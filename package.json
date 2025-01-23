@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.10.0",
+    "@vercel/speed-insights": "^1.1.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.4",
     "next": "15.1.6",
