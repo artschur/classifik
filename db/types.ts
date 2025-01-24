@@ -12,6 +12,13 @@ export interface ICompanion {
     created_at: Date;
     updated_at: Date;
 }
+export interface ISimpleCompanion {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    age: number;
+}
 
 export interface ICharacteristic {
     id: number;
