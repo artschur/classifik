@@ -1,6 +1,6 @@
 import { setTimeout } from 'timers';
 import { db } from './index';
-import { companionsTable, locationsTable, type Companion } from './schema';
+import { companionsTable, citiesTable, type Companion } from './schema';
 import { eq } from 'drizzle-orm';
 
 // Usar tipo gerado pelo drizzle...
@@ -30,6 +30,6 @@ export function getSimpleCompanions(
             age: companionsTable.age,
         })
         .from(companionsTable)
-        .innerJoin(locationsTable, eq(locationsTable.companion_id, companionsTable.id))
-        .where(eq(locationsTable.city, city));
+        .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city))
+        .where(eq(citiesTable.slug, city));
 }
