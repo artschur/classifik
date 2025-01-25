@@ -4,7 +4,7 @@ import { CompanionsList, CompanionsListSkeleton } from "@/components/companionsL
 export default async function CompanionsPage({ params, }: { params: Promise<{ cidade: string; }>; }) {
 
     const city = (await params).cidade;
-    const capitalizedCity = city.charAt(0).toUpperCase() + city.slice(1);
+    const capitalizedCity = city.charAt(0).toUpperCase() + city.slice(1).replaceAll("-", " ");
 
     return (
         <div className="container mx-auto px-4 py-8">
