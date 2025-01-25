@@ -8,6 +8,21 @@ export function getCompanions(): Promise<Companion[]> {
     return db.select().from(companionsTable);
 }
 
+// export function getCompanionById(id: number) {
+//     return db.select(
+//         {
+//             id: companionsTable.id,
+//             name: companionsTable.name,
+//             price: companionsTable.price,
+//             verified: companionsTable.verified,
+//             description: companionsTable.description,
+//             age: companionsTable.age,
+//             city: citiesTable.city
+
+//         }
+//     ).from(companionsTable).where(eq(companionsTable.id, id));
+// }
+
 export function getSimpleCompanions(
     city: string
 ): Promise<
@@ -32,4 +47,11 @@ export function getSimpleCompanions(
         .from(companionsTable)
         .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city))
         .where(eq(citiesTable.slug, city));
+}
+
+export function getAvailableCities() {
+    return db.select({
+        name: citiesTable.city,
+        slug: citiesTable.slug,
+    }).from(citiesTable);
 }
