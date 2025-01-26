@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import {
   ClerkProvider,
-  SignInButton,
-  SignedIn,
-  SignedOut,
-  UserButton
 } from '@clerk/nextjs';
 import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
+import Navbar from "@/components/header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,13 +34,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body>
+          <Analytics />
           <Toaster />
-          <SignedOut>
-            <SignInButton />
-          </SignedOut>
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
+          <Navbar />
           {children}
           <SpeedInsights />
           <Footer />
