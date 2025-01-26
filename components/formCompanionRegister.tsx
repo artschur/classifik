@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Cigarette, PenTool } from "lucide-react";
 
 
 
@@ -20,7 +21,7 @@ const pageOneSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     description: z.string().min(10, "Description must be at least 10 characters"),
-    price: z.number().min(0, "Price must be positive"),
+    price: z.number().min(1, "Price must be positive"),
     age: z.number().min(18, "Must be at least 18 years old").max(100),
     gender: z.string().min(1, "Gender is required"),
     gender_identity: z.string().optional(),
@@ -159,8 +160,8 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Register Companion</CardTitle>
-                        <CardDescription>Enter the details of the new companion.</CardDescription>
+                        <CardTitle>Register yourself</CardTitle>
+                        <CardDescription>Enter your details and start appearing in our platform today.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {currentPage === 0 && (
@@ -210,7 +211,7 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     name="price"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Price</FormLabel>
+                                            <FormLabel>Price (per hour)</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -233,6 +234,7 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                                 <Input
                                                     type="number"
                                                     placeholder="Enter age"
+                                                    max={100}
                                                     {...field}
                                                     onChange={(e) => field.onChange(Number.parseInt(e.target.value, 10))}
                                                 />
@@ -282,9 +284,18 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Languages</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter languages" {...field} />
-                                            </FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select languages" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="portuguese">Portuguese</SelectItem>
+                                                    <SelectItem value="spanish">Spanish</SelectItem>
+                                                    <SelectItem value="english">English</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -294,7 +305,7 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                         {currentPage === 1 && (
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold">Characteristics</h3>
-                                <p className=" text-secondary">Insert more details about yourself. This is very important to attracting more clients and appearing more.</p>
+                                <p className=" text-sm text-neutral-500 ">Insert more details about yourself. This is very important to attracting more clients and appearing more.</p>
                                 <FormField
                                     control={form.control}
                                     name="weight"
@@ -337,9 +348,19 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Ethnicity</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter ethnicity" {...field} />
-                                            </FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select ethnicity" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="white">White</SelectItem>
+                                                    <SelectItem value="black">Black</SelectItem>
+                                                    <SelectItem value="latino">Latino</SelectItem>
+                                                    <SelectItem value="asian">Asian</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -350,9 +371,19 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Eye Color</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter eye color" {...field} />
-                                            </FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select your eye color" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="blue">Blue</SelectItem>
+                                                    <SelectItem value="green">Green</SelectItem>
+                                                    <SelectItem value="brown">Brown</SelectItem>
+                                                    <SelectItem value="black">Black</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -363,9 +394,22 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Hair Color</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter hair color" {...field} />
-                                            </FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select hair color" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="blonde">Blonde</SelectItem>
+                                                    <SelectItem value="brown">Brown</SelectItem>
+                                                    <SelectItem value="black">Black</SelectItem>
+                                                    <SelectItem value="red">Red</SelectItem>
+                                                    <SelectItem value="gray">Gray</SelectItem>
+                                                    <SelectItem value="white">White</SelectItem>
+                                                    <SelectItem value="colored">Colored</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -376,9 +420,19 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Hair Length</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter hair length" {...field} />
-                                            </FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select hair lenght" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="male">Short</SelectItem>
+                                                    <SelectItem value="female">Middle</SelectItem>
+                                                    <SelectItem value="long">Long</SelectItem>
+                                                    <SelectItem value="other">Very Long</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -388,7 +442,7 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     name="shoe_size"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Shoe Size</FormLabel>
+                                            <FormLabel>Shoe Size (EU size)</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -407,8 +461,8 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Silicone</FormLabel>
-                                                <FormDescription>Does this companion have silicone enhancements?</FormDescription>
+                                                <FormLabel className="text-base flex flex-row gap-2">Silicone</FormLabel>
+                                                <FormDescription>Do you have silicone enhancements?</FormDescription>
                                             </div>
                                             <FormControl>
                                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -422,8 +476,8 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Tattoos</FormLabel>
-                                                <FormDescription>Does this companion have tattoos?</FormDescription>
+                                                <FormLabel className="text-base flex flex-row gap-2">Tattoos </FormLabel>
+                                                <FormDescription>Do you have tattoos?</FormDescription>
                                             </div>
                                             <FormControl>
                                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -437,8 +491,8 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Piercings</FormLabel>
-                                                <FormDescription>Does this companion have piercings?</FormDescription>
+                                                <FormLabel className="text-base flex flex-row gap-2">Piercings</FormLabel>
+                                                <FormDescription>Do you have piercings?</FormDescription>
                                             </div>
                                             <FormControl>
                                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -452,8 +506,8 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base">Smoker</FormLabel>
-                                                <FormDescription>Is this companion a smoker?</FormDescription>
+                                                <FormLabel className="text-base flex flex-row gap-2">Smoker <Cigarette /></FormLabel>
+                                                <FormDescription>Are you a smoker?  </FormDescription>
                                             </div>
                                             <FormControl>
                                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
