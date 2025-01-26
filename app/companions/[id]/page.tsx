@@ -4,17 +4,20 @@ import { ReviewsSkeleton } from "@/components/skeletons/skeletonReview";
 import { CompanionSkeleton } from "@/components/skeletons/skeletonSingleCompanion";
 import { Suspense } from "react";
 
-export default async function CompanionPage({ params }: { params: { id: string; }; }) {
-    const id = await parseInt(params.id);
+
+type Params = Promise<{ id: string; }>;
+
+export default async function CompanionPage(props: { params: Params; }) {
+    let { id } = await props.params;
 
     return (
         <div>
             <h1>As melhores acompanhantes</h1>
             <Suspense fallback={<CompanionSkeleton />}>
-                <SingleCompanionPage id={id} />
+                <SingleCompanionPage id={parseInt(id)} />
             </Suspense>
             <Suspense fallback={<ReviewsSkeleton />}>
-                <CompanionReviews id={id} />
+                <CompanionReviews id={parseInt(id)} />
             </Suspense>
 
         </div>
