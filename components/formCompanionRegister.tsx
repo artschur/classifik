@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 
 
@@ -141,9 +142,16 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
         reValidateMode: "onChange",
     });
 
+    const { toast } = useToast();
+
     function onSubmit(data: RegisterCompanionFormValues) {
         console.log(data);
         // Handle form submission here
+
+        toast({
+            title: "You have been registered",
+            description: `Hey ${data.name}! You are now available in our platform.`,
+        });
     }
 
     return (
