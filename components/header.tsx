@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChartNoAxesColumnIncreasing, FireExtinguisher, Heart, Home, Menu, MessageCircleHeart, PersonStanding, X } from "lucide-react";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-export default function Header() {
+export default async function Header() {
     return (
         <header className="sticky top-0 z-50 transition-all duration-200 bg-white/70 backdrop-blur-md dark:bg-gray-950/70">
             <div className="container mx-auto px-4">
@@ -20,10 +20,10 @@ export default function Header() {
                         <Link href="/about" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             About us
                         </Link>
-                        <Link href="/find" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
+                        <Link href="/location" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             Find a companion
                         </Link>
-                        <Link href="/promote" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
+                        <Link href="/companions/register" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             Promote yourself
                         </Link>
                         <Link href="/contact" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
@@ -35,12 +35,16 @@ export default function Header() {
                             <UserButton />
                         </SignedIn>
                         <SignedOut>
-                            <Button className="hidden sm:inline-flex" variant="ghost" size="sm">
-                                Log in
-                            </Button>
-                            <Button className="hidden sm:inline-flex" size="sm">
-                                Sign up
-                            </Button>
+                            <SignInButton>
+                                <Button variant="ghost" size="sm">
+                                    Login
+                                </Button>
+                            </SignInButton>
+                            <SignUpButton>
+                                <Button className="hidden sm:inline-flex" size="sm">
+                                    Register
+                                </Button>
+                            </SignUpButton>
                         </SignedOut>
                         <Sheet>
                             <SheetTrigger asChild>
@@ -89,12 +93,8 @@ export default function Header() {
                                     </SignedIn>
                                     <SignedOut>
                                         <div className="space-y-2">
-                                            <Button className="w-full" variant="outline" size="sm">
-                                                Log in
-                                            </Button>
-                                            <Button className="w-full" size="sm">
-                                                Sign up
-                                            </Button>
+                                            <SignInButton />
+                                            <SignUpButton />
                                         </div>
                                     </SignedOut>
                                 </div>
