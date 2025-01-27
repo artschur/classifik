@@ -62,14 +62,14 @@ export default function Header() {
                                         <PersonStanding /> About us
                                     </Link>
                                     <Link
-                                        href="/find"
+                                        href="/location"
                                         className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-4"
                                         prefetch={false}
                                     >
                                         <Heart /> Find a companion
                                     </Link>
                                     <Link
-                                        href="/promote"
+                                        href="/companions/register"
                                         className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-4"
                                         prefetch={false}
                                     >
