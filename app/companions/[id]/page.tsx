@@ -10,20 +10,16 @@ import { ReviewsSkeleton } from "@/components/skeletons/skeletonReview";
 import SingleCompanionComponent from "@/components/singleCompanion";
 import { CompanionSkeleton } from "@/components/skeletons/skeletonSingleCompanion";
 
-export default async function SingleCompanionPage({ params }: { params: { id: string; }; }) {
-    const id = Number.parseInt(params.id);
-    const companions = await getCompanionById(id);
-    const companion = companions[0];
-
-
+export default async function SingleCompanionPage(params: { params: Promise<{ id: string; }>; }) {
+    const { id } = await (await params).params;
 
     return (
-        <div className="container mx-auto py-8 px-4 md:px-0">
+        <div className="container mx-auto py-8 md:px-0">
             <Suspense fallback={<CompanionSkeleton />}>
-                <SingleCompanionComponent id={id} />
+                <SingleCompanionComponent id={parseInt(id)} />
             </Suspense>
             <Suspense fallback={<ReviewsSkeleton />}>
-                <CompanionReviews id={id} />
+                <CompanionReviews id={parseInt(id)} />
             </Suspense>
         </div>
     );

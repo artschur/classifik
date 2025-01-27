@@ -1,62 +1,105 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FireExtinguisher } from "lucide-react";
+import { ChartNoAxesColumnIncreasing, FireExtinguisher, Heart, Home, Menu, MessageCircleHeart, PersonStanding, X } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Header() {
     return (
         <header className="sticky top-0 z-50 transition-all duration-200 bg-white/70 backdrop-blur-md dark:bg-gray-950/70">
-            <div className="container mx-auto px-4 md:px-6 lg:px-8">
-                <div className="flex h-20 w-full shrink-0 items-center px-4 md:px-6">
-                    <Link href="#" className="mr-6 hidden lg:flex" prefetch={false}>
-                        <FireExtinguisher />
-                        <span className="sr-only">Safadasnow</span>
+            <div className="container mx-auto px-4">
+                <div className="flex h-16 items-center justify-between">
+                    <Link href="/" className="flex items-center space-x-2" prefetch={false}>
+                        <FireExtinguisher className="h-6 w-6" />
+                        <span className="font-bold text-xl hidden sm:inline">Safadasnow</span>
                     </Link>
-                    <div className="mx-auto flex gap-2">
-                        <Link
-                            href="#"
-                            className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/50 data-[state=open]:bg-white/50 dark:bg-gray-950/10 dark:hover:bg-gray-950/20 dark:hover:text-gray-50 dark:focus:bg-gray-950/20 dark:focus:text-gray-50 dark:data-[active]:bg-gray-950/50 dark:data-[state=open]:bg-gray-950/50"
-                            prefetch={false}
-                        >
+                    <nav className="hidden md:flex space-x-4">
+                        <Link href="/" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             Home
                         </Link>
-                        <Link
-                            href="#"
-                            className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/50 data-[state=open]:bg-white/50 dark:bg-gray-950/10 dark:hover:bg-gray-950/20 dark:hover:text-gray-50 dark:focus:bg-gray-950/20 dark:focus:text-gray-50 dark:data-[active]:bg-gray-950/50 dark:data-[state=open]:bg-gray-950/50"
-                            prefetch={false}
-                        >
+                        <Link href="/about" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             About us
                         </Link>
-                        <Link
-                            href="#"
-                            className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/50 data-[state=open]:bg-white/50 dark:bg-gray-950/10 dark:hover:bg-gray-950/20 dark:hover:text-gray-50 dark:focus:bg-gray-950/20 dark:focus:text-gray-50 dark:data-[active]:bg-gray-950/50 dark:data-[state=open]:bg-gray-950/50"
-                            prefetch={false}
-                        >
+                        <Link href="/find" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             Find a companion
                         </Link>
-                        <Link
-                            href="#"
-                            className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/50 data-[state=open]:bg-white/50 dark:bg-gray-950/10 dark:hover:bg-gray-950/20 dark:hover:text-gray-50 dark:focus:bg-gray-950/20 dark:focus:text-gray-50 dark:data-[active]:bg-gray-950/50 dark:data-[state=open]:bg-gray-950/50"
-                            prefetch={false}
-                        >
+                        <Link href="/promote" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             Promote yourself
                         </Link>
-                        <Link
-                            href="#"
-                            className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-white/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/20 hover:text-gray-900 focus:bg-white/20 focus:text-gray-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-white/50 data-[state=open]:bg-white/50 dark:bg-gray-950/10 dark:hover:bg-gray-950/20 dark:hover:text-gray-50 dark:focus:bg-gray-950/20 dark:focus:text-gray-50 dark:data-[active]:bg-gray-950/50 dark:data-[state=open]:bg-gray-950/50"
-                            prefetch={false}
-                        >
+                        <Link href="/contact" className="text-sm font-medium transition-colors hover:text-primary" prefetch={false}>
                             Contact
                         </Link>
-                    </div>
-                    <div className="flex gap-2">
+                    </nav>
+                    <div className="flex items-center space-x-4">
                         <SignedIn>
                             <UserButton />
                         </SignedIn>
                         <SignedOut>
-                            <Button className="px-2 py-1 text-xs">Login</Button>
-                            <Button className="px-2 py-1 text-xs">Register</Button>
+                            <Button className="hidden sm:inline-flex" variant="ghost" size="sm">
+                                Log in
+                            </Button>
+                            <Button className="hidden sm:inline-flex" size="sm">
+                                Sign up
+                            </Button>
                         </SignedOut>
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon" className="md:hidden">
+                                    <Menu className="h-5 w-5" />
+                                    <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="flex flex-col justify-end pb-12">
+                                <nav className="flex flex-col space-y-8">
+                                    <Link href="/" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-4" prefetch={false}>
+                                        <Home /> Home
+                                    </Link>
+                                    <Link
+                                        href="/about"
+                                        className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-4"
+                                        prefetch={false}
+                                    >
+                                        <PersonStanding /> About us
+                                    </Link>
+                                    <Link
+                                        href="/find"
+                                        className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-4"
+                                        prefetch={false}
+                                    >
+                                        <Heart /> Find a companion
+                                    </Link>
+                                    <Link
+                                        href="/promote"
+                                        className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-4"
+                                        prefetch={false}
+                                    >
+                                        <ChartNoAxesColumnIncreasing /> Promote yourself
+                                    </Link>
+                                    <Link
+                                        href="/contact"
+                                        className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-4"
+                                        prefetch={false}
+                                    >
+                                        <MessageCircleHeart /> Contact
+                                    </Link>
+                                </nav>
+                                <div className="mt-4">
+                                    <SignedIn>
+                                        <UserButton />
+                                    </SignedIn>
+                                    <SignedOut>
+                                        <div className="space-y-2">
+                                            <Button className="w-full" variant="outline" size="sm">
+                                                Log in
+                                            </Button>
+                                            <Button className="w-full" size="sm">
+                                                Sign up
+                                            </Button>
+                                        </div>
+                                    </SignedOut>
+                                </div>
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </div>
             </div>

@@ -14,7 +14,7 @@ export default async function SingleCompanionComponent({ id }: { id: number; }) 
 
     const detailGroups = [
         {
-            title: "Physical Attributes",
+            title: "About me",
             details: [
                 { label: "Age", value: companion.age },
                 { label: "Height", value: companion.height },
@@ -29,7 +29,7 @@ export default async function SingleCompanionComponent({ id }: { id: number; }) 
             details: [{ label: "City", value: companion.city }],
         },
         {
-            title: "Additional Info",
+            title: "Characteristics",
             details: [
                 { label: "Silicone", value: companion.silicone ? "Yes" : "No" },
                 { label: "Tattoos", value: companion.tattoos ? "Yes" : "No" },
