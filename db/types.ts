@@ -55,6 +55,24 @@ export interface ILocation {
     slug: string;
 }
 
+export interface CompanionFiltered {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    age: number;
+    city: string;
+    weight: string;
+    height: string;
+    eyeColor?: string | null;
+    hairColor: string;
+    silicone: boolean | null;
+    tattoos: boolean | null;
+    piercings: boolean | null;
+    smoker: boolean | null;
+    verified: boolean | null;
+}
+
 // Types for new entries (without id and timestamps)
 export type NewCompanionInput = Omit<ICompanion, 'id' | 'created_at' | 'updated_at'>;
 export type NewCharacteristicInput = Omit<ICharacteristic, 'id'>;

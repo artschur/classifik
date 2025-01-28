@@ -7,8 +7,6 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 
 export default async function Header() {
 
-    const user = await currentUser();
-
     return (
         <header className="sticky top-0 z-50 transition-all duration-200 bg-white/70 backdrop-blur-md dark:bg-gray-950/70">
             <div className="container mx-auto px-4">
@@ -96,7 +94,6 @@ export default async function Header() {
                                     <SignedIn>
                                         <div className="flex items-center space-x-2 text-black">
                                             <UserButton />
-                                            <p>{user?.username}</p>
                                         </div>
                                     </SignedIn>
                                     <SignedOut>
