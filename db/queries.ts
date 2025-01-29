@@ -9,6 +9,7 @@ import {
     neighborhoodsTable,
 } from './schema';
 import { eq } from 'drizzle-orm';
+import { CompanionFiltered } from './types';
 
 // Usar tipo gerado pelo drizzle...
 export function getCompanions(): Promise<Companion[]> {
@@ -83,4 +84,37 @@ export async function getAvailableCities() {
             country: citiesTable.country,
         })
         .from(citiesTable).groupBy(citiesTable.id);
+}
+
+export async function getCompanionsToFilter(city: string): Promise<CompanionFiltered[]> {
+    const results = await db
+        .select({
+            id: companionsTable.id,
+            name: companionsTable.name,
+            description: companionsTable.description,
+            price: companionsTable.price,
+            age: companionsTable.age,
+            city: citiesTable.city,
+            weight: characteristicsTable.weight,
+            height: characteristicsTable.height,
+            eyeColor: characteristicsTable.eye_color,
+            hairColor: characteristicsTable.hair_color,
+            silicone: characteristicsTable.silicone,
+            tattoos: characteristicsTable.tattoos,
+            piercings: characteristicsTable.piercings,
+            smoker: characteristicsTable.smoker,
+            verified: companionsTable.verified,
+        })
+        .from(companionsTable)
+        .innerJoin(
+            characteristicsTable,
+            eq(characteristicsTable.companion_id, companionsTable.id)
+        )
+        .innerJoin(
+            citiesTable,
+            eq(citiesTable.id, companionsTable.city)
+        )
+        .where(eq(citiesTable.slug, city));
+
+    return results as CompanionFiltered[];
 }

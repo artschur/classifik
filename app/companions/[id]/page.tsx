@@ -1,9 +1,3 @@
-import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { getCompanionById, getReviewsByCompanionId } from "@/db/queries";
 import CompanionReviews from "@/components/companionReviews";
 import { Suspense } from "react";
 import { ReviewsSkeleton } from "@/components/skeletons/skeletonReview";
