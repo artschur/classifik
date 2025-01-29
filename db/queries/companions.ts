@@ -6,6 +6,7 @@ import {
     characteristicsTable,
 } from '../schema';
 import { eq, and, gte, lte, desc, asc } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 export async function getCompanionsToFilter(
     city: string,
@@ -18,10 +19,11 @@ export async function getCompanionsToFilter(
         hairColor?: string,
         height?: string,
         weight?: string,
-        smoker?: string
+        smoker?: string,
+        eyeColor?: string,
     }
 ): Promise<CompanionFiltered[]> {
-    const { price, age, sort, silicone, tattoos, hairColor, height, weight, smoker } = filters || {};
+    const { price, age, sort, silicone, tattoos, hairColor, height, weight, smoker, eyeColor } = filters || {};
 
     let baseQuery = db
         .select({
@@ -67,7 +69,19 @@ export async function getCompanionsToFilter(
     }
 
     if (hairColor && hairColor !== 'all') {
-        conditions.push(eq(characteristicsTable.hair_color, hairColor));
+        const colors = hairColor.split(',');
+        if (colors.length > 0) {
+            conditions.push(
+                sql`LOWER(${characteristicsTable.hair_color}) IN (${sql.join(
+                    colors.map(c => sql`LOWER(${c})`),
+                    sql`, `
+                )})`
+            );
+        }
+    }
+
+    if (eyeColor && eyeColor !== 'all') {
+        conditions.push(sql`LOWER(${characteristicsTable.eye_color}) = LOWER(${eyeColor})`);
     }
 
     if (silicone && silicone !== 'all') {

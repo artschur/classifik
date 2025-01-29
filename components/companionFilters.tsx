@@ -68,7 +68,20 @@ export default function CompanionFilters({ companions: initialCompanions, city }
       }
     })
     setPendingFilters(initialFilters)
-  }, [searchParams])
+
+    // Apply filters if there are any search params
+    if (searchParams.toString()) {
+      setIsLoading(true)
+      fetch(`/api/companions?${searchParams.toString()}&city=${city}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setCompanions(data)
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }
+  }, [searchParams, city])
 
   const createQueryString = (params: Record<string, string | number | number[] | null>) => {
     const current = new URLSearchParams(searchParams)
@@ -105,10 +118,27 @@ export default function CompanionFilters({ companions: initialCompanions, city }
   }
 
   const handlePendingFilter = (key: string, value: string | number | number[] | null) => {
-    setPendingFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }))
+    setPendingFilters((prev) => {
+      if (key === 'hairColor') {
+        // If it's hairColor, handle as array
+        const currentColors = (prev.hairColor as string || '').split(',').filter(Boolean);
+        if (!value) {
+          // Remove all
+          return { ...prev, [key]: null };
+        }
+        if (currentColors.includes(value as string)) {
+          // Remove color if already selected
+          const newColors = currentColors.filter(c => c !== value);
+          return { ...prev, [key]: newColors.length ? newColors.join(',') : null };
+        } else {
+          // Add new color
+          currentColors.push(value as string);
+          return { ...prev, [key]: currentColors.join(',') };
+        }
+      }
+      // Handle other filters as before
+      return { ...prev, [key]: value };
+    });
   }
 
   const applyFilters = () => {
@@ -195,23 +225,28 @@ export default function CompanionFilters({ companions: initialCompanions, city }
                 <div className="space-y-4">
                   <h4 className="font-medium text-sm">Hair Color</h4>
                   <div className="grid grid-cols-3 gap-2">
-                    {["Black", "Blonde", "Brown", "Red", "Other"].map((color) => (
-                      <Badge
-                        key={color}
-                        variant="outline"
-                        className={`cursor-pointer text-base ${
-                          pendingFilters.hairColor === color.toLowerCase() ? "bg-primary text-primary-foreground" : ""
-                        }`}
-                        onClick={() =>
-                          handlePendingFilter(
-                            "hairColor",
-                            pendingFilters.hairColor === color.toLowerCase() ? null : color.toLowerCase(),
-                          )
-                        }
-                      >
-                        {color}
-                      </Badge>
-                    ))}
+                    {["Black", "Blonde", "Brown", "Red", "Other"].map((color) => {
+                      const selectedColors = (pendingFilters.hairColor as string || '').split(',');
+                      const isSelected = selectedColors.includes(color.toLowerCase());
+                      
+                      return (
+                        <Badge
+                          key={color}
+                          variant="outline"
+                          className={`cursor-pointer text-base ${
+                            isSelected ? "bg-primary text-primary-foreground" : ""
+                          }`}
+                          onClick={() =>
+                            handlePendingFilter(
+                              "hairColor",
+                              color.toLowerCase()
+                            )
+                          }
+                        >
+                          {color}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
