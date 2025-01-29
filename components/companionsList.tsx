@@ -6,14 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
+export function CompanionsList({ companions }: { companions: CompanionFiltered[]; }) {
+  if (!companions || companions.length === 0) {
+    return (
+      <div className="text-center text-gray-500 p-4">
+        <p>No companions found.</p>
+      </div>
+    );
+  }
 
-export async function CompanionsList({ companions }: { companions: CompanionFiltered[]; }) {
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {companions.map((companion: ISimpleCompanion) => (
+        {companions.map((companion: CompanionFiltered) => (
           <Link
             key={companion.id}
             href={`/companions/${companion.id}`}
