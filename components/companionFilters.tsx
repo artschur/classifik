@@ -1,22 +1,24 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import { Button } from "@/components/ui/button"
 import { CompanionsList } from "./companionsList"
 import { Filter, SortAsc, X } from "lucide-react"
-import type { CompanionFiltered } from "@/db/types"
+import type { CompanionFiltered, FilterTypesCompanions } from "@/db/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { CompanionsListSkeleton } from "./companionsList"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import * as SliderPrimitive from "@radix-ui/react-slider"
+import { useTransition } from "react"
 
 interface FilterProps {
   companions: CompanionFiltered[]
   city: string
+  currentFilters: FilterTypesCompanions
 }
 
 const DualSlider = ({
@@ -48,45 +50,19 @@ const DualSlider = ({
   )
 }
 
-export default function CompanionFilters({ companions: initialCompanions, city }: FilterProps) {
+export function CompanionFilters({ companions, city, currentFilters }: FilterProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [companions, setCompanions] = useState<CompanionFiltered[]>(initialCompanions || [])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [isOpen, setIsOpen] = useState(false)
-  const [pendingFilters, setPendingFilters] = useState<Record<string, string | number | number[] | null>>({})
+  const [pendingFilters, setPendingFilters] =
+    useState< FilterTypesCompanions> (currentFilters)
 
-  useEffect(() => {
-    // Initialize pendingFilters with current search params
-    const initialFilters: Record<string, string | number | number[] | null> = {}
-    searchParams.forEach((value, key) => {
-      if (key === "age") {
-        const [min, max] = value.split("-").map(Number)
-        initialFilters[key] = [min, max]
-      } else {
-        initialFilters[key] = value
-      }
-    })
-    setPendingFilters(initialFilters)
-
-    // Apply filters if there are any search params
-    if (searchParams.toString()) {
-      setIsLoading(true)
-      fetch(`/api/companions?${searchParams.toString()}&city=${city}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setCompanions(data)
-        })
-        .finally(() => {
-          setIsLoading(false)
-        })
-    }
-  }, [searchParams, city])
 
   const createQueryString = (params: Record<string, string | number | number[] | null>) => {
-    const current = new URLSearchParams(searchParams)
+    const current = new URLSearchParams(searchParams.toString())
     Object.entries(params).forEach(([key, value]) => {
-      if (value === null) {
+      if (value === null || value === "") {
         current.delete(key)
       } else if (Array.isArray(value)) {
         current.set(key, `${value[0]}-${value[1]}`)
@@ -99,50 +75,40 @@ export default function CompanionFilters({ companions: initialCompanions, city }
 
   const updateFilters = (filters: Record<string, string | number | number[] | null>) => {
     const queryString = createQueryString(filters)
-    setIsLoading(true)
-
-    fetch(`/api/companions?${queryString}&city=${city}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setCompanions(data)
-        router.push(`?${queryString}`, { scroll: false })
-        setIsOpen(false)
-      })
-      .finally(() => {
-        setIsLoading(false)
-      })
+    startTransition(() => {
+      router.push(`${city}?${queryString}`, { scroll: false })
+    })
+    setIsOpen(false)
   }
 
   const handleSort = (value: string | null) => {
-    updateFilters({ ...pendingFilters, sort: value ? `price-${value}` : null })
+    updateFilters({ ...pendingFilters, sort: value ? `price-${value}` : null, silicone: pendingFilters.silicone?.toString() || null, tattoos: pendingFilters.tattoos?.toString() || null, smoker: pendingFilters.smoker?.toString() || null })
   }
 
   const handlePendingFilter = (key: string, value: string | number | number[] | null) => {
     setPendingFilters((prev) => {
-      if (key === 'hairColor') {
-        // If it's hairColor, handle as array
-        const currentColors = (prev.hairColor as string || '').split(',').filter(Boolean);
+      if (key === "hairColor") {
+        const currentColors = ((prev.hairColor as string) || "").split(",").filter(Boolean)
         if (!value) {
-          // Remove all
-          return { ...prev, [key]: null };
+          return { ...prev, [key]: null }
         }
         if (currentColors.includes(value as string)) {
-          // Remove color if already selected
-          const newColors = currentColors.filter(c => c !== value);
-          return { ...prev, [key]: newColors.length ? newColors.join(',') : null };
+          const newColors = currentColors.filter((c) => c !== value)
+          return { ...prev, [key]: newColors.length ? newColors.join(",") : null }
         } else {
-          // Add new color
-          currentColors.push(value as string);
-          return { ...prev, [key]: currentColors.join(',') };
+          currentColors.push(value as string)
+          return { ...prev, [key]: currentColors.join(",") }
         }
       }
-      // Handle other filters as before
-      return { ...prev, [key]: value };
-    });
+      return { ...prev, [key]: value }
+    })
   }
 
   const applyFilters = () => {
-    updateFilters(pendingFilters)
+    const filtersWithStrings = Object.fromEntries(
+      Object.entries(pendingFilters).map(([key, value]) => [key, typeof value === 'boolean' ? value.toString() : value])
+    )
+    updateFilters(filtersWithStrings)
   }
 
   return (
@@ -186,14 +152,14 @@ export default function CompanionFilters({ companions: initialCompanions, city }
                 <div className="space-y-4">
                   <h4 className="font-medium text-sm">Age Range</h4>
                   <DualSlider
-                    value={(pendingFilters.age as number[]) || [18, 60]}
+                    value={(pendingFilters.age as number[] | undefined) ?? [18, 60]}
                     onValueChange={(value) => handlePendingFilter("age", value)}
                     min={18}
                     max={60}
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{(pendingFilters.age as number[])?.[0] || 18}</span>
-                    <span>{(pendingFilters.age as number[])?.[1] || 60}</span>
+                    <span>{(pendingFilters.age as number[] | undefined)?.[0] ?? 18}</span>
+                    <span>{(pendingFilters.age as number[] | undefined)?.[1] ?? 60}</span>
                   </div>
                 </div>
 
@@ -206,12 +172,12 @@ export default function CompanionFilters({ companions: initialCompanions, city }
                         key={char}
                         variant="outline"
                         className={`cursor-pointer ${
-                          pendingFilters[char.toLowerCase()] === "true" ? "bg-primary text-primary-foreground" : ""
+                          pendingFilters[char.toLowerCase() as keyof FilterTypesCompanions] === "true" ? "bg-primary text-primary-foreground" : ""
                         }`}
                         onClick={() =>
                           handlePendingFilter(
                             char.toLowerCase(),
-                            pendingFilters[char.toLowerCase()] === "true" ? null : "true",
+                            pendingFilters[char.toLowerCase() as keyof FilterTypesCompanions] === "true" ? null : "true",
                           )
                         }
                       >
@@ -253,14 +219,14 @@ export default function CompanionFilters({ companions: initialCompanions, city }
             </ScrollArea>
             {/* Apply Filters Button */}
             <div className="p-6 border-t">
-              <Button onClick={applyFilters} disabled={isLoading} className="w-full">
+              <Button onClick={applyFilters} className="w-full">
                 Show results
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
-      {isLoading ? <CompanionsListSkeleton /> : <CompanionsList companions={companions} />}
+      { isPending ? <CompanionsListSkeleton /> : <CompanionsList companions={companions} />}
     </div>
   )
 }

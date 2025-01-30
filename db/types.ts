@@ -73,6 +73,20 @@ export interface CompanionFiltered {
     verified: boolean | null;
 }
 
+
+export type FilterTypesCompanions = {
+    hairColor?: string | null;
+    price?: string;
+    age?: string;
+    sort?: string;
+    silicone?: boolean;
+    tattoos?: boolean;
+    height?: string;
+    weight?: string;
+    smoker?: string;
+    eyeColor?: string;
+};
+
 // Types for new entries (without id and timestamps)
 export type NewCompanionInput = Omit<ICompanion, 'id' | 'created_at' | 'updated_at'>;
 export type NewCharacteristicInput = Omit<ICharacteristic, 'id'>;
