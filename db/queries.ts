@@ -9,7 +9,7 @@ import {
     neighborhoodsTable,
 } from './schema';
 import { eq } from 'drizzle-orm';
-import { CompanionFiltered } from './types';
+import { CompanionById, CompanionFiltered } from './types';
 
 // Usar tipo gerado pelo drizzle...
 export function getCompanions(): Promise<Companion[]> {
@@ -21,8 +21,8 @@ export function getReviewsByCompanionId(id: number) {
         .select().from(reviewsTable).where(eq(reviewsTable.companion_id, id));
 }
 
-export function getCompanionById(id: number) {
-    return db
+export async function getCompanionById(id: number): Promise<CompanionById> {
+    const result = await db
         .select({
             id: companionsTable.id,
             name: companionsTable.name,
@@ -49,6 +49,7 @@ export function getCompanionById(id: number) {
         ).leftJoin(citiesTable, eq(citiesTable.id, companionsTable.city))
         .limit(1);
 
+    return result[0] as CompanionById;
 }
 
 export function getSimpleCompanions(city: string): Promise<
