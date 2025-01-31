@@ -87,7 +87,25 @@ export type FilterTypesCompanions = {
     eyeColor?: string;
 };
 
-// Types for new entries (without id and timestamps)
+export interface CompanionById {
+    id: number;
+    name: string;
+    price: number;
+    verified: boolean | null;
+    description: string;
+    age: number;
+    city: string;
+    weight: number | string;
+    height: number | string;
+    ethnicity: string;
+    eyeColor?: string;
+    hairColor: string;
+    silicone: boolean;
+    tattoos: boolean;
+    piercings: boolean;
+    smoker?: boolean;
+}
+
 export type NewCompanionInput = Omit<ICompanion, 'id' | 'created_at' | 'updated_at'>;
 export type NewCharacteristicInput = Omit<ICharacteristic, 'id'>;
 export type NewReviewInput = Omit<IReview, 'id' | 'created_at' | 'updated_at'>;
