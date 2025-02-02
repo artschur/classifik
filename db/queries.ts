@@ -3,20 +3,15 @@ import { db } from './index';
 import {
     companionsTable,
     citiesTable,
-    type Companion,
     characteristicsTable,
     reviewsTable,
-    neighborhoodsTable,
+    City,
+    Review,
 } from './schema';
 import { eq } from 'drizzle-orm';
-import { CompanionById, CompanionFiltered } from './types';
+import { CitySummary, CompanionById, CompanionFiltered } from './types';
 
-// Usar tipo gerado pelo drizzle...
-export function getCompanions(): Promise<Companion[]> {
-    return db.select().from(companionsTable);
-}
-
-export function getReviewsByCompanionId(id: number) {
+export function getReviewsByCompanionId(id: number): Promise<Review[]> {
     return db
         .select().from(reviewsTable).where(eq(reviewsTable.companion_id, id));
 }
@@ -52,37 +47,23 @@ export async function getCompanionById(id: number): Promise<CompanionById> {
     return result[0] as CompanionById;
 }
 
-export function getSimpleCompanions(city: string): Promise<
-    {
-        id: number;
-        name: string;
-        price: number;
-        verified: boolean | null;
-        description: string;
-        age: number;
-    }[]
-> {
-    return db
+export async function getAvailableCities(): Promise<City[]> {
+    return await db
         .select({
-            id: companionsTable.id,
-            name: companionsTable.name,
-            price: companionsTable.price,
-            verified: companionsTable.verified,
-            description: companionsTable.description,
-            age: companionsTable.age,
+            id: citiesTable.id,
+            city: citiesTable.city,
+            state: citiesTable.state,
+            country: citiesTable.country,
+            slug: citiesTable.slug,
         })
-        .from(companionsTable)
-        .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city))
-        .where(eq(citiesTable.slug, city));
+        .from(citiesTable).groupBy(citiesTable.id);
 }
 
-export async function getAvailableCities() {
+export async function getAvailableCitiesSummary(): Promise<CitySummary[]> {
     return await db
         .select({
             slug: citiesTable.slug,
-            name: citiesTable.city,
-            state: citiesTable.state,
-            country: citiesTable.country,
+            city: citiesTable.city,
         })
         .from(citiesTable).groupBy(citiesTable.id);
 }

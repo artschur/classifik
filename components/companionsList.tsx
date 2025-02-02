@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { CompanionFiltered, ISimpleCompanion } from "@/db/types";
+import type { CompanionFiltered } from "@/db/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function CompanionsList({ companions }: { companions: CompanionFiltered[]; }) {
   if (!companions || companions.length === 0) {
     return (
-      <div className="text-center text-gray-500 p-4">
+      <div className="p-4 text-center text-gray-500">
         <p>No companions found.</p>
       </div>
     );
@@ -17,7 +17,7 @@ export function CompanionsList({ companions }: { companions: CompanionFiltered[]
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {companions.map((companion: CompanionFiltered) => (
           <Link
             key={companion.id}
@@ -42,7 +42,7 @@ export function CompanionsList({ companions }: { companions: CompanionFiltered[]
                 </div>
                 <p className="text-sm text-gray-600 line-clamp-3">{companion.description}</p>
               </CardContent>
-              <CardFooter className="flex justify-between items-center">
+              <CardFooter className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span>€ {companion.price.toFixed(2)}</span>
                 </div>
@@ -57,20 +57,20 @@ export function CompanionsList({ companions }: { companions: CompanionFiltered[]
 
 export function CompanionsListSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {[...Array(6)].map((_, index) => (
         <Card key={index} className="h-full">
           <CardHeader>
-            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="w-3/4 h-6" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-48 w-full mb-4" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="w-full h-48 mb-4" />
+            <Skeleton className="w-full h-4 mb-2" />
+            <Skeleton className="w-3/4 h-4" />
           </CardContent>
-          <CardFooter className="flex justify-between items-center">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-4 w-1/4" />
+          <CardFooter className="flex items-center justify-between">
+            <Skeleton className="w-1/4 h-4" />
+            <Skeleton className="w-1/4 h-4" />
           </CardFooter>
         </Card>
       ))}

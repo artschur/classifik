@@ -1,6 +1,7 @@
+import { CitySummary } from '@/db/types';
 import Link from 'next/link';
 
-export function SelectCidadesCadastradas({ cities }: { cities: { name: string; slug: string; }[]; }) {
+export function SelectCidadesCadastradas({ cities }: { cities: CitySummary[]; }) {
 
     return (
         <div className=" flex flex-col items-left justify-start gap-2">
@@ -10,7 +11,7 @@ export function SelectCidadesCadastradas({ cities }: { cities: { name: string; s
                     href={`/location/${city.slug}`}
                     className='text-3xl text-neutral-600 hover:text-white hover:bg-neutral-600 transition-colors duration-400 cursor-pointer px-2 rounded-md'
                 >
-                    {city.name}
+                    {city.city}
                 </Link>
             ))}
         </div>
