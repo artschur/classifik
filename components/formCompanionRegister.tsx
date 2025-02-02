@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Cigarette, PenTool } from "lucide-react";
+import { City } from "@/db/schema";
 
 
 
@@ -62,7 +63,7 @@ const RegisterCompanionFormSchema = z.object({
 const formSections = ["Companion Info", "Characteristics", "Location"] as const;
 
 
-export function RegisterCompanionForm({ cities }: { cities: { name: string; slug: string; state: string; country: string; }[]; }) {
+export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
     const [currentPage, setCurrentPage] = React.useState(0);
 
     const handleCityChange = (citySlug: string) => {
@@ -549,7 +550,7 @@ export function RegisterCompanionForm({ cities }: { cities: { name: string; slug
                                                         <SelectContent>
                                                             {cities.map((city) => (
                                                                 <SelectItem key={city.slug} value={city.slug}>
-                                                                    {city.name}
+                                                                    {city.city}
                                                                 </SelectItem>
                                                             ))}
                                                         </SelectContent>
