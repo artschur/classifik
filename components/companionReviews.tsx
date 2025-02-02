@@ -6,11 +6,11 @@ import { Star, ThumbsUp } from "lucide-react";
 import { Review } from "@/db/schema";
 
 
-export default function CompanionReviews({ reviews }: { reviews: Review[]; }) {
+export default function CompanionReviews({ reviews, companionName }: { reviews: Review[]; companionName: string; }) {
     return (
         <Card className="w-full max-w-xl mx-auto mt-8">
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-xl font-semibold">Reviews sobre Tatta Franco</CardTitle>
+                <CardTitle className="text-xl font-semibold">Reviews sobre {companionName}</CardTitle>
                 <Badge variant="secondary">{reviews.length} reviews</Badge>
             </CardHeader>
             <CardContent>

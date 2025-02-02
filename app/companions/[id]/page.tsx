@@ -20,7 +20,7 @@ export default async function SingleCompanionPage(params: { params: Promise<{ id
                 <SingleCompanionComponent companion={companion} countReviews={countReviews} />
             </Suspense>
             <Suspense fallback={<ReviewsSkeleton />}>
-                <CompanionReviews reviews={reviews} />
+                <CompanionReviews reviews={reviews} companionName={companion.name} />
             </Suspense>
         </div>
     );
