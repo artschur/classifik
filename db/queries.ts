@@ -3,21 +3,15 @@ import { db } from './index';
 import {
     companionsTable,
     citiesTable,
-    type Companion,
     characteristicsTable,
     reviewsTable,
-    neighborhoodsTable,
     City,
+    Review,
 } from './schema';
 import { eq } from 'drizzle-orm';
 import { CitySummary, CompanionById, CompanionFiltered } from './types';
 
-// Usar tipo gerado pelo drizzle...
-export function getCompanions(): Promise<Companion[]> {
-    return db.select().from(companionsTable);
-}
-
-export function getReviewsByCompanionId(id: number) {
+export function getReviewsByCompanionId(id: number): Promise<Review[]> {
     return db
         .select().from(reviewsTable).where(eq(reviewsTable.companion_id, id));
 }
