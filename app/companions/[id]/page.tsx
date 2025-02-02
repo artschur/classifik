@@ -15,7 +15,7 @@ export default async function SingleCompanionPage(params: { params: Promise<{ id
     const reviews: Review[] = await getReviewsByCompanionId(parseInt(id));
     const countReviews: number = reviews.length;
     return (
-        <div className="container py-8 mx-auto md:px-0">
+        <div className="container mx-auto md:px-0">
             <Suspense fallback={<CompanionSkeleton />}>
                 <SingleCompanionComponent companion={companion} countReviews={countReviews} />
             </Suspense>

@@ -16,7 +16,7 @@ export default function SingleCompanionComponent({
     return (
         <Card className="w-full max-w-5xl mx-auto overflow-hidden bg-white">
             {/* Banner Image */}
-            <div className="relative h-48 bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400">
+            <div className="relative h-36 bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-400">
                 <Image
                     src="/placeholder.svg?height=192&width=768"
                     alt="Banner"
