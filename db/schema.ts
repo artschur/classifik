@@ -1,20 +1,50 @@
-import { integer, index, pgTable, serial, text, boolean, decimal, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { integer, index, pgTable, serial, text, boolean, decimal, varchar, timestamp, PgArray, jsonb } from 'drizzle-orm/pg-core';
+import { number } from 'zod';
 
 export const companionsTable = pgTable('companions', {
     id: serial('id').primaryKey(),
+    auth_id: text('auth_id').notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
+    phone: varchar('phone', { length: 20 }).notNull(),
+    shortDescription: varchar('short_description', { length: 60 }).notNull(),
     description: text('description').notNull(),
+
     price: integer('price').notNull(),
     age: integer('age').notNull(),
     gender: varchar('gender', { length: 50 }).notNull(),
     gender_identity: varchar('gender_identity', { length: 100 }),
-    languages: varchar('languages', { length: 255 }),
-    verified: boolean('verified').default(false),
+    languages: text('languages').array().notNull().default(sql`ARRAY[]::TEXT[]`),
+
     city: integer('location_id').notNull().references(() => citiesTable.id),
-    neighborhoodsTable: integer('neighborhood_id').references(() => neighborhoodsTable.id),
+    neighborhood_id: integer('neighborhood_id').references(() => neighborhoodsTable.id),
+
+    verified: boolean('verified').default(false),
+
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
+
+    availability: jsonb('availability').$type<{
+        days: string[];
+        hours: {
+            start: string;
+            end: string;
+        };
+    }>(),
+
+    reviews_summary: jsonb('reviews_summary').$type<{
+        total_count: number;
+        average_rating: number;
+        recent_reviews?: Array<{
+            user_id: string;
+            comment: string;
+            created_at: Date;
+        }>;
+    }>(),
+
+    last_seen: timestamp('last_seen').defaultNow(),
+
 }, (table) => ({
     companions_price_idx: index('companions_price_idx').on(table.price),
     companions_age_idx: index('companions_age_idx').on(table.age),
@@ -48,13 +78,14 @@ export const reviewsTable = pgTable('reviews', {
     companion_id: integer('companion_id').references(() => companionsTable.id).notNull(),
     user_id: text('user_id').notNull(),
     comment: text('comment').notNull(),
+    rating: integer('rating').notNull().default(5),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
 }, (table) => ({
     reviews_companion_idx: index('reviews_companion_idx').on(table.companion_id)
 }));
 
-export const citiesTable = pgTable('locations', {
+export const citiesTable = pgTable('cities', {
     id: serial('id').primaryKey(),
     city: varchar('city', { length: 100 }).notNull(),
     state: varchar('state', { length: 2 }).notNull(),
@@ -68,11 +99,11 @@ export const citiesTable = pgTable('locations', {
 export const neighborhoodsTable = pgTable('neighborhoods', {
     id: serial('id').primaryKey(),
     neighborhood: varchar('neighborhood', { length: 100 }).notNull(),
-    city: integer('city_id').references(() => citiesTable.id).notNull(),
+    city_id: integer('city_id').references(() => citiesTable.id).notNull(),
     slug: varchar('slug', { length: 100 }).notNull(),
 }, (table) => ({
     neighborhoods_slug_idx: index('neighborhoods_slug_idx').on(table.slug),
-    neighborhoods_city_idx: index('neighborhoods_city_idx').on(table.city)
+    neighborhoods_city_idx: index('neighborhoods_city_idx').on(table.city_id)
 }));
 
 

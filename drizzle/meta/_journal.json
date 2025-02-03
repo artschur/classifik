@@ -22,6 +22,13 @@
       "when": 1737760242920,
       "tag": "0002_thin_zaladane",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1738616243301,
+      "tag": "0003_great_wild_child",
+      "breakpoints": true
     }
   ]
 }
