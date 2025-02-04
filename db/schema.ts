@@ -17,7 +17,7 @@ export const companionsTable = pgTable('companions', {
     gender_identity: varchar('gender_identity', { length: 100 }),
     languages: text('languages').array().notNull().default(sql`ARRAY[]::TEXT[]`),
 
-    city: integer('location_id').notNull().references(() => citiesTable.id),
+    city_id: integer('location_id').notNull().references(() => citiesTable.id),
     neighborhood_id: integer('neighborhood_id').references(() => neighborhoodsTable.id),
 
     verified: boolean('verified').default(false),
@@ -33,23 +33,13 @@ export const companionsTable = pgTable('companions', {
         };
     }>(),
 
-    reviews_summary: jsonb('reviews_summary').$type<{
-        total_count: number;
-        average_rating: number;
-        recent_reviews?: Array<{
-            user_id: string;
-            comment: string;
-            created_at: Date;
-        }>;
-    }>(),
-
     last_seen: timestamp('last_seen').defaultNow(),
 
 }, (table) => ({
     companions_price_idx: index('companions_price_idx').on(table.price),
     companions_age_idx: index('companions_age_idx').on(table.age),
     companions_verified_idx: index('companions_verified_idx').on(table.verified),
-    compations_city_idx: index('compations_city_idx').on(table.city),
+    compations_city_idx: index('compations_city_idx').on(table.city_id),
 }));
 
 export const characteristicsTable = pgTable('characteristics', {

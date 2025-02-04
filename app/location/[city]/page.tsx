@@ -6,12 +6,12 @@ import { CompanionFilters } from "@/components/companionFilters";
 import { FilterTypesCompanions } from "@/db/types";
 
 
-export default async function CompanionsPage({ 
+export default async function CompanionsPage({
     params,
-    searchParams 
-}: { 
-    params: Promise<{ city: string }>;
-    searchParams: Promise< FilterTypesCompanions >;
+    searchParams
+}: {
+    params: Promise<{ city: string; }>;
+    searchParams: Promise<FilterTypesCompanions>;
 }) {
     const { city } = await params;
     const sParams = await searchParams;
@@ -25,6 +25,7 @@ export default async function CompanionsPage({
         companions = await getCompanionsToFilter(city, {
             ...sParams,
         });
+
     } catch (e) {
         error = e instanceof Error ? e.message : "An error occurred";
     }
@@ -49,7 +50,7 @@ export default async function CompanionsPage({
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-2">Companions in {capitalizedCity}</h1>
             <Suspense fallback={<CompanionsListSkeleton />}>
-                <CompanionFilters companions={companions} city={city} currentFilters={sParams}/>
+                <CompanionFilters companions={companions} city={city} currentFilters={sParams} />
             </Suspense>
         </div>
     );
