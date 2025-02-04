@@ -40,7 +40,7 @@ export function CompanionsList({ companions }: { companions: CompanionFiltered[]
                     style={{ objectFit: "contain" }}
                   />
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-3">{companion.description}</p>
+                <p className="text-sm text-gray-600 line-clamp-3">{companion.shortDescription}</p>
               </CardContent>
               <CardFooter className="flex items-center justify-between">
                 <div className="flex items-center">

@@ -1,0 +1,1 @@
+ALTER TABLE "companions" DROP COLUMN "reviews_summary";
