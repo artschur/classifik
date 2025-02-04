@@ -108,7 +108,7 @@ export default function SingleCompanionComponent({
                         <CharacteristicItem
                             label="Cidade"
                             icon={<MapPin className="w-5 h-5" />}
-                            value={companion.city}
+                            value={companion.languages.join(", ")}
                         />
                         <CharacteristicItem
                             label="Altura"
