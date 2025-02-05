@@ -1,20 +1,25 @@
-import { db } from '../index';
+'use server';
+
 import { companionsTable, characteristicsTable } from '../schema';
+import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
 import { auth } from '@clerk/nextjs/server';
 
-export async function registerCompanion(companionData: RegisterCompanionFormValues) {
+export async function registerCompanion(
+  companionData: RegisterCompanionFormValues
+) {
   const {
     name,
     email,
-    shortDescription,
     phoneNumber,
+    shortDescription,
     description,
     price,
     age,
     gender,
     gender_identity,
     languages,
+    city, // assuming this is an integer id for the city
     weight,
     height,
     ethnicity,
@@ -26,13 +31,10 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
     tattoos,
     piercings,
     smoker,
-    city,
-    state,
-    country,
-    // neighborhood, etc. if needed
   } = companionData;
 
   const userSession = await auth();
+
   if (!userSession?.userId) {
     throw new Error('User not authenticated');
   }
@@ -52,20 +54,15 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
         age: age,
         gender: gender,
         gender_identity: gender_identity,
-        languages: languages, 
-        city_id: city, // or city_id: city.id if you have a lookup
-        // must be an array if columns define string[]
-        // city_id: (some ID if you have a lookup),
-        // or store city/slug directly if that's how your schema is defined
+        languages: languages,
+        city_id: city,
       })
       .returning({ id: companionsTable.id });
 
-    // 2) Insert into characteristicsTable
     await db.insert(characteristicsTable).values({
-      companion_id: newCompanion.id,
-      weight: weight,
       height: height,
       ethnicity: ethnicity,
+      companion_id: newCompanion.id,
       eye_color: eye_color,
       hair_color: hair_color,
       hair_length: hair_length,
@@ -73,6 +70,7 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
       silicone: silicone,
       tattoos: tattoos,
       piercings: piercings,
+      weight: weight,
       smoker: smoker,
     });
 
