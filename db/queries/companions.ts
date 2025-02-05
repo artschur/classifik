@@ -1,114 +1,84 @@
 import { db } from '../index';
-import { CompanionFiltered, FilterTypesCompanions } from '../types';
-import { companionsTable, citiesTable, characteristicsTable } from '../schema';
-import { eq, and, gte, lte, desc, asc, SQL } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
+import { companionsTable, characteristicsTable } from '../schema';
+import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
+import { auth } from '@clerk/nextjs/server';
 
-export async function getCompanionsToFilter(
-  city: string,
-  filters?: FilterTypesCompanions
-): Promise<CompanionFiltered[]> {
+export async function registerCompanion(companionData: RegisterCompanionFormValues) {
   const {
+    name,
+    email,
+    shortDescription,
+    phoneNumber,
+    description,
     price,
     age,
-    sort,
+    gender,
+    gender_identity,
+    languages,
+    weight,
+    height,
+    ethnicity,
+    eye_color,
+    hair_color,
+    hair_length,
+    shoe_size,
     silicone,
     tattoos,
-    hairColor,
-    height,
-    weight,
+    piercings,
     smoker,
-    eyeColor,
-  } = filters || {};
+    city,
+    state,
+    country,
+    // neighborhood, etc. if needed
+  } = companionData;
 
-  // Collect all conditions
-  const conditions: SQL[] = [eq(citiesTable.slug, city)];
-
-  if (price) {
-    const [minPrice, maxPrice] = price.split('-');
-    if (minPrice)
-      conditions.push(gte(companionsTable.price, parseInt(minPrice)));
-    if (maxPrice)
-      conditions.push(lte(companionsTable.price, parseInt(maxPrice)));
+  const userSession = await auth();
+  if (!userSession?.userId) {
+    throw new Error('User not authenticated');
   }
 
-  if (age && age !== 'all') {
-    const [minAge, maxAge] = age.split('-');
-    if (minAge && maxAge) {
-      conditions.push(
-        gte(companionsTable.age, parseInt(minAge)),
-        lte(companionsTable.age, parseInt(maxAge))
-      );
-    }
+  try {
+    // 1) Insert into companionsTable
+    const [newCompanion] = await db
+      .insert(companionsTable)
+      .values({
+        auth_id: userSession.userId,
+        name: name,
+        email: email,
+        phone: phoneNumber,
+        shortDescription: shortDescription,
+        description: description,
+        price: price,
+        age: age,
+        gender: gender,
+        gender_identity: gender_identity,
+        languages: languages, 
+        city_id: city, // or city_id: city.id if you have a lookup
+        // must be an array if columns define string[]
+        // city_id: (some ID if you have a lookup),
+        // or store city/slug directly if that's how your schema is defined
+      })
+      .returning({ id: companionsTable.id });
+
+    // 2) Insert into characteristicsTable
+    await db.insert(characteristicsTable).values({
+      companion_id: newCompanion.id,
+      weight: weight,
+      height: height,
+      ethnicity: ethnicity,
+      eye_color: eye_color,
+      hair_color: hair_color,
+      hair_length: hair_length,
+      shoe_size: shoe_size,
+      silicone: silicone,
+      tattoos: tattoos,
+      piercings: piercings,
+      smoker: smoker,
+    });
+
+    return newCompanion;
+  } catch (error) {
+    console.error('Error inserting companion or characteristics:', error);
+    throw error;
   }
-
-  // Add characteristics table conditions
-  if (hairColor && hairColor !== 'all') {
-    const colors = hairColor.split(',');
-    if (colors.length > 0) {
-      conditions.push(
-        sql`LOWER(${characteristicsTable.hair_color}) IN (${sql.join(
-          colors.map((c) => sql`LOWER(${c})`),
-          sql`, `
-        )})`
-      );
-    }
-  }
-
-  if (eyeColor && eyeColor !== 'all') {
-    conditions.push(
-      sql`LOWER(${characteristicsTable.eye_color}) = LOWER(${eyeColor})`
-    );
-  }
-
-  if (silicone) {
-    conditions.push(
-      sql`${characteristicsTable.silicone} = ${Boolean(silicone)}`
-    );
-  }
-
-  if (tattoos) {
-    conditions.push(eq(characteristicsTable.tattoos, tattoos === true));
-  }
-
-  if (smoker && smoker !== 'all') {
-    conditions.push(eq(characteristicsTable.smoker, smoker === 'true'));
-  }
-
-  const query = db
-    .select({
-      id: companionsTable.id,
-      name: companionsTable.name,
-      shortDescription: companionsTable.shortDescription,
-      price: companionsTable.price,
-      age: companionsTable.age,
-      city: citiesTable.city,
-      ethinicity: characteristicsTable.ethnicity,
-      weight: characteristicsTable.weight,
-      height: characteristicsTable.height,
-      eyeColor: characteristicsTable.eye_color,
-      hairColor: characteristicsTable.hair_color,
-      silicone: characteristicsTable.silicone,
-      tattoos: characteristicsTable.tattoos,
-      piercings: characteristicsTable.piercings,
-      smoker: characteristicsTable.smoker,
-      verified: companionsTable.verified,
-    })
-    .from(companionsTable)
-    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(
-      characteristicsTable,
-      eq(characteristicsTable.companion_id, companionsTable.id)
-    )
-    .where(and(...conditions))
-    .orderBy(
-      sort
-        ? sort.split('-')[1] === 'asc'
-          ? asc(companionsTable[sort.split('-')[0] as 'price' | 'age'])
-          : desc(companionsTable[sort.split('-')[0] as 'price' | 'age'])
-        : asc(companionsTable.id)
-    );
-
-  console.log(query.toSQL());
-  return await query;
 }
