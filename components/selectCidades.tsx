@@ -9,7 +9,7 @@ export function SelectCidadesCadastradas({ cities }: { cities: CitySummary[]; })
                 <Link
                     key={city.slug}
                     href={`/location/${city.slug}`}
-                    className='text-3xl text-neutral-600 hover:text-white hover:bg-neutral-600 transition-colors duration-400 cursor-pointer px-2 rounded-md'
+                    className='text-3xl text-neutral-600 hover:text-white hover:bg-primary transition-colors duration-400 cursor-pointer px-2 rounded-md'
                 >
                     {city.city}
                 </Link>

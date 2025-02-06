@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-import { CompanionsList, CompanionsListSkeleton } from "@/components/companionsList";
 
 export default function CompanionsPage() {
   return (
