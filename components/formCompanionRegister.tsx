@@ -1,44 +1,74 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Cigarette } from "lucide-react";
-import { City } from "@/db/schema";
-import { registerCompanion } from "@/db/queries/companions";
-
-
+import * as React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Cigarette } from 'lucide-react';
+import { City } from '@/db/schema';
+import { registerCompanion } from '@/db/queries/companions';
+import Error from 'next/error';
 
 const pageOneSchema = z.object({
     // Companion Info
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    shortDescription: z.string().min(10, "Short description must be at least 10 characters"),
-    phoneNumber: z.string().min(10, "Phone number must be at least 10 characters"),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    price: z.number().min(1, "Price must be positive"),
-    age: z.number().min(18, "Must be at least 18 years old").max(100),
-    gender: z.string().min(1, "Gender is required"),
+    name: z.string().min(2, 'Nome precisa ter ao menos 2 caractéres'),
+    email: z.string().email('Endereço de email inválido'),
+    shortDescription: z
+        .string()
+        .min(10, 'Descrição curta precisa ter ao menos 10 caractéres')
+        .max(60, 'Descrição curta pode ter no máximo 60 caractéres'),
+    phoneNumber: z
+        .string()
+        .min(10, 'Numero de telefone precisa ter ao menos 10 caractéres'),
+    description: z
+        .string()
+        .min(30, 'Descrição precisa ter ao menos 30 caractéres'),
+    price: z.number().min(1, 'Seu preço precisa ser positivo'),
+    age: z.number().min(18, 'Você precisa ter mais de 18 anos!').max(100),
+    gender: z.string().min(1, 'Gênero é obrigatório'),
     gender_identity: z.string().optional(),
-    languages: z.array(z.string()).min(1, "At least one language is required"),
+    languages: z.array(z.string()).min(1, 'Selecione ao menos uma Lingua'),
 });
 
 const pageTwoSchema = z.object({
     // Characteristics
-    weight: z.number().min(30, "Weight must be at least 30kg"),
-    height: z.number().min(1.4, "Height must be at least 1.40m"),
-    ethnicity: z.string().min(1, "Ethnicity is required"),
+    weight: z.number().min(30, 'Peso precisa ser ao menos 30kg'),
+    height: z
+        .number()
+        .min(1.3, 'Altura precisa ser ao menos 1.40m')
+        .max(2.5, 'Altura precisa ser menor que 2.5m'),
+    ethnicity: z.string().min(1, 'Etnia é obrigatória'),
     eye_color: z.string().optional(),
-    hair_color: z.string().min(1, "Hair color is required"),
+    hair_color: z.string().min(1, 'Cor do seu cabelo é obrigatória'),
     hair_length: z.string().optional(),
     shoe_size: z.number().optional(),
     silicone: z.boolean().default(false),
@@ -50,12 +80,14 @@ const pageTwoSchema = z.object({
 const pageThreeSchema = z.object({
     // Location
     neighborhood: z.string().optional(),
-    city: z.number().min(1, "City is required"),
-    state: z.string().length(2, "State must be 2 characters"),
-    country: z.string().min(1, "Country is required"),
+    city: z.number().min(1, 'Cidade é obrigatória'),
+    state: z.string().length(2, 'Estado precisa conter ao menos 2 caractéres'),
+    country: z.string().min(1, 'País é obrigatório'),
 });
 
-export type RegisterCompanionFormValues = z.infer<typeof RegisterCompanionFormSchema>;
+export type RegisterCompanionFormValues = z.infer<
+    typeof RegisterCompanionFormSchema
+>;
 
 const RegisterCompanionFormSchema = z.object({
     ...pageOneSchema.shape,
@@ -63,8 +95,11 @@ const RegisterCompanionFormSchema = z.object({
     ...pageThreeSchema.shape,
 });
 
-const formSections = ["Companion Info", "Characteristics", "Location"] as const;
-
+const formSections = [
+    'Suas Informações',
+    'Características',
+    'Localização',
+] as const;
 
 export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
     const [currentPage, setCurrentPage] = React.useState(0);
@@ -79,13 +114,11 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
             if (currentPage === 1) {
                 await pageTwoSchema.parseAsync(values);
                 return true;
-            }
-            else if (currentPage === 2) {
+            } else if (currentPage === 2) {
                 await pageThreeSchema.parseAsync(values);
                 return true;
             }
             return false;
-
         } catch (error) {
             return false;
         }
@@ -104,49 +137,51 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
         setCurrentPage((prev) => prev - 1);
     };
 
-
     const form = useForm<RegisterCompanionFormValues>({
         resolver: zodResolver(RegisterCompanionFormSchema),
         defaultValues: {
-            name: "",
-            email: "",
-            shortDescription: "",
-            languages: ['portuguese'],
-            phoneNumber: "",
-            description: "",
+            name: '',
+            email: '',
+            shortDescription: '',
+            languages: [''],
+            phoneNumber: '',
+            description: '',
             price: 0,
-            age: 18,
-            gender: "",
-            gender_identity: "",
-            weight: 30,
-            height: 1.4,
-            ethnicity: "",
-            eye_color: "",
-            hair_color: "",
-            hair_length: "",
-            shoe_size: 0,
+            age: 0,
+            gender: '',
+            gender_identity: '',
+            weight: 60,
+            height: 1.6,
+            ethnicity: '',
+            eye_color: '',
+            hair_color: '',
+            hair_length: '',
+            shoe_size: 36,
             silicone: false,
             tattoos: false,
             piercings: false,
             smoker: false,
-            neighborhood: "",
+            neighborhood: '',
             city: 1,
-            state: "",
-            country: "",
+            state: '',
+            country: '',
         },
-        mode: "onBlur",
-        reValidateMode: "onChange",
+        mode: 'onBlur',
+        reValidateMode: 'onChange',
     });
 
     const { toast } = useToast();
 
     function onSubmit(data: RegisterCompanionFormValues) {
-        registerCompanion(data);
+        try {
+            registerCompanion(data); //better catch errors
 
-        toast({
-            title: "You have been registered",
-            description: `Hey ${data.name}! You are now available in our platform.`,
-        });
+            toast({
+                title: 'You have been registered',
+                description: `Hey ${data.name}! You are now available in our platform.`,
+            });
+        } catch {
+        }
     }
 
     return (
@@ -154,21 +189,24 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Register yourself</CardTitle>
-                        <CardDescription>Enter your details and start appearing in our platform today.</CardDescription>
+                        <CardTitle>Registre-se</CardTitle>
+                        <CardDescription>
+                            Insira seus detalhes e apareça na melhor plataforma de
+                            acompanhantes de portugal.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         {currentPage === 0 && (
                             <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">Companion Info</h3>
+                                <h3 className="text-lg font-semibold">Suas Informações</h3>
                                 <FormField
                                     control={form.control}
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Name</FormLabel>
+                                            <FormLabel>Nome</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter name" {...field} />
+                                                <Input placeholder="Ana Carolina" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -179,9 +217,9 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="phoneNumber"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Phone Number</FormLabel>
+                                            <FormLabel>Numero de Telefone</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Enter phone number" {...field} />
+                                                <Input placeholder="99999-9992" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -195,7 +233,11 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                         <FormItem>
                                             <FormLabel>Email</FormLabel>
                                             <FormControl>
-                                                <Input type="email" placeholder="Enter email" {...field} />
+                                                <Input
+                                                    type="email"
+                                                    placeholder="exemplo@gmail.com"
+                                                    {...field}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -207,9 +249,12 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="shortDescription"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Short Description</FormLabel>
+                                            <FormLabel>Descrição curta</FormLabel>
                                             <FormControl>
-                                                <Textarea placeholder="Enter short description" {...field} />
+                                                <Textarea
+                                                    placeholder="Escreva uma descrição curta para aparecer no seu perfil. É extremamente importante."
+                                                    {...field}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -221,9 +266,12 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="description"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Description</FormLabel>
+                                            <FormLabel>Descrição</FormLabel>
                                             <FormControl>
-                                                <Textarea placeholder="Enter description" {...field} />
+                                                <Textarea
+                                                    placeholder="Essa é sua descrição mais detalhada. Conte um pouco mais sobre você e o que gosta."
+                                                    {...field}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -234,13 +282,19 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="price"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Price (per hour)</FormLabel>
+                                            <FormLabel>Preço (por hora)</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
-                                                    placeholder="Enter price"
+                                                    placeholder="Insira seu preço cobrado"
                                                     value={field.value?.toString() || ''}
-                                                    onChange={(e) => field.onChange(e.target.value ? Number.parseFloat(e.target.value) : 0)}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value
+                                                                ? Number.parseFloat(e.target.value)
+                                                                : 0
+                                                        )
+                                                    }
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -252,14 +306,17 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="age"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Age</FormLabel>
+                                            <FormLabel>Idade</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
-                                                    placeholder="Enter age"
+                                                    placeholder="18"
                                                     max={100}
                                                     {...field}
-                                                    onChange={(e) => field.onChange(Number.parseInt(e.target.value, 10))}
+                                                    value={field.value?.toString() || ''}
+                                                    onChange={(e) =>
+                                                        field.onChange(Number.parseInt(e.target.value, 10))
+                                                    }
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -272,7 +329,10 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Gênero</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Selecione seu gênero" />
@@ -294,9 +354,23 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Identidade de gênero</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Enter gender identity" {...field} />
-                                            </FormControl>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Cisgênero" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Cisgênero">Cisgênero</SelectItem>
+                                                    <SelectItem value="Transgênero">
+                                                        Transgênero
+                                                    </SelectItem>
+                                                    <SelectItem value="Outro">Outro</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -310,7 +384,9 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                             <Select
                                                 onValueChange={(selectedValue) => {
                                                     const newValues = field.value.includes(selectedValue)
-                                                        ? field.value.filter((val: string) => val !== selectedValue)
+                                                        ? field.value.filter(
+                                                            (val: string) => val !== selectedValue
+                                                        )
                                                         : [...field.value, selectedValue];
                                                     field.onChange(newValues);
                                                 }}
@@ -336,7 +412,10 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                         {currentPage === 1 && (
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold">Características</h3>
-                                <p className=" text-sm text-neutral-500 ">Essa parte é muito importante para aparecer nos nossos filtros e atrair novos clientes.</p>
+                                <p className=" text-sm text-neutral-500 ">
+                                    Essa parte é muito importante para aparecer nos nossos filtros
+                                    e atrair novos clientes.
+                                </p>
                                 <FormField
                                     control={form.control}
                                     name="weight"
@@ -348,7 +427,13 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                                     type="number"
                                                     placeholder="Insira seu peso"
                                                     value={field.value?.toString() || ''}
-                                                    onChange={(e) => field.onChange(e.target.value ? Number.parseFloat(e.target.value) : 0)}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value
+                                                                ? Number.parseFloat(e.target.value)
+                                                                : 0
+                                                        )
+                                                    }
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -360,13 +445,15 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="height"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Altura (m)</FormLabel>
+                                            <FormLabel>Altura(m)</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
                                                     placeholder="Insira sua Altura"
                                                     {...field}
-                                                    onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
+                                                    onChange={(e) =>
+                                                        field.onChange(Number.parseFloat(e.target.value))
+                                                    }
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -378,8 +465,11 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="ethnicity"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Ethnicity</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormLabel>Etnia</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Selecione sua etnia" />
@@ -401,11 +491,14 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="eye_color"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Eye Color</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormLabel>Cor do olhos</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select your eye color" />
+                                                        <SelectValue placeholder="Selecione sua cor de olhos" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -424,11 +517,14 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="hair_color"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Hair Color</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormLabel>Cor do seu cabelo</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select hair color" />
+                                                        <SelectValue placeholder="Castanho" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -451,17 +547,25 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Hair Length</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select hair lenght" />
+                                                        <SelectValue
+                                                            placeholder="Tamanho do seu cabelo"
+                                                            defaultValue={`Médio`}
+                                                        />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="male">Short</SelectItem>
-                                                    <SelectItem value="female">Middle</SelectItem>
-                                                    <SelectItem value="long">Long</SelectItem>
-                                                    <SelectItem value="other">Very Long</SelectItem>
+                                                    <SelectItem value="Curto">Curto</SelectItem>
+                                                    <SelectItem value="Médio">Médio</SelectItem>
+                                                    <SelectItem value="Longo">Longo</SelectItem>
+                                                    <SelectItem value="Muito Longo">
+                                                        Muito Longo
+                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -473,13 +577,20 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     name="shoe_size"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Shoe Size (EU size)</FormLabel>
+                                            <FormLabel>Tamanho do pé (EU size)</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
-                                                    placeholder="Enter shoe size"
+                                                    placeholder=""
+                                                    defaultValue={36}
                                                     value={field.value?.toString() || ''}
-                                                    onChange={(e) => field.onChange(e.target.value ? Number.parseFloat(e.target.value) : 0)}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value
+                                                                ? Number.parseFloat(e.target.value)
+                                                                : 0
+                                                        )
+                                                    }
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -492,11 +603,18 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base flex flex-row gap-2">Silicone</FormLabel>
-                                                <FormDescription>Do you have silicone enhancements?</FormDescription>
+                                                <FormLabel className="text-base flex flex-row gap-2">
+                                                    Silicone
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    Do you have silicone enhancements?
+                                                </FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
                                             </FormControl>
                                         </FormItem>
                                     )}
@@ -507,11 +625,16 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base flex flex-row gap-2">Tattoos </FormLabel>
+                                                <FormLabel className="text-base flex flex-row gap-2">
+                                                    Tattoos{' '}
+                                                </FormLabel>
                                                 <FormDescription>Do you have tattoos?</FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
                                             </FormControl>
                                         </FormItem>
                                     )}
@@ -522,11 +645,18 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base flex flex-row gap-2">Piercings</FormLabel>
-                                                <FormDescription>Do you have piercings?</FormDescription>
+                                                <FormLabel className="text-base flex flex-row gap-2">
+                                                    Piercings
+                                                </FormLabel>
+                                                <FormDescription>
+                                                    Do you have piercings?
+                                                </FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
                                             </FormControl>
                                         </FormItem>
                                     )}
@@ -537,11 +667,16 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                             <div className="space-y-0.5">
-                                                <FormLabel className="text-base flex flex-row gap-2">Smoker <Cigarette /></FormLabel>
-                                                <FormDescription>Are you a smoker?  </FormDescription>
+                                                <FormLabel className="text-base flex flex-row gap-2">
+                                                    Smoker <Cigarette />
+                                                </FormLabel>
+                                                <FormDescription>Are you a smoker? </FormDescription>
                                             </div>
                                             <FormControl>
-                                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
                                             </FormControl>
                                         </FormItem>
                                     )}
@@ -573,7 +708,9 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                             <FormItem>
                                                 <FormLabel>Select City</FormLabel>
                                                 <Select
-                                                    onValueChange={(selected) => field.onChange(Number(selected))}
+                                                    onValueChange={(selected) =>
+                                                        field.onChange(Number(selected))
+                                                    }
                                                     value={String(field.value)}
                                                 >
                                                     <FormControl>
@@ -583,17 +720,15 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                                                 // Show city name in selected state
                                                                 // Find the current city object and display its name
                                                                 defaultValue={
-                                                                    cities.find((c) => c.id === field.value)?.city || ''
+                                                                    cities.find((c) => c.id === field.value)
+                                                                        ?.city || ''
                                                                 }
                                                             />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
                                                         {cities.map((city) => (
-                                                            <SelectItem
-                                                                key={city.id}
-                                                                value={String(city.id)}
-                                                            >
+                                                            <SelectItem key={city.id} value={String(city.id)}>
                                                                 {city.city}
                                                             </SelectItem>
                                                         ))}
@@ -610,7 +745,11 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                             <FormItem>
                                                 <FormLabel>State</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Enter state (2 characters)" {...field} maxLength={2} />
+                                                    <Input
+                                                        placeholder="Enter state (2 characters)"
+                                                        {...field}
+                                                        maxLength={2}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -635,7 +774,11 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                     </CardContent>
                     <CardFooter className="flex justify-between">
                         {currentPage > 0 && (
-                            <Button type="button" variant="outline" onClick={handlePreviousPage}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handlePreviousPage}
+                            >
                                 Previous
                             </Button>
                         )}
@@ -652,4 +795,3 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
         </Form>
     );
 }
-
