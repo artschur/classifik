@@ -141,7 +141,6 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
     const { toast } = useToast();
 
     function onSubmit(data: RegisterCompanionFormValues) {
-        console.log(data);
         registerCompanion(data);
 
         toast({
