@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import * as React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -13,17 +13,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Card,
   CardContent,
@@ -31,47 +31,50 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Cigarette, Loader2, X } from "lucide-react";
-import { City } from "@/db/schema"; // Import Companion
-import { registerCompanion, updateCompanionFromForm } from "@/db/queries/companions"; // Import updateCompanion
-import { IMaskInput } from "react-imask";
-import { PhoneInput } from "./phoneInput";
-import { useRouter } from "next/navigation"; // Import useRouter
-import { useToast } from "@/hooks/use-toast"; // Import at the correct path
-import { Badge } from "./ui/badge";
-import { useUser } from "@clerk/nextjs";
+} from '@/components/ui/card';
+import { Cigarette, Loader2, X } from 'lucide-react';
+import { City } from '@/db/schema'; // Import Companion
+import {
+  registerCompanion,
+  updateCompanionFromForm,
+} from '@/db/queries/companions'; // Import updateCompanion
+import { IMaskInput } from 'react-imask';
+import { PhoneInput } from './phoneInput';
+import { useRouter } from 'next/navigation'; // Import useRouter
+import { useToast } from '@/hooks/use-toast'; // Import at the correct path
+import { useUser } from '@clerk/nextjs';
+import { MultiSelect } from './multi-select';
 
 const pageOneSchema = z.object({
   // Companion Info
-  name: z.string().min(2, "Nome precisa ter ao menos 2 caractéres"),
+  name: z.string().min(2, 'Nome precisa ter ao menos 2 caractéres'),
   shortDescription: z
     .string()
-    .min(10, "Descrição curta precisa ter ao menos 10 caractéres")
-    .max(60, "Descrição curta pode ter no máximo 60 caractéres"),
+    .min(10, 'Descrição curta precisa ter ao menos 10 caractéres')
+    .max(60, 'Descrição curta pode ter no máximo 60 caractéres'),
   phoneNumber: z
     .string()
-    .min(8, "Numero de telefone precisa ter ao menos 8 caractéres"),
+    .min(8, 'Numero de telefone precisa ter ao menos 8 caractéres'),
   description: z
     .string()
-    .min(30, "Descrição precisa ter ao menos 30 caractéres"),
-  price: z.number().min(1, "Seu preço precisa ser positivo"),
-  age: z.number().min(18, "Você precisa ter mais de 18 anos!").max(100),
-  gender: z.string().min(1, "Gênero é obrigatório"),
+    .min(30, 'Descrição precisa ter ao menos 30 caractéres'),
+  price: z.number().min(1, 'Seu preço precisa ser positivo'),
+  age: z.number().min(18, 'Você precisa ter mais de 18 anos!').max(100),
+  gender: z.string().min(1, 'Gênero é obrigatório'),
   gender_identity: z.string().optional(),
-  languages: z.array(z.string()).min(1, "Selecione ao menos uma Lingua"),
+  languages: z.array(z.string()).min(1, 'Selecione ao menos uma Lingua'),
 });
 
 const pageTwoSchema = z.object({
   // Characteristics
-  weight: z.number().min(30, "Peso precisa ser ao menos 30kg"),
+  weight: z.number().min(30, 'Peso precisa ser ao menos 30kg'),
   height: z
     .number()
-    .min(1.3, "Altura precisa ser ao menos 1.40m")
-    .max(2.5, "Altura precisa ser menor que 2.5m"),
-  ethnicity: z.string().min(1, "Etnia é obrigatória"),
+    .min(1.3, 'Altura precisa ser ao menos 1.40m')
+    .max(2.5, 'Altura precisa ser menor que 2.5m'),
+  ethnicity: z.string().min(1, 'Etnia é obrigatória'),
   eye_color: z.string().optional(),
-  hair_color: z.string().min(1, "Cor do seu cabelo é obrigatória"),
+  hair_color: z.string().min(1, 'Cor do seu cabelo é obrigatória'),
   hair_length: z.string().optional(),
   shoe_size: z.number().optional(),
   silicone: z.boolean().default(false),
@@ -83,9 +86,9 @@ const pageTwoSchema = z.object({
 const pageThreeSchema = z.object({
   // Location
   neighborhood: z.string().optional(),
-  city: z.number().min(1, "Cidade é obrigatória"),
-  state: z.string().length(2, "Estado precisa conter ao menos 2 caractéres"),
-  country: z.string().min(1, "País é obrigatório"),
+  city: z.number().min(1, 'Cidade é obrigatória'),
+  state: z.string().length(2, 'Estado precisa conter ao menos 2 caractéres'),
+  country: z.string().min(1, 'País é obrigatório'),
 });
 
 const RegisterCompanionFormSchema = z.object({
@@ -102,14 +105,14 @@ export type RegisterCompanionFormValues = z.infer<
 };
 
 const formSections = [
-  "Suas Informações",
-  "Características",
-  "Localização",
+  'Suas Informações',
+  'Características',
+  'Localização',
 ] as const;
 
 interface RegisterCompanionFormProps {
   cities: City[];
-  companionData?: RegisterCompanionFormValues | null; // Optional companion data for editing
+  companionData?: RegisterCompanionFormValues | null | undefined; // Optional companion data for editing
 }
 
 export function RegisterCompanionForm({
@@ -117,11 +120,21 @@ export function RegisterCompanionForm({
   companionData,
 }: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
+  const linguasDisponiveis = [
+    { value: 'Português', label: 'Português' },
+    { value: 'Inglês', label: 'Inglês' },
+    { value: 'Espanhol', label: 'Espanhol' },
+    { value: 'Francês', label: 'Francês' },
+    { value: 'Alemão', label: 'Alemão' },
+    { value: 'Italiano', label: 'Italiano' },
+  ];
+  const [selectedLanguages, setLanguages] = React.useState<string[]>([
+    'Português',
+  ]);
   const { toast } = useToast();
-  const router = useRouter(); // For redirection
+  const router = useRouter();
 
   const validateCurrentPage = async () => {
-    // (rest of validateCurrentPage is the same) ...
     const values = form.getValues();
     try {
       if (currentPage === 0) {
@@ -153,7 +166,8 @@ export function RegisterCompanionForm({
   const handlePreviousPage = () => {
     setCurrentPage((prev) => prev - 1);
   };
-  const getInitialValues = (): RegisterCompanionFormValues  => {
+
+  const getInitialValues = (): RegisterCompanionFormValues => {
     if (companionData) {
       return {
         ...companionData,
@@ -164,87 +178,89 @@ export function RegisterCompanionForm({
         shoe_size: companionData.shoe_size ?? 36, // Provide default if null
         languages: companionData.languages, // Assuming languages is an array of strings
         city: companionData.city, // City is an id
-        phoneNumber: companionData.phoneNumber || "", // Provide default if null
-        ethnicity: companionData.ethnicity || "", // Provide default if null
-        hair_color: companionData.hair_color || "", // Provide default if null
+        phoneNumber: companionData.phoneNumber || '', // Provide default if null
+        ethnicity: companionData.ethnicity || '', // Provide default if null
+        hair_color: companionData.hair_color || '', // Provide default if null
         silicone: companionData.silicone || false, // Provide default if null
         tattoos: companionData.tattoos || false, // Provide default if null
         piercings: companionData.piercings || false, // Provide default if null
         smoker: companionData.smoker || false, // Provide default if null
-        neighborhood: companionData.neighborhood || "", // Provide default if null
-        state: companionData.state || "", // Provide default if null
-        country: companionData.country || "", // Provide default if null
+        neighborhood: companionData.neighborhood || '', // Provide default if null
+        state: companionData.state || '', // Provide default if null
+        country: companionData.country || '', // Provide default if null
       };
     } else {
-      // Default values for registration
       return {
-        name: "",
-        shortDescription: "",
-        phoneNumber: "",
-        description: "",
+        name: '',
+        shortDescription: '',
+        phoneNumber: '',
+        description: '',
         price: 0,
         age: 0,
-        gender: "",
-        gender_identity: "",
+        gender: '',
+        gender_identity: '',
         languages: [],
         weight: 60,
         height: 1.6,
-        ethnicity: "",
-        eye_color: "",
-        hair_color: "",
-        hair_length: "",
+        ethnicity: '',
+        eye_color: '',
+        hair_color: '',
+        hair_length: '',
         shoe_size: 36,
         silicone: false,
         tattoos: false,
         piercings: false,
         smoker: false,
-        neighborhood: "",
+        neighborhood: '',
         city: 1,
-        state: "",
-        country: "",
+        state: '',
+        country: '',
       };
     }
   };
 
   const form = useForm<RegisterCompanionFormValues>({
     resolver: zodResolver(RegisterCompanionFormSchema),
-    defaultValues: getInitialValues(), // Use dynamic default values
-    mode: "onBlur",
-    reValidateMode: "onChange",
+    defaultValues: getInitialValues(),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   });
+  const { user } = useUser();
 
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
     try {
       if (companionData) {
-        const clerkId = useUser().user?.id;
+        console.log(companionData);
+        const clerkId = user?.id;
+
         if (!clerkId) {
-          throw new Error("User ID not found");
+          throw new Error('User ID not found');
         }
 
-        await updateCompanionFromForm(clerkId, data); // Pass ID and data
+        await updateCompanionFromForm(clerkId, data);
 
         toast({
-          title: "Profile Updated",
+          title: 'Profile Updated',
           description: `Your profile has been successfully updated.`,
         });
       } else {
         // Registration: call registerCompanion
         await registerCompanion(data);
         toast({
-          title: "You have been registered",
+          title: 'You have been registered',
           description: `Hey ${data.name}! You are now available in our platform.`,
         });
       }
       router.refresh(); // Refresh the page to reflect changes
-      router.push("/"); // Redirect to the homepage (or a profile page)
+      router.push('/'); // Redirect to the homepage (or a profile page)
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: companionData ? "Update failed" : "Registration failed",
+        variant: 'destructive',
+        title: companionData ? 'Update failed' : 'Registration failed',
         description:
           error instanceof globalThis.Error
             ? error.message
-            : "Something went wrong",
+            : 'Something went wrong',
       });
     }
   }
@@ -255,12 +271,12 @@ export function RegisterCompanionForm({
         <Card>
           <CardHeader>
             <CardTitle>
-              {companionData ? "Edit Profile" : "Registre-se"}
+              {companionData ? 'Edit Profile' : 'Registre-se'}
             </CardTitle>
             <CardDescription>
               {companionData
-                ? "Update your profile details."
-                : "Insira seus detalhes e apareça na melhor plataforma de acompanhantes de portugal."}
+                ? 'Update your profile details.'
+                : 'Insira seus detalhes e apareça na melhor plataforma de acompanhantes de portugal.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -290,7 +306,7 @@ export function RegisterCompanionForm({
                       <FormLabel>Numero de Telefone</FormLabel>
                       <FormControl>
                         <PhoneInput
-                          defaultCountry={"PT"}
+                          defaultCountry={'PT'}
                           placeholder="Insira seu numero de telefone"
                           value={field.value}
                           onChange={(value) => field.onChange(value)}
@@ -347,8 +363,8 @@ export function RegisterCompanionForm({
                               num: {
                                 mask: Number,
                                 scale: 2,
-                                radix: ",",
-                                thousandsSeparator: ".",
+                                radix: ',',
+                                thousandsSeparator: '.',
                               },
                             }}
                             placeholder="Insira seu preço cobrado"
@@ -356,7 +372,7 @@ export function RegisterCompanionForm({
                             value={String(field.value)}
                             onAccept={(value: string) =>
                               field.onChange(
-                                Number.parseFloat(value.replace(/[^\d.-]/g, ""))
+                                Number.parseFloat(value.replace(/[^\d.-]/g, ''))
                               )
                             }
                           />
@@ -377,7 +393,7 @@ export function RegisterCompanionForm({
                             placeholder="18"
                             max={100}
                             {...field}
-                            value={field.value?.toString() || ""}
+                            value={field.value?.toString() || ''}
                             onChange={(e) =>
                               field.onChange(
                                 Number.parseInt(e.target.value, 10)
@@ -448,45 +464,16 @@ export function RegisterCompanionForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Linguas</FormLabel>
-                      <Select
-                        value={field.value.toString()}
-                        onValueChange={(selected) => {
-                          field.onChange(selected);
-                        }}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="min-h-[40px]">
-                            <div className="flex gap-1 flex-wrap">
-                              {field.value.map((lang) => (
-                                <Badge
-                                  key={lang}
-                                  className="flex items-center gap-1"
-                                >
-                                  {lang}
-                                  <X
-                                    className="w-3 h-3 cursor-pointer"
-                                    onClick={() => {
-                                      field.onChange(
-                                        field.value.filter((l) => l !== lang)
-                                      );
-                                    }}
-                                  />
-                                </Badge>
-                              ))}
-                            </div>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {["Português", "Espanhol", "Inglês"].map((lang) => (
-                            <SelectItem
-                              key={lang}
-                              value={lang}
-                            >
-                              {lang}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <MultiSelect
+                        options={linguasDisponiveis}
+                        onValueChange={field.onChange} // Direct form update
+                        value={field.value} // Use form value
+                        defaultValue={['Português']} // Initial value
+                        placeholder="Selecione suas Linguas"
+                        variant="inverted"
+                        animation={2}
+                        maxCount={3}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -512,7 +499,7 @@ export function RegisterCompanionForm({
                           <Input
                             type="number"
                             placeholder="Insira seu peso"
-                            value={field.value?.toString() || ""}
+                            value={field.value?.toString() || ''}
                             onChange={(e) =>
                               field.onChange(
                                 e.target.value
@@ -671,8 +658,7 @@ export function RegisterCompanionForm({
                         <Input
                           type="number"
                           placeholder=""
-                          defaultValue={36}
-                          value={field.value?.toString() || ""}
+                          value={field.value?.toString() || ''}
                           onChange={(e) =>
                             field.onChange(
                               e.target.value
@@ -715,7 +701,7 @@ export function RegisterCompanionForm({
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base flex flex-row gap-2">
-                          Tattoos{" "}
+                          Tattoos{' '}
                         </FormLabel>
                         <FormDescription>Do you have tattoos?</FormDescription>
                       </div>
@@ -811,7 +797,7 @@ export function RegisterCompanionForm({
                                 // Find the current city object and display its name
                                 defaultValue={
                                   cities.find((c) => c.id === field.value)
-                                    ?.city || ""
+                                    ?.city || ''
                                 }
                               />
                             </SelectTrigger>
@@ -862,46 +848,23 @@ export function RegisterCompanionForm({
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex justify-between items-center">
-            <div className="flex gap-2">
-              {currentPage > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePreviousPage}
-                >
-                  Previous
-                </Button>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              {companionData && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => router.push(`/profile}`)}
-                >
-                  Preview Public View
-                </Button>
-              )}
-
-              {currentPage < formSections.length - 1 ? (
-                <Button type="button" onClick={handleNextPage}>
-                  Next
-                </Button>
-              ) : (
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : companionData ? (
-                    "Save Changes"
-                  ) : (
-                    "Register yourself"
-                  )}
-                </Button>
-              )}
-            </div>
+          <CardFooter className="flex justify-between">
+            {currentPage > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePreviousPage}
+              >
+                Anterior
+              </Button>
+            )}
+            {currentPage < formSections.length - 1 ? (
+              <Button type="button" onClick={handleNextPage}>
+                Próximo
+              </Button>
+            ) : (
+              <Button type="submit">Cadastre-se</Button>
+            )}
           </CardFooter>
         </Card>
       </form>
