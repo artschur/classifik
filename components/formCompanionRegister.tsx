@@ -38,11 +38,14 @@ import { City } from '@/db/schema';
 import { registerCompanion } from '@/db/queries/companions';
 import { IMaskInput } from 'react-imask';
 import { PhoneInput } from './phoneInput';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+const { toast } = useToast();
+
 
 const pageOneSchema = z.object({
     // Companion Info
     name: z.string().min(2, 'Nome precisa ter ao menos 2 caractéres'),
-    email: z.string().email('Endereço de email inválido'),
     shortDescription: z
         .string()
         .min(10, 'Descrição curta precisa ter ao menos 10 caractéres')
@@ -86,9 +89,10 @@ const pageThreeSchema = z.object({
     country: z.string().min(1, 'País é obrigatório'),
 });
 
-export type RegisterCompanionFormValues = z.infer<
-    typeof RegisterCompanionFormSchema
->;
+export type RegisterCompanionFormValues = z.infer<typeof RegisterCompanionFormSchema> & {
+    email: string | undefined;
+};
+
 
 const RegisterCompanionFormSchema = z.object({
     ...pageOneSchema.shape,
@@ -102,8 +106,10 @@ const formSections = [
     'Localização',
 ] as const;
 
-export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
+
+export async function RegisterCompanionForm({ cities }: { cities: City[]; }) {
     const [currentPage, setCurrentPage] = React.useState(0);
+    const { toast } = useToast();
 
     const validateCurrentPage = async () => {
         const values = form.getValues();
@@ -142,7 +148,6 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
         resolver: zodResolver(RegisterCompanionFormSchema),
         defaultValues: {
             name: '',
-            email: '',
             shortDescription: '',
             languages: [''],
             phoneNumber: '',
@@ -171,11 +176,9 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
         reValidateMode: 'onChange',
     });
 
-    const { toast } = useToast();
 
-    function onSubmit(data: RegisterCompanionFormValues) {
+    async function onSubmit(data: RegisterCompanionFormValues) {
         try {
-            console.log(data);
             registerCompanion(data);
             toast({
                 title: 'You have been registered',
@@ -226,24 +229,6 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                             <FormLabel>Numero de Telefone</FormLabel>
                                             <FormControl>
                                                 <PhoneInput defaultCountry='PT' placeholder='Insira seu numero de telefone' {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Email</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="email"
-                                                    placeholder="exemplo@gmail.com"
-                                                    {...field}
-                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
