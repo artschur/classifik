@@ -36,7 +36,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Cigarette } from 'lucide-react';
 import { City } from '@/db/schema';
 import { registerCompanion } from '@/db/queries/companions';
-import Error from 'next/error';
+import { IMaskInput } from 'react-imask';
+import { PhoneInput } from './phoneInput';
 
 const pageOneSchema = z.object({
     // Companion Info
@@ -48,7 +49,7 @@ const pageOneSchema = z.object({
         .max(60, 'Descrição curta pode ter no máximo 60 caractéres'),
     phoneNumber: z
         .string()
-        .min(10, 'Numero de telefone precisa ter ao menos 10 caractéres'),
+        .min(8, 'Numero de telefone precisa ter ao menos 8 caractéres'),
     description: z
         .string()
         .min(30, 'Descrição precisa ter ao menos 30 caractéres'),
@@ -174,13 +175,18 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
 
     function onSubmit(data: RegisterCompanionFormValues) {
         try {
-            registerCompanion(data); //better catch errors
-
+            console.log(data);
+            registerCompanion(data);
             toast({
                 title: 'You have been registered',
                 description: `Hey ${data.name}! You are now available in our platform.`,
             });
-        } catch {
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Registration failed",
+                description: error instanceof globalThis.Error ? error.message : "Something went wrong",
+            });
         }
     }
 
@@ -219,7 +225,7 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                         <FormItem>
                                             <FormLabel>Numero de Telefone</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="99999-9992" {...field} />
+                                                <PhoneInput defaultCountry='PT' placeholder='Insira seu numero de telefone' {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -277,52 +283,61 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="price"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Preço (por hora)</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Insira seu preço cobrado"
-                                                    value={field.value?.toString() || ''}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            e.target.value
-                                                                ? Number.parseFloat(e.target.value)
-                                                                : 0
-                                                        )
-                                                    }
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="age"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Idade</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="18"
-                                                    max={100}
-                                                    {...field}
-                                                    value={field.value?.toString() || ''}
-                                                    onChange={(e) =>
-                                                        field.onChange(Number.parseInt(e.target.value, 10))
-                                                    }
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className='flex flex-row gap-8'>
+
+                                    <FormField
+                                        control={form.control}
+                                        name="price"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Preço (por hora)</FormLabel>
+                                                <FormControl>
+                                                    <IMaskInput
+                                                        mask="€ num"
+                                                        blocks={{
+                                                            num: {
+                                                                mask: Number,
+                                                                scale: 2,
+                                                                radix: ',',
+                                                                thousandsSeparator: '.',
+                                                            },
+                                                        }}
+                                                        placeholder="Insira seu preço cobrado"
+                                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                        value={String(field.value)}
+                                                        onAccept={(value: string) =>
+                                                            field.onChange(Number.parseFloat(value.replace(/[^\d.-]/g, '')))
+                                                        }
+                                                    />
+
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="age"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Idade</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="18"
+                                                        max={100}
+                                                        {...field}
+                                                        value={field.value?.toString() || ''}
+                                                        onChange={(e) =>
+                                                            field.onChange(Number.parseInt(e.target.value, 10))
+                                                        }
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <FormField
                                     control={form.control}
                                     name="gender"
@@ -416,50 +431,52 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                     Essa parte é muito importante para aparecer nos nossos filtros
                                     e atrair novos clientes.
                                 </p>
-                                <FormField
-                                    control={form.control}
-                                    name="weight"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Peso (kg)</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Insira seu peso"
-                                                    value={field.value?.toString() || ''}
-                                                    onChange={(e) =>
-                                                        field.onChange(
-                                                            e.target.value
-                                                                ? Number.parseFloat(e.target.value)
-                                                                : 0
-                                                        )
-                                                    }
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="height"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Altura(m)</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="Insira sua Altura"
-                                                    {...field}
-                                                    onChange={(e) =>
-                                                        field.onChange(Number.parseFloat(e.target.value))
-                                                    }
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className='flex flex-row gap-8'>
+                                    <FormField
+                                        control={form.control}
+                                        name="weight"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Peso (kg)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="Insira seu peso"
+                                                        value={field.value?.toString() || ''}
+                                                        onChange={(e) =>
+                                                            field.onChange(
+                                                                e.target.value
+                                                                    ? Number.parseFloat(e.target.value)
+                                                                    : 0
+                                                            )
+                                                        }
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="height"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Altura(m)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="Insira sua Altura"
+                                                        {...field}
+                                                        onChange={(e) =>
+                                                            field.onChange(Number.parseFloat(e.target.value))
+                                                        }
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <FormField
                                     control={form.control}
                                     name="ethnicity"
@@ -486,61 +503,64 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="eye_color"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Cor do olhos</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Selecione sua cor de olhos" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Azul">Azul</SelectItem>
-                                                    <SelectItem value="Verde">Verde</SelectItem>
-                                                    <SelectItem value="Marrom">Marrom</SelectItem>
-                                                    <SelectItem value="Preto">Preto</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="hair_color"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Cor do seu cabelo</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Castanho" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Loiro">Loiro</SelectItem>
-                                                    <SelectItem value="Marrom">Castanho</SelectItem>
-                                                    <SelectItem value="Preto">Preto</SelectItem>
-                                                    <SelectItem value="Vermelho">Vermelho</SelectItem>
-                                                    <SelectItem value="Cinza">Cinza</SelectItem>
-                                                    <SelectItem value="Branco">Branco</SelectItem>
-                                                    <SelectItem value="Colorido">Colorido</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div className='flex flex-row gap-8'>
+
+                                    <FormField
+                                        control={form.control}
+                                        name="eye_color"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cor do olhos</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    defaultValue={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecione sua cor de olhos" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Azul">Azul</SelectItem>
+                                                        <SelectItem value="Verde">Verde</SelectItem>
+                                                        <SelectItem value="Marrom">Marrom</SelectItem>
+                                                        <SelectItem value="Preto">Preto</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="hair_color"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cor do seu cabelo</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    defaultValue={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Castanho" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Loiro">Loiro</SelectItem>
+                                                        <SelectItem value="Marrom">Castanho</SelectItem>
+                                                        <SelectItem value="Preto">Preto</SelectItem>
+                                                        <SelectItem value="Vermelho">Vermelho</SelectItem>
+                                                        <SelectItem value="Cinza">Cinza</SelectItem>
+                                                        <SelectItem value="Branco">Branco</SelectItem>
+                                                        <SelectItem value="Colorido">Colorido</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <FormField
                                     control={form.control}
                                     name="hair_length"
@@ -792,6 +812,6 @@ export function RegisterCompanionForm({ cities }: { cities: City[]; }) {
                     </CardFooter>
                 </Card>
             </form>
-        </Form>
+        </Form >
     );
 }
