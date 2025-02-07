@@ -40,6 +40,7 @@ import { PhoneInput } from "./phoneInput";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { useToast } from "@/hooks/use-toast"; // Import at the correct path
 import { Badge } from "./ui/badge";
+import { useUser } from "@clerk/nextjs";
 
 const pageOneSchema = z.object({
   // Companion Info
@@ -152,7 +153,7 @@ export function RegisterCompanionForm({
   const handlePreviousPage = () => {
     setCurrentPage((prev) => prev - 1);
   };
-  const getInitialValues = (): RegisterCompanionFormValues => {
+  const getInitialValues = (): RegisterCompanionFormValues  => {
     if (companionData) {
       return {
         ...companionData,
@@ -212,11 +213,15 @@ export function RegisterCompanionForm({
     reValidateMode: "onChange",
   });
 
-  async function onSubmit(data: RegisterCompanionFormValues) {
+  async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
     try {
       if (companionData) {
-        // Editing: call updateCompanion
-        await updateCompanionFromForm(companionData.id, data); // Pass ID and data
+        const clerkId = useUser().user?.id;
+        if (!clerkId) {
+          throw new Error("User ID not found");
+        }
+
+        await updateCompanionFromForm(clerkId, data); // Pass ID and data
 
         toast({
           title: "Profile Updated",

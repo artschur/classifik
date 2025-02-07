@@ -289,7 +289,10 @@ export async function getCompanionToEdit(
     id: row.id,
     name: row.name ?? "",
     shortDescription: row.shortDescription ?? "",
-    phoneNumber: row.phoneNumber ?? "",
+    phoneNumber:
+      row.phoneNumber && !row.phoneNumber.startsWith("+")
+        ? `+${row.phoneNumber}`
+        : (row.phoneNumber ?? ""),
     description: row.description ?? "",
     price: row.price ?? 0,
     age: row.age ?? 0,
@@ -316,7 +319,7 @@ export async function getCompanionToEdit(
 }
 
 export async function updateCompanionFromForm(
-  companionId: number,
+  clerkId: string,
   data: RegisterCompanionFormValues,
 ) {
   await db.transaction(async (tx) => {
@@ -335,14 +338,13 @@ export async function updateCompanionFromForm(
         languages: data.languages,
         city_id: data.city,
       } as NewCompanion)
-      .where(eq(companionsTable.id, companionId));
+      .where(eq(companionsTable.auth_id, clerkId));
 
-    // Update characteristicsTable
     await tx
       .update(characteristicsTable)
       .set({
-        weight: data.weight,
-        height: data.height,
+        weight: Number(data.weight),
+        height: Number(data.height),
         ethnicity: data.ethnicity,
         eye_color: data.eye_color,
         hair_color: data.hair_color,
@@ -352,7 +354,18 @@ export async function updateCompanionFromForm(
         tattoos: data.tattoos,
         piercings: data.piercings,
         smoker: data.smoker,
-      }as NewCharacteristic)
-      .where(eq(characteristicsTable.companion_id, companionId));
+      } as NewCharacteristic)
+      .where(
+        eq(
+          characteristicsTable.companion_id,
+          (
+            await tx
+              .select({ id: companionsTable.id })
+              .from(companionsTable)
+              .where(eq(companionsTable.auth_id, clerkId))
+              .limit(1)
+          )[0].id,
+        ),
+      );
   });
 }
