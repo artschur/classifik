@@ -1,4 +1,4 @@
-'use server';
+"use server";
 
 import {
   companionsTable,
@@ -6,17 +6,19 @@ import {
   citiesTable,
   NewCompanion,
   Companion,
-} from '../schema';
-import { db } from '..';
-import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
-import { auth } from '@clerk/nextjs/server';
-import { CompanionFiltered, FilterTypesCompanions } from '../../types/types';
-import { eq, and, gte, lte, desc, asc, SQL } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
-import { getEmail } from './userActions';
+  neighborhoodsTable,
+  NewCharacteristic,
+} from "../schema";
+import { db } from "..";
+import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
+import { auth } from "@clerk/nextjs/server";
+import { CompanionFiltered, FilterTypesCompanions } from "../../types/types";
+import { eq, and, gte, lte, desc, asc, SQL } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import { getEmail } from "./userActions";
 export async function getCompanionsToFilter(
   city: string,
-  filters?: FilterTypesCompanions
+  filters?: FilterTypesCompanions,
 ): Promise<CompanionFiltered[]> {
   const {
     price,
@@ -38,45 +40,45 @@ export async function getCompanionsToFilter(
   ];
 
   if (price) {
-    const [minPrice, maxPrice] = price.split('-');
+    const [minPrice, maxPrice] = price.split("-");
     if (minPrice)
       conditions.push(gte(companionsTable.price, parseInt(minPrice)));
     if (maxPrice)
       conditions.push(lte(companionsTable.price, parseInt(maxPrice)));
   }
 
-  if (age && age !== 'all') {
-    const [minAge, maxAge] = age.split('-');
+  if (age && age !== "all") {
+    const [minAge, maxAge] = age.split("-");
     if (minAge && maxAge) {
       conditions.push(
         gte(companionsTable.age, parseInt(minAge)),
-        lte(companionsTable.age, parseInt(maxAge))
+        lte(companionsTable.age, parseInt(maxAge)),
       );
     }
   }
 
   // Add characteristics table conditions
-  if (hairColor && hairColor !== 'all') {
-    const colors = hairColor.split(',');
+  if (hairColor && hairColor !== "all") {
+    const colors = hairColor.split(",");
     if (colors.length > 0) {
       conditions.push(
         sql`LOWER(${characteristicsTable.hair_color}) IN (${sql.join(
           colors.map((c) => sql`LOWER(${c})`),
-          sql`, `
-        )})`
+          sql`, `,
+        )})`,
       );
     }
   }
 
-  if (eyeColor && eyeColor !== 'all') {
+  if (eyeColor && eyeColor !== "all") {
     conditions.push(
-      sql`LOWER(${characteristicsTable.eye_color}) = LOWER(${eyeColor})`
+      sql`LOWER(${characteristicsTable.eye_color}) = LOWER(${eyeColor})`,
     );
   }
 
   if (silicone) {
     conditions.push(
-      sql`${characteristicsTable.silicone} = ${Boolean(silicone)}`
+      sql`${characteristicsTable.silicone} = ${Boolean(silicone)}`,
     );
   }
 
@@ -84,8 +86,8 @@ export async function getCompanionsToFilter(
     conditions.push(eq(characteristicsTable.tattoos, tattoos === true));
   }
 
-  if (smoker && smoker !== 'all') {
-    conditions.push(eq(characteristicsTable.smoker, smoker === 'true'));
+  if (smoker && smoker !== "all") {
+    conditions.push(eq(characteristicsTable.smoker, smoker === "true"));
   }
 
   const query = db
@@ -111,22 +113,22 @@ export async function getCompanionsToFilter(
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
     .innerJoin(
       characteristicsTable,
-      eq(characteristicsTable.companion_id, companionsTable.id)
+      eq(characteristicsTable.companion_id, companionsTable.id),
     )
     .where(and(...conditions))
     .orderBy(
       sort
-        ? sort.split('-')[1] === 'asc'
-          ? asc(companionsTable[sort.split('-')[0] as 'price' | 'age'])
-          : desc(companionsTable[sort.split('-')[0] as 'price' | 'age'])
-        : asc(companionsTable.id)
+        ? sort.split("-")[1] === "asc"
+          ? asc(companionsTable[sort.split("-")[0] as "price" | "age"])
+          : desc(companionsTable[sort.split("-")[0] as "price" | "age"])
+        : asc(companionsTable.id),
     );
 
   return await query;
 }
 
 export async function registerCompanion(
-  companionData: RegisterCompanionFormValues
+  companionData: RegisterCompanionFormValues,
 ) {
   let {
     name,
@@ -156,7 +158,7 @@ export async function registerCompanion(
   const userSession = await auth();
 
   if (!userSession?.userId) {
-    throw new Error('User not authenticated');
+    throw new Error("User not authenticated");
   }
 
   try {
@@ -197,12 +199,14 @@ export async function registerCompanion(
 
     return newCompanion;
   } catch (error) {
-    console.error('Error inserting companion or characteristics:', error);
+    console.error("Error inserting companion or characteristics:", error);
     throw error;
   }
 }
 
-export async function getCompanionByClerkId(clerkId: string): Promise<CompanionFiltered> {
+export async function getCompanionByClerkId(
+  clerkId: string,
+): Promise<CompanionFiltered> {
   const companion = await db
     .select({
       id: companionsTable.id,
@@ -225,9 +229,130 @@ export async function getCompanionByClerkId(clerkId: string): Promise<CompanionF
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, clerkId))
     .limit(1)
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
-    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    ;
-
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id),
+    )
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id));
   return companion[0];
+}
+
+export async function getCompanionToEdit(
+  clerkId: string,
+): Promise<RegisterCompanionFormValues & { id: number }> {
+  const [row] = await db
+    .select({
+      // Page one fields
+      id: companionsTable.id,
+      name: companionsTable.name,
+      shortDescription: companionsTable.shortDescription,
+      phoneNumber: companionsTable.phone,
+      description: companionsTable.description,
+      price: companionsTable.price,
+      age: companionsTable.age,
+      gender: companionsTable.gender,
+      gender_identity: companionsTable.gender_identity,
+      languages: companionsTable.languages,
+
+      // Page two fields
+      weight: characteristicsTable.weight,
+      height: characteristicsTable.height,
+      ethnicity: characteristicsTable.ethnicity,
+      eye_color: characteristicsTable.eye_color,
+      hair_color: characteristicsTable.hair_color,
+      hair_length: characteristicsTable.hair_length,
+      shoe_size: characteristicsTable.shoe_size,
+      silicone: characteristicsTable.silicone,
+      tattoos: characteristicsTable.tattoos,
+      piercings: characteristicsTable.piercings,
+      smoker: characteristicsTable.smoker,
+
+      // Page three fields
+      city: companionsTable.city_id,
+      state: citiesTable.state,
+      country: citiesTable.country,
+      neighborhood: neighborhoodsTable.neighborhood,
+    })
+    .from(companionsTable)
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id),
+    )
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .where(eq(companionsTable.auth_id, clerkId))
+    .limit(1);
+
+  if (!row) throw new Error(`No companion found for Clerk ID: ${clerkId}`);
+
+  // Return the row in the shape of RegisterCompanionFormValues
+  return {
+    id: row.id,
+    name: row.name ?? "",
+    shortDescription: row.shortDescription ?? "",
+    phoneNumber: row.phoneNumber ?? "",
+    description: row.description ?? "",
+    price: row.price ?? 0,
+    age: row.age ?? 0,
+    gender: row.gender ?? "",
+    gender_identity: row.gender_identity ?? "",
+    languages: row.languages ?? [],
+    weight: parseInt(row.weight) ?? 60,
+    height: parseFloat(row.height) ?? 1.6,
+    ethnicity: row.ethnicity ?? "",
+    eye_color: row.eye_color ?? "",
+    hair_color: row.hair_color ?? "",
+    hair_length: row.hair_length ?? "",
+    shoe_size: row.shoe_size ?? 36,
+    silicone: row.silicone ?? false,
+    tattoos: row.tattoos ?? false,
+    piercings: row.piercings ?? false,
+    smoker: row.smoker ?? false,
+
+    city: row.city ?? 1,
+    state: row.state ?? "",
+    country: row.country ?? "",
+    neighborhood: row.neighborhood ?? "",
+  };
+}
+
+export async function updateCompanionFromForm(
+  companionId: number,
+  data: RegisterCompanionFormValues,
+) {
+  await db.transaction(async (tx) => {
+    // Update companionsTable
+    await tx
+      .update(companionsTable)
+      .set({
+        name: data.name,
+        phone: data.phoneNumber,
+        shortDescription: data.shortDescription,
+        description: data.description,
+        price: data.price,
+        age: data.age,
+        gender: data.gender,
+        gender_identity: data.gender_identity,
+        languages: data.languages,
+        city_id: data.city,
+      } as NewCompanion)
+      .where(eq(companionsTable.id, companionId));
+
+    // Update characteristicsTable
+    await tx
+      .update(characteristicsTable)
+      .set({
+        weight: data.weight,
+        height: data.height,
+        ethnicity: data.ethnicity,
+        eye_color: data.eye_color,
+        hair_color: data.hair_color,
+        hair_length: data.hair_length,
+        shoe_size: data.shoe_size,
+        silicone: data.silicone,
+        tattoos: data.tattoos,
+        piercings: data.piercings,
+        smoker: data.smoker,
+      }as NewCharacteristic)
+      .where(eq(characteristicsTable.companion_id, companionId));
+  });
 }
