@@ -1,4 +1,4 @@
-import { CitySummary } from '@/db/types';
+import { CitySummary } from '@/types/types';
 import Link from 'next/link';
 
 export function SelectCidadesCadastradas({ cities }: { cities: CitySummary[]; }) {

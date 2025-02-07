@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import type { CompanionFiltered } from "@/db/types";
+import type { CompanionFiltered } from "@/types/types";
 import { CompanionsListSkeleton } from "@/components/companionsList";
 import { getCompanionsToFilter } from "@/db/queries/companions";
 import { CompanionFilters } from "@/components/companionFilters";
-import { FilterTypesCompanions } from "@/db/types";
+import { FilterTypesCompanions } from "@/types/types";
 
 
 export default async function CompanionsPage({

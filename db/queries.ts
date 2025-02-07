@@ -9,7 +9,7 @@ import {
   Review,
 } from './schema';
 import { eq } from 'drizzle-orm';
-import { CitySummary, CompanionById, CompanionFiltered } from './types';
+import { CitySummary, CompanionById, CompanionFiltered } from '../types/types';
 import { Languages } from 'lucide-react';
 
 export function getReviewsByCompanionId(id: number): Promise<Review[]> {
