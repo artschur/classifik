@@ -4,14 +4,16 @@ import {
   companionsTable,
   characteristicsTable,
   citiesTable,
-  NewCharacteristic,
+  NewCompanion,
+  Companion,
 } from '../schema';
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
 import { auth } from '@clerk/nextjs/server';
-import { CompanionFiltered, FilterTypesCompanions } from '../types';
+import { CompanionFiltered, FilterTypesCompanions } from '../../types/types';
 import { eq, and, gte, lte, desc, asc, SQL } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
+import { getEmail } from './userActions';
 export async function getCompanionsToFilter(
   city: string,
   filters?: FilterTypesCompanions
@@ -126,7 +128,7 @@ export async function getCompanionsToFilter(
 export async function registerCompanion(
   companionData: RegisterCompanionFormValues
 ) {
-  const {
+  let {
     name,
     email,
     phoneNumber,
@@ -159,6 +161,7 @@ export async function registerCompanion(
 
   try {
     // 1) Insert into companionsTable
+    email = await getEmail();
     const [newCompanion] = await db
       .insert(companionsTable)
       .values({
@@ -174,7 +177,7 @@ export async function registerCompanion(
         gender_identity: gender_identity,
         languages: languages,
         city_id: city,
-      })
+      } as NewCompanion)
       .returning({ id: companionsTable.id });
 
     await db.insert(characteristicsTable).values({
@@ -197,4 +200,34 @@ export async function registerCompanion(
     console.error('Error inserting companion or characteristics:', error);
     throw error;
   }
+}
+
+export async function getCompanionByClerkId(clerkId: string): Promise<CompanionFiltered> {
+  const companion = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      shortDescription: companionsTable.shortDescription,
+      price: companionsTable.price,
+      age: companionsTable.age,
+      ethinicity: characteristicsTable.ethnicity,
+      city: citiesTable.city,
+      weight: characteristicsTable.weight,
+      height: characteristicsTable.height,
+      eyeColor: characteristicsTable.eye_color,
+      hairColor: characteristicsTable.hair_color,
+      silicone: characteristicsTable.silicone,
+      tattoos: characteristicsTable.tattoos,
+      piercings: characteristicsTable.piercings,
+      smoker: characteristicsTable.smoker,
+      verified: companionsTable.verified,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, clerkId))
+    .limit(1)
+    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    ;
+
+  return companion[0];
 }
