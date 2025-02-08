@@ -468,7 +468,11 @@ export function RegisterCompanionForm({
                         options={linguasDisponiveis}
                         onValueChange={field.onChange} // Direct form update
                         value={field.value} // Use form value
-                        defaultValue={['Português']} // Initial value
+                        defaultValue={
+                          companionData
+                            ? companionData.languages
+                            : ['Português']
+                        } // Initial value
                         placeholder="Selecione suas Linguas"
                         variant="inverted"
                         animation={2}
@@ -488,7 +492,7 @@ export function RegisterCompanionForm({
                   Essa parte é muito importante para aparecer nos nossos filtros
                   e atrair novos clientes.
                 </p>
-                <div className="flex flex-row gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="weight"
@@ -507,6 +511,7 @@ export function RegisterCompanionForm({
                                   : 0
                               )
                             }
+                            className="w-full"
                           />
                         </FormControl>
                         <FormMessage />
@@ -518,7 +523,7 @@ export function RegisterCompanionForm({
                     name="height"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Altura(m)</FormLabel>
+                        <FormLabel>Altura (m)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -527,52 +532,51 @@ export function RegisterCompanionForm({
                             onChange={(e) =>
                               field.onChange(Number.parseFloat(e.target.value))
                             }
+                            className="w-full"
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="ethnicity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Etnia</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione sua etnia" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Branco">Branco</SelectItem>
-                          <SelectItem value="Negro">Negro</SelectItem>
-                          <SelectItem value="Latino">Latino</SelectItem>
-                          <SelectItem value="Asiático">Asiático</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex flex-row gap-8">
                   <FormField
                     control={form.control}
-                    name="eye_color"
+                    name="ethnicity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cor do olhos</FormLabel>
+                        <FormLabel>Etnia</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecione sua etnia" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Branco">Branco</SelectItem>
+                            <SelectItem value="Negro">Negro</SelectItem>
+                            <SelectItem value="Latino">Latino</SelectItem>
+                            <SelectItem value="Asiático">Asiático</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="eye_color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cor do olho</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
                               <SelectValue placeholder="Selecione sua cor de olhos" />
                             </SelectTrigger>
                           </FormControl>
@@ -592,13 +596,13 @@ export function RegisterCompanionForm({
                     name="hair_color"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cor do seu cabelo</FormLabel>
+                        <FormLabel>Cor do cabelo</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="w-full">
                               <SelectValue placeholder="Castanho" />
                             </SelectTrigger>
                           </FormControl>
@@ -616,62 +620,63 @@ export function RegisterCompanionForm({
                       </FormItem>
                     )}
                   />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="hair_length"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hair Length</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                  <FormField
+                    control={form.control}
+                    name="hair_length"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tamanho do Cabelo</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                placeholder="Tamanho do seu cabelo"
+                                defaultValue="Médio"
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Curto">Curto</SelectItem>
+                            <SelectItem value="Médio">Médio</SelectItem>
+                            <SelectItem value="Longo">Longo</SelectItem>
+                            <SelectItem value="Muito Longo">
+                              Muito Longo
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="shoe_size"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tamanho do pé (EU)</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder="Tamanho do seu cabelo"
-                              defaultValue={`Médio`}
-                            />
-                          </SelectTrigger>
+                          <Input
+                            type="number"
+                            placeholder=""
+                            value={field.value?.toString() || ''}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value
+                                  ? Number.parseFloat(e.target.value)
+                                  : 0
+                              )
+                            }
+                            className="w-full"
+                          />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Curto">Curto</SelectItem>
-                          <SelectItem value="Médio">Médio</SelectItem>
-                          <SelectItem value="Longo">Longo</SelectItem>
-                          <SelectItem value="Muito Longo">
-                            Muito Longo
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="shoe_size"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tamanho do pé (EU size)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder=""
-                          value={field.value?.toString() || ''}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? Number.parseFloat(e.target.value)
-                                : 0
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
                   name="silicone"
@@ -682,7 +687,7 @@ export function RegisterCompanionForm({
                           Silicone
                         </FormLabel>
                         <FormDescription>
-                          Do you have silicone enhancements?
+                          Você possui procedimentos de silicone?
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -703,7 +708,7 @@ export function RegisterCompanionForm({
                         <FormLabel className="text-base flex flex-row gap-2">
                           Tattoos{' '}
                         </FormLabel>
-                        <FormDescription>Do you have tattoos?</FormDescription>
+                        <FormDescription>Você tem tatuagens?</FormDescription>
                       </div>
                       <FormControl>
                         <Switch
@@ -723,9 +728,7 @@ export function RegisterCompanionForm({
                         <FormLabel className="text-base flex flex-row gap-2">
                           Piercings
                         </FormLabel>
-                        <FormDescription>
-                          Do you have piercings?
-                        </FormDescription>
+                        <FormDescription>Você tem piercings?</FormDescription>
                       </div>
                       <FormControl>
                         <Switch
@@ -743,9 +746,9 @@ export function RegisterCompanionForm({
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base flex flex-row gap-2">
-                          Smoker <Cigarette />
+                          Fumante
                         </FormLabel>
-                        <FormDescription>Are you a smoker? </FormDescription>
+                        <FormDescription>Você fuma? </FormDescription>
                       </div>
                       <FormControl>
                         <Switch
@@ -762,89 +765,68 @@ export function RegisterCompanionForm({
             {/* Page Three (Localização) */}
             {currentPage === 2 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Location</h3>
+                <h3 className="text-lg font-semibold">Localização</h3>
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade</FormLabel>
+                      <Select
+                        onValueChange={(selected) => {
+                          // Update city
+                          field.onChange(Number(selected));
+
+                          // Find selected city data
+                          const selectedCity = cities.find(
+                            (c) => c.id === Number(selected)
+                          );
+
+                          // Update state and country from city data
+                          if (selectedCity) {
+                            form.setValue('state', selectedCity.state);
+                            form.setValue('country', selectedCity.country);
+                          }
+                        }}
+                        value={String(field.value)}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder="Selecione sua cidade"
+                              defaultValue={
+                                cities.find((c) => c.id === field.value)
+                                  ?.city || ''
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {cities.map((city) => (
+                            <SelectItem key={city.id} value={String(city.id)}>
+                              {city.city}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="neighborhood"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Neighborhood</FormLabel>
+                      <FormLabel>Bairro</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter neighborhood" {...field} />
+                        <Input placeholder="Digite seu bairro" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <div className="flex flex-row justify-between">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select City</FormLabel>
-                        <Select
-                          onValueChange={(selected) =>
-                            field.onChange(Number(selected))
-                          }
-                          value={String(field.value)}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder="Select a city"
-                                // Show city name in selected state
-                                // Find the current city object and display its name
-                                defaultValue={
-                                  cities.find((c) => c.id === field.value)
-                                    ?.city || ''
-                                }
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {cities.map((city) => (
-                              <SelectItem key={city.id} value={String(city.id)}>
-                                {city.city}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>State</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter state (2 characters)"
-                            {...field}
-                            maxLength={2}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter country" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </div>
             )}
           </CardContent>
