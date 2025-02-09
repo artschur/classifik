@@ -857,11 +857,12 @@ export function RegisterCompanionForm({
                 Anterior
               </Button>
             )}
-            {currentPage < formSections.length - 1 ? (
+            {currentPage < formSections.length - 1 && (
               <Button type="button" onClick={handleNextPage}>
-                Próximo
+              Próximo
               </Button>
-            ) : (
+            )}
+            {currentPage === formSections.length - 1 && (
               <Button type="submit">Cadastre-se</Button>
             )}
           </CardFooter>
