@@ -230,7 +230,6 @@ export function RegisterCompanionForm({
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
     try {
       if (companionData) {
-        console.log(companionData);
         const clerkId = user?.id;
 
         if (!clerkId) {
@@ -251,8 +250,8 @@ export function RegisterCompanionForm({
           description: `Hey ${data.name}! You are now available in our platform.`,
         });
       }
-      router.refresh(); // Refresh the page to reflect changes
-      router.push('/'); // Redirect to the homepage (or a profile page)
+      router.refresh();
+      router.push('/');
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -267,7 +266,15 @@ export function RegisterCompanionForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-8"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+          }
+        }}
+      >
         <Card>
           <CardHeader>
             <CardTitle>
@@ -275,7 +282,7 @@ export function RegisterCompanionForm({
             </CardTitle>
             <CardDescription>
               {companionData
-                ? 'Update your profile details.'
+                ? 'Edite seu detalhes.'
                 : 'Insira seus detalhes e apareça na melhor plataforma de acompanhantes de portugal.'}
             </CardDescription>
           </CardHeader>
@@ -349,12 +356,12 @@ export function RegisterCompanionForm({
                     </FormItem>
                   )}
                 />
-                <div className="flex flex-row gap-8">
+                <div className="grid grid-cols-2 md:flex md:flex-row gap-4 justify-between w-full">
                   <FormField
                     control={form.control}
                     name="price"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="md:w-1/4">
                         <FormLabel>Preço (por hora)</FormLabel>
                         <FormControl>
                           <IMaskInput
@@ -405,59 +412,60 @@ export function RegisterCompanionForm({
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gênero</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione seu gênero" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Masculino">Masculino</SelectItem>
+                            <SelectItem value="Feminino">Feminino</SelectItem>
+                            <SelectItem value="Outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="gender_identity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Identidade de gênero</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Cisgênero" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Cisgênero">Cisgênero</SelectItem>
+                            <SelectItem value="Transgênero">
+                              Transgênero
+                            </SelectItem>
+                            <SelectItem value="Outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gênero</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione seu gênero" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Masculino">Masculino</SelectItem>
-                          <SelectItem value="Feminino">Feminino</SelectItem>
-                          <SelectItem value="Outro">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="gender_identity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Identidade de gênero</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Cisgênero" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Cisgênero">Cisgênero</SelectItem>
-                          <SelectItem value="Transgênero">
-                            Transgênero
-                          </SelectItem>
-                          <SelectItem value="Outro">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
                 <FormField
                   control={form.control}
                   name="languages"
@@ -677,88 +685,90 @@ export function RegisterCompanionForm({
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="silicone"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base flex flex-row gap-2">
-                          Silicone
-                        </FormLabel>
-                        <FormDescription>
-                          Você possui procedimentos de silicone?
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="tattoos"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base flex flex-row gap-2">
-                          Tattoos{' '}
-                        </FormLabel>
-                        <FormDescription>Você tem tatuagens?</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="piercings"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base flex flex-row gap-2">
-                          Piercings
-                        </FormLabel>
-                        <FormDescription>Você tem piercings?</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="smoker"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base flex flex-row gap-2">
-                          Fumante
-                        </FormLabel>
-                        <FormDescription>Você fuma? </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="silicone"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base flex flex-row gap-2">
+                            Silicone
+                          </FormLabel>
+                          <FormDescription>
+                            Você possui procedimentos de silicone?
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="tattoos"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base flex flex-row gap-2">
+                            Tattoos{' '}
+                          </FormLabel>
+                          <FormDescription>Você tem tatuagens?</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="piercings"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base flex flex-row gap-2">
+                            Piercings
+                          </FormLabel>
+                          <FormDescription>Você tem piercings?</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="smoker"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base flex flex-row gap-2">
+                            Fumante
+                          </FormLabel>
+                          <FormDescription>Você fuma? </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             )}
 
@@ -774,18 +784,23 @@ export function RegisterCompanionForm({
                       <FormLabel>Cidade</FormLabel>
                       <Select
                         onValueChange={(selected) => {
-                          // Update city
                           field.onChange(Number(selected));
 
-                          // Find selected city data
                           const selectedCity = cities.find(
                             (c) => c.id === Number(selected)
                           );
 
-                          // Update state and country from city data
                           if (selectedCity) {
-                            form.setValue('state', selectedCity.state);
-                            form.setValue('country', selectedCity.country);
+                            form.setValue('state', selectedCity.state, {
+                              shouldValidate: false,
+                              shouldDirty: true,
+                              shouldTouch: false,
+                            });
+                            form.setValue('country', selectedCity.country, {
+                              shouldValidate: false,
+                              shouldDirty: true,
+                              shouldTouch: false,
+                            });
                           }
                         }}
                         value={String(field.value)}
