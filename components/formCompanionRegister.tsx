@@ -370,6 +370,8 @@ export function RegisterCompanionForm({
                               num: {
                                 mask: Number,
                                 scale: 2,
+                                min: 0,
+                                max: 10000,
                                 radix: ',',
                                 thousandsSeparator: '.',
                               },
@@ -379,7 +381,7 @@ export function RegisterCompanionForm({
                             value={String(field.value)}
                             onAccept={(value: string) =>
                               field.onChange(
-                                Number.parseFloat(value.replace(/[^\d.-]/g, ''))
+                                Number(value.replace(/[^0-9]/g, ''))
                               )
                             }
                           />
