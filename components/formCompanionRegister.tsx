@@ -239,6 +239,7 @@ export function RegisterCompanionForm({
         await updateCompanionFromForm(clerkId, data);
 
         toast({
+          variant: 'success',
           title: 'Profile Updated',
           description: `Your profile has been successfully updated.`,
         });
@@ -246,6 +247,7 @@ export function RegisterCompanionForm({
         // Registration: call registerCompanion
         await registerCompanion(data);
         toast({
+          variant: 'success',
           title: 'You have been registered',
           description: `Hey ${data.name}! You are now available in our platform.`,
         });
