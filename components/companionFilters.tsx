@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { CompanionsList } from "./companionsList"
 import { Filter, SortAsc, X } from "lucide-react"
-import type { CompanionFiltered, FilterTypesCompanions } from "@/db/types"
+import type { CompanionFiltered, FilterTypesCompanions } from "@/types/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { CompanionsListSkeleton } from "./companionsList"
 import { Badge } from "@/components/ui/badge"

@@ -1,4 +1,4 @@
-import { Characteristic, City, Companion } from './schema';
+import { Characteristic, City, Companion } from '../db/schema';
 
 export type CompanionFiltered = Pick<
   Companion,

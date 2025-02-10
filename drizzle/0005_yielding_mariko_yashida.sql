@@ -1,0 +1,1 @@
+CREATE INDEX "companions_auth_idx" ON "companions" USING btree ("auth_id");

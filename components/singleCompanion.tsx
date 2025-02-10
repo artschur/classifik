@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, MessageCircle, Phone, Check, Cake, MapPin, Ruler, Weight, Globe, Eye, User, Droplet, PenTool, Gem, Coffee, Cigarette } from "lucide-react";
-import type { CompanionById } from "@/db/types";
+import type { CompanionById } from "@/types/types";
 import { JSX } from "react";
 
 export default function SingleCompanionComponent({

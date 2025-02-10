@@ -4,7 +4,7 @@ import { ReviewsSkeleton } from "@/components/skeletons/skeletonReview";
 import SingleCompanionComponent from "@/components/singleCompanion";
 import { CompanionSkeleton } from "@/components/skeletons/skeletonSingleCompanion";
 import { getCompanionById } from "@/db/queries";
-import { CompanionById } from "@/db/types";
+import { CompanionById } from "@/types/types";
 import { getReviewsByCompanionId } from "@/db/queries";
 import { Review } from "@/db/schema";
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { CompanionFiltered } from "@/db/types";
+import type { CompanionFiltered } from "@/types/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
