@@ -71,7 +71,7 @@ const pageTwoSchema = z.object({
   height: z
     .number()
     .min(1.3, 'Altura precisa ser ao menos 1.40m')
-    .max(2.5, 'Altura precisa ser menor que 2.5m'),
+    .max(3.0, 'Altura precisa ser menor que 2.5m'),
   ethnicity: z.string().min(1, 'Etnia é obrigatória'),
   eye_color: z.string().optional(),
   hair_color: z.string().min(1, 'Cor do seu cabelo é obrigatória'),
@@ -535,16 +535,34 @@ export function RegisterCompanionForm({
                       <FormItem>
                         <FormLabel>Altura (m)</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Insira sua Altura"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number.parseFloat(e.target.value))
+                          <IMaskInput
+                            mask="0,99"
+                            definitions={{
+                              '0': /[1-2]/, // First digit: only 1-2
+                              '9': /[0-9]/, // Other digits: 0-9
+                            }}
+                            placeholder="1,70"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={
+                              field.value?.toString().replace('.', ',') || ''
                             }
-                            className="w-full"
+                            onAccept={(value: string) => {
+                              const numericValue = Number(
+                                value.replace(',', '.')
+                              );
+                              if (
+                                !isNaN(numericValue) &&
+                                numericValue >= 1.3 &&
+                                numericValue <= 2.5
+                              ) {
+                                field.onChange(numericValue);
+                              }
+                            }}
                           />
                         </FormControl>
+                        <FormDescription className="text-xs text-muted-foreground">
+                          Exemplo: 1,70
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -859,7 +877,7 @@ export function RegisterCompanionForm({
             )}
             {currentPage < formSections.length - 1 && (
               <Button type="button" onClick={handleNextPage}>
-              Próximo
+                Próximo
               </Button>
             )}
             {currentPage === formSections.length - 1 && (
