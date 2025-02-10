@@ -134,6 +134,10 @@ export function RegisterCompanionForm({
   const { toast } = useToast();
   const router = useRouter();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 100, behavior: 'smooth' });
+  };
+
   const validateCurrentPage = async () => {
     const values = form.getValues();
     try {
@@ -158,6 +162,7 @@ export function RegisterCompanionForm({
     const isValid = await validateCurrentPage();
     if (isValid) {
       setCurrentPage((prev) => prev + 1);
+      scrollToTop();
     } else {
       form.trigger();
     }
@@ -165,6 +170,7 @@ export function RegisterCompanionForm({
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => prev - 1);
+    scrollToTop();
   };
 
   const getInitialValues = (): RegisterCompanionFormValues => {
@@ -562,9 +568,6 @@ export function RegisterCompanionForm({
                             }}
                           />
                         </FormControl>
-                        <FormDescription className="text-xs text-muted-foreground">
-                          Exemplo: 1,70
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
