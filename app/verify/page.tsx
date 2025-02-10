@@ -27,7 +27,7 @@ function CompanionsListSkeleton() {
   return (
     <div className="space-y-4 w-full max-w-2xl">
       {[1, 2, 3].map((i) => (
-        <Skeleton key={i} className="w-full h-64" />
+        <Skeleton key={i} className="w-full h-[430px]" />
       ))}
     </div>
   );
