@@ -376,7 +376,7 @@ export async function updateCompanionFromForm(
 }
 
 export async function getUnverifiedCompanions(): Promise<
-  (RegisterCompanionFormValues & { id: number })[]
+  (RegisterCompanionFormValues & { id: number; cityName: string })[]
 > {
   const rows = await db
     .select({
@@ -402,6 +402,7 @@ export async function getUnverifiedCompanions(): Promise<
       piercings: characteristicsTable.piercings,
       smoker: characteristicsTable.smoker,
       city: companionsTable.city_id,
+      cityName: citiesTable.city,
       state: citiesTable.state,
       country: citiesTable.country,
       neighborhood: neighborhoodsTable.neighborhood,
@@ -444,8 +445,30 @@ export async function getUnverifiedCompanions(): Promise<
     piercings: row.piercings ?? false,
     smoker: row.smoker ?? false,
     city: row.city ?? 1,
+    cityName: row.cityName ?? '',
     state: row.state ?? '',
     country: row.country ?? '',
     neighborhood: row.neighborhood ?? '',
   }));
+}
+
+export async function approveCompanion(id: number) {
+  await db
+    .update(companionsTable)
+    .set({ verified: true })
+    .where(eq(companionsTable.id, id));
+
+  return { success: true, id };
+}
+
+export async function rejectCompanion(id: number) {
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(characteristicsTable)
+      .where(eq(characteristicsTable.companion_id, id));
+
+    await tx.delete(companionsTable).where(eq(companionsTable.id, id));
+  });
+
+  return { success: true, id };
 }
