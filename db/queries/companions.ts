@@ -374,3 +374,78 @@ export async function updateCompanionFromForm(
       );
   });
 }
+
+export async function getUnverifiedCompanions(): Promise<
+  (RegisterCompanionFormValues & { id: number })[]
+> {
+  const rows = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      shortDescription: companionsTable.shortDescription,
+      phoneNumber: companionsTable.phone,
+      description: companionsTable.description,
+      price: companionsTable.price,
+      age: companionsTable.age,
+      gender: companionsTable.gender,
+      gender_identity: companionsTable.gender_identity,
+      languages: companionsTable.languages,
+      weight: characteristicsTable.weight,
+      height: characteristicsTable.height,
+      ethnicity: characteristicsTable.ethnicity,
+      eye_color: characteristicsTable.eye_color,
+      hair_color: characteristicsTable.hair_color,
+      hair_length: characteristicsTable.hair_length,
+      shoe_size: characteristicsTable.shoe_size,
+      silicone: characteristicsTable.silicone,
+      tattoos: characteristicsTable.tattoos,
+      piercings: characteristicsTable.piercings,
+      smoker: characteristicsTable.smoker,
+      city: companionsTable.city_id,
+      state: citiesTable.state,
+      country: citiesTable.country,
+      neighborhood: neighborhoodsTable.neighborhood,
+    })
+    .from(companionsTable)
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .leftJoin(
+      neighborhoodsTable,
+      eq(neighborhoodsTable.id, companionsTable.neighborhood_id)
+    )
+    .where(eq(companionsTable.verified, false));
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name ?? '',
+    shortDescription: row.shortDescription ?? '',
+    phoneNumber:
+      row.phoneNumber && !row.phoneNumber.startsWith('+')
+        ? `+${row.phoneNumber}`
+        : row.phoneNumber ?? '',
+    description: row.description ?? '',
+    price: row.price ?? 0,
+    age: row.age ?? 0,
+    gender: row.gender ?? '',
+    gender_identity: row.gender_identity ?? '',
+    languages: row.languages ?? [],
+    weight: parseInt(row.weight) ?? 60,
+    height: parseFloat(row.height) ?? 1.6,
+    ethnicity: row.ethnicity ?? '',
+    eye_color: row.eye_color ?? '',
+    hair_color: row.hair_color ?? '',
+    hair_length: row.hair_length ?? '',
+    shoe_size: row.shoe_size ?? 36,
+    silicone: row.silicone ?? false,
+    tattoos: row.tattoos ?? false,
+    piercings: row.piercings ?? false,
+    smoker: row.smoker ?? false,
+    city: row.city ?? 1,
+    state: row.state ?? '',
+    country: row.country ?? '',
+    neighborhood: row.neighborhood ?? '',
+  }));
+}
