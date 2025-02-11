@@ -162,45 +162,49 @@ export async function registerCompanion(
   }
 
   try {
-    // 1) Insert into companionsTable
     email = await getEmail();
-    const [newCompanion] = await db
-      .insert(companionsTable)
-      .values({
-        auth_id: userSession.userId,
-        name: name,
-        email: email,
-        phone: phoneNumber,
-        shortDescription: shortDescription,
-        description: description,
-        price: price,
-        age: age,
-        gender: gender,
-        gender_identity: gender_identity,
-        languages: languages,
-        city_id: city,
-      } as NewCompanion)
-      .returning({ id: companionsTable.id });
+    const newCompanion = await db.transaction(async (tx) => {
+      // 1) Insert into companionsTable
+      const [companion] = await tx
+        .insert(companionsTable)
+        .values({
+          auth_id: userSession.userId,
+          name: name,
+          email: email,
+          phone: phoneNumber,
+          shortDescription: shortDescription,
+          description: description,
+          price: price,
+          age: age,
+          gender: gender,
+          gender_identity: gender_identity,
+          languages: languages,
+          city_id: city,
+        } as NewCompanion)
+        .returning({ id: companionsTable.id });
 
-    await db.insert(characteristicsTable).values({
-      height: height,
-      ethnicity: ethnicity,
-      companion_id: newCompanion.id,
-      eye_color: eye_color,
-      hair_color: hair_color,
-      hair_length: hair_length,
-      shoe_size: shoe_size,
-      silicone: silicone,
-      tattoos: tattoos,
-      piercings: piercings,
-      weight: weight,
-      smoker: smoker,
-    } as any);
+      // 2) Insert into characteristicsTable
+      await tx.insert(characteristicsTable).values({
+        height: height,
+        ethnicity: ethnicity,
+        companion_id: companion.id,
+        eye_color: eye_color,
+        hair_color: hair_color,
+        hair_length: hair_length,
+        shoe_size: shoe_size,
+        silicone: silicone,
+        tattoos: tattoos,
+        piercings: piercings,
+        weight: weight,
+        smoker: smoker,
+      } as any);
+
+      return companion;
+    });
 
     return newCompanion;
   } catch (error) {
-    console.error('Error inserting companion or characteristics:', error);
-    throw error;
+    throw new Error('Failed to register companion');
   }
 }
 
