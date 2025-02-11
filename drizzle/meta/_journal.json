@@ -43,6 +43,20 @@
       "when": 1738949584418,
       "tag": "0005_yielding_mariko_yashida",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1739312542865,
+      "tag": "0006_regular_cloak",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1739312572637,
+      "tag": "0007_ordinary_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }
