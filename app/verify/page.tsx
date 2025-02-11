@@ -1,18 +1,22 @@
 import { Suspense } from 'react';
-import type { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
 import { getUnverifiedCompanions } from '@/db/queries/companions';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import VerifyCompanionsList from '@/components/verifyCompanionsList';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RedirectToSignIn } from '@clerk/nextjs';
 
-const authorizedIds = [`user_2s07vybL9GSrjPbhjljghGwzl1X`];
+const authorizedIds = [
+  `user_2s07vybL9GSrjPbhjljghGwzl1X`,
+  'user_2sqI4uTepu0PyRSqlCYxM9ExFW8',
+  'user_2sqAwSVd5g0wjbJ8ewbR7zzyUCm',
+];
 
 async function FetchUnverifiedCompanions() {
   const userId = (await auth()).userId;
 
   if (!userId) {
-    throw new Error('User ID not found');
+    return <RedirectToSignIn />;
   }
 
   if (authorizedIds.includes(userId)) {
