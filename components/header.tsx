@@ -15,6 +15,17 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import Image from 'next/image';
+import { auth } from '@clerk/nextjs/server';
+
+export const admins = [
+  `user_2s07vybL9GSrjPbhjljghGwzl1X`,
+  'user_2sqI4uTepu0PyRSqlCYxM9ExFW8',
+  'user_2sqAwSVd5g0wjbJ8ewbR7zzyUCm',
+];
+
+export const isAdmin = (userId: string): boolean => {
+  return admins.includes(userId);
+};
 
 export default async function Header() {
   return (
@@ -36,19 +47,29 @@ export default async function Header() {
           </Link>
           <nav className="hidden md:flex gap-x-16">
             <Link
-              href="/location"
-              className="text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
-              prefetch={false}
-            >
-              Encontre uma acompanhante
-            </Link>
-            <Link
               href="/companions/register"
               className="text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
               prefetch={false}
             >
               Registre-se
             </Link>
+            <Link
+              href="/location"
+              className="text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
+              prefetch={false}
+            >
+              Encontre uma acompanhante
+            </Link>
+            {(await auth()).userId &&
+            isAdmin((await auth()).userId as string) ? (
+              <Link
+                href="/verify"
+                className="text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
+                prefetch={false}
+              >
+                Verificar
+              </Link>
+            ) : null}
           </nav>
           <div className="flex items-center space-x-4">
             <SignedIn>
@@ -56,13 +77,16 @@ export default async function Header() {
             </SignedIn>
             <SignedOut>
               <SignInButton>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" className="rounded-full" size="sm">
                   Login
                 </Button>
               </SignInButton>
               <SignUpButton>
-                <Button className="hidden sm:inline-flex" size="sm">
-                  Criar conta
+                <Button
+                  className="hidden sm:inline-flex rounded-full"
+                  size="sm"
+                >
+                  Registrar
                 </Button>
               </SignUpButton>
             </SignedOut>
@@ -103,13 +127,20 @@ export default async function Header() {
                   <SignedOut>
                     <div className="space-y-2">
                       <SignInButton>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          className="rounded-full"
+                          size="sm"
+                        >
                           Login
                         </Button>
                       </SignInButton>
                       <SignUpButton>
-                        <Button className=" sm:inline-flex" size="sm">
-                          Criar conta
+                        <Button
+                          className=" sm:inline-flex rounded-full"
+                          size="sm"
+                        >
+                          Registrar
                         </Button>
                       </SignUpButton>
                     </div>
