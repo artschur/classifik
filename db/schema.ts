@@ -12,7 +12,6 @@ import {
   PgArray,
   jsonb,
 } from 'drizzle-orm/pg-core';
-import { number } from 'zod';
 
 export const companionsTable = pgTable(
   'companions',

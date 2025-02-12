@@ -1,5 +1,10 @@
+'use server';
+
 import { createClient } from '@supabase/supabase-js';
 import imageCompression from 'browser-image-compression';
+import { db } from '..';
+import { imagesTable } from '../schema';
+import { auth } from '@clerk/nextjs/server';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -32,120 +37,46 @@ async function compressImage(file: File): Promise<File> {
   }
 }
 
-// Function to upload image with owner linking
 export async function uploadImage(
   file: File,
-  ownerId: string,
   bucket: string = 'images'
 ): Promise<{
-  path: string | null;
-  error: Error | null;
-  metadata: ImageMetadata | null;
-}> {
-  try {
-    // Compress image
-    const compressedFile = await compressImage(file);
-
-    // Create unique filename with owner prefix
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${ownerId}/${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2)}.${fileExt}`;
-
-    // Create metadata
-    const metadata: ImageMetadata = {
-      ownerId,
-      originalName: file.name,
-      size: compressedFile.size,
-      type: compressedFile.type,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Upload file to Supabase with metadata
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, compressedFile, {
-        metadata: metadata as any,
-      });
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    // Get public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(bucket).getPublicUrl(fileName);
-
-    // Store image reference in a separate table
-    const { error: dbError } = await supabase.from('images').insert({
-      owner_id: ownerId,
-      storage_path: fileName,
-      public_url: publicUrl,
-      metadata,
-    });
-
-    if (dbError) {
-      throw dbError;
-    }
-
-    return { path: publicUrl, metadata, error: null };
-  } catch (error) {
-    return { path: null, metadata: null, error: error as Error };
-  }
-}
-
-// Function to get all images for an owner
-export async function getOwnerImages(ownerId: string): Promise<{
-  images: Array<{ path: string; metadata: ImageMetadata }> | null;
+  fileUrl: string;
   error: Error | null;
 }> {
   try {
-    const { data, error } = await supabase
-      .from('images')
-      .select('*')
-      .eq('owner_id', ownerId)
-      .order('created_at', { ascending: false });
+    let compressedFile = await compressImage(file);
+    const ext = compressedFile.name.split('.').pop() || '';
+    compressedFile = new File(
+      [compressedFile],
+      `${compressedFile.name.split('.')[0]}-${Math.floor(
+        Math.random() * 10000
+      )}.${ext}`,
+      { type: compressedFile.type }
+    );
+    const companionId = (await auth()).userId;
+    if (!companionId) throw new Error('User not authenticated');
 
-    if (error) throw error;
+    const path = `${companionId}/${compressedFile.name}`;
 
-    return {
-      images: data.map((img) => ({
-        path: img.public_url,
-        metadata: img.metadata,
-      })),
-      error: null,
-    };
-  } catch (error) {
-    return { images: null, error: error as Error };
-  }
-}
-
-// Function to delete image with owner check
-export async function deleteImage(
-  path: string,
-  ownerId: string,
-  bucket: string = 'images'
-): Promise<{ error: Error | null }> {
-  try {
-    // Delete from database first
-    const { error: dbError } = await supabase
-      .from('images')
-      .delete()
-      .match({ storage_path: path, owner_id: ownerId });
-
-    if (dbError) throw dbError;
-
-    // Then delete from storage
     const { error: storageError } = await supabase.storage
       .from(bucket)
-      .remove([path]);
+      .upload(path, compressedFile);
 
     if (storageError) throw storageError;
 
-    return { error: null };
+    const { data } = await supabase.storage.from(bucket).getPublicUrl(path);
+
+    await db.insert(imagesTable).values({
+      companion_id: companionId,
+      storage_path: path,
+      public_url: data.publicUrl,
+    });
+
+    return { fileUrl: data.publicUrl, error: null };
   } catch (error) {
-    return { error: error as Error };
+    console.error('Upload failed:', error);
+    throw error;
   }
 }
 
