@@ -5,6 +5,7 @@ import imageCompression from 'browser-image-compression';
 import { db } from '..';
 import { imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -80,9 +81,13 @@ export async function uploadImage(
   }
 }
 
-export async function getMockImage() {
-  const { data } = await supabase.storage
-    .from('images')
-    .getPublicUrl('mock.png');
-  return data;
+export async function getImageByAuthId(
+  authId: string
+): Promise<{ publicUrl: string }[]> {
+  const images = await db
+    .select({ publicUrl: imagesTable.public_url })
+    .from(imagesTable)
+    .where(eq(imagesTable.companion_id, authId));
+
+  return images;
 }
