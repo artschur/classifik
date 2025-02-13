@@ -143,14 +143,15 @@ export const imagesTable = pgTable(
   'images',
   {
     id: serial('id').primaryKey(),
-    companion_id: text('owner_id'),
+    companionId: integer('companion_id').references(() => companionsTable.id),
+    authId: text('owner_id'),
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
     created_at: timestamp('created_at').defaultNow(),
   },
   (table) => ({
-    images_owner_idx: index('images_owner_idx').on(table.companion_id),
-    images_companion_idx: index('images_companion_idx').on(table.companion_id),
+    images_owner_idx: index('images_ownimages_auth_idx').on(table.authId),
+    images_companion_idx: index('images_companion_idx').on(table.companionId),
     images_created_idx: index('images_created_idx').on(table.created_at),
   })
 );
