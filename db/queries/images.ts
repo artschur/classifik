@@ -3,7 +3,7 @@
 import { createClient } from '@supabase/supabase-js';
 import imageCompression from 'browser-image-compression';
 import { db } from '..';
-import { imagesTable } from '../schema';
+import { companionsTable, imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
@@ -12,14 +12,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-interface ImageMetadata {
-  ownerId: string;
-  originalName: string;
-  size: number;
-  type: string;
-  createdAt: string;
-}
 
 // Compression options
 const compressionOptions = {
@@ -69,7 +61,7 @@ export async function uploadImage(
     const { data } = await supabase.storage.from(bucket).getPublicUrl(path);
 
     await db.insert(imagesTable).values({
-      companion_id: companionId,
+      authId: companionId,
       storage_path: path,
       public_url: data.publicUrl,
     });
@@ -81,13 +73,50 @@ export async function uploadImage(
   }
 }
 
-export async function getImageByAuthId(
+export async function getImagesByAuthId(
   authId: string
 ): Promise<{ publicUrl: string }[]> {
   const images = await db
     .select({ publicUrl: imagesTable.public_url })
     .from(imagesTable)
-    .where(eq(imagesTable.companion_id, authId));
+    .where(eq(imagesTable.authId, authId));
+
+  return images;
+}
+
+export async function deleteImage(
+  publicUrl: string,
+  bucket: string = 'images'
+): Promise<void> {
+  const path = publicUrl.split('/').pop() || '';
+  await supabase.storage.from(bucket).remove([path]);
+
+  const { error: storageRemoveError } = await supabase.storage
+    .from(bucket)
+    .remove([path]);
+  if (storageRemoveError) {
+    console.error('Storage removal failed:', storageRemoveError);
+    throw new Error('Image removal from storage failed');
+  }
+
+  await db.delete(imagesTable).where(eq(imagesTable.public_url, publicUrl));
+}
+
+export async function getImagesByCompanionId(
+  companionId: number
+): Promise<{ publicUrl: string }[]> {
+  const authIdResult = await db
+    .select({ auth_id: companionsTable.auth_id })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, companionId));
+
+  const authId = authIdResult[0]?.auth_id;
+  if (!authId) throw new Error('Companion not found');
+
+  const images = await db
+    .select({ publicUrl: imagesTable.public_url })
+    .from(imagesTable)
+    .where(eq(imagesTable.authId, authId));
 
   return images;
 }

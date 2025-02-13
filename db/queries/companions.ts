@@ -16,6 +16,7 @@ import { CompanionFiltered, FilterTypesCompanions } from '../../types/types';
 import { eq, and, gte, lte, desc, asc, SQL } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
+
 export async function getCompanionsToFilter(
   city: string,
   filters?: FilterTypesCompanions
