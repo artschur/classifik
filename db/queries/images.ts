@@ -61,7 +61,7 @@ export async function uploadImage(
     if (storageError) throw storageError;
 
     const { data } = await supabase.storage.from(bucket).getPublicUrl(path);
-    
+
     const companionId = await getCompanionIdByClerkId(clerkId);
 
     await db.insert(imagesTable).values({
@@ -80,9 +80,9 @@ export async function uploadImage(
 
 export async function getImagesByAuthId(
   authId: string
-): Promise<{ publicUrl: string }[]> {
+): Promise<{ publicUrl: string; storagePath: string; }[]> {
   const images = await db
-    .select({ publicUrl: imagesTable.public_url })
+    .select({ publicUrl: imagesTable.public_url, storagePath: imagesTable.storage_path })
     .from(imagesTable)
     .where(eq(imagesTable.authId, authId));
 
@@ -90,26 +90,21 @@ export async function getImagesByAuthId(
 }
 
 export async function deleteImage(
-  publicUrl: string,
+  storagePath: string,
   bucket: string = 'images'
 ): Promise<void> {
-  const path = publicUrl.split('/').pop() || '';
-  await supabase.storage.from(bucket).remove([path]);
+  console.log('Public URL:', storagePath);
 
-  const { error: storageRemoveError } = await supabase.storage
-    .from(bucket)
-    .remove([path]);
-  if (storageRemoveError) {
-    console.error('Storage removal failed:', storageRemoveError);
-    throw new Error('Image removal from storage failed');
-  }
+  const removeFromBucket = supabase.storage.from(bucket).remove([storagePath]);
+  const removeFromDb = db.delete(imagesTable).where(eq(imagesTable.storage_path, storagePath));
 
-  await db.delete(imagesTable).where(eq(imagesTable.public_url, publicUrl));
+  await Promise.all([removeFromBucket, removeFromDb]);
+
 }
 
 export async function getImagesByCompanionId(
   companionId: number
-): Promise<{ publicUrl: string }[]> {
+): Promise<{ publicUrl: string; }[]> {
 
   const images = await db
     .select({ publicUrl: imagesTable.public_url })
