@@ -9,8 +9,8 @@ import {
   Review,
 } from './schema';
 import { eq } from 'drizzle-orm';
-import { CitySummary, CompanionById, CompanionFiltered } from '../types/types';
-import { Languages } from 'lucide-react';
+import { CitySummary, CompanionById } from '../types/types';
+import { getImagesByCompanionId } from './queries/images';
 
 export function getReviewsByCompanionId(id: number): Promise<Review[]> {
   return db
@@ -53,8 +53,15 @@ export async function getCompanionById(id: number): Promise<CompanionById> {
       eq(companionsTable.id, characteristicsTable.companion_id)
     )
     .limit(1);
+  const images: {} = await getImagesByCompanionId(id);
+  const imageUrls = (images as { publicUrl: string }[]).map(
+    (image) => image.publicUrl
+  );
 
-  return result[0] as CompanionById;
+  return {
+    ...result[0],
+    images: imageUrls,
+  } as CompanionById;
 }
 
 export async function getAvailableCities(): Promise<City[]> {

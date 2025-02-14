@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sheet';
 import Image from 'next/image';
 import { auth } from '@clerk/nextjs/server';
+import { ModeToggle } from './modeToggle';
 
 export const admins = [
   `user_2s07vybL9GSrjPbhjljghGwzl1X`,
@@ -42,6 +43,7 @@ export default async function Header() {
               width={30}
               height={30}
               alt="onesugar"
+              className="dark:invert"
             />
             <span className="font-bold text-xl hidden sm:inline">onesugar</span>
           </Link>
@@ -74,6 +76,7 @@ export default async function Header() {
           <div className="flex items-center space-x-4">
             <SignedIn>
               <UserButton />
+              <ModeToggle />
             </SignedIn>
             <SignedOut>
               <SignInButton>
@@ -89,6 +92,7 @@ export default async function Header() {
                   Registrar
                 </Button>
               </SignUpButton>
+              <ModeToggle />
             </SignedOut>
             <Sheet>
               <SheetTrigger asChild>

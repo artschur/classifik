@@ -52,6 +52,7 @@ export type CompanionById = Omit<
   tattoos: Characteristic['tattoos'];
   piercings: Characteristic['piercings'];
   smoker: Characteristic['smoker'];
+  images: string[];
 };
 
 export interface Review {
