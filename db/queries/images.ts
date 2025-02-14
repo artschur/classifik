@@ -21,7 +21,6 @@ const compressionOptions = {
   useWebWorker: true,
 };
 
-// Function to compress image
 async function compressImage(file: File): Promise<File> {
   try {
     return await imageCompression(file, compressionOptions);
@@ -115,7 +114,7 @@ export async function getImagesByCompanionId(
   const images = await db
     .select({ publicUrl: imagesTable.public_url })
     .from(imagesTable)
-    .where(eq(imagesTable.id, companionId));
+    .where(eq(imagesTable.companionId, companionId));
 
   return images;
 }
