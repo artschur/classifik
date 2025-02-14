@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={geistSans.className}>
+      <html lang="en" className={geistSans.className} suppressHydrationWarning>
         <body className="min-h-screen flex flex-col">
           <ThemeProvider
             attribute="class"
