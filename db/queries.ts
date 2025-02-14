@@ -19,7 +19,7 @@ export function getReviewsByCompanionId(id: number): Promise<Review[]> {
     .where(eq(reviewsTable.companion_id, id));
 }
 
-async function getCompanionDetails(id: number ) { 
+export async function getCompanionDetails(id: number ) { 
   const result = await db
   .select({
           name: companionsTable.name,
@@ -42,7 +42,7 @@ async function getCompanionDetails(id: number ) {
   return result[0];
 }
 
-async function getCompanionCharacteristics(id:number) {
+export async function getCompanionCharacteristics(id:number) {
   const result = await db
   .select({
     weight: characteristicsTable.weight,

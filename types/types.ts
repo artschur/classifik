@@ -4,7 +4,6 @@ export type CompanionFiltered = Pick<
   Companion,
   'id' | 'name' | 'shortDescription' | 'price' | 'age' | 'verified'
 > & {
-  city: string;
   weight: string;
   height: string;
   eyeColor?: string | null;
@@ -14,10 +13,12 @@ export type CompanionFiltered = Pick<
   ethinicity: string;
   piercings: boolean | null;
   smoker: boolean | null;
+  images: string[];
 };
 
 export type FilterTypesCompanions = {
   hairColor?: string | null;
+  search?: string;
   price?: string;
   age?: string;
   sort?: string;
