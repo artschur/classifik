@@ -6,6 +6,7 @@ import { db } from '..';
 import { companionsTable, imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
+import { getCompanionIdByClerkId } from './companions';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -39,7 +40,9 @@ export async function uploadImage(
 }> {
   try {
     let compressedFile = await compressImage(file);
+
     const ext = compressedFile.name.split('.').pop() || '';
+
     compressedFile = new File(
       [compressedFile],
       `${compressedFile.name.split('.')[0]}-${Math.floor(
@@ -47,10 +50,10 @@ export async function uploadImage(
       )}.${ext}`,
       { type: compressedFile.type }
     );
-    const companionId = (await auth()).userId;
-    if (!companionId) throw new Error('User not authenticated');
+    const clerkId = (await auth()).userId;
+    if (!clerkId) throw new Error('User not authenticated');
 
-    const path = `${companionId}/${compressedFile.name}`;
+    const path = `${clerkId}/${compressedFile.name}`;
 
     const { error: storageError } = await supabase.storage
       .from(bucket)
@@ -59,9 +62,12 @@ export async function uploadImage(
     if (storageError) throw storageError;
 
     const { data } = await supabase.storage.from(bucket).getPublicUrl(path);
+    
+    const companionId = await getCompanionIdByClerkId(clerkId);
 
     await db.insert(imagesTable).values({
-      authId: companionId,
+      companionId: companionId,
+      authId: clerkId,
       storage_path: path,
       public_url: data.publicUrl,
     });
@@ -105,18 +111,11 @@ export async function deleteImage(
 export async function getImagesByCompanionId(
   companionId: number
 ): Promise<{ publicUrl: string }[]> {
-  const authIdResult = await db
-    .select({ auth_id: companionsTable.auth_id })
-    .from(companionsTable)
-    .where(eq(companionsTable.id, companionId));
-
-  const authId = authIdResult[0]?.auth_id;
-  if (!authId) throw new Error('Companion not found');
 
   const images = await db
     .select({ publicUrl: imagesTable.public_url })
     .from(imagesTable)
-    .where(eq(imagesTable.authId, authId));
+    .where(eq(imagesTable.id, companionId));
 
   return images;
 }

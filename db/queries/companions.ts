@@ -477,3 +477,13 @@ export async function rejectCompanion(id: number) {
 
   return { success: true, id };
 }
+
+export async function getCompanionIdByClerkId(id: string) : Promise<number> {
+  const companion = await db
+    .select({ id: companionsTable.id })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, id))
+    .limit(1);
+
+  return companion[0].id;
+}

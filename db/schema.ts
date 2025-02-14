@@ -143,8 +143,8 @@ export const imagesTable = pgTable(
   'images',
   {
     id: serial('id').primaryKey(),
-    companionId: integer('companion_id').references(() => companionsTable.id),
     authId: text('owner_id'),
+    companionId: integer('companion_id').references(() => companionsTable.id).notNull(),
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
     created_at: timestamp('created_at').defaultNow(),
