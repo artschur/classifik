@@ -9,8 +9,8 @@ import {
   Review,
 } from './schema';
 import { eq } from 'drizzle-orm';
-import { CitySummary, CompanionById, CompanionFiltered } from '../types/types';
-import { Languages } from 'lucide-react';
+import { CitySummary, CompanionById } from '../types/types';
+import { getImagesByCompanionId } from './queries/images';
 
 export function getReviewsByCompanionId(id: number): Promise<Review[]> {
   return db
