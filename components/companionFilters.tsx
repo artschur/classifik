@@ -119,12 +119,12 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
           onValueChange={(value) => handleSort(value || null)}
         >
           <SelectTrigger className="w-[100px] rounded-full">
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder="Ordenar" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="none">No sorting</SelectItem>
-            <SelectItem value="asc">Price: Low to High</SelectItem>
-            <SelectItem value="desc">Price: High to Low</SelectItem>
+            <SelectItem value="none">Sem ordem</SelectItem>
+            <SelectItem value="asc">Preço: Menor para maior</SelectItem>
+            <SelectItem value="desc">Preço: Maior para menor</SelectItem>
           </SelectContent>
         </Select>
 
@@ -132,7 +132,7 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
           <DialogTrigger asChild>
             <Button variant="outline" className="rounded-full">
               <Filter className="mr-2 h-4 w-4" />
-              Filters
+              Filtros
               {Object.keys(pendingFilters).length > 0 && (
                 <Badge variant="secondary" className="ml-2">
                   {Object.keys(pendingFilters).length}
@@ -143,14 +143,14 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
           <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl">
             <DialogHeader className="px-6 py-4 border-b">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
+                <DialogTitle className="text-lg font-semibold">Filtros</DialogTitle>
               </div>
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
               <div className="space-y-6 p-6">
                 {/* Age Range */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Age Range</h4>
+                  <h4 className="font-medium text-sm">Idade</h4>
                   <DualSlider
                     value={(pendingFilters.age as number[] | undefined) ?? [18, 60]}
                     onValueChange={(value) => handlePendingFilter("age", value)}
@@ -189,9 +189,9 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
 
                 {/* Hair Color */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Hair Color</h4>
+                  <h4 className="font-medium text-sm">Cor do cabelo</h4>
                   <div className="grid grid-cols-3 gap-2">
-                    {["Black", "Blonde", "Brown", "Red", "Other"].map((color) => {
+                    {["Preto", "Loiro", "Castanho", "Vermelho", "Outro"].map((color) => {
                       const selectedColors = (pendingFilters.hairColor as string || '').split(',');
                       const isSelected = selectedColors.includes(color.toLowerCase());
                       
@@ -220,7 +220,7 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
             {/* Apply Filters Button */}
             <div className="p-6 border-t">
               <Button onClick={applyFilters} className="w-full">
-                Show results
+                Mostrar resultados
               </Button>
             </div>
           </DialogContent>
