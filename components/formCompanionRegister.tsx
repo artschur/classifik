@@ -1025,7 +1025,8 @@ export function RegisterCompanionForm({
                   <>
                     <div className="flex justify-between items-center mb-4">
                       <p className="text-sm">
-                        {selectedImages.size} {selectedImages.size === 1 ? 'imagem selecionada' : 'imagens selecionadas'}
+
+                        {selectedImages.size === 0 ? null : selectedImages.size} {selectedImages.size === 0 ? null :  selectedImages.size === 1 ? 'imagem selecionada' : 'imagens selecionadas'}
                       </p>
                       {selectedImages.size > 0 && (
                         <AlertDialog>

@@ -84,14 +84,10 @@ export async function CompanionProfile({ id }: { id: number }) {
             variant="secondary"
             className="w-full mt-4 text-white bg-green-500 hover:bg-green-600"
           >
-            <MessageCircle className="w-4 h-4 mr-2" />
+            <MessageCircle className="w-4 h-4 mr-2 rounded-lg" />
             Conversar online
           </Button>
 
-          <div className="flex items-center gap-2 p-4 mt-6 rounded-lg bg-green-50">
-            <Check className="w-5 h-5 text-green-500" />
-            <p className="text-sm text-green-700">Perfil verificado</p>
-          </div>
 
           <div>
             <ImageGrid images={companion.images} />

@@ -26,7 +26,7 @@ export function ImageGrid({ images }: ImageGridProps) {
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-6 p-6">
+      <div className="grid grid-cols-3 gap-6 pt-6">
         {images.map((img, index) => (
           <div
             key={index}
