@@ -261,35 +261,41 @@ export function RegisterCompanionForm({
 
   const handleFileUpload = async (files: File[]) => {
     if (!files.length) return;
-    for (const file of files) {
-      try {
-        const result = await uploadImage(file);
-        if (result.error) {
-          setUploadStatus(`Upload failed: ${result.error.message}`);
-          toast({
-            title: 'Upload failed',
-            description: result.error.message,
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Image uploaded',
-            description: 'Your image has been uploaded successfully',
-            variant: 'success',
-          });
-          // Refresh images list
-          if (isLoaded && user?.id) {
-            const newImages = await getImagesByAuthId(user.id);
-            setImages(newImages);
-          }
-        }
-      } catch (error) {
+    setUploadStatus('Uploading files...');
+    
+    try {
+      // Use Promise.all to upload all files in parallel
+      const results = await Promise.all(files.map(file => uploadImage(file)));
+      
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        setUploadStatus(`Upload failed for ${errors.length} files`);
         toast({
           title: 'Upload failed',
-          description: error instanceof Error ? error.message : 'Something went wrong',
+          description: `Failed to upload ${errors.length} files`,
           variant: 'destructive',
         });
+      } else {
+        toast({
+          title: 'Images uploaded',
+          description: `Successfully uploaded ${files.length} images`,
+          variant: 'success',
+        });
       }
+
+      // Refresh images list once after all uploads
+      if (isLoaded && user?.id) {
+        const newImages = await getImagesByAuthId(user.id);
+        setImages(newImages);
+      }
+      setUploadStatus('');
+    } catch (error) {
+      toast({
+        title: 'Upload failed',
+        description: error instanceof Error ? error.message : 'Something went wrong',
+        variant: 'destructive',
+      });
+      setUploadStatus('');
     }
   };
 
