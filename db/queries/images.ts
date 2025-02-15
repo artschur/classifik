@@ -30,6 +30,17 @@ async function compressImage(file: File): Promise<File> {
   }
 }
 
+function sanitizeFilename(filename: string): string {
+  // Remove accented characters and replace spaces with underscores
+  const sanitized = filename
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9._-]/g, ''); // Remove any other invalid characters
+
+  return sanitized;
+}
+
 export async function uploadImage(
   file: File,
   bucket: string = 'images'
@@ -38,19 +49,34 @@ export async function uploadImage(
   error: Error | null;
 }> {
   try {
-    let compressedFile = await compressImage(file);
+    const clerkId = (await auth()).userId;
+    if (!clerkId) throw new Error('User not authenticated');
+
+    const fileType = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : null;
+
+    if (!fileType) {
+      throw new Error('Unsupported file type. Only images and videos are allowed.');
+    }
+
+    let compressedFile: File = file;
+
+    if (fileType === 'image') {
+      compressedFile = await compressImage(file);
+    }
 
     const ext = compressedFile.name.split('.').pop() || '';
+    let baseName = compressedFile.name.split('.')[0];
+
+    // Sanitize the filename
+    const sanitizedBaseName = sanitizeFilename(baseName);
 
     compressedFile = new File(
       [compressedFile],
-      `${compressedFile.name.split('.')[0]}-${Math.floor(
+      `${sanitizedBaseName}-${Math.floor(
         Math.random() * 10000
       )}.${ext}`,
       { type: compressedFile.type }
     );
-    const clerkId = (await auth()).userId;
-    if (!clerkId) throw new Error('User not authenticated');
 
     const path = `${clerkId}/${compressedFile.name}`;
 
