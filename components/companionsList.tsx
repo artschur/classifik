@@ -2,7 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import type { CompanionFiltered, FilterTypesCompanions } from '@/types/types';
+import type {
+  CompanionFiltered,
+  FilterTypesCompanions,
+  Media,
+} from '@/types/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,19 +60,76 @@ export function CompanionsList({
 function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Filter out videos and get only image URLs
+  const images = companion.images
+    .filter((media): media is string | Media => {
+      if (typeof media === 'string') {
+        return !media.match(/\.(mp4|webm|ogg)$/i);
+      }
+      return media.type !== 'video';
+    })
+    .map((media) => (typeof media === 'object' ? media.publicUrl : media));
+
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     setCurrentImageIndex((prevIndex) =>
-      prevIndex === companion.images.length - 1 ? 0 : prevIndex + 1
+      prevIndex === images.length - 1 ? 0 : prevIndex + 1
     );
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     setCurrentImageIndex((prevIndex) =>
-      prevIndex === 0 ? companion.images.length - 1 : prevIndex - 1
+      prevIndex === 0 ? images.length - 1 : prevIndex - 1
     );
   };
+
+  // If no images available after filtering, show placeholder
+  if (images.length === 0) {
+    return (
+      <Link
+        href={`/companions/${companion.id}`}
+        className="transition-transform duration-200 ease-in-out transform hover:scale-105"
+      >
+        <Card className="h-full overflow-hidden">
+          <div className="relative aspect-[4/3]">
+            <Image
+              src="/image.png"
+              alt={companion.name}
+              fill={true}
+              className="object-cover"
+            />
+          </div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">{companion.name}</h3>
+              <Badge variant="secondary">{companion.age} years</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+              {companion.shortDescription}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {companion.silicone && <Badge variant="outline">Silicone</Badge>}
+              {companion.ethinicity && (
+                <Badge variant="outline">{companion.ethinicity}</Badge>
+              )}
+              {companion.eyeColor && (
+                <Badge variant="outline">{companion.eyeColor}</Badge>
+              )}
+              {companion.hairColor && (
+                <Badge variant="outline">{companion.hairColor}</Badge>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="p-4 pt-0">
+            <span className="text-lg font-bold">
+              € {companion.price.toFixed(2)}
+            </span>
+          </CardFooter>
+        </Card>
+      </Link>
+    );
+  }
 
   return (
     <Link
@@ -78,12 +139,12 @@ function CompanionCard({ companion }: { companion: CompanionFiltered }) {
       <Card className="h-full overflow-hidden">
         <div className="relative aspect-[4/3]">
           <Image
-            src={companion.images[currentImageIndex] ?? '/image.png'}
+            src={images[currentImageIndex] ?? '/image.png'}
             alt={companion.name}
             fill={true}
             className="object-cover"
           />
-          {companion.images.length > 1 && (
+          {images.length > 1 && (
             <>
               <Button
                 variant="ghost"

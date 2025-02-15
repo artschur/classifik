@@ -1,5 +1,10 @@
 import { Characteristic, City, Companion } from '../db/schema';
 
+export interface Media {
+  publicUrl: string;
+  type?: 'image' | 'video';
+}
+
 export type CompanionFiltered = Pick<
   Companion,
   'id' | 'name' | 'shortDescription' | 'price' | 'age' | 'verified'
@@ -13,7 +18,7 @@ export type CompanionFiltered = Pick<
   ethinicity: string;
   piercings: boolean | null;
   smoker: boolean | null;
-  images: string[];
+  images: (string | Media)[];
 };
 
 export type FilterTypesCompanions = {
