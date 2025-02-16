@@ -7,6 +7,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import Footer from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import Navbar from '@/components/header';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,14 +31,21 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={geistSans.className}>
+      <html lang="en" className={geistSans.className} suppressHydrationWarning>
         <body className="min-h-screen flex flex-col">
-          <Analytics />
-          <Toaster />
-          <Navbar />
-          <main className="flex-grow">{children}</main>
-          <SpeedInsights />
-          <Footer />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Analytics />
+            <Toaster />
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <SpeedInsights />
+            <Footer />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

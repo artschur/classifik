@@ -1,25 +1,27 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-import { Button } from "@/components/ui/button"
-import { CompanionsList } from "./companionsList"
-import { Filter, SortAsc, X } from "lucide-react"
-import type { CompanionFiltered, FilterTypesCompanions } from "@/types/types"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { CompanionsListSkeleton } from "./companionsList"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import * as SliderPrimitive from "@radix-ui/react-slider"
-import { useTransition } from "react"
-
-interface FilterProps {
-  companions: CompanionFiltered[]
-  city: string
-  currentFilters: FilterTypesCompanions
-}
+import { useState, useTransition } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Filter } from 'lucide-react';
+import type { FilterTypesCompanions } from '@/types/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import * as SliderPrimitive from '@radix-ui/react-slider';
 
 const DualSlider = ({
   value,
@@ -27,10 +29,10 @@ const DualSlider = ({
   min,
   max,
 }: {
-  value: number[]
-  onValueChange: (value: number[]) => void
-  min: number
-  max: number
+  value: number[];
+  onValueChange: (value: number[]) => void;
+  min: number;
+  max: number;
 }) => {
   return (
     <SliderPrimitive.Root
@@ -47,137 +49,264 @@ const DualSlider = ({
       <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
       <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
     </SliderPrimitive.Root>
-  )
-}
+  );
+};
 
-export function CompanionFilters({ companions, city, currentFilters }: FilterProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [isPending, startTransition] = useTransition()
-  const [isOpen, setIsOpen] = useState(false)
+export function CompanionFilters({
+  initialFilters,
+}: {
+  initialFilters: FilterTypesCompanions;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [searchValue, setSearchValue] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   const [pendingFilters, setPendingFilters] =
-    useState< FilterTypesCompanions> (currentFilters)
+    useState<FilterTypesCompanions>(initialFilters);
 
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchValue(value);
 
-  const createQueryString = (params: Record<string, string | number | number[] | null>) => {
-    const current = new URLSearchParams(searchParams.toString())
-    Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === "") {
-        current.delete(key)
-      } else if (Array.isArray(value)) {
-        current.set(key, `${value[0]}-${value[1]}`)
-      } else {
-        current.set(key, value.toString())
-      }
-    })
-    return current.toString()
-  }
+    setPendingFilters((prev) => ({
+      ...prev,
+      search: value,
+    }));
 
-  const updateFilters = (filters: Record<string, string | number | number[] | null>) => {
-    const queryString = createQueryString(filters)
     startTransition(() => {
-      router.push(`${city}?${queryString}`, { scroll: false })
-    })
-    setIsOpen(false)
-  }
+      updateFilters({
+        ...pendingFilters,
+        search: value,
+        silicone: pendingFilters.silicone?.toString() || null,
+        tattoos: pendingFilters.tattoos?.toString() || null,
+        smoker: pendingFilters.smoker?.toString() || null,
+      });
+    });
+  };
+
+  const createQueryString = (
+    params: Record<string, string | number | number[] | null>
+  ) => {
+    const current = new URLSearchParams(searchParams.toString());
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === '') {
+        current.delete(key);
+      } else if (Array.isArray(value)) {
+        current.set(key, `${value[0]}-${value[1]}`);
+      } else {
+        current.set(key, value.toString());
+      }
+    });
+    return current.toString();
+  };
+
+  const updateFilters = (
+    filters: Record<string, string | number | number[] | null>
+  ) => {
+    const queryString = createQueryString(filters);
+    startTransition(() => {
+      router.push(`?${queryString}`, { scroll: false });
+    });
+    setIsOpen(false);
+  };
 
   const handleSort = (value: string | null) => {
-    updateFilters({ ...pendingFilters, sort: value ? `price-${value}` : null, silicone: pendingFilters.silicone?.toString() || null, tattoos: pendingFilters.tattoos?.toString() || null, smoker: pendingFilters.smoker?.toString() || null })
-  }
+    updateFilters({
+      ...pendingFilters,
+      sort: value ? `price-${value}` : null,
+      silicone: pendingFilters.silicone?.toString() || null,
+      tattoos: pendingFilters.tattoos?.toString() || null,
+      smoker: pendingFilters.smoker?.toString() || null,
+    });
+  };
 
-  const handlePendingFilter = (key: string, value: string | number | number[] | null) => {
+  const handlePendingFilter = (
+    key: string,
+    value: string | number | number[] | null
+  ) => {
     setPendingFilters((prev) => {
-      if (key === "hairColor") {
-        const currentColors = ((prev.hairColor as string) || "").split(",").filter(Boolean)
+      if (key === 'hairColor') {
+        const currentColors = ((prev.hairColor as string) || '')
+          .split(',')
+          .filter(Boolean);
         if (!value) {
-          return { ...prev, [key]: null }
+          return { ...prev, [key]: null };
         }
         if (currentColors.includes(value as string)) {
-          const newColors = currentColors.filter((c) => c !== value)
-          return { ...prev, [key]: newColors.length ? newColors.join(",") : null }
+          const newColors = currentColors.filter((c) => c !== value);
+          return {
+            ...prev,
+            [key]: newColors.length ? newColors.join(',') : null,
+          };
         } else {
-          currentColors.push(value as string)
-          return { ...prev, [key]: currentColors.join(",") }
+          currentColors.push(value as string);
+          return { ...prev, [key]: currentColors.join(',') };
         }
       }
-      return { ...prev, [key]: value }
-    })
-  }
+      return { ...prev, [key]: value };
+    });
+  };
 
   const applyFilters = () => {
     const filtersWithStrings = Object.fromEntries(
-      Object.entries(pendingFilters).map(([key, value]) => [key, typeof value === 'boolean' ? value.toString() : value])
-    )
-    updateFilters(filtersWithStrings)
-  }
+      Object.entries(pendingFilters).map(([key, value]) => [
+        key,
+        typeof value === 'boolean' ? value.toString() : value,
+      ])
+    );
+    updateFilters(filtersWithStrings);
+  };
+
+  const activeFiltersCount = Object.values(pendingFilters).filter(
+    (value) => value !== null && value !== undefined && value !== ''
+  ).length;
 
   return (
-    <div>
-      <div className="flex w-full justify-between items-center h-32">
+    <div className="mb-6 space-y-4">
+      <div className="flex justify-between items-center">
         <Select
-          value={searchParams.get("sort")?.split("-")[1] || undefined}
+          value={searchParams.get('sort')?.split('-')[1] || undefined}
           onValueChange={(value) => handleSort(value || null)}
         >
-          <SelectTrigger className="w-[100px] rounded-full">
-            <SelectValue placeholder="Sort by" />
+          <SelectTrigger className="w-[180px] rounded-full">
+            <SelectValue placeholder="Ordenar por preço" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="none">No sorting</SelectItem>
-            <SelectItem value="asc">Price: Low to High</SelectItem>
-            <SelectItem value="desc">Price: High to Low</SelectItem>
+            <SelectItem value="none">Sem ordenar</SelectItem>
+            <SelectItem value="asc">Preço: Menor para Maior</SelectItem>
+            <SelectItem value="desc">Preço: Maior para menor</SelectItem>
           </SelectContent>
         </Select>
 
+        <input
+          type="text"
+          placeholder="Procure acompanhantes..."
+          className="w-3/12 rounded-full border-primary border p-2 bg-background"
+          value={searchValue}
+          onChange={handleSearch}
+        />
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" className="rounded-full">
               <Filter className="mr-2 h-4 w-4" />
-              Filters
-              {Object.keys(pendingFilters).length > 0 && (
+              Filtros
+              {activeFiltersCount > 0 && (
                 <Badge variant="secondary" className="ml-2">
-                  {Object.keys(pendingFilters).length}
+                  {activeFiltersCount}
                 </Badge>
               )}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl">
             <DialogHeader className="px-6 py-4 border-b">
-              <div className="flex items-center justify-between">
-                <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
-              </div>
+              <DialogTitle className="text-lg font-semibold">
+                Filtros
+              </DialogTitle>
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
               <div className="space-y-6 p-6">
                 {/* Age Range */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Age Range</h4>
+                  <h4 className="font-medium text-sm">Idade</h4>
                   <DualSlider
-                    value={(pendingFilters.age as number[] | undefined) ?? [18, 60]}
-                    onValueChange={(value) => handlePendingFilter("age", value)}
+                    value={
+                      (pendingFilters.age as number[] | undefined) ?? [18, 60]
+                    }
+                    onValueChange={(value) => handlePendingFilter('age', value)}
                     min={18}
                     max={60}
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{(pendingFilters.age as number[] | undefined)?.[0] ?? 18}</span>
-                    <span>{(pendingFilters.age as number[] | undefined)?.[1] ?? 60}</span>
+                    <span>
+                      {(pendingFilters.age as number[] | undefined)?.[0] ?? 18}
+                    </span>
+                    <span>
+                      {(pendingFilters.age as number[] | undefined)?.[1] ?? 60}
+                    </span>
                   </div>
                 </div>
 
+                {/* Height Range */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm">Altura (cm)</h4>
+                  <DualSlider
+                    value={
+                      (pendingFilters.height as number[] | undefined) ?? [
+                        150, 190,
+                      ]
+                    }
+                    onValueChange={(value) =>
+                      handlePendingFilter('height', value)
+                    }
+                    min={150}
+                    max={190}
+                  />
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>
+                      {(pendingFilters.height as number[] | undefined)?.[0] ??
+                        150}
+                      cm
+                    </span>
+                    <span>
+                      {(pendingFilters.height as number[] | undefined)?.[1] ??
+                        190}
+                      cm
+                    </span>
+                  </div>
+                </div>
+
+                {/* Weight Range */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm">Peso (kg)</h4>
+                  <DualSlider
+                    value={
+                      (pendingFilters.weight as number[] | undefined) ?? [
+                        45, 100,
+                      ]
+                    }
+                    onValueChange={(value) =>
+                      handlePendingFilter('weight', value)
+                    }
+                    min={45}
+                    max={100}
+                  />
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>
+                      {(pendingFilters.weight as number[] | undefined)?.[0] ??
+                        45}
+                      kg
+                    </span>
+                    <span>
+                      {(pendingFilters.weight as number[] | undefined)?.[1] ??
+                        100}
+                      kg
+                    </span>
+                  </div>
+                </div>
                 {/* Characteristics */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Characteristics</h4>
+                  <h4 className="font-medium text-sm">Características</h4>
                   <div className="flex flex-wrap gap-2">
-                    {["Silicone", "Tattoos", "Smoker"].map((char) => (
+                    {['Silicone', 'Tattoos', 'Smoker'].map((char) => (
                       <Badge
                         key={char}
                         variant="outline"
                         className={`cursor-pointer ${
-                          pendingFilters[char.toLowerCase() as keyof FilterTypesCompanions] === "true" ? "bg-primary text-primary-foreground" : ""
+                          pendingFilters[
+                            char.toLowerCase() as keyof FilterTypesCompanions
+                          ] === 'true'
+                            ? 'bg-primary text-primary-foreground'
+                            : ''
                         }`}
                         onClick={() =>
                           handlePendingFilter(
                             char.toLowerCase(),
-                            pendingFilters[char.toLowerCase() as keyof FilterTypesCompanions] === "true" ? null : "true",
+                            pendingFilters[
+                              char.toLowerCase() as keyof FilterTypesCompanions
+                            ] === 'true'
+                              ? null
+                              : 'true'
                           )
                         }
                       >
@@ -189,22 +318,36 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
 
                 {/* Hair Color */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Hair Color</h4>
+                  <h4 className="font-medium text-sm">Cor do Cabelo</h4>
                   <div className="grid grid-cols-3 gap-2">
-                    {["Black", "Blonde", "Brown", "Red", "Other"].map((color) => {
-                      const selectedColors = (pendingFilters.hairColor as string || '').split(',');
-                      const isSelected = selectedColors.includes(color.toLowerCase());
-                      
+                    {[
+                      'Preto',
+                      'Loiro',
+                      'Castanho',
+                      'Vermelho',
+                      'Branco',
+                      'Cinza',
+                      'Colorido',
+                    ].map((color) => {
+                      const selectedColors = (
+                        (pendingFilters.hairColor as string) || ''
+                      ).split(',');
+                      const isSelected = selectedColors.includes(
+                        color.toLowerCase()
+                      );
+
                       return (
                         <Badge
                           key={color}
                           variant="outline"
-                          className={`cursor-pointer text-base ${
-                            isSelected ? "bg-primary text-primary-foreground" : ""
+                          className={`cursor-pointer ${
+                            isSelected
+                              ? 'bg-primary text-primary-foreground'
+                              : ''
                           }`}
                           onClick={() =>
                             handlePendingFilter(
-                              "hairColor",
+                              'hairColor',
                               color.toLowerCase()
                             )
                           }
@@ -217,7 +360,6 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
                 </div>
               </div>
             </ScrollArea>
-            {/* Apply Filters Button */}
             <div className="p-6 border-t">
               <Button onClick={applyFilters} className="w-full">
                 Show results
@@ -226,8 +368,6 @@ export function CompanionFilters({ companions, city, currentFilters }: FilterPro
           </DialogContent>
         </Dialog>
       </div>
-      { isPending ? <CompanionsListSkeleton /> : <CompanionsList companions={companions} />}
     </div>
-  )
+  );
 }
-

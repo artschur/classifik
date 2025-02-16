@@ -1,10 +1,14 @@
 import { Characteristic, City, Companion } from '../db/schema';
 
+export interface Media {
+  publicUrl: string;
+  type?: 'image' | 'video';
+}
+
 export type CompanionFiltered = Pick<
   Companion,
   'id' | 'name' | 'shortDescription' | 'price' | 'age' | 'verified'
 > & {
-  city: string;
   weight: string;
   height: string;
   eyeColor?: string | null;
@@ -14,10 +18,12 @@ export type CompanionFiltered = Pick<
   ethinicity: string;
   piercings: boolean | null;
   smoker: boolean | null;
+  images: (string | Media)[];
 };
 
 export type FilterTypesCompanions = {
   hairColor?: string | null;
+  search?: string;
   price?: string;
   age?: string;
   sort?: string;
@@ -52,6 +58,7 @@ export type CompanionById = Omit<
   tattoos: Characteristic['tattoos'];
   piercings: Characteristic['piercings'];
   smoker: Characteristic['smoker'];
+  images: string[];
 };
 
 export interface Review {

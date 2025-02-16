@@ -5,126 +5,212 @@ import {
   characteristicsTable,
   citiesTable,
   NewCompanion,
-  Companion,
   neighborhoodsTable,
   NewCharacteristic,
+  imagesTable,
 } from '../schema';
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
 import { auth } from '@clerk/nextjs/server';
 import { CompanionFiltered, FilterTypesCompanions } from '../../types/types';
-import { eq, and, gte, lte, desc, asc, SQL } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, asc, SQL, inArray, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
+import { getImagesByAuthId } from './images';
+
 export async function getCompanionsToFilter(
-  city: string,
+  citySlug: string,
+  page: number,
   filters?: FilterTypesCompanions
 ): Promise<CompanionFiltered[]> {
-  const {
-    price,
-    age,
-    sort,
-    silicone,
-    tattoos,
-    hairColor,
-    height,
-    weight,
-    smoker,
-    eyeColor,
-  } = filters || {};
+  const pageSize = 15;
+  const offset = (page - 1) * pageSize;
 
-  // Collect all conditions
-  const conditions: SQL[] = [
-    eq(citiesTable.slug, city),
-    eq(companionsTable.verified, true),
+  const [cityRow] = await db
+    .select({ id: citiesTable.id })
+    .from(citiesTable)
+    .where(eq(citiesTable.slug, citySlug))
+    .limit(1);
+  if (!cityRow) return [];
+
+  const companionConditions: SQL[] = [
+    eq(companionsTable.city_id, cityRow.id),
+    eq(companionsTable.verified, true)
   ];
+  const addCondition = (condition: SQL | undefined) => {
+    if (condition) companionConditions.push(condition);
+  };
 
-  if (price) {
-    const [minPrice, maxPrice] = price.split('-');
-    if (minPrice)
-      conditions.push(gte(companionsTable.price, parseInt(minPrice)));
-    if (maxPrice)
-      conditions.push(lte(companionsTable.price, parseInt(maxPrice)));
+  if (filters?.search) {
+    addCondition(
+      or(
+        sql`LOWER(${companionsTable.name}) LIKE LOWER(${'%' + filters.search + '%'})`
+      )
+    );
   }
 
-  if (age && age !== 'all') {
-    const [minAge, maxAge] = age.split('-');
+  if (filters?.price) {
+    const [minPrice, maxPrice] = filters.price.split('-').map(Number);
+    if (minPrice && maxPrice) {
+      addCondition(
+        and(
+          gte(companionsTable.price, minPrice),
+          lte(companionsTable.price, maxPrice)
+        )
+      );
+    }
+  }
+
+  if (filters?.age) {
+    const [minAge, maxAge] = filters.age.split('-').map(Number);
     if (minAge && maxAge) {
-      conditions.push(
-        gte(companionsTable.age, parseInt(minAge)),
-        lte(companionsTable.age, parseInt(maxAge))
+      addCondition(
+        and(
+          gte(companionsTable.age, minAge),
+          lte(companionsTable.age, maxAge)
+        )
       );
     }
   }
 
-  // Add characteristics table conditions
-  if (hairColor && hairColor !== 'all') {
-    const colors = hairColor.split(',');
-    if (colors.length > 0) {
-      conditions.push(
-        sql`LOWER(${characteristicsTable.hair_color}) IN (${sql.join(
-          colors.map((c) => sql`LOWER(${c})`),
-          sql`, `
-        )})`
+  const sortConditions: SQL[] = [];
+  const addSortCondition = (condition: SQL | undefined) => {
+    if (condition) sortConditions.push(condition);
+  };
+
+  if (filters?.sort) {
+    switch (filters.sort) {
+      case 'price-asc':
+        addSortCondition(asc(companionsTable.price));
+        break;
+      case 'price-desc':
+        addSortCondition(desc(companionsTable.price));
+        break;
+    }
+  }
+
+
+  const characteristicConditions: SQL[] = [];
+  const addCharacteristicCondition = (condition: SQL | undefined) => {
+    if (condition) characteristicConditions.push(condition);
+  };
+
+  if (filters?.height) {
+    const [minHeight, maxHeight] = filters.height.split('-').map(Number);
+    if (minHeight && maxHeight) {
+      addCharacteristicCondition(
+        and(
+          gte(characteristicsTable.height, (minHeight / 100).toString()),
+          lte(characteristicsTable.height, (maxHeight / 100).toString())
+        )
       );
     }
   }
 
-  if (eyeColor && eyeColor !== 'all') {
-    conditions.push(
-      sql`LOWER(${characteristicsTable.eye_color}) = LOWER(${eyeColor})`
+  if (filters?.weight) {
+    const [minWeight, maxWeight] = filters.weight.split('-').map(Number);
+    if (minWeight && maxWeight) {
+      addCharacteristicCondition(
+        and(
+          gte(characteristicsTable.weight, minWeight.toString()),
+          lte(characteristicsTable.weight, maxWeight.toString())
+        )
+      );
+    }
+  }
+
+  if (filters?.hairColor) {
+    const hairColors = filters.hairColor
+      .split(',')
+      .map((color) => color.trim().toLowerCase());
+    addCharacteristicCondition(
+      inArray(
+        sql`LOWER(${characteristicsTable.hair_color})`,
+        hairColors
+      )
     );
   }
 
-  if (silicone) {
-    conditions.push(
-      sql`${characteristicsTable.silicone} = ${Boolean(silicone)}`
-    );
+  if (filters?.silicone) {
+    addCharacteristicCondition(eq(characteristicsTable.silicone, true));
+  }
+  if (filters?.tattoos) {
+    addCharacteristicCondition(eq(characteristicsTable.tattoos, true));
+  }
+  if (filters?.smoker) {
+    addCharacteristicCondition(eq(characteristicsTable.smoker, true));
   }
 
-  if (tattoos) {
-    conditions.push(eq(characteristicsTable.tattoos, tattoos === true));
-  }
+  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
 
-  if (smoker && smoker !== 'all') {
-    conditions.push(eq(characteristicsTable.smoker, smoker === 'true'));
-  }
-
-  const query = db
+  let query = db
     .select({
-      id: companionsTable.id,
-      name: companionsTable.name,
-      shortDescription: companionsTable.shortDescription,
-      price: companionsTable.price,
-      age: companionsTable.age,
-      city: citiesTable.city,
-      ethinicity: characteristicsTable.ethnicity,
-      weight: characteristicsTable.weight,
-      height: characteristicsTable.height,
-      eyeColor: characteristicsTable.eye_color,
-      hairColor: characteristicsTable.hair_color,
-      silicone: characteristicsTable.silicone,
-      tattoos: characteristicsTable.tattoos,
-      piercings: characteristicsTable.piercings,
-      smoker: characteristicsTable.smoker,
-      verified: companionsTable.verified,
+      companion: {
+        id: companionsTable.id,
+        name: companionsTable.name,
+        shortDescription: companionsTable.shortDescription,
+        price: companionsTable.price,
+        age: companionsTable.age,
+        verified: companionsTable.verified,
+      },
+      city: {
+        name: citiesTable.city,
+      },
+      characteristics: {
+        weight: characteristicsTable.weight,
+        height: characteristicsTable.height,
+        ethnicity: characteristicsTable.ethnicity,
+        eye_color: characteristicsTable.eye_color,
+        hair_color: characteristicsTable.hair_color,
+        silicone: characteristicsTable.silicone,
+        tattoos: characteristicsTable.tattoos,
+        piercings: characteristicsTable.piercings,
+        smoker: characteristicsTable.smoker,
+      },
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(
-      characteristicsTable,
-      eq(characteristicsTable.companion_id, companionsTable.id)
-    )
-    .where(and(...conditions))
-    .orderBy(
-      sort
-        ? sort.split('-')[1] === 'asc'
-          ? asc(companionsTable[sort.split('-')[0] as 'price' | 'age'])
-          : desc(companionsTable[sort.split('-')[0] as 'price' | 'age'])
-        : asc(companionsTable.id)
-    );
+    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .where(and(...allConditions))
+    .orderBy(...sortConditions);
 
-  return await query;
+  const results = await query.limit(pageSize).offset(offset);
+  if (results.length === 0) return [];
+
+  const companionIds = results.map(r => r.companion.id);
+
+  const imagesPromise = db
+    .select({
+      companionId: imagesTable.companionId,
+      public_url: imagesTable.public_url,
+    })
+    .from(imagesTable)
+    .where(inArray(imagesTable.companionId, companionIds));
+
+  const [images] = await Promise.all([imagesPromise]);
+
+  const imagesMap = images.reduce((acc, img) => {
+    if (!acc.has(img.companionId.toString())) {
+      acc.set(img.companionId.toString(), []);
+    }
+    acc.get(img.companionId.toString())!.push(img.public_url);
+    return acc;
+  }, new Map<string, string[]>());
+
+  return results.map(({ companion, city, characteristics }) => ({
+    ...companion,
+    city: city.name,
+    weight: characteristics.weight,
+    height: characteristics.height,
+    eyeColor: characteristics.eye_color,
+    hairColor: characteristics.hair_color,
+    silicone: characteristics.silicone,
+    tattoos: characteristics.tattoos,
+    piercings: characteristics.piercings,
+    smoker: characteristics.smoker,
+    ethinicity: characteristics.ethnicity,
+    images: imagesMap.get(String(companion.id)) || [],
+  }));
 }
 
 export async function registerCompanion(
@@ -211,7 +297,8 @@ export async function registerCompanion(
 export async function getCompanionByClerkId(
   clerkId: string
 ): Promise<CompanionFiltered> {
-  const companion = await db
+
+  const query = db
     .select({
       id: companionsTable.id,
       name: companionsTable.name,
@@ -238,12 +325,23 @@ export async function getCompanionByClerkId(
       eq(characteristicsTable.companion_id, companionsTable.id)
     )
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id));
-  return companion[0];
+
+  const [response, images] = await Promise.all([
+    query,
+    getImagesByAuthId(clerkId),
+  ]);
+
+  const imageUrls = (images as { publicUrl: string; }[]).map((image) => image.publicUrl);
+
+  return {
+    ...response[0],
+    images: imageUrls,
+  };
 }
 
 export async function getCompanionToEdit(
   clerkId: string
-): Promise<(RegisterCompanionFormValues & { id: number }) | null> {
+): Promise<(RegisterCompanionFormValues & { id: number; }) | null> {
   const [row] = await db
     .select({
       // Page one fields
@@ -380,7 +478,7 @@ export async function updateCompanionFromForm(
 }
 
 export async function getUnverifiedCompanions(): Promise<
-  (RegisterCompanionFormValues & { id: number; cityName: string })[]
+  (RegisterCompanionFormValues & { id: number; cityName: string; })[]
 > {
   const rows = await db
     .select({
@@ -475,4 +573,14 @@ export async function rejectCompanion(id: number) {
   });
 
   return { success: true, id };
+}
+
+export async function getCompanionIdByClerkId(id: string): Promise<number> {
+  const companion = await db
+    .select({ id: companionsTable.id })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, id))
+    .limit(1);
+
+  return companion[0].id;
 }

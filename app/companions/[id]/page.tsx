@@ -1,28 +1,21 @@
-import CompanionReviews from "@/components/companionReviews";
-import { Suspense } from "react";
-import { ReviewsSkeleton } from "@/components/skeletons/skeletonReview";
-import SingleCompanionComponent from "@/components/singleCompanion";
-import { CompanionSkeleton } from "@/components/skeletons/skeletonSingleCompanion";
-import { getCompanionById } from "@/db/queries";
-import { CompanionById } from "@/types/types";
-import { getReviewsByCompanionId } from "@/db/queries";
-import { Review } from "@/db/schema";
+import { Suspense } from 'react';
+import { ReviewsSkeleton } from '@/components/skeletons/skeletonReview';
+import CompanionReviews from '@/components/companionReviews';
+import { CompanionProfile, CompanionSkeleton } from '@/components/CompanionProfile';
 
+export default async function CompanionPage({ params } : {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params;
 
-export default async function SingleCompanionPage(params: { params: Promise<{ id: string; }>; }) {
-    const { id } = await (await params).params;
-    const companion: CompanionById = await getCompanionById(parseInt(id));
-    const reviews: Review[] = await getReviewsByCompanionId(parseInt(id));
-    const countReviews: number = reviews.length;
-    return (
-        <div className="container mx-auto md:px-0">
-            <Suspense fallback={<CompanionSkeleton />}>
-                <SingleCompanionComponent companion={companion} countReviews={countReviews} />
-            </Suspense>
-            <Suspense fallback={<ReviewsSkeleton />}>
-                <CompanionReviews reviews={reviews} companionName={companion.name} />
-            </Suspense>
-        </div>
-    );
+  return (
+    <div className="flex flex-col gap-8">
+      <Suspense fallback={<CompanionSkeleton />}>
+        <CompanionProfile id={parseInt(id)} />
+      </Suspense>
+      <Suspense fallback={<ReviewsSkeleton />}>
+        <CompanionReviews id={parseInt(id)} />
+      </Suspense>
+    </div>
+  );
 }
-
