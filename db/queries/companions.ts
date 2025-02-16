@@ -73,17 +73,17 @@ export async function getCompanionsToFilter(
     }
   }
 
-  const sortConditions : SQL[] = [];
+  const sortConditions: SQL[] = [];
   const addSortCondition = (condition: SQL | undefined) => {
     if (condition) sortConditions.push(condition);
-  }
+  };
 
   if (filters?.sort) {
     switch (filters.sort) {
-      case 'price-asc': 
+      case 'price-asc':
         addSortCondition(asc(companionsTable.price));
         break;
-      case 'price-desc': 
+      case 'price-desc':
         addSortCondition(desc(companionsTable.price));
         break;
     }
@@ -326,22 +326,22 @@ export async function getCompanionByClerkId(
     )
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id));
 
-    const [response, images] = await Promise.all([
-      query,
-      getImagesByAuthId(clerkId),
-    ]);
+  const [response, images] = await Promise.all([
+    query,
+    getImagesByAuthId(clerkId),
+  ]);
 
-    const imageUrls = (images as { publicUrl: string }[]).map((image) => image.publicUrl);
+  const imageUrls = (images as { publicUrl: string; }[]).map((image) => image.publicUrl);
 
-    return {
-      ...response[0],
-      images: imageUrls,
-    };
+  return {
+    ...response[0],
+    images: imageUrls,
+  };
 }
 
 export async function getCompanionToEdit(
   clerkId: string
-): Promise<(RegisterCompanionFormValues & { id: number }) | null> {
+): Promise<(RegisterCompanionFormValues & { id: number; }) | null> {
   const [row] = await db
     .select({
       // Page one fields
@@ -478,7 +478,7 @@ export async function updateCompanionFromForm(
 }
 
 export async function getUnverifiedCompanions(): Promise<
-  (RegisterCompanionFormValues & { id: number; cityName: string })[]
+  (RegisterCompanionFormValues & { id: number; cityName: string; })[]
 > {
   const rows = await db
     .select({
@@ -575,7 +575,7 @@ export async function rejectCompanion(id: number) {
   return { success: true, id };
 }
 
-export async function getCompanionIdByClerkId(id: string) : Promise<number> {
+export async function getCompanionIdByClerkId(id: string): Promise<number> {
   const companion = await db
     .select({ id: companionsTable.id })
     .from(companionsTable)
