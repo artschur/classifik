@@ -45,7 +45,11 @@ import { useToast } from '@/hooks/use-toast'; // Import at the correct path
 import { useUser } from '@clerk/nextjs';
 import { MultiSelect } from './multi-select';
 import { FileUpload } from '@/components/ui/file-upload';
-import { uploadImage, getImagesByAuthId, deleteImage } from '@/db/queries/images';
+import {
+  uploadImage,
+  getImagesByAuthId,
+  deleteImage,
+} from '@/db/queries/images';
 import Image from 'next/image';
 import { useState } from 'react';
 import {
@@ -58,8 +62,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 
 const pageOneSchema = z.object({
   // Companion Info
@@ -138,7 +142,9 @@ export function RegisterCompanionForm({
 }: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState('');
-  const [images, setImages] = React.useState<{ publicUrl: string }[]>([]);
+  const [images, setImages] = React.useState<
+    { publicUrl: string; storagePath: string }[]
+  >([]);
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -262,12 +268,11 @@ export function RegisterCompanionForm({
   const handleFileUpload = async (files: File[]) => {
     if (!files.length) return;
     setUploadStatus('Uploading files...');
-    
+
     try {
-      // Use Promise.all to upload all files in parallel
-      const results = await Promise.all(files.map(file => uploadImage(file)));
-      
-      const errors = results.filter(r => r.error);
+      const results = await Promise.all(files.map((file) => uploadImage(file)));
+
+      const errors = results.filter((r) => r.error);
       if (errors.length > 0) {
         setUploadStatus(`Upload failed for ${errors.length} files`);
         toast({
@@ -292,20 +297,21 @@ export function RegisterCompanionForm({
     } catch (error) {
       toast({
         title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        description:
+          error instanceof Error ? error.message : 'Something went wrong',
         variant: 'destructive',
       });
       setUploadStatus('');
     }
   };
 
-  const toggleImageSelection = (publicUrl: string) => {
-    setSelectedImages(prev => {
+  const toggleImageSelection = (storagePath: string) => {
+    setSelectedImages((prev) => {
       const newSelection = new Set(prev);
-      if (newSelection.has(publicUrl)) {
-        newSelection.delete(publicUrl);
+      if (newSelection.has(storagePath)) {
+        newSelection.delete(storagePath);
       } else {
-        newSelection.add(publicUrl);
+        newSelection.add(storagePath);
       }
       return newSelection;
     });
@@ -314,15 +320,18 @@ export function RegisterCompanionForm({
   const handleDeleteSelected = async () => {
     if (selectedImages.size === 0) return;
 
-    // Optimistically remove selected images
     const imagesToDelete = Array.from(selectedImages);
-    setImages(prev => prev.filter(img => !selectedImages.has(img.publicUrl)));
+    // Filter using storagePath
+    setImages((prev) =>
+      prev.filter((img) => !selectedImages.has(img.storagePath))
+    );
     setSelectedImages(new Set());
     setIsDeleting(true);
 
     try {
-      // Delete images in parallel
-      await Promise.all(imagesToDelete.map(url => deleteImage(url)));
+      await Promise.all(
+        imagesToDelete.map((storagePath) => deleteImage(storagePath))
+      );
       toast({
         title: 'Images deleted',
         description: `Successfully deleted ${imagesToDelete.length} images`,
@@ -336,7 +345,8 @@ export function RegisterCompanionForm({
       }
       toast({
         title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        description:
+          error instanceof Error ? error.message : 'Something went wrong',
         variant: 'destructive',
       });
     } finally {
@@ -344,26 +354,26 @@ export function RegisterCompanionForm({
     }
   };
 
-  const handleDeleteImage = async (publicUrl: string) => {
+  const handleDeleteImage = async (storagePath: string) => {
     // Optimistically remove the image
-    setImages(prev => prev.filter(img => img.publicUrl !== publicUrl));
+    setImages((prev) => prev.filter((img) => img.storagePath !== storagePath));
 
     try {
-      await deleteImage(publicUrl);
+      await deleteImage(storagePath);
       toast({
         title: 'Image deleted',
         description: 'Your image has been deleted successfully',
         variant: 'success',
       });
     } catch (error) {
-      // On error, restore the images
       if (isLoaded && user?.id) {
         const newImages = await getImagesByAuthId(user.id);
         setImages(newImages);
       }
       toast({
         title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        description:
+          error instanceof Error ? error.message : 'Something went wrong',
         variant: 'destructive',
       });
     }
@@ -784,7 +794,7 @@ export function RegisterCompanionForm({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="Loiro">Loiro</SelectItem>
-                            <SelectItem value="Marrom">Castanho</SelectItem>
+                            <SelectItem value="Castanho">Castanho</SelectItem>
                             <SelectItem value="Preto">Preto</SelectItem>
                             <SelectItem value="Vermelho">Vermelho</SelectItem>
                             <SelectItem value="Cinza">Cinza</SelectItem>
@@ -1018,21 +1028,26 @@ export function RegisterCompanionForm({
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Suas Fotos</h3>
                 <p className="text-sm text-neutral-500">
-                  Adicione fotos suas para que os clientes possam te conhecer melhor.
+                  Adicione fotos suas para que os clientes possam te conhecer
+                  melhor.
                 </p>
-                
+
                 {images.length > 0 && (
                   <>
                     <div className="flex justify-between items-center mb-4">
                       <p className="text-sm">
-
-                        {selectedImages.size === 0 ? null : selectedImages.size} {selectedImages.size === 0 ? null :  selectedImages.size === 1 ? 'imagem selecionada' : 'imagens selecionadas'}
+                        {selectedImages.size === 0 ? null : selectedImages.size}{' '}
+                        {selectedImages.size === 0
+                          ? null
+                          : selectedImages.size === 1
+                          ? 'imagem selecionada'
+                          : 'imagens selecionadas'}
                       </p>
                       {selectedImages.size > 0 && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="destructive" 
+                            <Button
+                              variant="destructive"
                               size="sm"
                               disabled={isDeleting}
                             >
@@ -1048,16 +1063,21 @@ export function RegisterCompanionForm({
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Você tem certeza?
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Essa ação não pode ser desfeita. {selectedImages.size} {selectedImages.size === 1 ? 'imagem será' : 'imagens serão'} permanentemente removidas.
+                                Essa ação não pode ser desfeita.{' '}
+                                {selectedImages.size}{' '}
+                                {selectedImages.size === 1
+                                  ? 'imagem será'
+                                  : 'imagens serão'}{' '}
+                                permanentemente removidas.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={handleDeleteSelected}
-                              >
+                              <AlertDialogAction onClick={handleDeleteSelected}>
                                 Deletar
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -1067,13 +1087,16 @@ export function RegisterCompanionForm({
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {images.map((image, index) => (
-                        <div 
-                          key={index} 
+                        <div
+                          key={index}
                           className={cn(
-                            "relative aspect-square group cursor-pointer",
-                            selectedImages.has(image.publicUrl) && "ring-2 ring-primary ring-offset-2"
+                            'relative aspect-square group cursor-pointer',
+                            selectedImages.has(image.storagePath) &&
+                              'ring-2 ring-primary ring-offset-2'
                           )}
-                          onClick={() => toggleImageSelection(image.publicUrl)}
+                          onClick={() =>
+                            toggleImageSelection(image.storagePath)
+                          }
                         >
                           <Image
                             src={image.publicUrl}
@@ -1081,10 +1104,12 @@ export function RegisterCompanionForm({
                             fill
                             className="object-cover rounded-md"
                           />
-                          <div 
+                          <div
                             className={cn(
-                              "absolute inset-0 bg-black/40 transition-opacity",
-                              selectedImages.has(image.publicUrl) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                              'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                              selectedImages.has(image.storagePath)
+                                ? 'bg-primary border-primary'
+                                : 'border-white'
                             )}
                           >
                             <div className="absolute top-2 right-2">
@@ -1093,7 +1118,7 @@ export function RegisterCompanionForm({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setImageToDelete(image.publicUrl);
+                                      setImageToDelete(image.storagePath);
                                     }}
                                     className="p-1 bg-red-500 rounded-full"
                                   >
@@ -1102,13 +1127,18 @@ export function RegisterCompanionForm({
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                    <AlertDialogTitle>
+                                      Você tem certeza?
+                                    </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Essa ação não pode ser desfeita. A imagem será permanentemente removida.
+                                      Essa ação não pode ser desfeita. A imagem
+                                      será permanentemente removida.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                                    <AlertDialogCancel
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
                                       Cancelar
                                     </AlertDialogCancel>
                                     <AlertDialogAction
@@ -1127,15 +1157,15 @@ export function RegisterCompanionForm({
                               </AlertDialog>
                             </div>
                             <div className="absolute top-2 left-2">
-                              <div 
+                              <div
                                 className={cn(
-                                  "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                                  selectedImages.has(image.publicUrl) 
-                                    ? "bg-primary border-primary" 
-                                    : "border-white"
+                                  'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                                  selectedImages.has(image.publicUrl)
+                                    ? 'bg-primary border-primary'
+                                    : 'border-white'
                                 )}
                               >
-                                {selectedImages.has(image.publicUrl) && (
+                                {selectedImages.has(image.storagePath) && (
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24"
@@ -1157,9 +1187,11 @@ export function RegisterCompanionForm({
                     </div>
                   </>
                 )}
-                
+
                 <FileUpload onChange={handleFileUpload} />
-                {uploadStatus && <p className="text-sm text-red-500">{uploadStatus}</p>}
+                {uploadStatus && (
+                  <p className="text-sm text-red-500">{uploadStatus}</p>
+                )}
               </div>
             )}
           </CardContent>
@@ -1175,7 +1207,9 @@ export function RegisterCompanionForm({
             )}
             {currentPage < formSections.length - 1 && (
               <Button type="button" onClick={handleNextPage}>
-                {currentPage === formSections.length - 2 ? 'Adicionar Fotos' : 'Próximo'}
+                {currentPage === formSections.length - 2
+                  ? 'Adicionar Fotos'
+                  : 'Próximo'}
               </Button>
             )}
             {currentPage === formSections.length - 1 && (

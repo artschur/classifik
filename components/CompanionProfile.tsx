@@ -24,7 +24,6 @@ import {
   Cigarette,
 } from 'lucide-react';
 import { ImageGrid } from '@/components/imageGrid';
-import { IconCalendarClock, IconClock } from '@tabler/icons-react';
 
 export async function CompanionProfile({ id }: { id: number }) {
   const companion = await getCompanionById(id);

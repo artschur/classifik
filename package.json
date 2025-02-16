@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.10.0",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-avatar": "^1.1.2",
@@ -27,6 +30,7 @@
     "@radix-ui/react-toast": "^1.2.5",
     "@supabase/supabase-js": "^2.48.1",
     "@tabler/icons-react": "^3.30.0",
+    "@types/fluent-ffmpeg": "^2.1.27",
     "@vercel/analytics": "^1.4.1",
     "@vercel/speed-insights": "^1.1.0",
     "add": "^2.0.6",
@@ -39,6 +43,8 @@
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.4",
     "embla-carousel-react": "^8.5.2",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.3",
     "lucide-react": "^0.474.0",
     "motion": "^12.4.2",
     "next": "15.1.6",
@@ -55,6 +61,7 @@
     "supabase": "^2.12.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "webp-converter": "^2.3.3",
     "zod": "^3.24.1"
   },
   "devDependencies": {
