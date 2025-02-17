@@ -342,7 +342,8 @@ export async function getCompanionByClerkId(
 export async function getCompanionToEdit(
   clerkId: string
 ): Promise<(RegisterCompanionFormValues & { companionId: number; }) | null> {
-  const [row] = await db
+  // Fetch companion base data
+  const [companion] = await db
     .select({
       companionId: companionsTable.id,
       name: companionsTable.name,
@@ -354,37 +355,57 @@ export async function getCompanionToEdit(
       gender: companionsTable.gender,
       gender_identity: companionsTable.gender_identity,
       languages: companionsTable.languages,
-
-      weight: characteristicsTable.weight,
-      height: characteristicsTable.height,
-      ethnicity: characteristicsTable.ethnicity,
-      eye_color: characteristicsTable.eye_color,
-      hair_color: characteristicsTable.hair_color,
-      hair_length: characteristicsTable.hair_length,
-      shoe_size: characteristicsTable.shoe_size,
-      silicone: characteristicsTable.silicone,
-      tattoos: characteristicsTable.tattoos,
-      piercings: characteristicsTable.piercings,
-      smoker: characteristicsTable.smoker,
-
-      // Page three fields
       city: companionsTable.city_id,
-      state: citiesTable.state,
-      country: citiesTable.country,
-      neighborhood: neighborhoodsTable.neighborhood,
     })
     .from(companionsTable)
-    .innerJoin(
-      characteristicsTable,
-      eq(characteristicsTable.companion_id, companionsTable.id)
-    )
-    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .leftJoin(
-      neighborhoodsTable,
-      eq(neighborhoodsTable.id, companionsTable.neighborhood_id)
-    )
     .where(eq(companionsTable.auth_id, clerkId))
     .limit(1);
+
+  if (!companion) return null;
+
+  const [characteristics, cityInfo, neighborhood] = await Promise.all([
+    db
+      .select({
+        weight: characteristicsTable.weight,
+        height: characteristicsTable.height,
+        ethnicity: characteristicsTable.ethnicity,
+        eye_color: characteristicsTable.eye_color,
+        hair_color: characteristicsTable.hair_color,
+        hair_length: characteristicsTable.hair_length,
+        shoe_size: characteristicsTable.shoe_size,
+        silicone: characteristicsTable.silicone,
+        tattoos: characteristicsTable.tattoos,
+        piercings: characteristicsTable.piercings,
+        smoker: characteristicsTable.smoker,
+      })
+      .from(characteristicsTable)
+      .where(eq(characteristicsTable.companion_id, companion.companionId))
+      .limit(1),
+
+    db
+      .select({
+        state: citiesTable.state,
+        country: citiesTable.country,
+      })
+      .from(citiesTable)
+      .where(eq(citiesTable.id, companion.city))
+      .limit(1),
+
+    db
+      .select({
+        neighborhood: neighborhoodsTable.neighborhood,
+      })
+      .from(neighborhoodsTable)
+      .where(eq(neighborhoodsTable.id, companion.companionId))
+      .limit(1),
+  ]);
+
+  const row = {
+    ...companion,
+    ...characteristics[0],
+    ...cityInfo[0],
+    ...neighborhood[0],
+  };
 
   if (!row) {
     return null;

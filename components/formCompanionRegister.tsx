@@ -145,6 +145,7 @@ export function RegisterCompanionForm({
 }: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState('');
+  const [isRegistering, setIsRegistering] = React.useState(false);
   const [images, setImages] = React.useState<
     { publicUrl: string; storagePath: string }[]
   >([]);
@@ -168,7 +169,6 @@ export function RegisterCompanionForm({
 
   const validateCurrentPage = async () => {
     const values = form.getValues();
-
     companionData ? setCompanionId(companionData?.companionId) : null;
 
     try {
@@ -193,6 +193,7 @@ export function RegisterCompanionForm({
     const isValid = await validateCurrentPage();
     if (isValid) {
       if (currentPage === 2 && !companionData) {
+        setIsRegistering(true);
         const formData = form.getValues();
         try {
           const companion = await registerCompanion(formData);
@@ -213,6 +214,8 @@ export function RegisterCompanionForm({
               error instanceof Error ? error.message : 'Algo deu errado',
           });
           return;
+        } finally {
+          setIsRegistering(false);
         }
       } else {
         setCurrentPage((prev) => prev + 1);
@@ -257,16 +260,16 @@ export function RegisterCompanionForm({
         phoneNumber: '',
         description: '',
         price: 0,
-        age: 0,
+        age: 18,
         gender: '',
         gender_identity: '',
-        languages: [],
+        languages: ['Português'],
         weight: 60,
         height: 1.6,
-        ethnicity: '',
-        eye_color: '',
-        hair_color: '',
-        hair_length: '',
+        ethnicity: 'Branco',
+        eye_color: 'Castanho',
+        hair_color: 'Castanho',
+        hair_length: 'Médio',
         shoe_size: 36,
         silicone: false,
         tattoos: false,
@@ -290,22 +293,20 @@ export function RegisterCompanionForm({
 
   React.useEffect(() => {
     if (companionData && isLoaded && user?.id) {
-      // Load images in parallel when editing
       getImagesByAuthId(user.id).then(setImages);
     }
   }, [companionData, isLoaded, user?.id]);
 
-  // Add state for companionId
   const [companionId, setCompanionId] = React.useState<number | null>(null);
 
-  // Modify handleFileUpload to use companionId
   const handleFileUpload = async (files: File[]) => {
-    console.log(companionId);
     if (!files.length) return;
     setUploadStatus('Enviando arquivos...');
 
     try {
-      console.log('enviando imagem');
+      if (!companionId) {
+        throw new Error('Companion ID not found');
+      }
       const results = await Promise.all(
         files.map((file) => uploadImage(file, companionId))
       );
@@ -326,7 +327,6 @@ export function RegisterCompanionForm({
         });
       }
 
-      // Refresh images list once after all uploads
       if (isLoaded && user?.id) {
         const newImages = await getImagesByAuthId(user.id);
         setImages(newImages);
@@ -416,19 +416,20 @@ export function RegisterCompanionForm({
     }
   };
 
-  // Modify the submit handler to only handle updates
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
     if (!companionData) {
-      // For new registrations, we now handle this in handleNextPage
-      return;
+      toast({
+        variant: 'success',
+        title: 'Perfil criado com sucesso',
+        description: 'Seja bem vindo(a) à nossa plataforma.',
+      });
+      router.push('/');
     }
-
     try {
       const clerkId = user?.id;
       if (!clerkId) {
         throw new Error('User ID not found');
       }
-
       await updateCompanionFromForm(clerkId, data);
       toast({
         variant: 'success',
@@ -983,6 +984,12 @@ export function RegisterCompanionForm({
             {currentPage === 2 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Localização</h3>
+                {isRegistering && (
+                  <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <p className="text-sm text-muted-foreground">Registrando seu perfil...</p>
+                  </div>
+                )}
                 <FormField
                   control={form.control}
                   name="city"
@@ -1127,12 +1134,23 @@ export function RegisterCompanionForm({
                             toggleImageSelection(image.storagePath)
                           }
                         >
-                          <Image
-                            src={image.publicUrl}
-                            alt={`Image ${index + 1}`}
-                            fill
-                            className="object-cover rounded-md"
-                          />
+                          {image.publicUrl.includes('.mp4') ? (
+                            <video
+                              src={image.publicUrl}
+                              className="w-full h-full object-cover rounded-md"
+                              controls
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <Image
+                              src={image.publicUrl}
+                              alt={`Media ${index + 1}`}
+                              fill
+                              className="object-cover rounded-md"
+                            />
+                          )}
                           <div
                             className={cn(
                               'w-5 h-5 rounded-full border-2 flex items-center justify-center',
@@ -1160,8 +1178,8 @@ export function RegisterCompanionForm({
                                       Você tem certeza?
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Essa ação não pode ser desfeita. A imagem
-                                      será permanentemente removida.
+                                      Essa ação não pode ser desfeita. O arquivo
+                                      será permanentemente removido.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -1230,27 +1248,44 @@ export function RegisterCompanionForm({
                 type="button"
                 variant="outline"
                 onClick={handlePreviousPage}
+                disabled={isRegistering}
               >
                 Anterior
               </Button>
             )}
             {currentPage < formSections.length - 1 && (
-              <Button type="button" onClick={handleNextPage}>
-                {currentPage === 2 ? 'Adicionar Fotos' : 'Próximo'}
+              <Button
+                type="button"
+                onClick={handleNextPage}
+                disabled={isRegistering || form.formState.isSubmitting}
+              >
+                {currentPage === 2 && isRegistering ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Registrando perfil...
+                  </>
+                ) : currentPage === 2 ? (
+                  'Adicionar Fotos'
+                ) : (
+                  'Próximo'
+                )}
               </Button>
             )}
             {currentPage === formSections.length - 1 && (
-              <Button
-                type="button"
-                onClick={() => {
-                  toast({
-                    title: 'Registro completo',
-                    description: 'Seu perfil foi criado com sucesso!',
-                  });
-                  router.push('/');
-                }}
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting || isRegistering}
               >
-                Finalizar
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {companionData ? 'Atualizando...' : 'Registrando...'}
+                  </>
+                ) : companionData ? (
+                  'Atualizar'
+                ) : (
+                  'Registrar'
+                )}
               </Button>
             )}
           </CardFooter>
