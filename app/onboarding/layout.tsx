@@ -11,7 +11,7 @@ export default async function RootLayout({
     sessionClaims?.metadata?.onboardingComplete === true &&
     sessionClaims?.metadata?.isCompanion === true
   ) {
-    redirect('/register');
+    redirect('/companions/register');
   }
 
   if (

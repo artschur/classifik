@@ -4,15 +4,6 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 export async function handleOnboard({ isCompanion }: { isCompanion: boolean }) {
-  console.log('isCompanion', isCompanion);
-
-  if (isCompanion) {
-    redirect('/register');
-  }
-  redirect('/location');
-}
-
-export const completeOnboarding = async (formData: FormData) => {
   const client = await clerkClient();
   const { userId } = await auth();
 
@@ -24,13 +15,14 @@ export const completeOnboarding = async (formData: FormData) => {
     await client.users.updateUser(userId, {
       publicMetadata: {
         onboardingComplete: true,
-        applicationName: formData.get('applicationName'),
-        applicationType: formData.get('applicationType'),
+        isCompanion: isCompanion,
       },
     });
     return { message: 'User metadata Updated' };
   } catch (e) {
     console.log('error', e);
     return { message: 'Error Updating User Metadata' };
+  } finally {
+    isCompanion ? redirect('/companions/register') : redirect('/location');
   }
-};
+}
