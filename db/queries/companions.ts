@@ -341,11 +341,10 @@ export async function getCompanionByClerkId(
 
 export async function getCompanionToEdit(
   clerkId: string
-): Promise<(RegisterCompanionFormValues & { id: number; }) | null> {
+): Promise<(RegisterCompanionFormValues & { companionId: number; }) | null> {
   const [row] = await db
     .select({
-      // Page one fields
-      id: companionsTable.id,
+      companionId: companionsTable.id,
       name: companionsTable.name,
       shortDescription: companionsTable.shortDescription,
       phoneNumber: companionsTable.phone,
@@ -356,7 +355,6 @@ export async function getCompanionToEdit(
       gender_identity: companionsTable.gender_identity,
       languages: companionsTable.languages,
 
-      // Page two fields
       weight: characteristicsTable.weight,
       height: characteristicsTable.height,
       ethnicity: characteristicsTable.ethnicity,
@@ -391,9 +389,8 @@ export async function getCompanionToEdit(
   if (!row) {
     return null;
   }
-  // Return the row in the shape of RegisterCompanionFormValues
   return {
-    id: row.id,
+    companionId: row.companionId,
     name: row.name ?? '',
     shortDescription: row.shortDescription ?? '',
     phoneNumber:

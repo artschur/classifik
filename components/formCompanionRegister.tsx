@@ -133,7 +133,10 @@ const formSections = [
 
 interface RegisterCompanionFormProps {
   cities: City[];
-  companionData?: RegisterCompanionFormValues | null | undefined; // Optional companion data for editing
+  companionData?:
+    | (RegisterCompanionFormValues & { companionId: number })
+    | null
+    | undefined; // Optional companion data for editing
 }
 
 export function RegisterCompanionForm({
@@ -165,6 +168,9 @@ export function RegisterCompanionForm({
 
   const validateCurrentPage = async () => {
     const values = form.getValues();
+
+    companionData ? setCompanionId(companionData?.companionId) : null;
+
     try {
       if (currentPage === 0) {
         await pageOneSchema.parseAsync(values);
@@ -186,8 +192,32 @@ export function RegisterCompanionForm({
   const handleNextPage = async () => {
     const isValid = await validateCurrentPage();
     if (isValid) {
-      setCurrentPage((prev) => prev + 1);
-      scrollToTop();
+      if (currentPage === 2 && !companionData) {
+        const formData = form.getValues();
+        try {
+          const companion = await registerCompanion(formData);
+          toast({
+            variant: 'success',
+            title: 'Perfil criado',
+            description: `Hey ${formData.name}! Agora vamos adicionar suas fotos.`,
+          });
+          // Store the companion ID for image uploads
+          setCompanionId(companion.id);
+          setCurrentPage(3);
+          scrollToTop();
+        } catch (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Falha no registro',
+            description:
+              error instanceof Error ? error.message : 'Algo deu errado',
+          });
+          return;
+        }
+      } else {
+        setCurrentPage((prev) => prev + 1);
+        scrollToTop();
+      }
     } else {
       form.trigger();
     }
@@ -265,25 +295,33 @@ export function RegisterCompanionForm({
     }
   }, [companionData, isLoaded, user?.id]);
 
+  // Add state for companionId
+  const [companionId, setCompanionId] = React.useState<number | null>(null);
+
+  // Modify handleFileUpload to use companionId
   const handleFileUpload = async (files: File[]) => {
+    console.log(companionId);
     if (!files.length) return;
-    setUploadStatus('Uploading files...');
+    setUploadStatus('Enviando arquivos...');
 
     try {
-      const results = await Promise.all(files.map((file) => uploadImage(file)));
+      console.log('enviando imagem');
+      const results = await Promise.all(
+        files.map((file) => uploadImage(file, companionId))
+      );
 
       const errors = results.filter((r) => r.error);
       if (errors.length > 0) {
-        setUploadStatus(`Upload failed for ${errors.length} files`);
+        setUploadStatus(`Falha ao enviar ${errors.length} arquivos`);
         toast({
-          title: 'Upload failed',
-          description: `Failed to upload ${errors.length} files`,
+          title: 'Falha no upload',
+          description: `Falha ao enviar ${errors.length} arquivos`,
           variant: 'destructive',
         });
       } else {
         toast({
-          title: 'Images uploaded',
-          description: `Successfully uploaded ${files.length} images`,
+          title: 'Imagens enviadas',
+          description: `${files.length} imagens enviadas com sucesso`,
           variant: 'success',
         });
       }
@@ -296,9 +334,8 @@ export function RegisterCompanionForm({
       setUploadStatus('');
     } catch (error) {
       toast({
-        title: 'Upload failed',
-        description:
-          error instanceof Error ? error.message : 'Something went wrong',
+        title: 'Falha no upload',
+        description: error instanceof Error ? error.message : 'Algo deu errado',
         variant: 'destructive',
       });
       setUploadStatus('');
@@ -379,41 +416,33 @@ export function RegisterCompanionForm({
     }
   };
 
+  // Modify the submit handler to only handle updates
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
+    if (!companionData) {
+      // For new registrations, we now handle this in handleNextPage
+      return;
+    }
+
     try {
-      if (companionData) {
-        const clerkId = user?.id;
-
-        if (!clerkId) {
-          throw new Error('User ID not found');
-        }
-
-        await updateCompanionFromForm(clerkId, data);
-
-        toast({
-          variant: 'success',
-          title: 'Profile Updated',
-          description: `Your profile has been successfully updated.`,
-        });
-      } else {
-        // Registration: call registerCompanion
-        await registerCompanion(data);
-        toast({
-          variant: 'success',
-          title: 'You have been registered',
-          description: `Hey ${data.name}! You are now available in our platform.`,
-        });
+      const clerkId = user?.id;
+      if (!clerkId) {
+        throw new Error('User ID not found');
       }
+
+      await updateCompanionFromForm(clerkId, data);
+      toast({
+        variant: 'success',
+        title: 'Perfil Atualizado',
+        description: 'Seu perfil foi atualizado com sucesso.',
+      });
+
       router.refresh();
       router.push('/');
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: companionData ? 'Update failed' : 'Registration failed',
-        description:
-          error instanceof globalThis.Error
-            ? error.message
-            : 'Something went wrong',
+        title: 'Falha na atualização',
+        description: error instanceof Error ? error.message : 'Algo deu errado',
       });
     }
   }
@@ -1207,14 +1236,21 @@ export function RegisterCompanionForm({
             )}
             {currentPage < formSections.length - 1 && (
               <Button type="button" onClick={handleNextPage}>
-                {currentPage === formSections.length - 2
-                  ? 'Adicionar Fotos'
-                  : 'Próximo'}
+                {currentPage === 2 ? 'Adicionar Fotos' : 'Próximo'}
               </Button>
             )}
             {currentPage === formSections.length - 1 && (
-              <Button type="submit">
-                {companionData ? 'Salvar Alterações' : 'Cadastre-se'}
+              <Button
+                type="button"
+                onClick={() => {
+                  toast({
+                    title: 'Registro completo',
+                    description: 'Seu perfil foi criado com sucesso!',
+                  });
+                  router.push('/');
+                }}
+              >
+                Finalizar
               </Button>
             )}
           </CardFooter>
