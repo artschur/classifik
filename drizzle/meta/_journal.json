@@ -64,6 +64,13 @@
       "when": 1739394388698,
       "tag": "0008_wealthy_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1739890014138,
+      "tag": "0009_zippy_mentallo",
+      "breakpoints": true
     }
   ]
 }

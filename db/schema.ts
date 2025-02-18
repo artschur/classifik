@@ -110,6 +110,7 @@ export const reviewsTable = pgTable(
       .notNull(),
     user_id: text('user_id').notNull(),
     comment: text('comment').notNull(),
+    likes: integer('likes').default(0),
     rating: integer('rating').notNull().default(5),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
