@@ -109,6 +109,7 @@ export const reviewsTable = pgTable(
       .references(() => companionsTable.id)
       .notNull(),
     user_id: text('user_id').notNull(),
+    username: text('username').notNull(),
     comment: text('comment').notNull(),
     likes: integer('likes').default(0),
     rating: integer('rating').notNull().default(5),

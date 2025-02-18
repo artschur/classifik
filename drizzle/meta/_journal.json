@@ -71,6 +71,13 @@
       "when": 1739890014138,
       "tag": "0009_zippy_mentallo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1739890296729,
+      "tag": "0010_next_king_cobra",
+      "breakpoints": true
     }
   ]
 }

@@ -12,66 +12,61 @@ import { eq } from 'drizzle-orm';
 import { CitySummary, CompanionById } from '../types/types';
 import { getImagesByCompanionId } from './queries/images';
 
-export function getReviewsByCompanionId(id: number): Promise<Review[]> {
-  return db
-    .select()
-    .from(reviewsTable)
-    .where(eq(reviewsTable.companion_id, id));
-}
 
-export async function getCompanionDetails(id: number ) { 
+
+export async function getCompanionDetails(id: number) {
   const result = await db
-  .select({
-          name: companionsTable.name,
-          email: companionsTable.email,
-          phone: companionsTable.phone,
-          price: companionsTable.price,
-          verified: companionsTable.verified,
-          shortDescription: companionsTable.shortDescription,
-          description: companionsTable.description,
-          age: companionsTable.age,
-          gender: companionsTable.gender,
-          gender_identity: companionsTable.gender_identity,
-          languages: companionsTable.languages,
+    .select({
+      name: companionsTable.name,
+      email: companionsTable.email,
+      phone: companionsTable.phone,
+      price: companionsTable.price,
+      verified: companionsTable.verified,
+      shortDescription: companionsTable.shortDescription,
+      description: companionsTable.description,
+      age: companionsTable.age,
+      gender: companionsTable.gender,
+      gender_identity: companionsTable.gender_identity,
+      languages: companionsTable.languages,
       last_seen: companionsTable.last_seen,
-  })
-  .from(companionsTable)
-  .where(eq(companionsTable.id, id))
-  .limit(1);
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, id))
+    .limit(1);
 
   return result[0];
 }
 
-export async function getCompanionCharacteristics(id:number) {
+export async function getCompanionCharacteristics(id: number) {
   const result = await db
-  .select({
-    weight: characteristicsTable.weight,
-    height: characteristicsTable.height,
-    ethnicity: characteristicsTable.ethnicity,
-    eyeColor: characteristicsTable.eye_color,
-    hairColor: characteristicsTable.hair_color,
-    hair_length: characteristicsTable.hair_length,
-    shoe_size: characteristicsTable.shoe_size,
-    silicone: characteristicsTable.silicone,
-    tattoos: characteristicsTable.tattoos,
-    piercings: characteristicsTable.piercings,
-    smoker: characteristicsTable.smoker,
-  })
-  .from(characteristicsTable)
-  .where(eq(characteristicsTable.companion_id, id))
-  .limit(1);
+    .select({
+      weight: characteristicsTable.weight,
+      height: characteristicsTable.height,
+      ethnicity: characteristicsTable.ethnicity,
+      eyeColor: characteristicsTable.eye_color,
+      hairColor: characteristicsTable.hair_color,
+      hair_length: characteristicsTable.hair_length,
+      shoe_size: characteristicsTable.shoe_size,
+      silicone: characteristicsTable.silicone,
+      tattoos: characteristicsTable.tattoos,
+      piercings: characteristicsTable.piercings,
+      smoker: characteristicsTable.smoker,
+    })
+    .from(characteristicsTable)
+    .where(eq(characteristicsTable.companion_id, id))
+    .limit(1);
 
   return result[0];
 }
 
 export async function getCompanionById(id: number): Promise<CompanionById> {
-  const [ details, characteristics, images ] = await Promise.all([
+  const [details, characteristics, images] = await Promise.all([
     getCompanionDetails(id),
     getCompanionCharacteristics(id),
-   getImagesByCompanionId(id),
+    getImagesByCompanionId(id),
   ]);
 
-  const imagesUrls = (images as { publicUrl: string}[]).map((image) => image.publicUrl);
+  const imagesUrls = (images as { publicUrl: string; }[]).map((image) => image.publicUrl);
 
   return {
     ...details,
