@@ -496,79 +496,74 @@ export async function updateCompanionFromForm(
 }
 
 export async function getUnverifiedCompanions(): Promise<
-  (RegisterCompanionFormValues & { id: number; cityName: string; })[]
+  CompanionFiltered[]
 > {
-  const rows = await db
+  let query = db
     .select({
-      id: companionsTable.id,
-      name: companionsTable.name,
-      shortDescription: companionsTable.shortDescription,
-      phoneNumber: companionsTable.phone,
-      description: companionsTable.description,
-      price: companionsTable.price,
-      age: companionsTable.age,
-      gender: companionsTable.gender,
-      gender_identity: companionsTable.gender_identity,
-      languages: companionsTable.languages,
-      weight: characteristicsTable.weight,
-      height: characteristicsTable.height,
-      ethnicity: characteristicsTable.ethnicity,
-      eye_color: characteristicsTable.eye_color,
-      hair_color: characteristicsTable.hair_color,
-      hair_length: characteristicsTable.hair_length,
-      shoe_size: characteristicsTable.shoe_size,
-      silicone: characteristicsTable.silicone,
-      tattoos: characteristicsTable.tattoos,
-      piercings: characteristicsTable.piercings,
-      smoker: characteristicsTable.smoker,
-      city: companionsTable.city_id,
-      cityName: citiesTable.city,
-      state: citiesTable.state,
-      country: citiesTable.country,
-      neighborhood: neighborhoodsTable.neighborhood,
+      companion: {
+        id: companionsTable.id,
+        name: companionsTable.name,
+        shortDescription: companionsTable.shortDescription,
+        price: companionsTable.price,
+        age: companionsTable.age,
+        verified: companionsTable.verified,
+      },
+      city: {
+        name: citiesTable.city,
+      },
+      characteristics: {
+        weight: characteristicsTable.weight,
+        height: characteristicsTable.height,
+        ethnicity: characteristicsTable.ethnicity,
+        eye_color: characteristicsTable.eye_color,
+        hair_color: characteristicsTable.hair_color,
+        silicone: characteristicsTable.silicone,
+        tattoos: characteristicsTable.tattoos,
+        piercings: characteristicsTable.piercings,
+        smoker: characteristicsTable.smoker,
+      },
     })
     .from(companionsTable)
-    .innerJoin(
-      characteristicsTable,
-      eq(characteristicsTable.companion_id, companionsTable.id)
-    )
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .leftJoin(
-      neighborhoodsTable,
-      eq(neighborhoodsTable.id, companionsTable.neighborhood_id)
-    )
+    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
     .where(eq(companionsTable.verified, false));
 
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name ?? '',
-    shortDescription: row.shortDescription ?? '',
-    phoneNumber:
-      row.phoneNumber && !row.phoneNumber.startsWith('+')
-        ? `+${row.phoneNumber}`
-        : row.phoneNumber ?? '',
-    description: row.description ?? '',
-    price: row.price ?? 0,
-    age: row.age ?? 0,
-    gender: row.gender ?? '',
-    gender_identity: row.gender_identity ?? '',
-    languages: row.languages ?? [],
-    weight: parseInt(row.weight) ?? 60,
-    height: parseFloat(row.height) ?? 1.6,
-    ethnicity: row.ethnicity ?? '',
-    eye_color: row.eye_color ?? '',
-    hair_color: row.hair_color ?? '',
-    hair_length: row.hair_length ?? '',
-    shoe_size: row.shoe_size ?? 36,
-    silicone: row.silicone ?? false,
-    tattoos: row.tattoos ?? false,
-    piercings: row.piercings ?? false,
-    smoker: row.smoker ?? false,
-    city: row.city ?? 1,
-    cityName: row.cityName ?? '',
-    state: row.state ?? '',
-    country: row.country ?? '',
-    neighborhood: row.neighborhood ?? '',
+  const results = await query;
+  if (results.length === 0) return [];
+
+  const companionIds = results.map(r => r.companion.id);
+
+  const imagesPromise = db
+    .select({
+      companionId: imagesTable.companionId,
+      public_url: imagesTable.public_url,
+    })
+    .from(imagesTable)
+    .where(inArray(imagesTable.companionId, companionIds));
+
+  const [images] = await Promise.all([imagesPromise]);
+
+  const imagesMap = images.reduce((acc, img) => {
+    if (!acc.has(img.companionId.toString())) {
+      acc.set(img.companionId.toString(), []);
+    }
+    acc.get(img.companionId.toString())!.push(img.public_url);
+    return acc;
+  }, new Map<string, string[]>());
+
+  return results.map(({ companion, city, characteristics }) => ({
+    ...companion,
+    city: city.name,
+    weight: characteristics.weight,
+    height: characteristics.height,
+    eyeColor: characteristics.eye_color,
+    hairColor: characteristics.hair_color,
+    silicone: characteristics.silicone,
+    tattoos: characteristics.tattoos,
+    piercings: characteristics.piercings,
+    smoker: characteristics.smoker,
+    ethinicity: characteristics.ethnicity,
+    images: imagesMap.get(String(companion.id)) || [],
   }));
 }
 
