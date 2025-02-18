@@ -133,7 +133,10 @@ const formSections = [
 
 interface RegisterCompanionFormProps {
   cities: City[];
-  companionData?: RegisterCompanionFormValues | null | undefined; // Optional companion data for editing
+  companionData?:
+    | (RegisterCompanionFormValues & { companionId: number })
+    | null
+    | undefined; // Optional companion data for editing
 }
 
 export function RegisterCompanionForm({
@@ -142,6 +145,7 @@ export function RegisterCompanionForm({
 }: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState('');
+  const [isRegistering, setIsRegistering] = React.useState(false);
   const [images, setImages] = React.useState<
     { publicUrl: string; storagePath: string }[]
   >([]);
@@ -165,6 +169,8 @@ export function RegisterCompanionForm({
 
   const validateCurrentPage = async () => {
     const values = form.getValues();
+    companionData ? setCompanionId(companionData?.companionId) : null;
+
     try {
       if (currentPage === 0) {
         await pageOneSchema.parseAsync(values);
@@ -186,8 +192,35 @@ export function RegisterCompanionForm({
   const handleNextPage = async () => {
     const isValid = await validateCurrentPage();
     if (isValid) {
-      setCurrentPage((prev) => prev + 1);
-      scrollToTop();
+      if (currentPage === 2 && !companionData) {
+        setIsRegistering(true);
+        const formData = form.getValues();
+        try {
+          const companion = await registerCompanion(formData);
+          toast({
+            variant: 'success',
+            title: 'Perfil criado',
+            description: `Hey ${formData.name}! Agora vamos adicionar suas fotos.`,
+          });
+          // Store the companion ID for image uploads
+          setCompanionId(companion.id);
+          setCurrentPage(3);
+          scrollToTop();
+        } catch (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Falha no registro',
+            description:
+              error instanceof Error ? error.message : 'Algo deu errado',
+          });
+          return;
+        } finally {
+          setIsRegistering(false);
+        }
+      } else {
+        setCurrentPage((prev) => prev + 1);
+        scrollToTop();
+      }
     } else {
       form.trigger();
     }
@@ -227,16 +260,16 @@ export function RegisterCompanionForm({
         phoneNumber: '',
         description: '',
         price: 0,
-        age: 0,
+        age: 18,
         gender: '',
         gender_identity: '',
-        languages: [],
+        languages: ['Português'],
         weight: 60,
         height: 1.6,
-        ethnicity: '',
-        eye_color: '',
-        hair_color: '',
-        hair_length: '',
+        ethnicity: 'Branco',
+        eye_color: 'Castanho',
+        hair_color: 'Castanho',
+        hair_length: 'Médio',
         shoe_size: 36,
         silicone: false,
         tattoos: false,
@@ -260,35 +293,40 @@ export function RegisterCompanionForm({
 
   React.useEffect(() => {
     if (companionData && isLoaded && user?.id) {
-      // Load images in parallel when editing
       getImagesByAuthId(user.id).then(setImages);
     }
   }, [companionData, isLoaded, user?.id]);
 
+  const [companionId, setCompanionId] = React.useState<number | null>(null);
+
   const handleFileUpload = async (files: File[]) => {
     if (!files.length) return;
-    setUploadStatus('Uploading files...');
+    setUploadStatus('Enviando arquivos...');
 
     try {
-      const results = await Promise.all(files.map((file) => uploadImage(file)));
+      if (!companionId) {
+        throw new Error('Companion ID not found');
+      }
+      const results = await Promise.all(
+        files.map((file) => uploadImage(file, companionId))
+      );
 
       const errors = results.filter((r) => r.error);
       if (errors.length > 0) {
-        setUploadStatus(`Upload failed for ${errors.length} files`);
+        setUploadStatus(`Falha ao enviar ${errors.length} arquivos`);
         toast({
-          title: 'Upload failed',
-          description: `Failed to upload ${errors.length} files`,
+          title: 'Falha no upload',
+          description: `Falha ao enviar ${errors.length} arquivos`,
           variant: 'destructive',
         });
       } else {
         toast({
-          title: 'Images uploaded',
-          description: `Successfully uploaded ${files.length} images`,
+          title: 'Imagens enviadas',
+          description: `${files.length} imagens enviadas com sucesso`,
           variant: 'success',
         });
       }
 
-      // Refresh images list once after all uploads
       if (isLoaded && user?.id) {
         const newImages = await getImagesByAuthId(user.id);
         setImages(newImages);
@@ -296,9 +334,8 @@ export function RegisterCompanionForm({
       setUploadStatus('');
     } catch (error) {
       toast({
-        title: 'Upload failed',
-        description:
-          error instanceof Error ? error.message : 'Something went wrong',
+        title: 'Falha no upload',
+        description: error instanceof Error ? error.message : 'Algo deu errado',
         variant: 'destructive',
       });
       setUploadStatus('');
@@ -380,40 +417,33 @@ export function RegisterCompanionForm({
   };
 
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
+    if (!companionData) {
+      toast({
+        variant: 'success',
+        title: 'Perfil criado com sucesso',
+        description: 'Seja bem vindo(a) à nossa plataforma.',
+      });
+      router.push('/');
+    }
     try {
-      if (companionData) {
-        const clerkId = user?.id;
-
-        if (!clerkId) {
-          throw new Error('User ID not found');
-        }
-
-        await updateCompanionFromForm(clerkId, data);
-
-        toast({
-          variant: 'success',
-          title: 'Profile Updated',
-          description: `Your profile has been successfully updated.`,
-        });
-      } else {
-        // Registration: call registerCompanion
-        await registerCompanion(data);
-        toast({
-          variant: 'success',
-          title: 'You have been registered',
-          description: `Hey ${data.name}! You are now available in our platform.`,
-        });
+      const clerkId = user?.id;
+      if (!clerkId) {
+        throw new Error('User ID not found');
       }
+      await updateCompanionFromForm(clerkId, data);
+      toast({
+        variant: 'success',
+        title: 'Perfil Atualizado',
+        description: 'Seu perfil foi atualizado com sucesso.',
+      });
+
       router.refresh();
       router.push('/');
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: companionData ? 'Update failed' : 'Registration failed',
-        description:
-          error instanceof globalThis.Error
-            ? error.message
-            : 'Something went wrong',
+        title: 'Falha na atualização',
+        description: error instanceof Error ? error.message : 'Algo deu errado',
       });
     }
   }
@@ -954,6 +984,12 @@ export function RegisterCompanionForm({
             {currentPage === 2 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Localização</h3>
+                {isRegistering && (
+                  <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <p className="text-sm text-muted-foreground">Registrando seu perfil...</p>
+                  </div>
+                )}
                 <FormField
                   control={form.control}
                   name="city"
@@ -1098,12 +1134,23 @@ export function RegisterCompanionForm({
                             toggleImageSelection(image.storagePath)
                           }
                         >
-                          <Image
-                            src={image.publicUrl}
-                            alt={`Image ${index + 1}`}
-                            fill
-                            className="object-cover rounded-md"
-                          />
+                          {image.publicUrl.includes('.mp4') ? (
+                            <video
+                              src={image.publicUrl}
+                              className="w-full h-full object-cover rounded-md"
+                              controls
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <Image
+                              src={image.publicUrl}
+                              alt={`Media ${index + 1}`}
+                              fill
+                              className="object-cover rounded-md"
+                            />
+                          )}
                           <div
                             className={cn(
                               'w-5 h-5 rounded-full border-2 flex items-center justify-center',
@@ -1131,8 +1178,8 @@ export function RegisterCompanionForm({
                                       Você tem certeza?
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Essa ação não pode ser desfeita. A imagem
-                                      será permanentemente removida.
+                                      Essa ação não pode ser desfeita. O arquivo
+                                      será permanentemente removido.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -1201,20 +1248,44 @@ export function RegisterCompanionForm({
                 type="button"
                 variant="outline"
                 onClick={handlePreviousPage}
+                disabled={isRegistering}
               >
                 Anterior
               </Button>
             )}
             {currentPage < formSections.length - 1 && (
-              <Button type="button" onClick={handleNextPage}>
-                {currentPage === formSections.length - 2
-                  ? 'Adicionar Fotos'
-                  : 'Próximo'}
+              <Button
+                type="button"
+                onClick={handleNextPage}
+                disabled={isRegistering || form.formState.isSubmitting}
+              >
+                {currentPage === 2 && isRegistering ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Registrando perfil...
+                  </>
+                ) : currentPage === 2 ? (
+                  'Adicionar Fotos'
+                ) : (
+                  'Próximo'
+                )}
               </Button>
             )}
             {currentPage === formSections.length - 1 && (
-              <Button type="submit">
-                {companionData ? 'Salvar Alterações' : 'Cadastre-se'}
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting || isRegistering}
+              >
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {companionData ? 'Atualizando...' : 'Registrando...'}
+                  </>
+                ) : companionData ? (
+                  'Atualizar'
+                ) : (
+                  'Registrar'
+                )}
               </Button>
             )}
           </CardFooter>

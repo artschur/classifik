@@ -43,6 +43,7 @@ function sanitizeFilename(filename: string): string {
 
 export async function uploadImage(
   file: File,
+  companionId: number,
   bucket: string = 'images'
 ): Promise<{
   fileUrl: string;
@@ -51,6 +52,7 @@ export async function uploadImage(
   try {
     const clerkId = (await auth()).userId;
     if (!clerkId) throw new Error('User not authenticated');
+    if (!companionId) throw new Error('Companion ID is required');
 
     const fileType = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : null;
 
@@ -67,14 +69,11 @@ export async function uploadImage(
     const ext = compressedFile.name.split('.').pop() || '';
     let baseName = compressedFile.name.split('.')[0];
 
-    // Sanitize the filename
     const sanitizedBaseName = sanitizeFilename(baseName);
 
     compressedFile = new File(
       [compressedFile],
-      `${sanitizedBaseName}-${Math.floor(
-        Math.random() * 10000
-      )}.${ext}`,
+      `${sanitizedBaseName}-${Math.floor(Math.random() * 10000)}.${ext}`,
       { type: compressedFile.type }
     );
 
@@ -85,10 +84,7 @@ export async function uploadImage(
       .upload(path, compressedFile);
 
     if (storageError) throw storageError;
-
     const { data } = await supabase.storage.from(bucket).getPublicUrl(path);
-
-    const companionId = await getCompanionIdByClerkId(clerkId);
 
     await db.insert(imagesTable).values({
       companionId: companionId,
@@ -100,7 +96,7 @@ export async function uploadImage(
     return { fileUrl: data.publicUrl, error: null };
   } catch (error) {
     console.error('Upload failed:', error);
-    throw error;
+    return { fileUrl: '', error: error instanceof Error ? error : new Error('Upload failed') };
   }
 }
 

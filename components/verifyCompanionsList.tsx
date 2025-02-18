@@ -3,15 +3,17 @@
 import { useState } from 'react';
 import SingleCompanionVerify from './singleComponentVerify';
 import type { RegisterCompanionFormValues } from './formCompanionRegister';
+import { CompanionFiltered } from '@/types/types';
 
 type Companion = RegisterCompanionFormValues & { id: number; cityName: string };
 
 export default function VerifyCompanionsList({
   initialCompanions,
 }: {
-  initialCompanions: Companion[];
+  initialCompanions: CompanionFiltered[];
 }) {
-  const [companions, setCompanions] = useState<Companion[]>(initialCompanions);
+  const [companions, setCompanions] =
+    useState<CompanionFiltered[]>(initialCompanions);
 
   const handleActionComplete = (companionId: number) => {
     setCompanions((prevCompanions) =>
@@ -23,9 +25,9 @@ export default function VerifyCompanionsList({
     <div className="flex flex-col w-full items-center space-y-8">
       {companions.map((companion) => (
         <SingleCompanionVerify
-          companion={companion}
           key={companion.id}
           onActionComplete={() => handleActionComplete(companion.id)}
+          companion={companion}
         />
       ))}
       {companions.length === 0 && (

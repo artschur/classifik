@@ -29,7 +29,6 @@ export function CompanionsList({
 
   useEffect(() => {
     const fetchCompanions = async () => {
-      console.log('Fetching companions:', location, page, filters);
       setLoading(true);
       try {
         const data = await getCompanionsToFilter(location, page, filters);
@@ -57,10 +56,9 @@ export function CompanionsList({
   );
 }
 
-function CompanionCard({ companion }: { companion: CompanionFiltered }) {
+export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Filter out videos and get only image URLs
   const images = companion.images
     .filter((media): media is string | Media => {
       if (typeof media === 'string') {
