@@ -2,9 +2,8 @@
 
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "..";
-import { Review, reviewsTable } from "../schema";
+import { reviewsTable } from "../schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { assert } from "console";
 
 export interface ReviewResponse {
     id: number;
@@ -14,6 +13,7 @@ export interface ReviewResponse {
     rating: number;
     created_at: Date | null;
     userLiked: boolean;
+    userImageUrl: string | null;
 }
 
 export async function getReviewsByCompanionId(id: number): Promise<ReviewResponse[]> {
@@ -26,7 +26,8 @@ export async function getReviewsByCompanionId(id: number): Promise<ReviewRespons
             likes: sql<number>`COALESCE(array_length(${reviewsTable.liked_by}, 1), 0)`,
             rating: reviewsTable.rating,
             created_at: reviewsTable.created_at,
-            userLiked: sql<boolean>`${userId} = ANY(${reviewsTable.liked_by})`
+            userLiked: sql<boolean>`${userId} = ANY(${reviewsTable.liked_by})`,
+            userImageUrl: reviewsTable.userImageUrl,
         })
         .from(reviewsTable)
         .where(eq(reviewsTable.companion_id, id));
@@ -47,7 +48,8 @@ export async function insertReview({ companion_id, clerkId, comment, rating }: {
             username: username,
             user_id: clerkId,
             rating: Math.round(rating),
-            comment: comment
+            comment: comment,
+            userImageUrl: user.imageUrl,
         })
         .returning({
             id: reviewsTable.id,
@@ -56,6 +58,7 @@ export async function insertReview({ companion_id, clerkId, comment, rating }: {
             likes: sql`0`,
             rating: reviewsTable.rating,
             created_at: reviewsTable.created_at,
+            userImageUrl: reviewsTable.userImageUrl,
         });
 
     return inserted as ReviewResponse;
