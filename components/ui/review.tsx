@@ -6,6 +6,8 @@ import { Star, ThumbsUp } from 'lucide-react';
 import { likeReview, unlikeReview } from '@/db/queries/reviews';
 import type { ReviewResponse } from '@/db/queries/reviews';
 import { useState } from 'react';
+import { IconFlare, IconStar } from '@tabler/icons-react';
+import { toast } from '@/hooks/use-toast';
 
 export function Review({
   review,
@@ -15,24 +17,48 @@ export function Review({
   user: any;
 }) {
   const [isLiking, setIsLiking] = useState(false);
+  const [localLikes, setLocalLikes] = useState(review.likes);
+  const [localUserLiked, setLocalUserLiked] = useState(review.userLiked);
 
   const handleLike = async () => {
     if (!user?.id || isLiking) return;
-    setIsLiking(true);
-    if (review.userLiked) {
-      await unlikeReview(review.id, user.id);
-      setIsLiking(false);
-      review.likes--;
-      review.userLiked = false;
-      return;
+
+    if (localUserLiked) {
+      // if liked unlike
+      setLocalLikes((prev) => prev - 1);
+      setLocalUserLiked(false);
+
+      try {
+        await unlikeReview(review.id, user.id);
+      } catch (error) {
+        setLocalLikes((prev) => prev + 1);
+        setLocalUserLiked(true);
+        toast({
+          title: 'Erro',
+          description: 'Não foi possivel descurtir a review. Tente novamente.',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      setLocalLikes((prev) => prev + 1);
+      setLocalUserLiked(true);
+
+      try {
+        await likeReview(review.id, user.id);
+      } catch (error) {
+        setLocalLikes((prev) => prev - 1);
+        setLocalUserLiked(false);
+        toast({
+          title: 'Erro',
+          description: 'Não foi possivel curtir a review. Tente novamente.',
+          variant: 'destructive',
+        });
+      }
     }
-    await likeReview(review.id, user.id);
-    setIsLiking(false);
-    review.likes++;
-    review.userLiked = true;
   };
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col transition-colors duration-800 hover:bg-stone-800/5 p-4 rounded-xl ">
       <div className="flex flex-col gap-2">
         <Avatar className="w-10 h-10">
           <AvatarImage
@@ -47,11 +73,11 @@ export function Review({
           <h3 className="font-semibold">{review.author || 'Anonymous'}</h3>
           <div className="flex flex-row">
             {[...Array(5)].map((_, i) => (
-              <Star
+              <IconFlare
                 key={i}
                 className={`w-4 h-4 ${
                   i < (review.rating || 0)
-                    ? 'text-yellow-300 fill-yellow-300'
+                    ? 'text-red-400 fill-red-400'
                     : 'text-gray-300'
                 }`}
               />
@@ -73,15 +99,15 @@ export function Review({
               onClick={handleLike}
               disabled={isLiking}
             >
-              {review.userLiked ? (
+              {localUserLiked ? (
                 <>
                   <ThumbsUp className="w-4 h-4 mr-1 fill-neutral-400" />
-                  Útil ({review.likes})
+                  Útil ({localLikes})
                 </>
               ) : (
                 <>
                   <ThumbsUp className="w-4 h-4 mr-1" />
-                  Útil ({review.likes})
+                  Útil ({localLikes})
                 </>
               )}
             </Button>

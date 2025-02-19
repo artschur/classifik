@@ -9,6 +9,7 @@ import { useUser } from '@clerk/nextjs';
 import { useState, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from './ui/textarea';
+import { IconFlare } from '@tabler/icons-react';
 
 export default function InsertReviewsForm({
   companionId,
@@ -60,7 +61,7 @@ export default function InsertReviewsForm({
   }
 
   return (
-    <form action={handleSubmit} className="w-full flex flex-col gap-2">
+    <form action={handleSubmit} className="w-full flex flex-col gap-2 p-4">
       <Avatar className="w-10 h-10">
         <AvatarImage
           src={
@@ -74,11 +75,11 @@ export default function InsertReviewsForm({
         <h3 className="font-semibold">{user.username}</h3>
         <div className="flex items-center">
           {[...Array(5)].map((_, i) => (
-            <Star
+            <IconFlare
               key={i}
               onClick={() => setRating(i + 1)}
               className={`w-4 h-4 cursor-pointer ${
-                i < rating ? 'text-yellow-300 fill-yellow-300' : 'text-gray-300'
+                i < rating ? 'text-red-400 fill-red-400' : 'text-gray-300'
               }`}
             />
           ))}

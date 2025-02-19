@@ -28,16 +28,18 @@ export default function CompanionReviews({
   };
 
   return (
-    <Card className="w-full max-w-5xl mx-auto mt-8">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="w-full max-w-5xl mx-auto mt-8 px-8 py-6">
+      <CardHeader className="flex flex-row items-center justify-start">
         <Badge variant="secondary">{reviews.length} reviews</Badge>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<ReviewsSkeleton />}>
-          <ReviewsList initialReviews={reviews} />
-        </Suspense>
+        <div className="">
+          <Suspense fallback={<ReviewsSkeleton />}>
+            <ReviewsList initialReviews={reviews} />
+          </Suspense>
+        </div>
       </CardContent>
-      <CardFooter className="w-full">
+      <CardFooter className="">
         <InsertReviewsForm companionId={id} onAddReview={handleAddReview} />
       </CardFooter>
     </Card>
