@@ -8,7 +8,7 @@ import { insertReview, ReviewResponse } from '@/db/queries/reviews';
 import { useUser } from '@clerk/nextjs';
 import { useState, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { Textarea } from './ui/textarea';
 
 export default function InsertReviewsForm({
   companionId,
@@ -60,48 +60,41 @@ export default function InsertReviewsForm({
   }
 
   return (
-    <form action={handleSubmit}>
-      <CardTitle>Deixe seu review</CardTitle>
-      <div className="flex items-center gap-4">
-        <Avatar className="w-10 h-10">
-          <AvatarImage
-            src={
-              user.imageUrl ||
-              `https://api.dicebear.com/6.x/initials/svg?seed=${user.username}`
-            }
-          />
-          <AvatarFallback>{user.firstName?.slice(0, 2) || 'U'}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">{user.firstName || user.username}</h3>
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  onClick={() => setRating(i + 1)}
-                  className={`w-4 h-4 cursor-pointer ${
-                    i < rating
-                      ? 'text-yellow-400 fill-yellow-400'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-          <textarea
-            name="comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="w-full h-24 mt-2 p-2 border border-gray-300 rounded"
-            placeholder="Escreva seu review"
-          ></textarea>
-          <div className="flex items-center gap-2 mt-2">
-            <Button type="submit" variant="default" size="sm">
-              Enviar
-            </Button>
-          </div>
+    <form action={handleSubmit} className="w-full flex flex-col gap-2">
+      <Avatar className="w-10 h-10">
+        <AvatarImage
+          src={
+            user.imageUrl ||
+            `https://api.dicebear.com/6.x/initials/svg?seed=${user.username}`
+          }
+        />
+        <AvatarFallback>{user.firstName?.slice(0, 2) || 'U'}</AvatarFallback>
+      </Avatar>
+      <div className="flex flex-row justify-between">
+        <h3 className="font-semibold">{user.username}</h3>
+        <div className="flex items-center">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              onClick={() => setRating(i + 1)}
+              className={`w-4 h-4 cursor-pointer ${
+                i < rating ? 'text-yellow-300 fill-yellow-300' : 'text-gray-300'
+              }`}
+            />
+          ))}
         </div>
+      </div>
+      <div className="flex flex-col pb-4 pt-4 gap-6">
+        <Textarea
+          name="comment"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="w-full h-8 p-4 rounded-xl bg-neutral-950"
+          placeholder="Escreva seu review..."
+        />
+        <Button type="submit" className="px-4" variant="default" size="sm">
+          Enviar
+        </Button>
       </div>
     </form>
   );

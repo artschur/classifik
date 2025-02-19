@@ -37,7 +37,7 @@ export default function CompanionReviews({
           <ReviewsList initialReviews={reviews} />
         </Suspense>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="w-full">
         <InsertReviewsForm companionId={id} onAddReview={handleAddReview} />
       </CardFooter>
     </Card>

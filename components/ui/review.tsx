@@ -31,19 +31,21 @@ export function Review({
     review.likes++;
     review.userLiked = true;
   };
-  console.log(review.userLiked);
   return (
-    <div className="flex items-start gap-4">
-      <Avatar className="w-10 h-10">
-        <AvatarImage
-          src={`https://api.dicebear.com/6.x/initials/svg?seed=${review.author}`}
-        />
-        <AvatarFallback>{review.author?.slice(0, 2) || 'AN'}</AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <div className="flex items-center justify-between">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-2">
+        <Avatar className="w-10 h-10">
+          <AvatarImage
+            src={
+              review.userImageUrl ||
+              `https://api.dicebear.com/6.x/initials/svg?seed=${review.author}`
+            }
+          />
+          <AvatarFallback>{review.author?.slice(0, 2) || 'AN'}</AvatarFallback>
+        </Avatar>
+        <div className="flex justify-between">
           <h3 className="font-semibold">{review.author || 'Anonymous'}</h3>
-          <div className="flex items-center">
+          <div className="flex flex-row">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
@@ -56,12 +58,14 @@ export function Review({
             ))}
           </div>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {review.created_at?.toLocaleDateString().toString() ?? ''}
-        </p>
-        <p className="mt-2 text-sm">{review.comment}</p>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {review.created_at?.toLocaleDateString().toString() ?? ''}
+      </p>
+      <div className="pt-2">
+        <p className=" text-sm">{review.comment}</p>
         {user && (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center justify-end ml-auto">
             <Button
               variant="ghost"
               size="sm"
