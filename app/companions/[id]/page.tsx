@@ -17,7 +17,7 @@ export default async function CompanionPage({
   const [reviews] = await Promise.all([getReviewsByCompanionId(parseInt(id))]);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       <Suspense fallback={<CompanionSkeleton />}>
         <CompanionProfile id={parseInt(id)} />
       </Suspense>

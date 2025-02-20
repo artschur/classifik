@@ -48,7 +48,7 @@ export function ImageGrid({ images }: ImageGridProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {images.map((media, index) => {
           const isVideoMedia = isVideo(media);
           const mediaUrl = getMediaUrl(media);

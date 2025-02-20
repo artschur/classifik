@@ -26,7 +26,7 @@ function ReviewsContent({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 pt-6">
       {reviews.map((review) => (
         <Review key={review.id} review={review} user={user} />
       ))}

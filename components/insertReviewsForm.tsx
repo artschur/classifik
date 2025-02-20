@@ -51,14 +51,7 @@ export default function InsertReviewsForm({
       }
     });
   }
-
-  if (!user) {
-    return (
-      <div className="text-center py-4">
-        <p className="text-muted-foreground">Please login to leave a review</p>
-      </div>
-    );
-  }
+  if (!user) return;
 
   return (
     <form action={handleSubmit} className="w-full flex flex-col gap-2 p-4">
