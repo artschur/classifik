@@ -19,6 +19,7 @@ export async function getCompanionDetails(id: number) {
     .select({
       name: companionsTable.name,
       email: companionsTable.email,
+      auth_id: companionsTable.auth_id,
       phone: companionsTable.phone,
       price: companionsTable.price,
       verified: companionsTable.verified,

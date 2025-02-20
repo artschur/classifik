@@ -7,6 +7,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export interface ReviewResponse {
     id: number;
+    companionId: number;
     author: string;
     comment: string;
     likes: number;
@@ -21,6 +22,7 @@ export async function getReviewsByCompanionId(id: number): Promise<ReviewRespons
     return await db
         .select({
             id: reviewsTable.id,
+            companionId: reviewsTable.companion_id,
             author: reviewsTable.username,
             comment: reviewsTable.comment,
             likes: sql<number>`COALESCE(array_length(${reviewsTable.liked_by}, 1), 0)`,
