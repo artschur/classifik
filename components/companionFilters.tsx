@@ -182,15 +182,16 @@ export function CompanionFilters({
         <input
           type="text"
           placeholder="Procure acompanhantes..."
-          className="w-3/12 rounded-full border-primary border p-2 bg-background"
+          className="w-3/12 rounded-full border-primary border px-4 p-2 bg-background hidden md:block"
           value={searchValue}
           onChange={handleSearch}
         />
+
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" className="rounded-full">
-              <Filter className="mr-2 h-4 w-4" />
               Filtros
+              <Filter className="mr-2 h-4 w-4" />
               {activeFiltersCount > 0 && (
                 <Badge variant="secondary" className="ml-2">
                   {activeFiltersCount}

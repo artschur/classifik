@@ -1,7 +1,10 @@
 'use client';
 
 import { Suspense } from 'react';
-import type { ReviewResponse } from '@/db/queries/reviews';
+import {
+  getReviewsByCompanionId,
+  type ReviewResponse,
+} from '@/db/queries/reviews';
 import { Review } from './ui/review';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import { ReviewsSkeleton } from './ui/review';
