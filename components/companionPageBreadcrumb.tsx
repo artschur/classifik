@@ -16,7 +16,7 @@ import {
 
 export function CompanionPageBreadcrumb() {
   return (
-    <Breadcrumb className="px-4">
+    <Breadcrumb className="px-4 sm:px-6 lg:px-8">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink href="/">Início</BreadcrumbLink>
