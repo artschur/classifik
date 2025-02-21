@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useState, useRef, useCallback, useTransition } from 'react';
+import { useState, useRef, useCallback, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Play, Pause, Plus } from 'lucide-react';
 import type { Media } from '@/types/types';
@@ -34,6 +34,11 @@ export function ImageGrid({
       return img;
     })
   );
+  const [loadedVideos, setLoadedVideos] = useState<Set<string>>(new Set());
+  const [videoStates, setVideoStates] = useState<{
+    [key: string]: { ready: boolean; currentTime: number };
+  }>({});
+  const [nextBatchLoading, setNextBatchLoading] = useState(false);
 
   const isVideo = (media: Media | string) =>
     (typeof media === 'object' && media.type === 'video') ||
@@ -56,10 +61,11 @@ export function ImageGrid({
   );
 
   const loadMoreImages = useCallback(() => {
-    if (isLoading) return;
+    if (isLoading || nextBatchLoading) return;
 
+    setNextBatchLoading(true);
     startTransition(async () => {
-      const result = await getImagesByCompanionId(companionId, 6, offset);
+      const result = await getImagesByCompanionId(companionId, 3, offset);
       if (result.images.length === 0) {
         setHasMore(false);
       } else {
@@ -94,8 +100,9 @@ export function ImageGrid({
         setOffset((prev) => prev + result.images.length);
         setHasMore(offset + result.images.length < totalImages);
       }
+      setNextBatchLoading(false);
     });
-  }, [companionId, offset, isLoading, totalImages]);
+  }, [companionId, offset, isLoading, totalImages, nextBatchLoading]);
 
   const togglePlay = (mediaUrl: string, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -109,6 +116,26 @@ export function ImageGrid({
       setIsPlaying((prev) => ({
         ...prev,
         [mediaUrl]: !video.paused,
+      }));
+    }
+  };
+
+  const getVideoPoster = (url: string) => {
+    // Create a poster URL by appending a timestamp to force the first frame
+    return `${url}#t=0.01`;
+  };
+
+  const handleVideoLoaded = (mediaUrl: string) => {
+    setLoadedVideos((prev) => new Set(prev).add(mediaUrl));
+  };
+
+  const handleVideoState = (mediaUrl: string, video: HTMLVideoElement) => {
+    if (video.readyState >= 2) {
+      // HAVE_CURRENT_DATA or better
+      video.currentTime = 0.1; // Set to first frame
+      setVideoStates((prev) => ({
+        ...prev,
+        [mediaUrl]: { ready: true, currentTime: 0.1 },
       }));
     }
   };
@@ -131,15 +158,37 @@ export function ImageGrid({
               <div className="relative w-full h-full">
                 {isVideoMedia ? (
                   <>
+                    {!videoStates[mediaUrl]?.ready && (
+                      <div className="absolute inset-0 bg-neutral-900 animate-pulse" />
+                    )}
                     <video
                       ref={setVideoRef(mediaUrl)}
                       src={mediaUrl}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className={`absolute inset-0 w-full h-full object-cover ${
+                        videoStates[mediaUrl]?.ready
+                          ? 'opacity-100'
+                          : 'opacity-0'
+                      } transition-opacity duration-300`}
                       playsInline
                       muted
                       loop
-                      preload="metadata"
-                      poster={`${mediaUrl}#t=0.1`}
+                      preload="auto"
+                      onLoadedData={(e) =>
+                        handleVideoState(mediaUrl, e.target as HTMLVideoElement)
+                      }
+                      onSeeked={(e) => {
+                        const video = e.target as HTMLVideoElement;
+                        if (video.currentTime === 0.1) {
+                          setVideoStates((prev) => ({
+                            ...prev,
+                            [mediaUrl]: { ready: true, currentTime: 0.1 },
+                          }));
+                        }
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"
+                      aria-hidden="true"
                     />
                     <Button
                       variant="secondary"
@@ -173,14 +222,24 @@ export function ImageGrid({
                   }}
                 >
                   <div className="text-white text-center transform transition-transform duration-300 hover:scale-110">
-                    <Plus className="h-10 w-10 mx-auto mb-2 stroke-2" />
-                    <span className="text-xl font-medium">
-                      Ver próximas {Math.min(6, totalImages - images.length)}{' '}
-                      fotos
-                    </span>
-                    <p className="text-sm text-white/70">
-                      {images.length} de {totalImages}
-                    </p>
+                    {nextBatchLoading ? (
+                      <div className="flex flex-col items-center">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-2"></div>
+                        <span className="text-xl font-medium">
+                          Carregando...
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <Plus className="h-10 w-10 mx-auto mb-2 stroke-2" />
+                        <span className="text-xl font-medium">
+                          Ver próximas 3 fotos
+                        </span>
+                        <p className="text-sm text-white/70">
+                          {images.length} de {totalImages}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -188,6 +247,19 @@ export function ImageGrid({
           );
         })}
       </div>
+
+      {nextBatchLoading && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={`skeleton-${i}`}
+              className={`aspect-square rounded-xl bg-neutral-900 animate-pulse ${
+                i === 0 ? 'col-span-2 row-span-2' : ''
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {selectedMedia && (
         <div
