@@ -1,5 +1,6 @@
 'use client';
 
+import { CompanionPageBreadcrumb } from '@/components/companionPageBreadcrumb';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import type React from 'react'; // Added import for React
@@ -13,9 +14,7 @@ export default function CompanionsLayout({
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <Button variant="default" onClick={router.back} className="mb-6">
-          Go back
-        </Button>
+        <CompanionPageBreadcrumb />
         {children}
       </div>
     </div>

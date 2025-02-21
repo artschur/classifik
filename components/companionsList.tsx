@@ -9,11 +9,16 @@ import type {
 } from '@/types/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCompanionsToFilter } from '@/db/queries/companions';
 import { useEffect, useState } from 'react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 export function CompanionsList({
   location,
@@ -57,8 +62,6 @@ export function CompanionsList({
 }
 
 export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
   const images = companion.images
     .filter((media): media is string | Media => {
       if (typeof media === 'string') {
@@ -68,101 +71,47 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
     })
     .map((media) => (typeof media === 'object' ? media.publicUrl : media));
 
-  const nextImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setCurrentImageIndex((prevIndex) =>
-      prevIndex === images.length - 1 ? 0 : prevIndex + 1
-    );
-  };
-
-  const prevImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setCurrentImageIndex((prevIndex) =>
-      prevIndex === 0 ? images.length - 1 : prevIndex - 1
-    );
-  };
-
-  // If no images available after filtering, show placeholder
-  if (images.length === 0) {
-    return (
-      <Link
-        href={`/companions/${companion.id}`}
-        className="transition-transform duration-200 ease-in-out transform hover:scale-105"
-      >
-        <Card className="h-full overflow-hidden">
-          <div className="relative aspect-[4/3]">
-            <Image
-              src="/image.png"
-              alt={companion.name}
-              fill={true}
-              className="object-cover"
-            />
-          </div>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold">{companion.name}</h3>
-              <Badge variant="secondary">{companion.age} years</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-              {companion.shortDescription}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {companion.silicone && <Badge variant="outline">Silicone</Badge>}
-              {companion.ethinicity && (
-                <Badge variant="outline">{companion.ethinicity}</Badge>
-              )}
-              {companion.eyeColor && (
-                <Badge variant="outline">{companion.eyeColor}</Badge>
-              )}
-              {companion.hairColor && (
-                <Badge variant="outline">{companion.hairColor}</Badge>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="p-4 pt-0">
-            <span className="text-lg font-bold">
-              € {companion.price.toFixed(2)}
-            </span>
-          </CardFooter>
-        </Card>
-      </Link>
-    );
-  }
-
   return (
     <Link
       href={`/companions/${companion.id}`}
-      className="transition-transform duration-200 ease-in-out transform hover:scale-105"
+      className="transition-transform duration-200 ease-in-out transform hover:scale-102"
     >
       <Card className="h-full overflow-hidden">
-        <div className="relative aspect-[4/3]">
-          <Image
-            src={images[currentImageIndex] ?? '/image.png'}
-            alt={companion.name}
-            fill={true}
-            className="object-cover"
-          />
+        <Carousel className="w-full">
+          <CarouselContent>
+            {images.length > 0 ? (
+              images.map((image, index) => (
+                <CarouselItem key={index}>
+                  <div className="relative aspect-[4/3]">
+                    <Image
+                      src={image || '/placeholder.svg'}
+                      alt={`${companion.name} - Image ${index + 1}`}
+                      fill={true}
+                      className="object-cover"
+                    />
+                  </div>
+                </CarouselItem>
+              ))
+            ) : (
+              <CarouselItem>
+                <div className="relative aspect-[4/3]">
+                  <Image
+                    src="/image.png"
+                    alt={companion.name}
+                    fill={true}
+                    className="object-cover"
+                  />
+                </div>
+              </CarouselItem>
+            )}
+          </CarouselContent>
           {images.length > 1 && (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white hover:bg-black/70"
-                onClick={prevImage}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white hover:bg-black/70"
-                onClick={nextImage}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
             </>
           )}
-        </div>
+        </Carousel>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold">{companion.name}</h3>

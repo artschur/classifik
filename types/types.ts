@@ -38,7 +38,6 @@ export type FilterTypesCompanions = {
 export type CompanionById = Omit<
   Companion,
   | 'id'
-  | 'auth_id'
   | 'created_at'
   | 'updated_at'
   | 'availability'

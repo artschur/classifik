@@ -1,13 +1,12 @@
-'use server'
+'use server';
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { db } from "..";
 import { companionsTable } from "../schema";
 import { eq } from "drizzle-orm";
 
 export async function getEmail() {
   const { sessionClaims } = await auth();
-    
   return sessionClaims?.email;
 }
 
@@ -26,4 +25,26 @@ export async function checkEmailExists(emailRegistered: string | undefined) {
     .where(eq(companionsTable.email, emailRegistered));
 
   return user.length > 0;
+}
+
+export async function getLastSignInByClerkId(clerkId: string) {
+  const user = await clerkClient();
+  const lastSignIn = (await user.users.getUser(clerkId)).lastSignInAt;
+
+  const getRelativeTime = (timestamp: number) => {
+    const msPerHour = 1000 * 60 * 60;
+    const elapsed = new Date().getTime() - timestamp;
+    const hours = Math.floor(elapsed / msPerHour);
+
+    if (hours < 24) {
+      return `${hours} hours ago`;
+    } else {
+      const days = Math.floor(hours / 24);
+      return days === 1 ? "1 day ago" : `${days} days ago`;
+    }
+  };
+  if (!lastSignIn) {
+    return "Never";
+  }
+  return getRelativeTime(lastSignIn);
 }
