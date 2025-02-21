@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { ImageGrid } from '@/components/imageGrid';
 import { getLastSignInByClerkId } from '@/db/queries/userActions';
+import { WhatsAppButton } from './ui/whatsapp-button';
+import { IconBrandInstagram } from '@tabler/icons-react';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
@@ -36,7 +38,7 @@ async function LastSignIn({ clerkId }: { clerkId: string }) {
 
 export async function CompanionProfile({ id }: { id: number }) {
   const companion = await getCompanionById(id);
-
+  let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
@@ -138,14 +140,14 @@ export async function CompanionProfile({ id }: { id: number }) {
                 </div>
               </div>
 
-              <Button className="w-full mb-3 bg-green-600 hover:bg-green-700 text-white">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Conversar no Whatsapp
-              </Button>
+              <WhatsAppButton phone={sanitizedPhone} className="w-full" />
 
-              <Button variant="outline" className="w-full">
-                <Phone className="w-4 h-4 mr-2" />
-                Ver telefone
+              <Button
+                variant="outline"
+                className="w-full mt-4 flex items-center justify-start t"
+              >
+                <IconBrandInstagram className="w-4 h-4 mr-2" />
+                Ver Instagram
               </Button>
 
               <div className="mt-6 text-sm text-muted-foreground">
@@ -162,9 +164,9 @@ export async function CompanionProfile({ id }: { id: number }) {
 
 export function CompanionSkeleton() {
   return (
-    <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl p-5">
       <div className="mb-6">
-        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-8 w-64 mb-2" />
         <div className="flex items-center mt-2 space-x-4">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-5 w-16" />
@@ -175,25 +177,43 @@ export function CompanionSkeleton() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <div className="col-span-3 h-full row-span-2">
-              <Skeleton className="aspect-[4/3 h-full w-full rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-8">
+            <div className="col-span-3 row-span-2">
+              <Skeleton className="aspect-[4/3] w-full rounded-xl" />
             </div>
             <div className="col-span-1">
               <Skeleton className="aspect-[3/4] w-full rounded-xl" />
             </div>
             <div className="col-span-1">
-              <Skeleton className="aspect-[4/4] w-full rounded-xl" />
+              <Skeleton className="aspect-[3/4] w-full rounded-xl" />
             </div>
           </div>
+
+          <Card className="mt-8">
+            <CardContent className="p-6">
+              <Skeleton className="h-7 w-48 mb-4" />
+              <Skeleton className="h-24 w-full mb-6" />
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div>
+                      <Skeleton className="h-3 w-16 mb-1" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div>
-          <Card className="sticky top-12">
+        <div className="w-full">
+          <Card className="sticky top-20">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <Skeleton className="h-9 w-32" />
+                  <Skeleton className="h-7 w-32" />
                 </div>
                 <div className="flex space-x-2">
                   <Skeleton className="h-9 w-9" />
@@ -211,28 +231,6 @@ export function CompanionSkeleton() {
             </CardContent>
           </Card>
         </div>
-
-        <Card className="mt-8 col-span-2">
-          <CardContent className="p-6 ">
-            <h2 className="text-2xl font-semibold mb-4">
-              <Skeleton className="h-8 w-44" />
-            </h2>
-            <Skeleton className="h-20 w-full mb-6" />
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6">
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-              <Skeleton className="h-14 w-32" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
