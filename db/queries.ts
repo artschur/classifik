@@ -67,7 +67,7 @@ export async function getCompanionById(id: number): Promise<CompanionById> {
     getImagesByCompanionId(id),
   ]);
 
-  const imagesUrls = (images as { publicUrl: string; }[]).map((image) => image.publicUrl);
+  const imagesUrls = images.images.map((image) => image.publicUrl);
 
   return {
     ...details,
