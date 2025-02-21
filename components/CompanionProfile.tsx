@@ -162,67 +162,79 @@ export async function CompanionProfile({ id }: { id: number }) {
 
 export function CompanionSkeleton() {
   return (
-    <Card className="w-full max-w-5xl mx-auto overflow-hidden">
-      <div className="p-4 sm:p-6 lg:p-8">
-        <CardContent className="mt-24">
-          x{/* Profile Header */}
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:-mt-20">
-            <div className="flex-1 text-center sm:text-left">
-              <div className="flex items-center justify-center gap-2 sm:justify-start">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-6 w-24" />
-              </div>
-              <div className="flex items-center justify-center gap-2 mt-1 sm:justify-start">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-              <Skeleton className="h-4 w-full mt-4 max-w-md" />
-            </div>
-          </div>
-          {/* Stats Section */}
-          <div className="grid grid-cols-3 gap-4 px-4 py-6 mt-6 border-t border-b sm:px-8">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="text-center">
-                <Skeleton className="h-6 w-16 mx-auto mb-1" />
-                <Skeleton className="h-4 w-12 mx-auto" />
-              </div>
-            ))}
-          </div>
-          {/* Action Buttons */}
-          <div className="grid gap-4 mt-6 sm:grid-cols-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <Skeleton className="h-10 w-full mt-4" />
-          {/* Image Grid Placeholder */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-square w-full" />
-            ))}
-          </div>
-          {/* Characteristics */}
-          <div className="mt-8">
-            <Skeleton className="h-6 w-32 mb-4" />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {Array.from({ length: 11 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Skeleton className="h-5 w-5" />
-                  <div>
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-4 w-24 mt-1" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Bottom Action Buttons */}
-          <div className="grid grid-cols-1 gap-4 mt-8 sm:grid-cols-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        </CardContent>
+    <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="flex items-center mt-2 space-x-4">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-5 w-16" />
+          <span className="text-muted-foreground">·</span>
+          <Skeleton className="h-5 w-32" />
+        </div>
       </div>
-    </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="col-span-3 h-full row-span-2">
+              <Skeleton className="aspect-[4/3 h-full w-full rounded-xl" />
+            </div>
+            <div className="col-span-1">
+              <Skeleton className="aspect-[3/4] w-full rounded-xl" />
+            </div>
+            <div className="col-span-1">
+              <Skeleton className="aspect-[4/4] w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <Card className="sticky top-12">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <Skeleton className="h-9 w-32" />
+                </div>
+                <div className="flex space-x-2">
+                  <Skeleton className="h-9 w-9" />
+                  <Skeleton className="h-9 w-9" />
+                </div>
+              </div>
+
+              <Skeleton className="h-10 w-full mb-3" />
+              <Skeleton className="h-10 w-full" />
+
+              <div className="mt-6">
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="mt-8 col-span-2">
+          <CardContent className="p-6 ">
+            <h2 className="text-2xl font-semibold mb-4">
+              <Skeleton className="h-8 w-44" />
+            </h2>
+            <Skeleton className="h-20 w-full mb-6" />
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6">
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+              <Skeleton className="h-14 w-32" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 
