@@ -7,6 +7,7 @@ import {
 import { CompanionFilters } from '@/components/companionFilters';
 import CompanionsLayout from '@/app/companions/layout';
 import { stringify } from 'querystring';
+import Pagination from '@/components/ui/pagination';
 
 export default async function CompanionsPage({
   params,
@@ -33,6 +34,7 @@ export default async function CompanionsPage({
       >
         <CompanionsList location={city} page={page} filters={sParams} />
       </Suspense>
+      <Pagination totalPages={10} />
     </div>
   );
 }
