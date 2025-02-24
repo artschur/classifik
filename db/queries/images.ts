@@ -5,7 +5,7 @@ import imageCompression from 'browser-image-compression';
 import { db } from '..';
 import { companionsTable, imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { getCompanionIdByClerkId } from './companions';
 
 // Initialize Supabase client
@@ -125,13 +125,25 @@ export async function deleteImage(
 }
 
 export async function getImagesByCompanionId(
-  companionId: number
-): Promise<{ publicUrl: string; }[]> {
+  companionId: number,
+  limit: number = 3,
+  offset: number = 0
+): Promise<{ images: { publicUrl: string; }[]; total: number; }> {
+  const [images, [{ count }]] = await Promise.all([
+    db
+      .select({ publicUrl: imagesTable.public_url })
+      .from(imagesTable)
+      .where(eq(imagesTable.companionId, companionId))
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(imagesTable)
+      .where(eq(imagesTable.companionId, companionId))
+  ]);
 
-  const images = await db
-    .select({ publicUrl: imagesTable.public_url })
-    .from(imagesTable)
-    .where(eq(imagesTable.companionId, companionId));
-
-  return images;
+  return {
+    images,
+    total: count
+  };
 }

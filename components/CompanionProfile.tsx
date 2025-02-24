@@ -30,6 +30,7 @@ import { ImageGrid } from '@/components/imageGrid';
 import { getLastSignInByClerkId } from '@/db/queries/userActions';
 import { WhatsAppButton } from './ui/whatsapp-button';
 import { IconBrandInstagram } from '@tabler/icons-react';
+import { getImagesByCompanionId } from '@/db/queries/images';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
@@ -38,9 +39,21 @@ async function LastSignIn({ clerkId }: { clerkId: string }) {
 
 export async function CompanionProfile({ id }: { id: number }) {
   const companion = await getCompanionById(id);
+  const { images, total } = await getImagesByCompanionId(id, 3, 0);
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
+
+  const initialMedia = images.map((img) => {
+    if (img.publicUrl.match(/\.(mp4|webm|ogg|mov)$/i)) {
+      return {
+        type: 'video' as const,
+        publicUrl: img.publicUrl,
+      };
+    }
+    return img.publicUrl;
+  });
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{companion.name}</h1>
         <div className="flex items-center mt-2 space-x-4">
@@ -64,7 +77,11 @@ export async function CompanionProfile({ id }: { id: number }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <ImageGrid images={companion.images} />
+          <ImageGrid
+            initialImages={initialMedia}
+            companionId={id}
+            totalImages={total}
+          />
 
           <Card className="mt-8">
             <CardContent className="p-6">

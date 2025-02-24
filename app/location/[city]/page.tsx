@@ -7,6 +7,7 @@ import {
 import { CompanionFilters } from '@/components/companionFilters';
 import CompanionsLayout from '@/app/companions/layout';
 import { stringify } from 'querystring';
+import Pagination from '@/components/ui/pagination';
 
 export default async function CompanionsPage({
   params,
@@ -19,6 +20,7 @@ export default async function CompanionsPage({
   const sParams = await searchParams;
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
+  const page = parseInt(sParams.page ?? '1');
 
   return (
     <div className="container mx-auto px-10 py-8">
@@ -30,8 +32,9 @@ export default async function CompanionsPage({
         key={JSON.stringify(sParams)}
         fallback={<CompanionsListSkeleton />}
       >
-        <CompanionsList location={city} page={1} filters={sParams} />
+        <CompanionsList location={city} page={page} filters={sParams} />
       </Suspense>
+      <Pagination totalPages={10} />
     </div>
   );
 }

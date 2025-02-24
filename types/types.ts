@@ -24,6 +24,7 @@ export type CompanionFiltered = Pick<
 export type FilterTypesCompanions = {
   hairColor?: string | null;
   search?: string;
+  page?: string;
   price?: string;
   age?: string;
   sort?: string;
