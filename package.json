@@ -62,6 +62,7 @@
     "supabase": "^2.12.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "use-debounce": "^10.0.4",
     "webp-converter": "^2.3.3",
     "zod": "^3.24.1"
   },
@@ -77,5 +78,10 @@
     "@types/bun": "latest"
   },
   "module": "index.ts",
-  "type": "module"
+  "type": "module",
+  "trustedDependencies": [
+    "@clerk/shared",
+    "@vercel/speed-insights",
+    "core-js-pure"
+  ]
 }

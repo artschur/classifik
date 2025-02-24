@@ -1,5 +1,6 @@
 'use client';
 
+import { useDebouncedCallback } from 'use-debounce';
 import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -68,7 +69,10 @@ export function CompanionFilters({
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearchValue(value);
+    debouncedSearch(value);
+  };
 
+  const debouncedSearch = useDebouncedCallback((value: string) => {
     setPendingFilters((prev) => ({
       ...prev,
       search: value,
@@ -83,7 +87,7 @@ export function CompanionFilters({
         smoker: pendingFilters.smoker?.toString() || null,
       });
     });
-  };
+  }, 300);
 
   const createQueryString = (
     params: Record<string, string | number | number[] | null>
