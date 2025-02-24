@@ -102,6 +102,7 @@ export function CompanionFilters({
         current.set(key, value.toString());
       }
     });
+    current.set('page', '1');
     return current.toString();
   };
 

@@ -23,7 +23,7 @@ export async function getCompanionsToFilter(
   page: number,
   filters?: FilterTypesCompanions
 ): Promise<CompanionFiltered[]> {
-  const pageSize = 15;
+  const pageSize = 9;
   const offset = (page - 1) * pageSize;
 
   const [cityRow] = await db
