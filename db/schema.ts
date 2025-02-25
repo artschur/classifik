@@ -20,10 +20,10 @@ export const companionsTable = pgTable(
     auth_id: text('auth_id').notNull().unique(),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
+    instagramHandle: varchar('instagram', { length: 40 }).notNull(),
     phone: varchar('phone', { length: 20 }).notNull(),
     shortDescription: varchar('short_description', { length: 60 }).notNull(),
     description: text('description').notNull(),
-
     price: integer('price').notNull(),
     age: integer('age').notNull(),
     gender: varchar('gender', { length: 50 }).notNull(),
@@ -32,7 +32,6 @@ export const companionsTable = pgTable(
       .array()
       .notNull()
       .default(sql`ARRAY[]::TEXT[]`),
-
     city_id: integer('location_id')
       .notNull()
       .references(() => citiesTable.id),
