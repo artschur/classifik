@@ -511,14 +511,14 @@ export function RegisterCompanionForm({
                       control={form.control}
                       name="instagramHandle"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex-1">
                           <FormLabel>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center mt-1 gap-x-2">
                               <IconBrandInstagram className="w-4 h-4" />
                               Instagram
                             </div>
                           </FormLabel>
-                          <FormControl>
+                          <FormControl className="pt-1">
                             <div className="flex">
                               <div className="flex items-center justify-center px-3 border border-r-0 rounded-l-md bg-muted">
                                 @
@@ -587,7 +587,7 @@ export function RegisterCompanionForm({
                           <FormControl>
                             <div className="relative">
                               <IMaskInput
-                                mask="€ num"
+                                mask="num"
                                 blocks={{
                                   num: {
                                     mask: Number,
