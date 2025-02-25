@@ -18,45 +18,27 @@ import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
 import { getImagesByAuthId } from './images';
 
-export async function getCompanionsToFilter(
-  citySlug: string,
-  page: number,
+function buildCompanionConditions(
+  cityId: number,
   filters?: FilterTypesCompanions
-): Promise<CompanionFiltered[]> {
-  const pageSize = 9;
-  const offset = (page - 1) * pageSize;
-
-  const [cityRow] = await db
-    .select({ id: citiesTable.id })
-    .from(citiesTable)
-    .where(eq(citiesTable.slug, citySlug))
-    .limit(1);
-  if (!cityRow) return [];
-
-  const companionConditions: SQL[] = [
-    eq(companionsTable.city_id, cityRow.id),
+): SQL[] {
+  const conditions: SQL[] = [
+    eq(companionsTable.city_id, cityId),
     eq(companionsTable.verified, true)
   ];
-  const addCondition = (condition: SQL | undefined) => {
-    if (condition) companionConditions.push(condition);
-  };
 
   if (filters?.search) {
-    addCondition(
-      or(
-        sql`LOWER(${companionsTable.name}) LIKE LOWER(${'%' + filters.search + '%'})`
-      )
+    conditions.push(
+      sql`LOWER(${companionsTable.name}) LIKE LOWER(${'%' + filters.search + '%'})`
     );
   }
 
   if (filters?.price) {
     const [minPrice, maxPrice] = filters.price.split('-').map(Number);
     if (minPrice && maxPrice) {
-      addCondition(
-        and(
-          gte(companionsTable.price, minPrice),
-          lte(companionsTable.price, maxPrice)
-        )
+      conditions.push(
+        sql`${gte(companionsTable.price, minPrice)} and ${lte(companionsTable.price
+          , maxPrice)}`
       );
     }
   }
@@ -64,45 +46,23 @@ export async function getCompanionsToFilter(
   if (filters?.age) {
     const [minAge, maxAge] = filters.age.split('-').map(Number);
     if (minAge && maxAge) {
-      addCondition(
-        and(
-          gte(companionsTable.age, minAge),
-          lte(companionsTable.age, maxAge)
-        )
+      conditions.push(
+        sql`${gte(companionsTable.age, minAge)} and ${lte(companionsTable.age, maxAge)}`
       );
     }
   }
 
-  const sortConditions: SQL[] = [];
-  const addSortCondition = (condition: SQL | undefined) => {
-    if (condition) sortConditions.push(condition);
-  };
+  return conditions;
+}
 
-  if (filters?.sort) {
-    switch (filters.sort) {
-      case 'price-asc':
-        addSortCondition(asc(companionsTable.price));
-        break;
-      case 'price-desc':
-        addSortCondition(desc(companionsTable.price));
-        break;
-    }
-  }
-
-
-  const characteristicConditions: SQL[] = [];
-  const addCharacteristicCondition = (condition: SQL | undefined) => {
-    if (condition) characteristicConditions.push(condition);
-  };
+function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
+  const conditions: SQL[] = [];
 
   if (filters?.height) {
     const [minHeight, maxHeight] = filters.height.split('-').map(Number);
     if (minHeight && maxHeight) {
-      addCharacteristicCondition(
-        and(
-          gte(characteristicsTable.height, (minHeight / 100).toString()),
-          lte(characteristicsTable.height, (maxHeight / 100).toString())
-        )
+      conditions.push(
+        sql`${gte(characteristicsTable.height, (minHeight / 100).toString())} and ${lte(characteristicsTable.height, (maxHeight / 100).toString())}`
       );
     }
   }
@@ -110,11 +70,8 @@ export async function getCompanionsToFilter(
   if (filters?.weight) {
     const [minWeight, maxWeight] = filters.weight.split('-').map(Number);
     if (minWeight && maxWeight) {
-      addCharacteristicCondition(
-        and(
-          gte(characteristicsTable.weight, minWeight.toString()),
-          lte(characteristicsTable.weight, maxWeight.toString())
-        )
+      conditions.push(
+        sql`${gte(characteristicsTable.weight, minWeight.toString())} and ${lte(characteristicsTable.weight, maxWeight.toString())}`
       );
     }
   }
@@ -123,7 +80,7 @@ export async function getCompanionsToFilter(
     const hairColors = filters.hairColor
       .split(',')
       .map((color) => color.trim().toLowerCase());
-    addCharacteristicCondition(
+    conditions.push(
       inArray(
         sql`LOWER(${characteristicsTable.hair_color})`,
         hairColors
@@ -131,19 +88,72 @@ export async function getCompanionsToFilter(
     );
   }
 
-  if (filters?.silicone) {
-    addCharacteristicCondition(eq(characteristicsTable.silicone, true));
-  }
-  if (filters?.tattoos) {
-    addCharacteristicCondition(eq(characteristicsTable.tattoos, true));
-  }
-  if (filters?.smoker) {
-    addCharacteristicCondition(eq(characteristicsTable.smoker, true));
+  if (filters?.silicone) conditions.push(eq(characteristicsTable.silicone, true));
+  if (filters?.tattoos) conditions.push(eq(characteristicsTable.tattoos, true));
+  if (filters?.smoker) conditions.push(eq(characteristicsTable.smoker, true));
+
+  return conditions;
+}
+
+function buildSortConditions(filters?: FilterTypesCompanions): SQL[] {
+  const sortConditions: SQL[] = [];
+
+  if (filters?.sort) {
+    switch (filters.sort) {
+      case 'price-asc':
+        sortConditions.push(asc(companionsTable.price));
+        break;
+      case 'price-desc':
+        sortConditions.push(desc(companionsTable.price));
+        break;
+    }
   }
 
+  return sortConditions;
+}
+
+// Function to get city ID from slug
+async function getCityIdFromSlug(citySlug: string): Promise<number | null> {
+  const [cityRow] = await db
+    .select({ id: citiesTable.id })
+    .from(citiesTable)
+    .where(eq(citiesTable.slug, citySlug))
+    .limit(1);
+
+  return cityRow ? cityRow.id : null;
+}
+
+// Function to fetch companion images
+async function getCompanionImages(companionIds: number[]): Promise<Map<string, string[]>> {
+  if (companionIds.length === 0) return new Map();
+
+  const images = await db
+    .select({
+      companionId: imagesTable.companionId,
+      public_url: imagesTable.public_url,
+    })
+    .from(imagesTable)
+    .where(inArray(imagesTable.companionId, companionIds));
+
+  return images.reduce((acc, img) => {
+    if (!acc.has(img.companionId.toString())) {
+      acc.set(img.companionId.toString(), []);
+    }
+    acc.get(img.companionId.toString())!.push(img.public_url);
+    return acc;
+  }, new Map<string, string[]>());
+}
+
+// Function to build the base companions query
+function buildCompanionsQuery(
+  cityId: number,
+  companionConditions: SQL[],
+  characteristicConditions: SQL[],
+  sortConditions: SQL[]
+) {
   const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
 
-  let query = db
+  return db
     .select({
       companion: {
         id: companionsTable.id,
@@ -173,30 +183,67 @@ export async function getCompanionsToFilter(
     .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
     .where(and(...allConditions))
     .orderBy(...sortConditions);
+}
 
+// New function to count total companions for pagination
+export async function countCompanionsPages(
+  citySlug: string,
+  pageSize: number,
+  filters?: FilterTypesCompanions
+): Promise<number> {
+  const cityId = await getCityIdFromSlug(citySlug);
+  if (!cityId) return 0;
+
+  const companionConditions = buildCompanionConditions(cityId, filters);
+  const characteristicConditions = buildCharacteristicConditions(filters);
+  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(DISTINCT ${companionsTable.id})` })
+    .from(companionsTable)
+    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .where(and(...allConditions));
+
+  return Math.ceil(count / pageSize);
+}
+
+// Main function to get filtered companions
+export async function getCompanionsToFilter(
+  citySlug: string,
+  page: number,
+  filters?: FilterTypesCompanions
+): Promise<CompanionFiltered[]> {
+  const pageSize = 9;
+  const offset = (page - 1) * pageSize;
+
+  // Get city ID
+  const cityId = await getCityIdFromSlug(citySlug);
+  if (!cityId) return [];
+
+  // Build query conditions
+  const companionConditions = buildCompanionConditions(cityId, filters);
+  const characteristicConditions = buildCharacteristicConditions(filters);
+  const sortConditions = buildSortConditions(filters);
+
+  // Create the base query
+  const query = buildCompanionsQuery(
+    cityId,
+    companionConditions,
+    characteristicConditions,
+    sortConditions
+  );
+
+  // Execute the paginated query to get companions
   const results = await query.limit(pageSize).offset(offset);
   if (results.length === 0) return [];
 
+  // Get companion IDs for fetching related data
   const companionIds = results.map(r => r.companion.id);
 
-  const imagesPromise = db
-    .select({
-      companionId: imagesTable.companionId,
-      public_url: imagesTable.public_url,
-    })
-    .from(imagesTable)
-    .where(inArray(imagesTable.companionId, companionIds));
+  // Fetch images in parallel with any other potential data fetches
+  const imagesMap = await getCompanionImages(companionIds);
 
-  const [images] = await Promise.all([imagesPromise]);
-
-  const imagesMap = images.reduce((acc, img) => {
-    if (!acc.has(img.companionId.toString())) {
-      acc.set(img.companionId.toString(), []);
-    }
-    acc.get(img.companionId.toString())!.push(img.public_url);
-    return acc;
-  }, new Map<string, string[]>());
-
+  // Map the results to the expected output format
   return results.map(({ companion, city, characteristics }) => ({
     ...companion,
     city: city.name,
