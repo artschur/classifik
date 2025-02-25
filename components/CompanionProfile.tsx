@@ -31,6 +31,7 @@ import { getLastSignInByClerkId } from '@/db/queries/userActions';
 import { WhatsAppButton } from './ui/whatsapp-button';
 import { IconBrandInstagram } from '@tabler/icons-react';
 import { getImagesByCompanionId } from '@/db/queries/images';
+import { InstagramButton } from './ui/instagramButton';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
@@ -38,8 +39,11 @@ async function LastSignIn({ clerkId }: { clerkId: string }) {
 }
 
 export async function CompanionProfile({ id }: { id: number }) {
-  const companion = await getCompanionById(id);
-  const { images, total } = await getImagesByCompanionId(id, 3, 0);
+  const [companion, { images, total }] = await Promise.all([
+    getCompanionById(id),
+    getImagesByCompanionId(id, 3, 0),
+  ]);
+
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
   const initialMedia = images.map((img) => {
@@ -51,7 +55,7 @@ export async function CompanionProfile({ id }: { id: number }) {
     }
     return img.publicUrl;
   });
-
+  console.log(companion);
   return (
     <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
@@ -139,7 +143,8 @@ export async function CompanionProfile({ id }: { id: number }) {
 
         <div>
           <Card className="sticky top-20">
-            <CardContent className="p-6">
+            <CardContent className="p-6 gap-2 flex flex-col">
+              <div>{companion.shortDescription}</div>
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <span className="text-2xl font-bold">
@@ -158,15 +163,10 @@ export async function CompanionProfile({ id }: { id: number }) {
               </div>
 
               <WhatsAppButton phone={sanitizedPhone} className="w-full" />
-
-              <Button
-                variant="outline"
-                className="w-full mt-4 flex items-center justify-start t"
-              >
-                <IconBrandInstagram className="w-4 h-4 mr-2" />
-                Ver Instagram
-              </Button>
-
+              <InstagramButton
+                instagramHandle={companion.instagramHandle}
+                className="w-full"
+              />
               <div className="mt-6 text-sm text-muted-foreground">
                 <p>Idiomas: {companion.languages.join(', ')}</p>
                 <p className="mt-2">Mídias: {companion.images.length}</p>
