@@ -13,7 +13,6 @@ export default async function CompanionPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
   const [reviews] = await Promise.all([getReviewsByCompanionId(parseInt(id))]);
 
   return (

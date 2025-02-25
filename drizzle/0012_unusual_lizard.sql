@@ -1,0 +1,1 @@
+ALTER TABLE "companions" ADD COLUMN "instagram" varchar(100) NOT NULL;

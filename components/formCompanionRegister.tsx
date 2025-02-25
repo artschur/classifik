@@ -32,7 +32,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Cigarette, Loader2, X } from 'lucide-react';
+import { Cigarette, Globe, Loader2, X } from 'lucide-react';
 import { City } from '@/db/schema'; // Import Companion
 import {
   registerCompanion,
@@ -64,6 +64,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { IconBrandInstagram, IconLanguage } from '@tabler/icons-react';
 
 const pageOneSchema = z.object({
   // Companion Info
@@ -75,6 +76,7 @@ const pageOneSchema = z.object({
   phoneNumber: z
     .string()
     .min(8, 'Numero de telefone precisa ter ao menos 8 caractéres'),
+  instagramHandle: z.string().min(1, 'Instagram handle is required'),
   description: z
     .string()
     .min(30, 'Descrição precisa ter ao menos 30 caractéres'),
@@ -241,6 +243,7 @@ export function RegisterCompanionForm({
         height: companionData.height, // Assuming height is a number
         shoe_size: companionData.shoe_size ?? 36, // Provide default if null
         languages: companionData.languages, // Assuming languages is an array of strings
+        instagramHandle: companionData.instagramHandle, // Instagram handle is a string
         city: companionData.city, // City is an id
         phoneNumber: companionData.phoneNumber || '', // Provide default if null
         ethnicity: companionData.ethnicity || '', // Provide default if null
@@ -259,6 +262,7 @@ export function RegisterCompanionForm({
         shortDescription: '',
         phoneNumber: '',
         description: '',
+        instagramHandle: '',
         price: 0,
         age: 18,
         gender: '',
@@ -417,6 +421,7 @@ export function RegisterCompanionForm({
   };
 
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
+    console.log(data);
     if (!companionData) {
       toast({
         variant: 'success',
@@ -449,848 +454,908 @@ export function RegisterCompanionForm({
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-          }
-        }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {companionData ? 'Edit Profile' : 'Registre-se'}
-            </CardTitle>
-            <CardDescription>
-              {companionData
-                ? 'Edite seu detalhes.'
-                : 'Insira seus detalhes e apareça na melhor plataforma de acompanhantes de portugal.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Page One (Suas Informações) */}
-            {currentPage === 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Suas Informações</h3>
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ana Carolina" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phoneNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Numero de Telefone</FormLabel>
-                      <FormControl>
-                        <PhoneInput
-                          defaultCountry={'PT'}
-                          placeholder="Insira seu numero de telefone"
-                          value={field.value}
-                          onChange={(value) => field.onChange(value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="shortDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição curta</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Escreva uma descrição curta para aparecer no seu perfil. É extremamente importante."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Essa é sua descrição mais detalhada. Conte um pouco mais sobre você e o que gosta."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 md:flex md:flex-row gap-4 justify-between w-full">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="mx-auto max-w-3xl"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {companionData ? 'Edit Profile' : 'Registre-se'}
+              </CardTitle>
+              <CardDescription>
+                {companionData
+                  ? 'Edite seu detalhes.'
+                  : 'Insira seus detalhes e apareça na melhor plataforma de acompanhantes de portugal.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Page One (Suas Informações) */}
+              {currentPage === 0 && (
+                <div className="space-y-4">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ana Carolina" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phoneNumber"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Numero de Telefone</FormLabel>
+                          <FormControl>
+                            <PhoneInput
+                              defaultCountry={'PT'}
+                              placeholder="Insira seu numero de telefone"
+                              value={field.value}
+                              onChange={(value) => field.onChange(value)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="instagramHandle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            <div className="flex items-center gap-2">
+                              <IconBrandInstagram className="w-4 h-4" />
+                              Instagram
+                            </div>
+                          </FormLabel>
+                          <FormControl>
+                            <div className="flex">
+                              <div className="flex items-center justify-center px-3 border border-r-0 rounded-l-md bg-muted">
+                                @
+                              </div>
+                              <Input
+                                className="rounded-l-none"
+                                placeholder="seu_instagram"
+                                value={
+                                  field.value
+                                    ? field.value.replace('@', '')
+                                    : ''
+                                }
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value.replace('@', '')
+                                  )
+                                }
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem className="md:w-1/4">
-                        <FormLabel>Preço (por hora)</FormLabel>
-                        <FormControl>
-                          <IMaskInput
-                            mask="€ num"
-                            blocks={{
-                              num: {
-                                mask: Number,
-                                scale: 2,
-                                min: 0,
-                                max: 10000,
-                                radix: ',',
-                                thousandsSeparator: '.',
-                              },
-                            }}
-                            placeholder="Insira seu preço cobrado"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={String(field.value)}
-                            onAccept={(value: string) =>
-                              field.onChange(
-                                Number(value.replace(/[^0-9]/g, ''))
-                              )
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="age"
+                    name="shortDescription"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Idade</FormLabel>
+                        <FormLabel>Descrição curta</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="18"
-                            max={100}
+                          <Textarea
+                            placeholder="Escreva uma descrição curta para aparecer no seu perfil. É extremamente importante."
                             {...field}
-                            value={field.value?.toString() || ''}
-                            onChange={(e) =>
-                              field.onChange(
-                                Number.parseInt(e.target.value, 10)
-                              )
-                            }
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
-                    name="gender"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gênero</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione seu gênero" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Masculino">Masculino</SelectItem>
-                            <SelectItem value="Feminino">Feminino</SelectItem>
-                            <SelectItem value="Outro">Outro</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Essa é sua descrição mais detalhada. Conte um pouco mais sobre você e o que gosta."
+                            {...field}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço (por hora)</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <IMaskInput
+                                mask="€ num"
+                                blocks={{
+                                  num: {
+                                    mask: Number,
+                                    scale: 2,
+                                    min: 0,
+                                    max: 10000,
+                                    radix: ',',
+                                    thousandsSeparator: '.',
+                                  },
+                                }}
+                                placeholder="Insira seu preço cobrado"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-7 py-2 text-sm ring-offset-background"
+                                value={String(field.value)}
+                                onAccept={(value) =>
+                                  field.onChange(
+                                    Number(value.replace(/[^0-9]/g, ''))
+                                  )
+                                }
+                              />
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                                €
+                              </span>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="age"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Idade</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="18"
+                              max={100}
+                              {...field}
+                              value={field.value?.toString() || ''}
+                              onChange={(e) =>
+                                field.onChange(
+                                  Number.parseInt(e.target.value, 10)
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gênero</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione seu gênero" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Masculino">
+                                Masculino
+                              </SelectItem>
+                              <SelectItem value="Feminino">Feminino</SelectItem>
+                              <SelectItem value="Outro">Outro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="gender_identity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Identidade de gênero</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Cisgênero" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Cisgênero">
+                                Cisgênero
+                              </SelectItem>
+                              <SelectItem value="Transgênero">
+                                Transgênero
+                              </SelectItem>
+                              <SelectItem value="Outro">Outro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="gender_identity"
+                    name="languages"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Identidade de gênero</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Cisgênero" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Cisgênero">Cisgênero</SelectItem>
-                            <SelectItem value="Transgênero">
-                              Transgênero
-                            </SelectItem>
-                            <SelectItem value="Outro">Outro</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel className="flex items-center gap-2">
+                          <Globe className="w-4 h-4" />
+                          Línguas
+                        </FormLabel>
+                        <FormControl>
+                          <MultiSelect
+                            options={[
+                              { value: 'Português', label: 'Português' },
+                              { value: 'Inglês', label: 'Inglês' },
+                              { value: 'Espanhol', label: 'Espanhol' },
+                              { value: 'Francês', label: 'Francês' },
+                              { value: 'Alemão', label: 'Alemão' },
+                              { value: 'Italiano', label: 'Italiano' },
+                            ]}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            defaultValue={
+                              companionData
+                                ? companionData.languages
+                                : ['Português']
+                            }
+                            placeholder="Selecione suas Línguas"
+                            variant="inverted"
+                            animation={2}
+                            maxCount={3}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="languages"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Línguas</FormLabel>
-                      <MultiSelect
-                        options={[
-                          { value: 'Português', label: 'Português' },
-                          { value: 'Inglês', label: 'Inglês' },
-                          { value: 'Espanhol', label: 'Espanhol' },
-                          { value: 'Francês', label: 'Francês' },
-                          { value: 'Alemão', label: 'Alemão' },
-                          { value: 'Italiano', label: 'Italiano' },
-                        ]}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        defaultValue={
-                          companionData
-                            ? companionData.languages
-                            : ['Português']
-                        }
-                        placeholder="Selecione suas Línguas"
-                        variant="inverted"
-                        animation={2}
-                        maxCount={3}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-            {/* Page Two (Características) */}
-            {currentPage === 1 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Características</h3>
-                <p className=" text-sm text-neutral-500 ">
-                  Essa parte é muito importante para aparecer nos nossos filtros
-                  e atrair novos clientes.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="weight"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Peso (kg)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Insira seu peso"
-                            value={field.value?.toString() || ''}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number.parseFloat(e.target.value)
-                                  : 0
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="height"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Altura (m)</FormLabel>
-                        <FormControl>
-                          <IMaskInput
-                            mask="0,99"
-                            definitions={{
-                              '0': /[1-2]/, // First digit: only 1-2
-                              '9': /[0-9]/, // Other digits: 0-9
-                            }}
-                            placeholder="1,70"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={
-                              field.value?.toString().replace('.', ',') || ''
-                            }
-                            onAccept={(value: string) => {
-                              const numericValue = Number(
-                                value.replace(',', '.')
-                              );
-                              if (
-                                !isNaN(numericValue) &&
-                                numericValue >= 1.3 &&
-                                numericValue <= 2.5
-                              ) {
-                                field.onChange(numericValue);
+              )}
+              {/* Page Two (Características) */}
+              {currentPage === 1 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Características</h3>
+                  <p className=" text-sm text-neutral-500 ">
+                    Essa parte é muito importante para aparecer nos nossos
+                    filtros e atrair novos clientes.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="weight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Peso (kg)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Insira seu peso"
+                              value={field.value?.toString() || ''}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? Number.parseFloat(e.target.value)
+                                    : 0
+                                )
                               }
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="ethnicity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Etnia</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione sua etnia" />
-                            </SelectTrigger>
+                              className="w-full"
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Branco">Branco</SelectItem>
-                            <SelectItem value="Negro">Negro</SelectItem>
-                            <SelectItem value="Latino">Latino</SelectItem>
-                            <SelectItem value="Asiático">Asiático</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="eye_color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cor do olho</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="height"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Altura (m)</FormLabel>
                           <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione sua cor de olhos" />
-                            </SelectTrigger>
+                            <IMaskInput
+                              mask="0,99"
+                              definitions={{
+                                '0': /[1-2]/, // First digit: only 1-2
+                                '9': /[0-9]/, // Other digits: 0-9
+                              }}
+                              placeholder="1,70"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              value={
+                                field.value?.toString().replace('.', ',') || ''
+                              }
+                              onAccept={(value: string) => {
+                                const numericValue = Number(
+                                  value.replace(',', '.')
+                                );
+                                if (
+                                  !isNaN(numericValue) &&
+                                  numericValue >= 1.3 &&
+                                  numericValue <= 2.5
+                                ) {
+                                  field.onChange(numericValue);
+                                }
+                              }}
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Azul">Azul</SelectItem>
-                            <SelectItem value="Verde">Verde</SelectItem>
-                            <SelectItem value="Marrom">Marrom</SelectItem>
-                            <SelectItem value="Preto">Preto</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="hair_color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cor do cabelo</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="ethnicity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Etnia</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecione sua etnia" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Branco">Branco</SelectItem>
+                              <SelectItem value="Negro">Negro</SelectItem>
+                              <SelectItem value="Latino">Latino</SelectItem>
+                              <SelectItem value="Asiático">Asiático</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="eye_color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cor do olho</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecione sua cor de olhos" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Azul">Azul</SelectItem>
+                              <SelectItem value="Verde">Verde</SelectItem>
+                              <SelectItem value="Marrom">Marrom</SelectItem>
+                              <SelectItem value="Preto">Preto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="hair_color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cor do cabelo</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Castanho" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Loiro">Loiro</SelectItem>
+                              <SelectItem value="Castanho">Castanho</SelectItem>
+                              <SelectItem value="Preto">Preto</SelectItem>
+                              <SelectItem value="Vermelho">Vermelho</SelectItem>
+                              <SelectItem value="Cinza">Cinza</SelectItem>
+                              <SelectItem value="Branco">Branco</SelectItem>
+                              <SelectItem value="Colorido">Colorido</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="hair_length"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tamanho do Cabelo</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue
+                                  placeholder="Tamanho do seu cabelo"
+                                  defaultValue="Médio"
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Curto">Curto</SelectItem>
+                              <SelectItem value="Médio">Médio</SelectItem>
+                              <SelectItem value="Longo">Longo</SelectItem>
+                              <SelectItem value="Muito Longo">
+                                Muito Longo
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="shoe_size"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tamanho do pé (EU)</FormLabel>
                           <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Castanho" />
-                            </SelectTrigger>
+                            <Input
+                              type="number"
+                              placeholder=""
+                              value={field.value?.toString() || ''}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? Number.parseFloat(e.target.value)
+                                    : 0
+                                )
+                              }
+                              className="w-full"
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Loiro">Loiro</SelectItem>
-                            <SelectItem value="Castanho">Castanho</SelectItem>
-                            <SelectItem value="Preto">Preto</SelectItem>
-                            <SelectItem value="Vermelho">Vermelho</SelectItem>
-                            <SelectItem value="Cinza">Cinza</SelectItem>
-                            <SelectItem value="Branco">Branco</SelectItem>
-                            <SelectItem value="Colorido">Colorido</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="silicone"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base flex flex-row gap-2">
+                              Silicone
+                            </FormLabel>
+                            <FormDescription>
+                              Você possui procedimentos de silicone?
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="tattoos"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base flex flex-row gap-2">
+                              Tattoos{' '}
+                            </FormLabel>
+                            <FormDescription>
+                              Você tem tatuagens?
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="piercings"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base flex flex-row gap-2">
+                              Piercings
+                            </FormLabel>
+                            <FormDescription>
+                              Você tem piercings?
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="smoker"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base flex flex-row gap-2">
+                              Fumante
+                            </FormLabel>
+                            <FormDescription>Você fuma? </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Page Three (Localização) */}
+              {currentPage === 2 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Localização</h3>
+                  {isRegistering && (
+                    <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Registrando seu perfil...
+                      </p>
+                    </div>
+                  )}
                   <FormField
                     control={form.control}
-                    name="hair_length"
+                    name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tamanho do Cabelo</FormLabel>
+                        <FormLabel>Cidade</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          onValueChange={(selected) => {
+                            field.onChange(Number(selected));
+
+                            const selectedCity = cities.find(
+                              (c) => c.id === Number(selected)
+                            );
+
+                            if (selectedCity) {
+                              form.setValue('state', selectedCity.state, {
+                                shouldValidate: false,
+                                shouldDirty: true,
+                                shouldTouch: false,
+                              });
+                              form.setValue('country', selectedCity.country, {
+                                shouldValidate: false,
+                                shouldDirty: true,
+                                shouldTouch: false,
+                              });
+                            }
+                          }}
+                          value={String(field.value)}
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger>
                               <SelectValue
-                                placeholder="Tamanho do seu cabelo"
-                                defaultValue="Médio"
+                                placeholder="Selecione sua cidade"
+                                defaultValue={
+                                  cities.find((c) => c.id === field.value)
+                                    ?.city || ''
+                                }
                               />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Curto">Curto</SelectItem>
-                            <SelectItem value="Médio">Médio</SelectItem>
-                            <SelectItem value="Longo">Longo</SelectItem>
-                            <SelectItem value="Muito Longo">
-                              Muito Longo
-                            </SelectItem>
+                            {cities.map((city) => (
+                              <SelectItem key={city.id} value={String(city.id)}>
+                                {city.city}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
-                    name="shoe_size"
+                    name="neighborhood"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tamanho do pé (EU)</FormLabel>
+                        <FormLabel>Bairro</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            placeholder=""
-                            value={field.value?.toString() || ''}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value
-                                  ? Number.parseFloat(e.target.value)
-                                  : 0
-                              )
-                            }
-                            className="w-full"
-                          />
+                          <Input placeholder="Digite seu bairro" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="silicone"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base flex flex-row gap-2">
-                            Silicone
-                          </FormLabel>
-                          <FormDescription>
-                            Você possui procedimentos de silicone?
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tattoos"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base flex flex-row gap-2">
-                            Tattoos{' '}
-                          </FormLabel>
-                          <FormDescription>Você tem tatuagens?</FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="piercings"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base flex flex-row gap-2">
-                            Piercings
-                          </FormLabel>
-                          <FormDescription>Você tem piercings?</FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="smoker"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base flex flex-row gap-2">
-                            Fumante
-                          </FormLabel>
-                          <FormDescription>Você fuma? </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Page Three (Localização) */}
-            {currentPage === 2 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Localização</h3>
-                {isRegistering && (
-                  <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    <p className="text-sm text-muted-foreground">Registrando seu perfil...</p>
-                  </div>
-                )}
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade</FormLabel>
-                      <Select
-                        onValueChange={(selected) => {
-                          field.onChange(Number(selected));
+              {/* Page Four (Suas Fotos) */}
+              {currentPage === 3 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Suas Fotos</h3>
+                  <p className="text-sm text-neutral-500">
+                    Adicione fotos suas para que os clientes possam te conhecer
+                    melhor.
+                  </p>
 
-                          const selectedCity = cities.find(
-                            (c) => c.id === Number(selected)
-                          );
-
-                          if (selectedCity) {
-                            form.setValue('state', selectedCity.state, {
-                              shouldValidate: false,
-                              shouldDirty: true,
-                              shouldTouch: false,
-                            });
-                            form.setValue('country', selectedCity.country, {
-                              shouldValidate: false,
-                              shouldDirty: true,
-                              shouldTouch: false,
-                            });
-                          }
-                        }}
-                        value={String(field.value)}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder="Selecione sua cidade"
-                              defaultValue={
-                                cities.find((c) => c.id === field.value)
-                                  ?.city || ''
-                              }
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cities.map((city) => (
-                            <SelectItem key={city.id} value={String(city.id)}>
-                              {city.city}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="neighborhood"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bairro</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Digite seu bairro" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {/* Page Four (Suas Fotos) */}
-            {currentPage === 3 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Suas Fotos</h3>
-                <p className="text-sm text-neutral-500">
-                  Adicione fotos suas para que os clientes possam te conhecer
-                  melhor.
-                </p>
-
-                {images.length > 0 && (
-                  <>
-                    <div className="flex justify-between items-center mb-4">
-                      <p className="text-sm">
-                        {selectedImages.size === 0 ? null : selectedImages.size}{' '}
-                        {selectedImages.size === 0
-                          ? null
-                          : selectedImages.size === 1
-                          ? 'imagem selecionada'
-                          : 'imagens selecionadas'}
-                      </p>
-                      {selectedImages.size > 0 && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              disabled={isDeleting}
-                            >
-                              {isDeleting ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Deletando...
-                                </>
-                              ) : (
-                                <>Deletar Selecionadas</>
-                              )}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Você tem certeza?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Essa ação não pode ser desfeita.{' '}
-                                {selectedImages.size}{' '}
-                                {selectedImages.size === 1
-                                  ? 'imagem será'
-                                  : 'imagens serão'}{' '}
-                                permanentemente removidas.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDeleteSelected}>
-                                Deletar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {images.map((image, index) => (
-                        <div
-                          key={index}
-                          className={cn(
-                            'relative aspect-square group cursor-pointer',
-                            selectedImages.has(image.storagePath) &&
-                              'ring-2 ring-primary ring-offset-2'
-                          )}
-                          onClick={() =>
-                            toggleImageSelection(image.storagePath)
-                          }
-                        >
-                          {image.publicUrl.includes('.mp4') ? (
-                            <video
-                              src={image.publicUrl}
-                              className="w-full h-full object-cover rounded-md"
-                              controls
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Your browser does not support the video tag.
-                            </video>
-                          ) : (
-                            <Image
-                              src={image.publicUrl}
-                              alt={`Media ${index + 1}`}
-                              fill
-                              className="object-cover rounded-md"
-                            />
-                          )}
+                  {images.length > 0 && (
+                    <>
+                      <div className="flex justify-between items-center mb-4">
+                        <p className="text-sm">
+                          {selectedImages.size === 0
+                            ? null
+                            : selectedImages.size}{' '}
+                          {selectedImages.size === 0
+                            ? null
+                            : selectedImages.size === 1
+                            ? 'imagem selecionada'
+                            : 'imagens selecionadas'}
+                        </p>
+                        {selectedImages.size > 0 && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={isDeleting}
+                              >
+                                {isDeleting ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deletando...
+                                  </>
+                                ) : (
+                                  <>Deletar Selecionadas</>
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Você tem certeza?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Essa ação não pode ser desfeita.{' '}
+                                  {selectedImages.size}{' '}
+                                  {selectedImages.size === 1
+                                    ? 'imagem será'
+                                    : 'imagens serão'}{' '}
+                                  permanentemente removidas.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleDeleteSelected}
+                                >
+                                  Deletar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {images.map((image, index) => (
                           <div
+                            key={index}
                             className={cn(
-                              'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                              selectedImages.has(image.storagePath)
-                                ? 'bg-primary border-primary'
-                                : 'border-white'
+                              'relative aspect-square group cursor-pointer',
+                              selectedImages.has(image.storagePath) &&
+                                'ring-2 ring-primary ring-offset-2'
                             )}
+                            onClick={() =>
+                              toggleImageSelection(image.storagePath)
+                            }
                           >
-                            <div className="absolute top-2 right-2">
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setImageToDelete(image.storagePath);
-                                    }}
-                                    className="p-1 bg-red-500 rounded-full"
-                                  >
-                                    <X className="h-4 w-4 text-white" />
-                                  </button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Você tem certeza?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Essa ação não pode ser desfeita. O arquivo
-                                      será permanentemente removido.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      Cancelar
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
+                            {image.publicUrl.includes('.mp4') ? (
+                              <video
+                                src={image.publicUrl}
+                                className="w-full h-full object-cover rounded-md"
+                                controls
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : (
+                              <Image
+                                src={image.publicUrl}
+                                alt={`Media ${index + 1}`}
+                                fill
+                                className="object-cover rounded-md"
+                              />
+                            )}
+                            <div
+                              className={cn(
+                                'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                                selectedImages.has(image.storagePath)
+                                  ? 'bg-primary border-primary'
+                                  : 'border-white'
+                              )}
+                            >
+                              <div className="absolute top-2 right-2">
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        if (imageToDelete) {
-                                          handleDeleteImage(imageToDelete);
-                                          setImageToDelete(null);
-                                        }
+                                        setImageToDelete(image.storagePath);
                                       }}
+                                      className="p-1 bg-red-500 rounded-full"
                                     >
-                                      Deletar
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                            <div className="absolute top-2 left-2">
-                              <div
-                                className={cn(
-                                  'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                                  selectedImages.has(image.publicUrl)
-                                    ? 'bg-primary border-primary'
-                                    : 'border-white'
-                                )}
-                              >
-                                {selectedImages.has(image.storagePath) && (
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3 w-3 text-white"
-                                  >
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                )}
+                                      <X className="h-4 w-4 text-white" />
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Você tem certeza?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Essa ação não pode ser desfeita. O
+                                        arquivo será permanentemente removido.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        Cancelar
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (imageToDelete) {
+                                            handleDeleteImage(imageToDelete);
+                                            setImageToDelete(null);
+                                          }
+                                        }}
+                                      >
+                                        Deletar
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                              <div className="absolute top-2 left-2">
+                                <div
+                                  className={cn(
+                                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                                    selectedImages.has(image.publicUrl)
+                                      ? 'bg-primary border-primary'
+                                      : 'border-white'
+                                  )}
+                                >
+                                  {selectedImages.has(image.storagePath) && (
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-3 w-3 text-white"
+                                    >
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
+                        ))}
+                      </div>
+                    </>
+                  )}
 
-                <FileUpload onChange={handleFileUpload} />
-                {uploadStatus && (
-                  <p className="text-sm text-red-500">{uploadStatus}</p>
-                )}
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            {currentPage > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePreviousPage}
-                disabled={isRegistering}
-              >
-                Anterior
-              </Button>
-            )}
-            {currentPage < formSections.length - 1 && (
-              <Button
-                type="button"
-                onClick={handleNextPage}
-                disabled={isRegistering || form.formState.isSubmitting}
-              >
-                {currentPage === 2 && isRegistering ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Registrando perfil...
-                  </>
-                ) : currentPage === 2 ? (
-                  'Adicionar Fotos'
-                ) : (
-                  'Próximo'
-                )}
-              </Button>
-            )}
-            {currentPage === formSections.length - 1 && (
-              <Button 
-                type="submit" 
-                disabled={form.formState.isSubmitting || isRegistering}
-              >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {companionData ? 'Atualizando...' : 'Registrando...'}
-                  </>
-                ) : companionData ? (
-                  'Atualizar'
-                ) : (
-                  'Registrar'
-                )}
-              </Button>
-            )}
-          </CardFooter>
-        </Card>
-      </form>
-    </Form>
+                  <FileUpload onChange={handleFileUpload} />
+                  {uploadStatus && (
+                    <p className="text-sm text-red-500">{uploadStatus}</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              {currentPage > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousPage}
+                  disabled={isRegistering}
+                >
+                  Anterior
+                </Button>
+              )}
+              {currentPage < formSections.length - 1 && (
+                <Button
+                  type="button"
+                  onClick={handleNextPage}
+                  disabled={isRegistering || form.formState.isSubmitting}
+                >
+                  {currentPage === 2 && isRegistering ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Registrando perfil...
+                    </>
+                  ) : currentPage === 2 ? (
+                    'Adicionar Fotos'
+                  ) : (
+                    'Próximo'
+                  )}
+                </Button>
+              )}
+              {currentPage === formSections.length - 1 && (
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting || isRegistering}
+                >
+                  {form.formState.isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {companionData ? 'Atualizando...' : 'Registrando...'}
+                    </>
+                  ) : companionData ? (
+                    'Atualizar'
+                  ) : (
+                    'Registrar'
+                  )}
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        </form>
+      </Form>
+    </div>
   );
 }

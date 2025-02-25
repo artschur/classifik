@@ -20,6 +20,7 @@ export async function getCompanionDetails(id: number) {
       name: companionsTable.name,
       email: companionsTable.email,
       auth_id: companionsTable.auth_id,
+      instagramHandle: companionsTable.instagramHandle,
       phone: companionsTable.phone,
       price: companionsTable.price,
       verified: companionsTable.verified,
