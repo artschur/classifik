@@ -20,7 +20,6 @@ export async function handleOnboard({ isCompanion }: { isCompanion: boolean }) {
     });
     return { message: 'User metadata Updated' };
   } catch (e) {
-    console.log('error', e);
     return { message: 'Error Updating User Metadata' };
   } finally {
     isCompanion ? redirect('/companions/register') : redirect('/location');
