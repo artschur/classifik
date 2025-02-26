@@ -115,7 +115,6 @@ export async function deleteImage(
   storagePath: string,
   bucket: string = 'images'
 ): Promise<void> {
-  console.log('Public URL:', storagePath);
 
   const removeFromBucket = supabase.storage.from(bucket).remove([storagePath]);
   const removeFromDb = db.delete(imagesTable).where(eq(imagesTable.storage_path, storagePath));

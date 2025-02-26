@@ -421,7 +421,6 @@ export function RegisterCompanionForm({
   };
 
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
-    console.log(data);
     if (!companionData) {
       toast({
         variant: 'success',
