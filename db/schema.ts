@@ -11,7 +11,18 @@ import {
   timestamp,
   PgArray,
   jsonb,
+  json,
 } from 'drizzle-orm/pg-core';
+
+export const analyticsEventsTable = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
+  companion_id: integer("companion_id").notNull().references(() => companionsTable.id),
+  event_type: text("event_type").notNull(), // 'page_view', 'whatsapp_click', etc.
+  metadata: json("metadata"),
+  created_at: timestamp("created_at").defaultNow(),
+  user_agent: text("user_agent"),
+  ip_hash: text("ip_hash"), // Store hashed IPs for unique visitor counting
+});
 
 export const companionsTable = pgTable(
   'companions',
