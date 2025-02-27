@@ -5,7 +5,7 @@ import { db } from "..";
 import { analyticsEventsTable } from "../schema";
 import { and, eq, sql, SQL } from "drizzle-orm";
 
-export type AnalyticsEvents = 'page_view' | 'whatsapp_click' | 'image_view' | 'review_click';
+export type AnalyticsEvents = 'page_view' | 'whatsapp_click' | 'instagram_click' | 'image_view' | 'review_click';
 
 
 export async function insertAnalyticsEvent({

@@ -6,6 +6,7 @@ import {
   CompanionSkeleton,
 } from '@/components/CompanionProfile';
 import { getReviewsByCompanionId } from '@/db/queries/reviews';
+import { PageViewTracker } from '@/components/analyticsComponents';
 
 export default async function CompanionPage({
   params,
@@ -17,6 +18,7 @@ export default async function CompanionPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <PageViewTracker companionId={parseInt(id)} />
       <Suspense fallback={<CompanionSkeleton />}>
         <CompanionProfile id={parseInt(id)} />
       </Suspense>

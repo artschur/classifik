@@ -10,7 +10,6 @@ export function useAnalytics() {
         eventType: AnalyticsEvents,
         metadata: Record<string, any> = {}
     ) => {
-
         try {
             insertAnalyticsEvent({
                 companionId: companionId,

@@ -55,7 +55,6 @@ export async function CompanionProfile({ id }: { id: number }) {
     }
     return img.publicUrl;
   });
-  console.log(companion);
   return (
     <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
@@ -162,10 +161,15 @@ export async function CompanionProfile({ id }: { id: number }) {
                 </div>
               </div>
 
-              <WhatsAppButton phone={sanitizedPhone} className="w-full" />
+              <WhatsAppButton
+                phone={sanitizedPhone}
+                companionId={id}
+                className="w-full"
+              />
               <InstagramButton
                 instagramHandle={companion.instagramHandle}
                 className="w-full"
+                companionId={id}
               />
               <div className="mt-6 text-sm text-muted-foreground">
                 <p>Idiomas: {companion.languages.join(', ')}</p>
