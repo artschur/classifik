@@ -1,6 +1,9 @@
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { getCompanionIdByClerkId } from '@/db/queries/companions';
+import {
+  getCompanionByClerkId,
+  getCompanionIdByClerkId,
+} from '@/db/queries/companions';
 import { auth } from '@clerk/nextjs/server';
 import AnalyticsMain from '@/components/analytics-main';
 import { AnalyticsTimeframe } from '@/components/timeframe-selection-analytics';
@@ -18,15 +21,36 @@ export default async function AnalyticsDashboard({
   }
 
   const days = sParams.days ? parseInt(sParams.days) : 7;
-  const companionId = await getCompanionIdByClerkId(userId);
+  const companion = await getCompanionByClerkId(userId);
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">Dashboard de Métricas</h1>
-      <AnalyticsTimeframe days={days} />
-
-      <Suspense fallback={<Button disabled>Carregando...</Button>}>
-        <AnalyticsMain days={days} companionId={companionId} />
+      <h1 className="text-3xl font-bold">Dashboard de Métricas</h1>
+      <p className="text-xl font-sans text-gray-300 pt-4">
+        Olá {companion.name}. <br /> Aqui você verá a interação de seus clientes
+        com o seu perfil.
+      </p>
+      <div className="pt-8">
+        <AnalyticsTimeframe days={days} />
+      </div>
+      <Suspense
+        fallback={
+          <div className="space-y-6 py-2">
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-40 rounded-lg bg-card animate-pulse"
+                />
+              ))}
+            </div>
+            <div className="h-[400px] w-full rounded-lg bg-card animate-pulse" />
+          </div>
+        }
+      >
+        <div className="py-2">
+          <AnalyticsMain days={days} companionId={companion.id} />
+        </div>
       </Suspense>
     </div>
   );

@@ -3,6 +3,7 @@ import {
   getSelfAnalytics,
   SelfAnalyticsResponse,
 } from '@/db/queries/analytics';
+import { IconBrandInstagram, IconBrandWhatsapp } from '@tabler/icons-react';
 
 export async function AnalyticsCards({
   analytics,
@@ -10,8 +11,8 @@ export async function AnalyticsCards({
   analytics: SelfAnalyticsResponse;
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <Card className="">
         <CardHeader>
           <CardTitle>Visualizações de Perfil</CardTitle>
         </CardHeader>
@@ -25,7 +26,9 @@ export async function AnalyticsCards({
 
       <Card>
         <CardHeader>
-          <CardTitle>Cliques no WhatsApp</CardTitle>
+          <CardTitle className="flex w-full gap-2 items-center">
+            Cliques no WhatsApp <IconBrandWhatsapp />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">{analytics.whatsapp.total}</div>
@@ -38,7 +41,9 @@ export async function AnalyticsCards({
 
       <Card>
         <CardHeader>
-          <CardTitle>Cliques no Instagram</CardTitle>
+          <CardTitle className="flex w-full gap-2 items-center">
+            Cliques no Instagram <IconBrandInstagram />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">{analytics.instagram.total}</div>
