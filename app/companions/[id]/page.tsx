@@ -6,7 +6,7 @@ import {
   CompanionSkeleton,
 } from '@/components/CompanionProfile';
 import { getReviewsByCompanionId } from '@/db/queries/reviews';
-import { PageViewTracker } from '@/components/analyticsComponents';
+import { PageViewTracker } from '@/components/analytics-components';
 
 export default async function CompanionPage({
   params,
