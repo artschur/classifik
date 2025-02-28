@@ -29,6 +29,7 @@ export const isAdmin = (userId: string): boolean => {
 };
 
 export default async function Header() {
+  const { userId } = await auth();
   return (
     <header className="sticky top-0 z-50 transition-all duration-200 bg-white/70 backdrop-blur-md dark:bg-gray-950/70">
       <div className="container mx-auto px-4">
@@ -62,8 +63,7 @@ export default async function Header() {
             >
               Encontre uma acompanhante
             </Link>
-            {(await auth()).userId &&
-            isAdmin((await auth()).userId as string) ? (
+            {userId && isAdmin((await auth()).userId as string) ? (
               <Link
                 href="/verify"
                 className="text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
@@ -72,6 +72,16 @@ export default async function Header() {
                 Verificar
               </Link>
             ) : null}
+
+            {userId && (
+              <Link
+                href="/profile"
+                className="text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
+                prefetch={false}
+              >
+                Perfil
+              </Link>
+            )}
           </nav>
           <div className="flex items-center space-x-4">
             <SignedIn>
