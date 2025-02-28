@@ -90,7 +90,6 @@ export async function likeReview(reviewId: number, clerkId: string) {
 }
 
 export async function unlikeReview(reviewId: number, clerkId: string) {
-    console.log("interacted");
     const existingLike = await db
         .select({ id: reviewsTable.id })
         .from(reviewsTable)

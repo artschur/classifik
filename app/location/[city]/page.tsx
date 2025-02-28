@@ -8,6 +8,7 @@ import { CompanionFilters } from '@/components/companionFilters';
 import CompanionsLayout from '@/app/companions/layout';
 import { stringify } from 'querystring';
 import Pagination from '@/components/ui/pagination';
+import { countCompanionsPages } from '@/db/queries/companions';
 
 export default async function CompanionsPage({
   params,
@@ -16,8 +17,8 @@ export default async function CompanionsPage({
   params: Promise<{ city: string }>;
   searchParams: Promise<FilterTypesCompanions>;
 }) {
-  const { city } = await params;
-  const sParams = await searchParams;
+  const [{ city }, sParams] = await Promise.all([params, searchParams]);
+  const totalPages = await countCompanionsPages(city, 9, sParams);
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
   const page = parseInt(sParams.page ?? '1');
@@ -34,7 +35,7 @@ export default async function CompanionsPage({
       >
         <CompanionsList location={city} page={page} filters={sParams} />
       </Suspense>
-      <Pagination totalPages={10} />
+      <Pagination totalPages={totalPages} />
     </div>
   );
 }

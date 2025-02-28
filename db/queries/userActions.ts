@@ -48,3 +48,12 @@ export async function getLastSignInByClerkId(clerkId: string) {
   }
   return getRelativeTime(lastSignIn);
 }
+
+export async function getClerkIdByCompanionId(companionId: number): Promise<string> {
+  const companion = await db
+    .select({ auth_id: companionsTable.auth_id })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, companionId));
+
+  return companion[0].auth_id;
+}

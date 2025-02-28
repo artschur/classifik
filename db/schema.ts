@@ -11,7 +11,29 @@ import {
   timestamp,
   PgArray,
   jsonb,
+  json,
 } from 'drizzle-orm/pg-core';
+
+export const analyticsEventsTable = pgTable(
+  "analytics_events",
+  {
+    id: serial("id").primaryKey(),
+    companionId: integer("companion_id").references(() => companionsTable.id),
+    event_type: text("event_type").notNull(), // 'page_view', 'whatsapp_click', etc.
+    metadata: json("metadata"),
+    created_at: timestamp("created_at").defaultNow(),
+    user_agent: text("user_agent"),
+    ip_hash: text("ip_hash"), // Store hashed IPs for unique visitor counting
+  },
+  (table) => ({
+    analytics_events_companion_idx: index("analytics_events_companion_idx").on(
+      table.companionId
+    ),
+    analytics_events_type_idx: index("analytics_events_type_idx").on(
+      table.event_type
+    ),
+  })
+);
 
 export const companionsTable = pgTable(
   'companions',

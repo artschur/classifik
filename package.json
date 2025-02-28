@@ -57,6 +57,7 @@
     "react-hook-form": "^7.54.2",
     "react-imask": "^7.6.1",
     "react-phone-number-input": "^3.4.11",
+    "recharts": "^2.15.1",
     "shadcn": "^2.3.0",
     "sharp": "^0.33.5",
     "supabase": "^2.12.0",
