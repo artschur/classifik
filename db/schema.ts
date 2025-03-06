@@ -180,6 +180,28 @@ export const imagesTable = pgTable(
   })
 );
 
+export const documentsTable = pgTable(
+  'documents',
+  {
+    id: serial('id').primaryKey(),
+    authId: text('owner_id').notNull(),
+    companionId: integer('companion_id').references(() => companionsTable.id).notNull(),
+    document_type: varchar('document_type', { length: 50 }).notNull(), // ID, passport, etc.
+    storage_path: text('storage_path').notNull(),
+    public_url: text('public_url').notNull(),
+    verified: boolean('verified').default(false),
+    verification_date: timestamp('verification_date'),
+    created_at: timestamp('created_at').defaultNow(),
+    updated_at: timestamp('updated_at').defaultNow(),
+    notes: text('notes'),
+  },
+  (table) => ({
+    documents_owner_idx: index('documents_auth_idx').on(table.authId),
+    documents_companion_idx: index('documents_companion_idx').on(table.companionId),
+    documents_type_idx: index('documents_type_idx').on(table.document_type),
+  })
+);
+
 export const neighborhoodsTable = pgTable(
   'neighborhoods',
   {
@@ -216,3 +238,6 @@ export type NewCity = typeof citiesTable.$inferInsert;
 
 export type Neighborhood = typeof neighborhoodsTable.$inferSelect;
 export type NewNeighborhood = typeof neighborhoodsTable.$inferInsert;
+
+export type Document = typeof documentsTable.$inferSelect;
+export type NewDocument = typeof documentsTable.$inferInsert;

@@ -8,6 +8,7 @@ import {
   neighborhoodsTable,
   NewCharacteristic,
   imagesTable,
+  reviewsTable,
 } from '../schema';
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
@@ -339,9 +340,46 @@ export async function registerCompanion(
 
     return newCompanion;
   } catch (error) {
+    console.log(error);
     throw new Error('Failed to register companion');
   }
 }
+
+export async function getRelevantInfoAnalytics({
+  clerkId,
+}: {
+  clerkId: string;
+}) {
+  const [companion] = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      interactions: sql<number>`COALESCE(CAST(COUNT(CASE WHEN ${reviewsTable.liked_by} IS NOT NULL THEN 1 END) AS INTEGER), 0)`,
+      averageRating: sql<number>`COALESCE(avg(${reviewsTable.rating}), 0)`,
+    })
+    .from(companionsTable)
+    .leftJoin(reviewsTable, eq(reviewsTable.companion_id, companionsTable.id))
+    .where(eq(companionsTable.auth_id, clerkId))
+    .groupBy(companionsTable.id, companionsTable.name)  // Include name in GROUP BY
+    .limit(1);
+
+  if (!companion) {
+    return {
+      id: 0,
+      name: "Usuário",
+      interactions: 0,
+      averageRating: 0
+    };
+  }
+
+  return {
+    id: companion.id,
+    name: companion.name,
+    interactions: companion.interactions,
+    averageRating: Number(companion.averageRating).toFixed(1)
+  };
+}
+
 
 export async function getCompanionByClerkId(
   clerkId: string
