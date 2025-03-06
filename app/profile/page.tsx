@@ -1,9 +1,5 @@
 import { Suspense } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  getCompanionByClerkId,
-  getCompanionIdByClerkId,
-} from '@/db/queries/companions';
+import { getRelevantInfoAnalytics } from '@/db/queries/companions';
 import { auth } from '@clerk/nextjs/server';
 import AnalyticsMain from '@/components/analytics-main';
 import { AnalyticsTimeframe } from '@/components/timeframe-selection-analytics';
@@ -21,7 +17,7 @@ export default async function AnalyticsDashboard({
   }
 
   const days = sParams.days ? parseInt(sParams.days) : 7;
-  const companion = await getCompanionByClerkId(userId);
+  const companion = await getRelevantInfoAnalytics({ clerkId: userId });
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -32,6 +28,17 @@ export default async function AnalyticsDashboard({
       </p>
       <div className="pt-8">
         <AnalyticsTimeframe days={days} />
+      </div>
+      <div className="grid grid-cols-2 gap-4 py-4">
+        <div className="p-4 rounded-lg bg-card">
+          <h3 className="text-lg font-semibold">Total de Interações</h3>
+          <p className="text-2xl font-bold">{companion.interactions}</p>
+        </div>
+        <div className="p-4 rounded-lg bg-card">
+          <h3 className="text-lg font-semibold">Avaliação Média</h3>
+          {/* No need for toFixed here since we did it in the function */}
+          <p className="text-2xl font-bold">{companion.averageRating}/5</p>
+        </div>
       </div>
       <Suspense
         fallback={
