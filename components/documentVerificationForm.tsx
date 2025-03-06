@@ -70,13 +70,16 @@ const DocumentFormSchema = z.object({
 
 type Document = {
   id: number;
+  authId: string;
   document_type: string;
   public_url: string;
   storage_path: string;
-  verified: boolean;
-  verification_date: string | null;
+  verified: boolean | null;
+  verification_date: Date | null;
   notes: string | null;
-  created_at: string;
+  created_at: Date | null;
+  updated_at: Date | null;
+  companionId: number;
 };
 
 export function DocumentVerificationForm() {
@@ -109,14 +112,13 @@ export function DocumentVerificationForm() {
           const result = await getDocumentsByAuthId(user.id);
           if (result.success) {
             setDocuments(result.documents as Document[]);
-            // Check if verification video is already uploaded
             const hasVerificationVideo = (result.documents as Document[]).some(
               (doc) => doc.document_type === 'verification_video'
             );
             setVideoUploaded(hasVerificationVideo);
           } else {
             toast({
-              title: 'Error fetching documents',
+              title: 'Erro ao buscar documentos',
               description: result.error,
               variant: 'destructive',
             });
@@ -124,7 +126,7 @@ export function DocumentVerificationForm() {
         } catch (error) {
           toast({
             title: 'Error',
-            description: 'Failed to fetch documents',
+            description: 'Erro ao buscar documentos',
             variant: 'destructive',
           });
         } finally {
@@ -140,7 +142,7 @@ export function DocumentVerificationForm() {
     if (!isLoaded || !user?.id) {
       toast({
         title: 'Error',
-        description: 'You must be logged in to upload documents',
+        description: 'Usuario não autenticado',
         variant: 'destructive',
       });
       return;
@@ -157,9 +159,9 @@ export function DocumentVerificationForm() {
 
       if (result.success) {
         toast({
-          title: 'Document uploaded',
+          title: 'Documento enviado',
           description:
-            'Your document has been uploaded successfully and is pending verification',
+            'Seu documento foi enviado com sucesso e está aguardando revisão',
           variant: 'success',
         });
 
@@ -173,7 +175,6 @@ export function DocumentVerificationForm() {
         const updatedDocs = await getDocumentsByAuthId(user.id);
         if (updatedDocs.success) {
           setDocuments(updatedDocs.documents as Document[]);
-          // Update video upload state
           setVideoUploaded(
             updatedDocs.documents.some(
               (doc: Document) => doc.document_type === 'verification_video'
@@ -182,7 +183,7 @@ export function DocumentVerificationForm() {
         }
       } else {
         toast({
-          title: 'Upload failed',
+          title: 'Upload falhou',
           description: result.error,
           variant: 'destructive',
         });
@@ -193,7 +194,7 @@ export function DocumentVerificationForm() {
         description:
           error instanceof Error
             ? error.message
-            : 'An error occurred while uploading the document',
+            : 'Ocorreu um erro ao enviar o documento',
         variant: 'destructive',
       });
     } finally {
@@ -223,9 +224,9 @@ export function DocumentVerificationForm() {
 
       if (result.success) {
         toast({
-          title: 'Verification video uploaded',
+          title: 'Video de verificação enviado',
           description:
-            'Your verification video has been uploaded successfully and is pending review',
+            'Seu video foi enviado com sucesso e está aguardando revisão',
           variant: 'success',
         });
 
@@ -253,7 +254,7 @@ export function DocumentVerificationForm() {
         description:
           error instanceof Error
             ? error.message
-            : 'An error occurred while uploading the video',
+            : 'Ocorreu um erro ao enviar o video',
         variant: 'destructive',
       });
     } finally {
@@ -277,8 +278,8 @@ export function DocumentVerificationForm() {
         }
 
         toast({
-          title: 'Document deleted',
-          description: 'Document has been deleted successfully',
+          title: 'Documento deletado',
+          description: 'Documento deletado com sucesso',
           variant: 'success',
         });
       } else {
@@ -291,7 +292,7 @@ export function DocumentVerificationForm() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to delete document',
+        description: 'Falha ao deletar documento',
         variant: 'destructive',
       });
     } finally {
@@ -305,14 +306,14 @@ export function DocumentVerificationForm() {
       return (
         <div className="flex items-center text-green-600">
           <Check size={16} className="mr-1" />
-          <span>Verified</span>
+          <span>Verificado</span>
         </div>
       );
     }
     return (
       <div className="flex items-center text-amber-600">
         <AlertTriangle size={16} className="mr-1" />
-        <span>Pending verification</span>
+        <span>Aguardando verificação</span>
       </div>
     );
   };
@@ -324,35 +325,37 @@ export function DocumentVerificationForm() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <VideoIcon className="mr-2 h-6 w-6" />
-            Verification Video
+            Video de Verificação
             {videoUploaded && (
-              <span className="ml-2 text-sm bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
-                Pending Review
+              <span className="ml-4 text-sm bg-orange-400 text-orange-950 px-2 py-1 rounded-full">
+                Review em andamento
               </span>
             )}
           </CardTitle>
-          <CardDescription>
-            Upload a short verification video to confirm your identity. This is
-            required for account verification.
+          <CardDescription className="text-base max-w-[60%]">
+            Esse video aparecerá no seu perfil e estará visível para outros
+            usuários para garantir uma maior segurança aos nossos clientes.{' '}
+            <br /> Ele serve também para garantir que suas caracteristicas
+            correspondem as informadas.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <AlertDialog>
             <Info className="h-4 w-4" />
             <AlertDialogTitle>
-              Instructions for verification video:
+              Intruções para o Video de Verificação
             </AlertDialogTitle>
             <AlertDialogDescription>
               <ul className="list-disc pl-5 mt-2 space-y-1">
                 <li>
-                  Record a short video (15-30 seconds) showing your face clearly
+                  Grave um vídeo curto (15 segundos) com seu celular, do corpo
+                  inteiro e mostrando seu corpo, apenas com roupas íntimas.
                 </li>
-                <li>Hold a paper with your name and age written on it</li>
+                <li>Dê uma volta completa</li>
                 <li>
-                  Write "onesugar" underneath your name and age on the paper
+                  Segure um papel com seu nome, idade, data do dia e "Onesugar"
+                  escrito embaixo.
                 </li>
-                <li>Say your name out loud in the video</li>
-                <li>Maximum video size: 100MB</li>
               </ul>
             </AlertDialogDescription>
           </AlertDialog>
@@ -361,11 +364,7 @@ export function DocumentVerificationForm() {
             <div className="text-center py-4">
               <Check className="mx-auto h-8 w-8 text-green-500 mb-2" />
               <p className="text-green-600 font-medium">
-                Video uploaded successfully
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your verification video is pending review. For privacy reasons,
-                the video will be deleted after verification.
+                Video enviado com sucesso
               </p>
 
               {documents
@@ -375,20 +374,18 @@ export function DocumentVerificationForm() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" className="text-destructive">
-                          Delete Video
+                          Deletar Video
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will delete your verification video. You will
-                            need to upload a new one for your account to be
-                            verified.
+                            Isso vai deletar o seu video de verificação.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDeleteDocument(video.id)}
                             disabled={isDeleting}
@@ -411,10 +408,6 @@ export function DocumentVerificationForm() {
                 onChange={handleVideoUpload}
                 disabled={isSubmitting}
               />
-              <p className="text-sm text-muted-foreground mt-2">
-                For privacy protection, this video will be automatically deleted
-                after verification is complete.
-              </p>
             </div>
           )}
         </CardContent>
@@ -423,10 +416,10 @@ export function DocumentVerificationForm() {
       {/* ID Document Upload Section */}
       <Card>
         <CardHeader>
-          <CardTitle>ID Document Verification</CardTitle>
+          <CardTitle>Documento de Identidade</CardTitle>
           <CardDescription>
-            Upload your identification documents for verification. This is
-            required to verify your account.
+            Faça upload dos seus documentos de identificação para verificação.
+            Isso é necessário para verificar sua conta.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -437,7 +430,7 @@ export function DocumentVerificationForm() {
                 name="documentType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Document Type</FormLabel>
+                    <FormLabel>Tipo de documento</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -448,16 +441,16 @@ export function DocumentVerificationForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="id_card">ID Card</SelectItem>
-                        <SelectItem value="passport">Passport</SelectItem>
+                        <SelectItem value="id_card">Identidade</SelectItem>
+                        <SelectItem value="passport">Passaporte</SelectItem>
                         <SelectItem value="drivers_license">
-                          Driver's License
+                          Carteira de Motorista
                         </SelectItem>
-                        <SelectItem value="selfie">Selfie with ID</SelectItem>
+                        <SelectItem value="selfie">Selfie com ID</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Select the type of document you are uploading.
+                      Selecione o tipo de documento que você está enviando.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -469,7 +462,7 @@ export function DocumentVerificationForm() {
                 name="file"
                 render={({ field: { onChange, value, ...rest } }) => (
                   <FormItem>
-                    <FormLabel>Upload Document</FormLabel>
+                    <FormLabel>Escolher documento</FormLabel>
                     <FormControl>
                       <Input
                         type="file"
@@ -485,7 +478,7 @@ export function DocumentVerificationForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Upload a clear image or PDF of your document (max 5MB).
+                      Envie uma imagem ou pdf(max 5MB).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -500,7 +493,7 @@ export function DocumentVerificationForm() {
                   </>
                 ) : (
                   <>
-                    <Upload className="mr-2 h-4 w-4" /> Upload Document
+                    <Upload className="mr-2 h-4 w-4" /> Enviar documento
                   </>
                 )}
               </Button>
@@ -512,9 +505,9 @@ export function DocumentVerificationForm() {
       {/* Uploaded Documents Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Documents</CardTitle>
+          <CardTitle>Seus documentos</CardTitle>
           <CardDescription>
-            Documents you've submitted for verification.
+            Documents que você enviou para verificação.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -526,7 +519,7 @@ export function DocumentVerificationForm() {
             (documents.length === 1 &&
               documents[0].document_type === 'verification_video') ? (
             <div className="text-center py-8 text-muted-foreground">
-              No documents uploaded yet.
+              Sem documentos enviados
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -561,12 +554,10 @@ export function DocumentVerificationForm() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Are you absolutely sure?
-                              </AlertDialogTitle>
+                              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete this document and
-                                cannot be undone.
+                                Isso vai deletar o documento e não pode ser
+                                desfeito.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -590,9 +581,11 @@ export function DocumentVerificationForm() {
                         </h4>
                         <p className="text-xs text-muted-foreground mb-2">
                           Uploaded on{' '}
-                          {new Date(document.created_at).toLocaleDateString()}
+                          {new Date(
+                            document.created_at ?? 'Recentemente'
+                          ).toLocaleDateString()}
                         </p>
-                        {renderDocumentStatus(document.verified)}
+                        {renderDocumentStatus(document.verified ?? false)}
                         {document.notes && (
                           <p className="mt-2 text-sm italic border-l-2 border-muted-foreground pl-2">
                             {document.notes}

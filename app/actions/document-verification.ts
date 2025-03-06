@@ -58,7 +58,6 @@ export async function uploadDocument(formData: FormData) {
             .from('documents')
             .getPublicUrl(storagePath);
 
-        // Save document information to database
         await db.insert(documentsTable).values({
             authId: userId,
             companionId,
@@ -143,7 +142,6 @@ export async function verifyDocument(documentId: number, verified: boolean, note
             })
             .where(eq(documentsTable.id, documentId));
 
-        // If this is a verification video and it's verified, delete it for GDPR compliance
         if (document.document_type === 'verification_video' && verified) {
 
             const { error: deleteStorageError } = await supabase
