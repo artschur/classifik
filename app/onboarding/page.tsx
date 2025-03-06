@@ -73,10 +73,10 @@ export default function OnboardPage() {
             </HoverCardContent>
           </HoverCard>
         </div>
+        <p className="text-neutral-300 text-sm mt-4">
+          Crie sua conta gratuitamente
+        </p>
       </div>
-      <p className="text-neutral-300 text-sm mt-4">
-        Crie sua conta gratuitamente
-      </p>
     </section>
   );
 }
