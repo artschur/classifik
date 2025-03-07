@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/db';
-import { documentsTable, companionsTable } from '@/db/schema';
+import { documentsTable, companionsTable, imagesTable } from '@/db/schema';
 import { auth } from '@clerk/nextjs/server';
 import { getCompanionIdByClerkId } from '@/db/queries/companions';
 import { createClient } from '@supabase/supabase-js';
@@ -37,40 +37,92 @@ export async function uploadDocument(formData: FormData) {
 
         const fileExtension = file.name.split('.').pop();
         const fileName = `${userId}_${documentType}_${Date.now()}.${fileExtension}`;
-        const storagePath = `documents/${fileName}`;
 
-        // Upload file to Supabase storage
-        const { data: uploadData, error: uploadError } = await supabase
-            .storage
-            .from('documents')
-            .upload(storagePath, file, {
-                cacheControl: '3600',
-                upsert: false,
+        // For verification videos, store them in the images bucket but mark them
+        if (documentType === 'verification_video') {
+            const storagePath = `verification_videos/${fileName}`;
+
+            // Upload file to Supabase storage (public images bucket)
+            const { data: uploadData, error: uploadError } = await supabase
+                .storage
+                .from('images')
+                .upload(storagePath, file, {
+                    cacheControl: '3600',
+                    upsert: false,
+                });
+
+            if (uploadError) {
+                throw new Error(`Error uploading file: ${uploadError.message}`);
+            }
+
+            // Get the public URL
+            const { data: { publicUrl } } = supabase
+                .storage
+                .from('images')
+                .getPublicUrl(storagePath);
+
+            // Save document information to database
+            await db.insert(documentsTable).values({
+                authId: userId,
+                companionId,
+                document_type: documentType,
+                storage_path: storagePath,
+                public_url: publicUrl,
             });
 
-        if (uploadError) {
-            throw new Error(`Error uploading file: ${uploadError.message}`);
+            // Also save to images table with special metadata to identify it as verification video
+            await db.insert(imagesTable).values({
+                authId: userId,
+                companionId: companionId,
+                storage_path: storagePath,
+                public_url: publicUrl,
+                is_verification_video: true,
+            });
+
+            // Revalidate the verification page
+            revalidatePath('/verify');
+            revalidatePath('/companions/verification');
+            revalidatePath(`/${companionId}`);
+
+            return { success: true, publicUrl };
+        } else {
+            // For regular documents, use the documents bucket (private)
+            const storagePath = `documents/${fileName}`;
+
+            // Upload file to Supabase storage
+            const { data: uploadData, error: uploadError } = await supabase
+                .storage
+                .from('documents')
+                .upload(storagePath, file, {
+                    cacheControl: '3600',
+                    upsert: false,
+                });
+
+            if (uploadError) {
+                throw new Error(`Error uploading file: ${uploadError.message}`);
+            }
+
+            // Get the public URL
+            const { data: { publicUrl } } = supabase
+                .storage
+                .from('documents')
+                .getPublicUrl(storagePath);
+
+            // Save document information to database
+            await db.insert(documentsTable).values({
+                authId: userId,
+                companionId,
+                document_type: documentType,
+                storage_path: storagePath,
+                public_url: publicUrl,
+            });
+
+            // Revalidate the verification page
+            revalidatePath('/verify');
+            revalidatePath('/companions/verification');
+
+            return { success: true, publicUrl };
         }
-
-        // Get the public URL
-        const { data: { publicUrl } } = supabase
-            .storage
-            .from('documents')
-            .getPublicUrl(storagePath);
-
-        await db.insert(documentsTable).values({
-            authId: userId,
-            companionId,
-            document_type: documentType,
-            storage_path: storagePath,
-            public_url: publicUrl,
-        });
-
-        // Revalidate the verification page
-        revalidatePath('/verify');
-        revalidatePath('/companions/verification');
-
-        return { success: true, publicUrl };
     } catch (error) {
         console.error('Error uploading document:', error);
         return {
@@ -143,20 +195,14 @@ export async function verifyDocument(documentId: number, verified: boolean, note
             .where(eq(documentsTable.id, documentId));
 
         if (document.document_type === 'verification_video' && verified) {
+            // Wait a few seconds to ensure the verification is recorded
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
-            const { error: deleteStorageError } = await supabase
-                .storage
-                .from('documents')
-                .remove([document.storage_path]);
-
-            if (deleteStorageError) {
-                console.error('Error deleting verification video from storage:', deleteStorageError);
-            }
-
+            // Delete from documents table (but leave in images table for profile view)
             await db.delete(documentsTable)
                 .where(eq(documentsTable.id, documentId));
 
-            console.log(`Verification video deleted for GDPR compliance: ${documentId}`);
+            console.log(`Verification video deleted from documents table for GDPR compliance: ${documentId}`);
         }
 
         if (verified) {
@@ -186,6 +232,7 @@ export async function verifyDocument(documentId: number, verified: boolean, note
 
         revalidatePath('/verify');
         revalidatePath('/companions/verification');
+        revalidatePath(`/${document.companionId}`);
 
         return { success: true };
     } catch (error) {
@@ -208,6 +255,7 @@ export async function deleteDocument(documentId: number) {
         const [documentToDelete] = await db.select({
             storage_path: documentsTable.storage_path,
             document_type: documentsTable.document_type,
+            companionId: documentsTable.companionId
         })
             .from(documentsTable)
             .where(eq(documentsTable.id, documentId));
@@ -216,9 +264,13 @@ export async function deleteDocument(documentId: number) {
             throw new Error('Document not found');
         }
 
+        // Determine if this is stored in images or documents bucket
+        const bucket = documentToDelete.document_type === 'verification_video' ? 'images' : 'documents';
+
+        // Delete from storage
         const { error: deleteStorageError } = await supabase
             .storage
-            .from('documents')
+            .from(bucket)
             .remove([documentToDelete.storage_path]);
 
         if (deleteStorageError) {
@@ -227,8 +279,14 @@ export async function deleteDocument(documentId: number) {
 
         await db.delete(documentsTable).where(eq(documentsTable.id, documentId));
 
+        // If it's a verification video, also remove from images table
+        if (documentToDelete.document_type === 'verification_video') {
+            await db.delete(imagesTable).where(eq(imagesTable.storage_path, documentToDelete.storage_path));
+        }
+
         revalidatePath('/verify');
         revalidatePath('/companions/verification');
+        revalidatePath(`/${documentToDelete.companionId}`);
 
         return { success: true };
     } catch (error) {
@@ -237,5 +295,19 @@ export async function deleteDocument(documentId: number) {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred'
         };
+    }
+}
+
+export async function isCompanionVerified(clerkId: string) {
+    try {
+
+        const [companion] = await db.select({ verified: companionsTable.verified })
+            .from(companionsTable)
+            .where(eq(companionsTable.auth_id, clerkId));
+
+        return companion ? companion.verified : false;
+    } catch (error) {
+        console.error('Error checking verification status:', error);
+        return false;
     }
 }

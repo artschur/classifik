@@ -8,6 +8,7 @@ import {
   uploadDocument,
   getDocumentsByAuthId,
   deleteDocument,
+  isCompanionVerified,
 } from '@/app/actions/document-verification';
 import { useUser } from '@clerk/nextjs';
 import { useToast } from '@/hooks/use-toast';
@@ -58,8 +59,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const DocumentFormSchema = z.object({
   documentType: z.string().min(1, 'Document type is required'),
@@ -85,6 +86,7 @@ type Document = {
 export function DocumentVerificationForm() {
   const { isLoaded, user } = useUser();
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [documents, setDocuments] = React.useState<Document[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -93,6 +95,7 @@ export function DocumentVerificationForm() {
   );
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [videoUploaded, setVideoUploaded] = React.useState(false);
+  const [companionVerified, setCompanionVerified] = React.useState(false);
 
   const form = useForm<z.infer<typeof DocumentFormSchema>>({
     resolver: zodResolver(DocumentFormSchema),
@@ -109,7 +112,14 @@ export function DocumentVerificationForm() {
       if (isLoaded && user?.id) {
         setIsLoading(true);
         try {
-          const result = await getDocumentsByAuthId(user.id);
+          const [result, verified] = await Promise.all([
+            getDocumentsByAuthId(user.id),
+            isCompanionVerified(user.id),
+          ]);
+
+          // Set verification status
+          setCompanionVerified(!!verified);
+
           if (result.success) {
             setDocuments(result.documents as Document[]);
             const hasVerificationVideo = (result.documents as Document[]).some(
@@ -137,6 +147,22 @@ export function DocumentVerificationForm() {
 
     fetchDocuments();
   }, [isLoaded, user?.id, toast]);
+
+  React.useEffect(() => {
+    if (companionVerified) {
+      router.push('/companions/verification/success');
+    }
+  }, [companionVerified, router]);
+
+  // If verified, show a loading state until redirect happens
+  if (companionVerified) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="animate-spin h-8 w-8 mr-2" />
+        <p>Redirecionando para página de sucesso...</p>
+      </div>
+    );
+  }
 
   async function onSubmit(data: z.infer<typeof DocumentFormSchema>) {
     if (!isLoaded || !user?.id) {
@@ -327,14 +353,14 @@ export function DocumentVerificationForm() {
             <VideoIcon className="mr-2 h-6 w-6" />
             Video de Verificação
             {videoUploaded && (
-              <span className="ml-4 text-sm bg-orange-400 text-orange-950 px-2 py-1 rounded-full">
+              <span className="ml-4 text-sm text-center bg-orange-400 text-orange-950 px-2 py-1 rounded-full">
                 Review em andamento
               </span>
             )}
           </CardTitle>
           <CardDescription className="text-base max-w-[60%]">
             Esse video aparecerá no seu perfil e estará visível para outros
-            usuários para garantir uma maior segurança aos nossos clientes.{' '}
+            usuários para garantir uma maior segurança aos nossos clientes.
             <br /> Ele serve também para garantir que suas caracteristicas
             correspondem as informadas.
           </CardDescription>
