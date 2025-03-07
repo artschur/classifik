@@ -16,11 +16,11 @@ const authorizedIds = [
   `user_2s07vybL9GSrjPbhjljghGwzl1X`,
   'user_2sqI4uTepu0PyRSqlCYxM9ExFW8',
   'user_2sqAwSVd5g0wjbJ8ewbR7zzyUCm',
+  'user_2tulS8cCaz8h2jmcWSRmak5gcSX',
 ];
 
 async function FetchUnverifiedCompanions() {
   const userId = (await auth()).userId;
-
   if (!userId) {
     return <RedirectToSignIn />;
   }

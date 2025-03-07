@@ -586,7 +586,7 @@ export async function updateCompanionFromForm(
 }
 
 export async function getUnverifiedCompanions(): Promise<
-  CompanionFiltered[]
+  (CompanionFiltered & { description: string; })[]
 > {
   let query = db
     .select({
@@ -594,6 +594,7 @@ export async function getUnverifiedCompanions(): Promise<
         id: companionsTable.id,
         name: companionsTable.name,
         shortDescription: companionsTable.shortDescription,
+        description: companionsTable.description,
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
@@ -643,6 +644,7 @@ export async function getUnverifiedCompanions(): Promise<
 
   return results.map(({ companion, city, characteristics }) => ({
     ...companion,
+    description: companion.description,
     city: city.name,
     weight: characteristics.weight,
     height: characteristics.height,

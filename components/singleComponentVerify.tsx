@@ -19,6 +19,7 @@ import {
   MessageSquare,
   VideoIcon,
   AlertTriangle,
+  Sparkle,
 } from 'lucide-react';
 import type { RegisterCompanionFormValues } from './formCompanionRegister';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { IconWoman } from '@tabler/icons-react';
 
 type Document = {
   id: number;
@@ -76,7 +78,7 @@ export default function SingleCompanionVerify({
   companion,
   onActionComplete,
 }: {
-  companion: CompanionFiltered;
+  companion: CompanionFiltered & { description?: string };
   onActionComplete: (companionId: number) => void;
 }) {
   const { toast } = useToast();
@@ -93,7 +95,6 @@ export default function SingleCompanionVerify({
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
-
   const images = companion.images
     .filter((media): media is string | Media => {
       if (typeof media === 'string') {
@@ -218,6 +219,7 @@ export default function SingleCompanionVerify({
     setIsLoadingDocs(true);
     try {
       const result = await getDocumentsByCompanionId(companion.id);
+      console.log(result);
       if (result.success) {
         setDocuments(result.documents as Document[]);
       } else {
@@ -281,7 +283,7 @@ export default function SingleCompanionVerify({
   };
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl px-2">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">
@@ -289,18 +291,18 @@ export default function SingleCompanionVerify({
           </CardTitle>
         </div>
       </CardHeader>
-      <Tabs defaultValue="profile">
-        <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
+      <Tabs defaultValue="profile" className="">
+        <TabsList className="grid grid-cols-2 ">
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="documents">
-            Documents ({documents.length})
+            Documentos ({documents.length})
           </TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
         <TabsContent value="profile">
           <CardContent className="grid gap-4">
-            <div className="relative aspect-[4/3] w-full">
+            <div className="relative aspect-auto h-64">
               <Image
                 src={images[currentImageIndex] ?? '/image.png'}
                 alt={companion.name}
@@ -330,7 +332,7 @@ export default function SingleCompanionVerify({
             </div>
 
             <p className="text-sm text-muted-foreground">
-              {companion.shortDescription}
+              {companion.description}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -339,8 +341,8 @@ export default function SingleCompanionVerify({
                 <span className="text-sm">{companion.age} anos</span>
               </div>
               <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{companion.shortDescription}</span>
+                <Scissors className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">{companion.hairColor}</span>
               </div>
             </div>
 
@@ -374,11 +376,7 @@ export default function SingleCompanionVerify({
               </Badge>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Scissors className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">{companion.hairColor}</span>
-            </div>
-
+            <p>Descricão Curta</p>
             <p className="text-sm">{companion.shortDescription}</p>
           </CardContent>
         </TabsContent>
