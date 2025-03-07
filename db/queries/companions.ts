@@ -380,6 +380,25 @@ export async function getRelevantInfoAnalytics({
   };
 }
 
+export async function getCompanionNameByClerkId(
+  clerkId: string
+): Promise<{ name: string; id: number; }> {
+  const [companion] = await db
+    .select({
+      name: companionsTable.name,
+      id: companionsTable.id,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, clerkId))
+    .limit(1);
+  if (!companion) {
+    throw new Error('Companion not found');
+  }
+  return {
+    name: companion.name,
+    id: companion.id,
+  };
+};
 
 export async function getCompanionByClerkId(
   clerkId: string

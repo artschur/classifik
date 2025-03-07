@@ -298,16 +298,39 @@ export async function deleteDocument(documentId: number) {
     }
 }
 
-export async function isCompanionVerified(clerkId: string) {
+export async function isCompanionVerified(clerkId: string): Promise<boolean> {
     try {
 
         const [companion] = await db.select({ verified: companionsTable.verified })
             .from(companionsTable)
             .where(eq(companionsTable.auth_id, clerkId));
 
-        return companion ? companion.verified : false;
+        if (!companion) {
+            throw new Error('Companion not found');
+        }
+        return companion.verified;
+
     } catch (error) {
         console.error('Error checking verification status:', error);
         return false;
     }
+}
+
+export async function isVerificationPending(clerkId: string): Promise<boolean> {
+
+    const [isVerified, hasDocuments] = await Promise.all([
+        db.select({ isVerified: companionsTable.verified })
+            .from(companionsTable)
+            .where(eq(companionsTable.auth_id, clerkId)),
+        db.select({ hasDocuments: documentsTable.id })
+            .from(documentsTable)
+            .where(eq(documentsTable.authId, clerkId))
+    ]);
+
+    if (!isVerified[0].isVerified && hasDocuments.length !== 0) {
+        return true;
+    }
+
+
+    return false;
 }

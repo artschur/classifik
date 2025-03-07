@@ -61,7 +61,7 @@ export const companionsTable = pgTable(
       () => neighborhoodsTable.id
     ),
 
-    verified: boolean('verified').default(false),
+    verified: boolean('verified').default(false).notNull(),
 
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
