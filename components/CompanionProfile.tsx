@@ -4,7 +4,13 @@ import { Suspense } from 'react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Clock,
@@ -25,12 +31,17 @@ import {
   Share2,
   Heart,
   Star,
+  CheckCircle,
+  Info,
 } from 'lucide-react';
 import { ImageGrid } from '@/components/imageGrid';
 import { getLastSignInByClerkId } from '@/db/queries/userActions';
 import { WhatsAppButton } from './ui/whatsapp-button';
 import { IconBrandInstagram } from '@tabler/icons-react';
-import { getImagesByCompanionId } from '@/db/queries/images';
+import {
+  getImagesByCompanionId,
+  getVerificationVideosByCompanionId,
+} from '@/db/queries/images';
 import { InstagramButton } from './ui/instagramButton';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
@@ -39,15 +50,19 @@ async function LastSignIn({ clerkId }: { clerkId: string }) {
 }
 
 export async function CompanionProfile({ id }: { id: number }) {
-  const [companion, { images, total }] = await Promise.all([
+  const [companion, { images, total }, verificationVideo] = await Promise.all([
     getCompanionById(id),
     getImagesByCompanionId(id, 3, 0),
+    getVerificationVideosByCompanionId(id),
   ]);
 
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
   const initialMedia = images.map((img) => {
-    if (img.publicUrl.match(/\.(mp4|webm|ogg|mov)$/i)) {
+    if (
+      img.publicUrl.match(/\.(mp4|webm|ogg|mov)$/i) &&
+      !img.isVerificationVideo
+    ) {
       return {
         type: 'video' as const,
         publicUrl: img.publicUrl,
@@ -88,10 +103,10 @@ export async function CompanionProfile({ id }: { id: number }) {
 
           <Card className="mt-8">
             <CardContent className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">
+              <h2 className="text-2xl font-semibold mb-4 max-">
                 Sobre {companion.name}
               </h2>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-muted-foreground mb-6 whitespace-normal break-words overflow-wrap-anywhere">
                 {companion.description}
               </p>
 
@@ -135,6 +150,49 @@ export async function CompanionProfile({ id }: { id: number }) {
                     value={companion.smoker ? 'Sim' : 'Não'}
                   />
                 )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="w-full shadow-md mt-8">
+            <CardHeader className="pb-4">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl font-bold">
+                  Vídeo de Verificação
+                </CardTitle>
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                  <CheckCircle className="w-4 h-4 mr-1" /> Verificado
+                </Badge>
+              </div>
+              <CardDescription className="text-base mt-2">
+                Este vídeo serve para garantir a autenticidade do perfil e a
+                segurança de nossos clientes.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <div className="flex justify-center">
+                <video
+                  controls
+                  className="w-full max-h-[400px] rounded-lg border shadow-sm object-contain"
+                  src={verificationVideo[0].publicUrl}
+                />
+              </div>
+              <div className="bg-stone-700/20 shadow-md p-4 rounded-lg border">
+                <h3 className="font-medium mb-2">Detalhes do vídeo</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Data de envio</p>
+                    <p>
+                      {new Date(
+                        verificationVideo[0].createdAt
+                      ).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Status</p>
+                    <p>Verificado pela equipe onesugar</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -206,7 +264,7 @@ export function CompanionSkeleton() {
               <Skeleton className="aspect-[3/4] w-full rounded-xl" />
             </div>
             <div className="col-span-1">
-              <Skeleton className="aspect-[3/4] w-full rounded-xl" />
+              <Skeleton className="aspect-[4/4] w-full rounded-xl" />
             </div>
           </div>
 

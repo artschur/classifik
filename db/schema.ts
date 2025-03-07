@@ -171,7 +171,8 @@ export const imagesTable = pgTable(
     companionId: integer('companion_id').references(() => companionsTable.id).notNull(),
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
-    created_at: timestamp('created_at').defaultNow(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    is_verification_video: boolean('is_verification_video').default(false).notNull(), // Add this field
   },
   (table) => ({
     images_owner_idx: index('images_ownimages_auth_idx').on(table.authId),
