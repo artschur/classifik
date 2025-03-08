@@ -18,6 +18,7 @@ import { eq, and, gte, lte, desc, asc, SQL, inArray, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
 import { getImagesByAuthId } from './images';
+import { unstable_cache } from "next/cache";
 
 function buildCompanionConditions(
   cityId: number,
@@ -209,57 +210,64 @@ export async function countCompanionsPages(
 }
 
 // Main function to get filtered companions
-export async function getCompanionsToFilter(
-  citySlug: string,
-  page: number,
-  filters?: FilterTypesCompanions
-): Promise<CompanionFiltered[]> {
-  const pageSize = 9;
-  const offset = (page - 1) * pageSize;
+export const getCompanionsToFilter = unstable_cache(
+  async (
+    citySlug: string,
+    page: number,
+    filters?: FilterTypesCompanions
+  ): Promise<CompanionFiltered[]> => {
+    const pageSize = 9;
+    const offset = (page - 1) * pageSize;
 
-  // Get city ID
-  const cityId = await getCityIdFromSlug(citySlug);
-  if (!cityId) return [];
+    // Get city ID
+    const cityId = await getCityIdFromSlug(citySlug);
+    if (!cityId) return [];
 
-  // Build query conditions
-  const companionConditions = buildCompanionConditions(cityId, filters);
-  const characteristicConditions = buildCharacteristicConditions(filters);
-  const sortConditions = buildSortConditions(filters);
+    // Build query conditions
+    const companionConditions = buildCompanionConditions(cityId, filters);
+    const characteristicConditions = buildCharacteristicConditions(filters);
+    const sortConditions = buildSortConditions(filters);
 
-  // Create the base query
-  const query = buildCompanionsQuery(
-    cityId,
-    companionConditions,
-    characteristicConditions,
-    sortConditions
-  );
+    // Create the base query
+    const query = buildCompanionsQuery(
+      cityId,
+      companionConditions,
+      characteristicConditions,
+      sortConditions
+    );
 
-  // Execute the paginated query to get companions
-  const results = await query.limit(pageSize).offset(offset);
-  if (results.length === 0) return [];
+    // Execute the paginated query to get companions
+    const results = await query.limit(pageSize).offset(offset);
+    if (results.length === 0) return [];
 
-  // Get companion IDs for fetching related data
-  const companionIds = results.map(r => r.companion.id);
+    // Get companion IDs for fetching related data
+    const companionIds = results.map(r => r.companion.id);
 
-  // Fetch images in parallel with any other potential data fetches
-  const imagesMap = await getCompanionImages(companionIds);
+    // Fetch images in parallel with any other potential data fetches
+    const imagesMap = await getCompanionImages(companionIds);
 
-  // Map the results to the expected output format
-  return results.map(({ companion, city, characteristics }) => ({
-    ...companion,
-    city: city.name,
-    weight: characteristics.weight,
-    height: characteristics.height,
-    eyeColor: characteristics.eye_color,
-    hairColor: characteristics.hair_color,
-    silicone: characteristics.silicone,
-    tattoos: characteristics.tattoos,
-    piercings: characteristics.piercings,
-    smoker: characteristics.smoker,
-    ethinicity: characteristics.ethnicity,
-    images: imagesMap.get(String(companion.id)) || [],
-  }));
-}
+    // Map the results to the expected output format
+    return results.map(({ companion, city, characteristics }) => ({
+      ...companion,
+      city: city.name,
+      weight: characteristics.weight,
+      height: characteristics.height,
+      eyeColor: characteristics.eye_color,
+      hairColor: characteristics.hair_color,
+      silicone: characteristics.silicone,
+      tattoos: characteristics.tattoos,
+      piercings: characteristics.piercings,
+      smoker: characteristics.smoker,
+      ethinicity: characteristics.ethnicity,
+      images: imagesMap.get(String(companion.id)) || [],
+    }));
+  },
+  ["companions-filter"],
+  {
+    revalidate: 3600, // Cache for 1 hour
+    tags: ["companions"]
+  }
+);
 
 export async function registerCompanion(
   companionData: RegisterCompanionFormValues

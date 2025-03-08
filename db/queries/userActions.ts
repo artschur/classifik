@@ -29,24 +29,28 @@ export async function checkEmailExists(emailRegistered: string | undefined) {
 
 export async function getLastSignInByClerkId(clerkId: string) {
   const user = await clerkClient();
-  const lastSignIn = (await user.users.getUser(clerkId)).lastSignInAt;
+  try {
+    const lastSignIn = (await user.users.getUser(clerkId)).lastSignInAt;
+    const getRelativeTime = (timestamp: number) => {
+      const msPerHour = 1000 * 60 * 60;
+      const elapsed = new Date().getTime() - timestamp;
+      const hours = Math.floor(elapsed / msPerHour);
 
-  const getRelativeTime = (timestamp: number) => {
-    const msPerHour = 1000 * 60 * 60;
-    const elapsed = new Date().getTime() - timestamp;
-    const hours = Math.floor(elapsed / msPerHour);
-
-    if (hours < 24) {
-      return `${hours} hours ago`;
-    } else {
-      const days = Math.floor(hours / 24);
-      return days === 1 ? "1 day ago" : `${days} days ago`;
+      if (hours < 24) {
+        return `${hours} hours ago`;
+      } else {
+        const days = Math.floor(hours / 24);
+        return days === 1 ? "1 day ago" : `${days} days ago`;
+      }
+    };
+    if (!lastSignIn) {
+      return "Never";
     }
-  };
-  if (!lastSignIn) {
+    return getRelativeTime(lastSignIn);
+  }
+  catch (error) {
     return "Never";
   }
-  return getRelativeTime(lastSignIn);
 }
 
 export async function getClerkIdByCompanionId(companionId: number): Promise<string> {
