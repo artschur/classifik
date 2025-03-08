@@ -10,6 +10,19 @@ import { stringify } from 'querystring';
 import Pagination from '@/components/ui/pagination';
 import { countCompanionsPages } from '@/db/queries/companions';
 
+async function PaginationComponent({
+  location,
+  filters,
+  limit,
+}: {
+  location: string;
+  filters: FilterTypesCompanions;
+  limit: number;
+}) {
+  const totalPages = await countCompanionsPages(location, limit, filters);
+  return <Pagination totalPages={totalPages} />;
+}
+
 export default async function CompanionsPage({
   params,
   searchParams,
@@ -18,7 +31,6 @@ export default async function CompanionsPage({
   searchParams: Promise<FilterTypesCompanions>;
 }) {
   const [{ city }, sParams] = await Promise.all([params, searchParams]);
-  const totalPages = await countCompanionsPages(city, 9, sParams);
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
   const page = parseInt(sParams.page ?? '1');
@@ -35,7 +47,15 @@ export default async function CompanionsPage({
       >
         <CompanionsList location={city} page={page} filters={sParams} />
       </Suspense>
-      <Pagination totalPages={totalPages} />
+
+      <Suspense
+        key={JSON.stringify(sParams)}
+        fallback={
+          <div className="z-20 fixed bottom-4 min-h-14 min-w-36 left-1/2 transform -translate-x-1/2 bg-stone-800/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"></div>
+        }
+      >
+        <PaginationComponent location={city} filters={sParams} limit={5} />
+      </Suspense>
     </div>
   );
 }
