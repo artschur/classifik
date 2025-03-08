@@ -1,0 +1,1 @@
+ALTER TABLE "images" ADD COLUMN "is_verification_video" boolean DEFAULT false;

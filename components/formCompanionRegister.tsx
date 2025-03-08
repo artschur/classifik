@@ -425,9 +425,11 @@ export function RegisterCompanionForm({
       toast({
         variant: 'success',
         title: 'Perfil criado com sucesso',
-        description: 'Seja bem vindo(a) à nossa plataforma.',
+        description:
+          'Seja bem vindo(a) à nossa plataforma. Agora você precisa verificar sua identidade.',
       });
-      router.push('/');
+      router.push('/companions/verification');
+      return;
     }
     try {
       const clerkId = user?.id;

@@ -18,7 +18,7 @@ export const analyticsEventsTable = pgTable(
   "analytics_events",
   {
     id: serial("id").primaryKey(),
-    companionId: integer("companion_id").references(() => companionsTable.id),
+    companionId: integer("companion_id").references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
     event_type: text("event_type").notNull(), // 'page_view', 'whatsapp_click', etc.
     metadata: json("metadata"),
     created_at: timestamp("created_at").defaultNow(),
@@ -61,7 +61,7 @@ export const companionsTable = pgTable(
       () => neighborhoodsTable.id
     ),
 
-    verified: boolean('verified').default(false),
+    verified: boolean('verified').default(false).notNull(),
 
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
@@ -92,7 +92,7 @@ export const characteristicsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     companion_id: integer('companion_id')
-      .references(() => companionsTable.id)
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
       .notNull(),
     weight: decimal('weight', { precision: 5, scale: 2 }).notNull(),
     height: decimal('height', { precision: 3, scale: 2 }).notNull(),
@@ -127,7 +127,7 @@ export const reviewsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     companion_id: integer('companion_id')
-      .references(() => companionsTable.id)
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
       .notNull(),
     user_id: text('user_id').notNull(),
     userImageUrl: text('user_image_url'),
@@ -168,15 +168,38 @@ export const imagesTable = pgTable(
   {
     id: serial('id').primaryKey(),
     authId: text('owner_id'),
-    companionId: integer('companion_id').references(() => companionsTable.id).notNull(),
+    companionId: integer('companion_id').references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
-    created_at: timestamp('created_at').defaultNow(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    is_verification_video: boolean('is_verification_video').default(false).notNull(), // Add this field
   },
   (table) => ({
     images_owner_idx: index('images_ownimages_auth_idx').on(table.authId),
     images_companion_idx: index('images_companion_idx').on(table.companionId),
     images_created_idx: index('images_created_idx').on(table.created_at),
+  })
+);
+
+export const documentsTable = pgTable(
+  'documents',
+  {
+    id: serial('id').primaryKey(),
+    authId: text('owner_id').notNull(),
+    companionId: integer('companion_id').references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
+    document_type: varchar('document_type', { length: 50 }).notNull(), // ID, passport, etc.
+    storage_path: text('storage_path').notNull(),
+    public_url: text('public_url').notNull(),
+    verified: boolean('verified').default(false),
+    verification_date: timestamp('verification_date'),
+    created_at: timestamp('created_at').defaultNow(),
+    updated_at: timestamp('updated_at').defaultNow(),
+    notes: text('notes'),
+  },
+  (table) => ({
+    documents_owner_idx: index('documents_auth_idx').on(table.authId),
+    documents_companion_idx: index('documents_companion_idx').on(table.companionId),
+    documents_type_idx: index('documents_type_idx').on(table.document_type),
   })
 );
 
@@ -216,3 +239,6 @@ export type NewCity = typeof citiesTable.$inferInsert;
 
 export type Neighborhood = typeof neighborhoodsTable.$inferSelect;
 export type NewNeighborhood = typeof neighborhoodsTable.$inferInsert;
+
+export type Document = typeof documentsTable.$inferSelect;
+export type NewDocument = typeof documentsTable.$inferInsert;

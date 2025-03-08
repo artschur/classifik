@@ -3,10 +3,9 @@
 import { createClient } from '@supabase/supabase-js';
 import imageCompression from 'browser-image-compression';
 import { db } from '..';
-import { companionsTable, imagesTable } from '../schema';
+import { imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
-import { eq, sql } from 'drizzle-orm';
-import { getCompanionIdByClerkId } from './companions';
+import { and, eq, SQL, sql } from 'drizzle-orm';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -127,22 +126,45 @@ export async function getImagesByCompanionId(
   companionId: number,
   limit: number = 3,
   offset: number = 0
-): Promise<{ images: { publicUrl: string; }[]; total: number; }> {
+): Promise<{ images: { publicUrl: string; isVerificationVideo: boolean; }[]; total: number; }> {
+
+  const conditions: SQL[] = [
+    eq(imagesTable.companionId, companionId),
+    eq(imagesTable.is_verification_video, false)];
+
   const [images, [{ count }]] = await Promise.all([
     db
-      .select({ publicUrl: imagesTable.public_url })
+      .select({ publicUrl: imagesTable.public_url, isVerificationVideo: imagesTable.is_verification_video })
       .from(imagesTable)
-      .where(eq(imagesTable.companionId, companionId))
+      .where(and(...conditions))
       .limit(limit)
       .offset(offset),
+
     db
       .select({ count: sql<number>`count(*)` })
       .from(imagesTable)
-      .where(eq(imagesTable.companionId, companionId))
+      .where(and(...conditions))
   ]);
 
   return {
     images,
     total: count
   };
+}
+
+export async function getVerificationVideosByCompanionId(
+  companionId: number
+): Promise<{ publicUrl: string; createdAt: Date; }[]> {
+
+  const videos = await db
+    .select({ publicUrl: imagesTable.public_url, createdAt: imagesTable.created_at })
+    .from(imagesTable)
+    .where(
+      and(
+        eq(imagesTable.companionId, companionId),
+        eq(imagesTable.is_verification_video, true)
+      )
+    );
+
+  return videos;
 }

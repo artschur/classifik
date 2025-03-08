@@ -8,6 +8,7 @@ import {
   neighborhoodsTable,
   NewCharacteristic,
   imagesTable,
+  reviewsTable,
 } from '../schema';
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
@@ -339,9 +340,65 @@ export async function registerCompanion(
 
     return newCompanion;
   } catch (error) {
+    console.log(error);
     throw new Error('Failed to register companion');
   }
 }
+
+export async function getRelevantInfoAnalytics({
+  clerkId,
+}: {
+  clerkId: string;
+}) {
+  const [companion] = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      interactions: sql<number>`COALESCE(CAST(COUNT(CASE WHEN ${reviewsTable.liked_by} IS NOT NULL THEN 1 END) AS INTEGER), 0)`,
+      averageRating: sql<number>`COALESCE(avg(${reviewsTable.rating}), 0)`,
+    })
+    .from(companionsTable)
+    .leftJoin(reviewsTable, eq(reviewsTable.companion_id, companionsTable.id))
+    .where(eq(companionsTable.auth_id, clerkId))
+    .groupBy(companionsTable.id, companionsTable.name)  // Include name in GROUP BY
+    .limit(1);
+
+  if (!companion) {
+    return {
+      id: 0,
+      name: "Usuário",
+      interactions: 0,
+      averageRating: 0
+    };
+  }
+
+  return {
+    id: companion.id,
+    name: companion.name,
+    interactions: companion.interactions,
+    averageRating: Number(companion.averageRating).toFixed(1)
+  };
+}
+
+export async function getCompanionNameByClerkId(
+  clerkId: string
+): Promise<{ name: string; id: number; }> {
+  const [companion] = await db
+    .select({
+      name: companionsTable.name,
+      id: companionsTable.id,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, clerkId))
+    .limit(1);
+  if (!companion) {
+    throw new Error('Companion not found');
+  }
+  return {
+    name: companion.name,
+    id: companion.id,
+  };
+};
 
 export async function getCompanionByClerkId(
   clerkId: string
@@ -548,7 +605,7 @@ export async function updateCompanionFromForm(
 }
 
 export async function getUnverifiedCompanions(): Promise<
-  CompanionFiltered[]
+  (CompanionFiltered & { description: string; })[]
 > {
   let query = db
     .select({
@@ -556,6 +613,7 @@ export async function getUnverifiedCompanions(): Promise<
         id: companionsTable.id,
         name: companionsTable.name,
         shortDescription: companionsTable.shortDescription,
+        description: companionsTable.description,
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
@@ -605,6 +663,7 @@ export async function getUnverifiedCompanions(): Promise<
 
   return results.map(({ companion, city, characteristics }) => ({
     ...companion,
+    description: companion.description,
     city: city.name,
     weight: characteristics.weight,
     height: characteristics.height,
@@ -629,11 +688,8 @@ export async function approveCompanion(id: number) {
 }
 
 export async function rejectCompanion(id: number) {
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(characteristicsTable)
-      .where(eq(characteristicsTable.companion_id, id));
 
+  await db.transaction(async (tx) => {
     await tx.delete(companionsTable).where(eq(companionsTable.id, id));
   });
 
