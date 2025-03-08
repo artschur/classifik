@@ -234,7 +234,6 @@ export async function CompanionProfile({ id }: { id: number }) {
               />
               <div className="mt-6 text-sm text-muted-foreground">
                 <p>Idiomas: {companion.languages.join(', ')}</p>
-                <p className="mt-2">Mídias: {companion.images.length}</p>
               </div>
             </CardContent>
           </Card>
