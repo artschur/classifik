@@ -688,11 +688,8 @@ export async function approveCompanion(id: number) {
 }
 
 export async function rejectCompanion(id: number) {
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(characteristicsTable)
-      .where(eq(characteristicsTable.companion_id, id));
 
+  await db.transaction(async (tx) => {
     await tx.delete(companionsTable).where(eq(companionsTable.id, id));
   });
 

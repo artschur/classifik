@@ -7,6 +7,7 @@ import { getCompanionIdByClerkId } from '@/db/queries/companions';
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { and, eq } from 'drizzle-orm';
+import { getClerkIdByCompanionId } from '@/db/queries/userActions';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,7 +43,6 @@ export async function uploadDocument(formData: FormData) {
         if (documentType === 'verification_video') {
             const storagePath = `verification_videos/${fileName}`;
 
-            // Upload file to Supabase storage (public images bucket)
             const { data: uploadData, error: uploadError } = await supabase
                 .storage
                 .from('images')
@@ -55,41 +55,36 @@ export async function uploadDocument(formData: FormData) {
                 throw new Error(`Error uploading file: ${uploadError.message}`);
             }
 
-            // Get the public URL
             const { data: { publicUrl } } = supabase
                 .storage
                 .from('images')
                 .getPublicUrl(storagePath);
 
-            // Save document information to database
-            await db.insert(documentsTable).values({
-                authId: userId,
-                companionId,
-                document_type: documentType,
-                storage_path: storagePath,
-                public_url: publicUrl,
-            });
+            Promise.all([
+                await db.insert(documentsTable).values({
+                    authId: userId,
+                    companionId,
+                    document_type: documentType,
+                    storage_path: storagePath,
+                    public_url: publicUrl,
+                }),
+                await db.insert(imagesTable).values({
+                    authId: userId,
+                    companionId: companionId,
+                    storage_path: storagePath,
+                    public_url: publicUrl,
+                    is_verification_video: true,
+                })
+            ]);
 
-            // Also save to images table with special metadata to identify it as verification video
-            await db.insert(imagesTable).values({
-                authId: userId,
-                companionId: companionId,
-                storage_path: storagePath,
-                public_url: publicUrl,
-                is_verification_video: true,
-            });
-
-            // Revalidate the verification page
             revalidatePath('/verify');
             revalidatePath('/companions/verification');
             revalidatePath(`/${companionId}`);
 
             return { success: true, publicUrl };
         } else {
-            // For regular documents, use the documents bucket (private)
-            const storagePath = `documents/${fileName}`;
+            const storagePath = `documents/${userId}/${fileName}`;
 
-            // Upload file to Supabase storage
             const { data: uploadData, error: uploadError } = await supabase
                 .storage
                 .from('documents')
@@ -166,24 +161,8 @@ export async function getDocumentsByAuthId(authId: string) {
     }
 }
 
-export async function verifyDocument(documentId: number, verified: boolean, notes?: string) {
+export async function verifyDocument(documentId: number, verified: boolean, documentType: string, notes?: string) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
-            throw new Error('Authentication required');
-        }
-
-        const [document] = await db.select({
-            companionId: documentsTable.companionId,
-            document_type: documentsTable.document_type,
-            storage_path: documentsTable.storage_path
-        })
-            .from(documentsTable)
-            .where(eq(documentsTable.id, documentId));
-
-        if (!document) {
-            throw new Error('Document not found');
-        }
 
         await db.update(documentsTable)
             .set({
@@ -194,45 +173,8 @@ export async function verifyDocument(documentId: number, verified: boolean, note
             })
             .where(eq(documentsTable.id, documentId));
 
-        if (document.document_type === 'verification_video' && verified) {
-            // Wait a few seconds to ensure the verification is recorded
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            // Delete from documents table (but leave in images table for profile view)
-            await db.delete(documentsTable)
-                .where(eq(documentsTable.id, documentId));
-
-            console.log(`Verification video deleted from documents table for GDPR compliance: ${documentId}`);
-        }
-
-        if (verified) {
-            const verifiedDocs = await db.select({
-                document_type: documentsTable.document_type,
-            })
-                .from(documentsTable)
-                .where(and(
-                    eq(documentsTable.companionId, document.companionId),
-                    eq(documentsTable.verified, true)
-                ));
-
-            // If verification video plus at least one ID document is verified
-            const hasVerifiedId = verifiedDocs.some(doc =>
-                ['id_card', 'passport', 'drivers_license'].includes(doc.document_type)
-            );
-
-            const hasVerifiedSelfie = verifiedDocs.some(doc => doc.document_type === 'selfie');
-
-            // If they have either a verified ID or at least two verified documents
-            if (hasVerifiedId || verifiedDocs.length >= 2) {
-                await db.update(companionsTable)
-                    .set({ verified: true })
-                    .where(eq(companionsTable.id, document.companionId));
-            }
-        }
-
         revalidatePath('/verify');
         revalidatePath('/companions/verification');
-        revalidatePath(`/${document.companionId}`);
 
         return { success: true };
     } catch (error) {
@@ -246,12 +188,7 @@ export async function verifyDocument(documentId: number, verified: boolean, note
 
 export async function deleteDocument(documentId: number) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
-            throw new Error('Authentication required');
-        }
 
-        // Get the document to delete
         const [documentToDelete] = await db.select({
             storage_path: documentsTable.storage_path,
             document_type: documentsTable.document_type,
@@ -315,22 +252,75 @@ export async function isCompanionVerified(clerkId: string): Promise<boolean> {
         return false;
     }
 }
-
 export async function isVerificationPending(clerkId: string): Promise<boolean> {
+    try {
+        const [companionResult, documentsData] = await Promise.all([
+            db.select({ verified: companionsTable.verified })
+                .from(companionsTable)
+                .where(eq(companionsTable.auth_id, clerkId)),
 
-    const [isVerified, hasDocuments] = await Promise.all([
-        db.select({ isVerified: companionsTable.verified })
-            .from(companionsTable)
-            .where(eq(companionsTable.auth_id, clerkId)),
-        db.select({ hasDocuments: documentsTable.id })
-            .from(documentsTable)
-            .where(eq(documentsTable.authId, clerkId))
-    ]);
+            db.select({
+                document_type: documentsTable.document_type
+            })
+                .from(documentsTable)
+                .where(eq(documentsTable.authId, clerkId))
+        ]);
 
-    if (!isVerified[0].isVerified && hasDocuments.length !== 0) {
-        return true;
+        if (companionResult.length === 0) {
+            return false;
+        }
+
+        const companion = companionResult[0];
+
+        if (companion.verified) {
+            return false;
+        }
+
+        const documentTypes = documentsData.map(doc => doc.document_type);
+        const hasVerificationVideo = documentTypes.includes('verification_video');
+
+        const hasIdDocument = documentTypes.some(type =>
+            ['id_card', 'passport', 'drivers_license', 'selfie'].includes(type)
+        );
+
+        return hasVerificationVideo && hasIdDocument;
+    } catch (error) {
+        console.error('Error checking verification pending status:', error);
+        return false;
     }
+}
+
+export async function deleteAllDocumentsFromCompanion(companionId: number) {
+    try {
+        const authId = await getClerkIdByCompanionId(companionId);
+
+        const [verificationVideoPath] = await db
+            .select({ storage_path: documentsTable.storage_path })
+            .from(documentsTable)
+            .where(
+                and(
+                    eq(documentsTable.companionId, companionId),
+                    eq(documentsTable.document_type, 'verification_video')
+                )
+            );
+
+        Promise.all([
+            await supabase.storage.from('images').remove([`${authId}/`]),
+            await supabase.storage.from('documents').remove([`documents/${authId}/`]),
+            await supabase.storage.from('images').remove([verificationVideoPath.storage_path]),
+        ]);
 
 
-    return false;
+
+        revalidatePath('/verify');
+        revalidatePath('/companions/verification');
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting all documents:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
 }

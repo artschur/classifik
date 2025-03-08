@@ -39,6 +39,7 @@ import Image from 'next/image';
 import { CompanionFiltered, Media } from '@/types/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  deleteAllDocumentsFromCompanion,
   getDocumentsByCompanionId,
   verifyDocument,
 } from '@/app/actions/document-verification';
@@ -49,19 +50,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { IconWoman } from '@tabler/icons-react';
 
 type Document = {
   id: number;
@@ -146,7 +134,9 @@ export default function SingleCompanionVerify({
     setError(null);
     startTransition(async () => {
       try {
+        await deleteAllDocumentsFromCompanion(companion.id);
         await rejectCompanion(companion.id);
+
         toast({
           title: 'Companion Rejected',
           description: `${companion.name} has been rejected.`,
@@ -154,6 +144,7 @@ export default function SingleCompanionVerify({
         });
         onActionComplete(companion.id);
       } catch (e) {
+        console.log(e);
         setError('Failed to reject companion. Please try again.');
         toast({
           title: 'Error',
@@ -164,11 +155,20 @@ export default function SingleCompanionVerify({
     });
   };
 
-  const handleVerifyDocument = (docId: number, verified: boolean) => {
+  const handleVerifyDocument = (
+    docId: number,
+    documentType: string,
+    verified: boolean
+  ) => {
     setDocumentVerifyingId(docId);
     startTransition(async () => {
       try {
-        const result = await verifyDocument(docId, verified, verificationNotes);
+        const result = await verifyDocument(
+          docId,
+          verified,
+          documentType,
+          verificationNotes
+        );
         if (result.success) {
           // Update local state
           setDocuments(
@@ -458,7 +458,11 @@ export default function SingleCompanionVerify({
                             className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleVerifyDocument(doc.id, true);
+                              handleVerifyDocument(
+                                doc.id,
+                                doc.document_type,
+                                true
+                              );
                             }}
                             disabled={documentVerifyingId === doc.id}
                           >
@@ -471,7 +475,11 @@ export default function SingleCompanionVerify({
                             className="text-amber-600 border-amber-600 hover:bg-amber-600 hover:text-white"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleVerifyDocument(doc.id, false);
+                              handleVerifyDocument(
+                                doc.id,
+                                doc.document_type,
+                                false
+                              );
                             }}
                             disabled={documentVerifyingId === doc.id}
                           >
@@ -604,7 +612,11 @@ export default function SingleCompanionVerify({
                     variant="outline"
                     className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
                     onClick={() =>
-                      handleVerifyDocument(selectedDocument.id, false)
+                      handleVerifyDocument(
+                        selectedDocument.id,
+                        selectedDocument.document_type,
+                        false
+                      )
                     }
                     disabled={documentVerifyingId === selectedDocument.id}
                   >
@@ -614,7 +626,11 @@ export default function SingleCompanionVerify({
                     className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
                     variant="outline"
                     onClick={() =>
-                      handleVerifyDocument(selectedDocument.id, true)
+                      handleVerifyDocument(
+                        selectedDocument.id,
+                        selectedDocument.document_type,
+                        true
+                      )
                     }
                     disabled={documentVerifyingId === selectedDocument.id}
                   >

@@ -18,7 +18,7 @@ export const analyticsEventsTable = pgTable(
   "analytics_events",
   {
     id: serial("id").primaryKey(),
-    companionId: integer("companion_id").references(() => companionsTable.id),
+    companionId: integer("companion_id").references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
     event_type: text("event_type").notNull(), // 'page_view', 'whatsapp_click', etc.
     metadata: json("metadata"),
     created_at: timestamp("created_at").defaultNow(),
@@ -92,7 +92,7 @@ export const characteristicsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     companion_id: integer('companion_id')
-      .references(() => companionsTable.id)
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
       .notNull(),
     weight: decimal('weight', { precision: 5, scale: 2 }).notNull(),
     height: decimal('height', { precision: 3, scale: 2 }).notNull(),
@@ -127,7 +127,7 @@ export const reviewsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     companion_id: integer('companion_id')
-      .references(() => companionsTable.id)
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
       .notNull(),
     user_id: text('user_id').notNull(),
     userImageUrl: text('user_image_url'),
@@ -168,7 +168,7 @@ export const imagesTable = pgTable(
   {
     id: serial('id').primaryKey(),
     authId: text('owner_id'),
-    companionId: integer('companion_id').references(() => companionsTable.id).notNull(),
+    companionId: integer('companion_id').references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
     created_at: timestamp('created_at').defaultNow().notNull(),
@@ -186,7 +186,7 @@ export const documentsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     authId: text('owner_id').notNull(),
-    companionId: integer('companion_id').references(() => companionsTable.id).notNull(),
+    companionId: integer('companion_id').references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
     document_type: varchar('document_type', { length: 50 }).notNull(), // ID, passport, etc.
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
