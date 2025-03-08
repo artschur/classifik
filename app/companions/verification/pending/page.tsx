@@ -21,7 +21,7 @@ async function getCompanionName() {
   return name;
 }
 
-export async function CompanionGreeting() {
+async function CompanionGreeting() {
   const name = await getCompanionName();
   return <span className="">{name}</span>;
 }

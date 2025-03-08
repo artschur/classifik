@@ -32,7 +32,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { approveCompanion, rejectCompanion } from '@/db/queries/companions';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -240,7 +240,7 @@ export default function SingleCompanionVerify({
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     fetchDocuments();
   }, [companion.id]);
 

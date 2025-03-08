@@ -104,8 +104,8 @@ export function DocumentVerificationForm() {
     },
   });
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const videoInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     async function fetchDocuments() {
@@ -486,13 +486,15 @@ export function DocumentVerificationForm() {
               <FormField
                 control={form.control}
                 name="file"
-                render={({ field: { onChange, value, ...rest } }) => (
+                render={(
+                  { field: { onChange, value, ref, ...rest } } // Extract and ignore the ref
+                ) => (
                   <FormItem>
                     <FormLabel>Escolher documento</FormLabel>
                     <FormControl>
                       <Input
                         type="file"
-                        ref={fileInputRef}
+                        ref={fileInputRef} // Keep only your explicit ref
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
@@ -500,7 +502,7 @@ export function DocumentVerificationForm() {
                           }
                         }}
                         accept="image/jpeg,image/png,image/jpg,application/pdf"
-                        {...rest}
+                        {...rest} // Rest no longer includes ref
                       />
                     </FormControl>
                     <FormDescription>

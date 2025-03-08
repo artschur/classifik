@@ -171,11 +171,13 @@ export async function CompanionProfile({ id }: { id: number }) {
 
             <CardContent className="space-y-6">
               <div className="flex justify-center">
-                <video
-                  controls
-                  className="w-full max-h-[400px] rounded-lg border shadow-sm object-contain"
-                  src={verificationVideo[0].publicUrl}
-                />
+                {verificationVideo[0] && (
+                  <video
+                    controls
+                    className="w-full max-h-[400px] rounded-lg border shadow-sm object-contain"
+                    src={verificationVideo[0].publicUrl}
+                  />
+                )}
               </div>
               <div className="bg-stone-700/20 shadow-md p-4 rounded-lg border">
                 <h3 className="font-medium mb-2">Detalhes do vídeo</h3>
@@ -183,9 +185,10 @@ export async function CompanionProfile({ id }: { id: number }) {
                   <div>
                     <p className="text-muted-foreground">Data de envio</p>
                     <p>
-                      {new Date(
-                        verificationVideo[0].createdAt
-                      ).toLocaleDateString('pt-BR')}
+                      {verificationVideo[0] &&
+                        new Date(
+                          verificationVideo[0].createdAt
+                        ).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                   <div>

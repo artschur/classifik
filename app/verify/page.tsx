@@ -49,10 +49,7 @@ export default function VerifyCompanionPage() {
       <h1 className="text-3xl font-bold">Companion Verification</h1>
 
       <div className="w-full max-w-2xl space-y-4 mb-4">
-        <AlertDialog
-          variant="default"
-          className="bg-blue-50 text-blue-800 border-blue-200"
-        >
+        <AlertDialog>
           <FileCheck className="h-4 w-4" />
           <AlertDialogTitle>Document Verification</AlertDialogTitle>
           <AlertDialogDescription>
@@ -62,10 +59,7 @@ export default function VerifyCompanionPage() {
           </AlertDialogDescription>
         </AlertDialog>
 
-        <AlertDialog
-          variant="default"
-          className="bg-amber-50 text-amber-800 border-amber-200"
-        >
+        <AlertDialog>
           <ShieldAlert className="h-4 w-4" />
           <AlertDialogTitle>Verification Requirements</AlertDialogTitle>
           <AlertDialogDescription>
