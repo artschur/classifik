@@ -51,31 +51,33 @@ export default function VerifyCompanionPage() {
       <div className="w-full max-w-2xl space-y-4 mb-4">
         <AlertDialog>
           <FileCheck className="h-4 w-4" />
-          <AlertDialogTitle>Document Verification</AlertDialogTitle>
+          <AlertDialogTitle>Verificação de Documentos</AlertDialogTitle>
           <AlertDialogDescription>
-            Each companion must provide at least one form of ID and a
-            verification video to be approved. Verification videos are
-            automatically deleted after approval for GDPR compliance.
+            Cada acompanhante precisa mandar um documento e um vídeo de
+            verificação para entrar na plataforma.
           </AlertDialogDescription>
         </AlertDialog>
 
         <AlertDialog>
           <ShieldAlert className="h-4 w-4" />
-          <AlertDialogTitle>Verification Requirements</AlertDialogTitle>
+          <AlertDialogTitle>Requisitos de Verificação</AlertDialogTitle>
           <AlertDialogDescription>
             <ul className="list-disc pl-5 mt-1 space-y-1">
               <li>
-                Check that the verification video shows the companion's face
-                clearly
+                Verifique se o vídeo de verificação mostra claramente o rosto do
+                acompanhante
               </li>
               <li>
-                Verify that they hold a paper with their name, age, and
-                "onesugar" written on it
+                Verifique se eles seguram um papel com seu nome, idade e
+                "onesugar" escrito nele
               </li>
               <li>
-                Ensure their ID document matches their profile information
+                Garanta que o documento de identificação corresponde às
+                informações do perfil
               </li>
-              <li>All companions must be 18+ to be verified</li>
+              <li>
+                Todos os acompanhantes devem ter 18+ anos para serem verificados
+              </li>
             </ul>
           </AlertDialogDescription>
         </AlertDialog>
