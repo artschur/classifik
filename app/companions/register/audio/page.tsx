@@ -1,10 +1,7 @@
 import { Suspense } from 'react';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import {
-  getCompanionByClerkId,
-  getCompanionNameByClerkId,
-} from '@/db/queries/companions';
+import { getCompanionNameByClerkId } from '@/db/queries/companions';
 import AudioFormClient from './audio-form';
 
 export default async function AudioPage() {
@@ -22,9 +19,7 @@ export default async function AudioPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">
-        Record Audio for {companion.name}
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Audio for {companion.name}</h1>
 
       <Suspense
         fallback={
