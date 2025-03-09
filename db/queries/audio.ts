@@ -1,10 +1,9 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { db } from "..";
 import { audioRecordingsTable } from "../schema";
 import { createClient } from "@supabase/supabase-js";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,10 +51,9 @@ export async function uploadAudio({ audioFile, companionId, clerkId }: {
     }
 }
 
-export async function getAudioUrlByCompanionId(companionId: number): Promise<{ id: number; publicUrl: string; }> {
+export async function getAudioUrlByCompanionId(companionId: number): Promise<{ id: number; publicUrl: string; } | null> {
     try {
-        console.log("fetched audio");
-        const [audio] = await db
+        const [audioResults] = await db
             .select({
                 id: audioRecordingsTable.id,
                 publicUrl: audioRecordingsTable.public_url,
@@ -64,9 +62,90 @@ export async function getAudioUrlByCompanionId(companionId: number): Promise<{ i
             .where(eq(audioRecordingsTable.companionId, companionId))
             .limit(1);
 
-        return audio;
+        if (!audioResults) {
+            return null;
+        }
+
+        return audioResults;
     } catch (error) {
         console.error("Error fetching audio:", error);
-        throw Error("Failed to fetch audio");
+        return null;
     }
 }
+
+export async function getAudioUrlByClerkId(clerkId: string): Promise<{ id: number; publicUrl: string; } | null> {
+    try {
+        const [audioResults] = await db
+            .select({
+                id: audioRecordingsTable.id,
+                publicUrl: audioRecordingsTable.public_url,
+            })
+            .from(audioRecordingsTable)
+            .where(eq(audioRecordingsTable.authId, clerkId))
+            .limit(1);
+
+        if (!audioResults) {
+            return null;
+        }
+
+        return audioResults;
+    } catch (error) {
+        console.error("Error fetching audio:", error);
+        return null;
+    }
+}
+
+export async function updateAudio(
+    { audioFile, companionId, clerkId }: {
+        audioFile: File,
+        companionId?: number,
+        clerkId?: string,
+    }
+): Promise<{ success?: boolean; error?: string; }> {
+
+    if (!companionId && !clerkId) {
+        return { error: "Either companionId or clerkId is required" };
+    }
+
+    const conditions = [
+        companionId ? eq(audioRecordingsTable.companionId, companionId) : undefined,
+        clerkId ? eq(audioRecordingsTable.authId, clerkId) : undefined,
+    ].filter(Boolean);
+
+    const existingAudios = await db.select({
+        storagePath: audioRecordingsTable.storage_path,
+    })
+        .from(audioRecordingsTable)
+        .where(and(...conditions));
+
+    const deleteStoragePromise = existingAudios.length > 0
+        ? supabase.storage.from("images").remove(existingAudios.map(audio => audio.storagePath))
+        : Promise.resolve({ error: null });
+
+    const deleteTablePromise = db.delete(audioRecordingsTable).where(and(...conditions));
+
+    const uploadPromise = uploadAudio({
+        audioFile,
+        companionId: companionId!,
+        clerkId: clerkId!,
+    });
+
+    const [deleteStorageResult, deleteTableResult, uploadResult] = await Promise.all([
+        deleteStoragePromise,
+        deleteTablePromise,
+        uploadPromise
+    ]);
+
+    if (deleteStorageResult.error) {
+        console.error("Error deleting old audio files:", deleteStorageResult.error);
+        return { error: deleteStorageResult.error.message };
+    }
+
+    if (uploadResult.error) {
+        console.error("Error uploading new audio:", uploadResult.error);
+        return { error: uploadResult.error };
+    }
+
+    return uploadResult;
+}
+
