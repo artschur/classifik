@@ -43,6 +43,7 @@ import {
   getVerificationVideosByCompanionId,
 } from '@/db/queries/images';
 import { InstagramButton } from './ui/instagramButton';
+import { getAudioUrlByCompanionId } from '@/db/queries/audio';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
@@ -50,12 +51,15 @@ async function LastSignIn({ clerkId }: { clerkId: string }) {
 }
 
 export async function CompanionProfile({ id }: { id: number }) {
-  const [companion, { images, total }, verificationVideo] = await Promise.all([
-    getCompanionById(id),
-    getImagesByCompanionId(id, 3, 0),
-    getVerificationVideosByCompanionId(id),
-  ]);
+  const [companion, { images, total }, verificationVideo, audio] =
+    await Promise.all([
+      getCompanionById(id),
+      getImagesByCompanionId(id, 3, 0),
+      getVerificationVideosByCompanionId(id),
+      getAudioUrlByCompanionId(id),
+    ]);
 
+  console.log(audio);
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
   const initialMedia = images.map((img) => {
@@ -235,6 +239,11 @@ export async function CompanionProfile({ id }: { id: number }) {
               <div className="mt-6 text-sm text-muted-foreground">
                 <p>Idiomas: {companion.languages.join(', ')}</p>
               </div>
+              <audio
+                controls
+                className="w-full mt-4 rounded-lg border shadow-sm"
+                src={audio.publicUrl}
+              />
             </CardContent>
           </Card>
         </div>
