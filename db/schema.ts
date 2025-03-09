@@ -181,6 +181,23 @@ export const imagesTable = pgTable(
   })
 );
 
+export const audioRecordingsTable = pgTable(
+  "audio_recordings",
+  {
+    id: serial("id").primaryKey(),
+    authId: text("owner_id").notNull(),
+    companionId: integer("companion_id").notNull(),
+    storage_path: text("storage_path").notNull(),
+    public_url: text("public_url").notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    audio_owner_idx: index("audio_owner_idx").on(table.authId),
+    audio_companion_idx: index("audio_companion_idx").on(table.companionId),
+    audio_created_idx: index("audio_created_idx").on(table.created_at),
+  }),
+);
+
 export const documentsTable = pgTable(
   'documents',
   {
