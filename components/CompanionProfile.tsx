@@ -107,13 +107,15 @@ export async function CompanionProfile({ id }: { id: number }) {
           />
           <Card className="mt-8">
             <CardContent className="p-6">
-              <div className="flex flex-col w-full gap-4 pb-4">
-                <h2 className="text-xl">
-                  <IconMicrophone className="inline-block mr-2" />
-                  Ouça minha voz
-                </h2>
-                <AudioPlayer songUrl={audio.publicUrl} />
-              </div>
+              {audio && (
+                <div className="flex flex-col w-full gap-4 pb-4">
+                  <h2 className="text-xl">
+                    <IconMicrophone className="inline-block mr-2" />
+                    Ouça minha voz
+                  </h2>
+                  <AudioPlayer songUrl={audio.publicUrl} />
+                </div>
+              )}
               <h2 className="text-2xl font-semibold mb-4 max-">
                 Sobre {companion.name}
               </h2>
