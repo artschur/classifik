@@ -348,7 +348,6 @@ export async function registerCompanion(
 
     return newCompanion;
   } catch (error) {
-    console.log(error);
     throw new Error('Failed to register companion');
   }
 }

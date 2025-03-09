@@ -44,6 +44,8 @@ import {
 } from '@/db/queries/images';
 import { InstagramButton } from './ui/instagramButton';
 import { getAudioUrlByCompanionId } from '@/db/queries/audio';
+import AudioPlayer from '@/audio-player';
+import { IconMicrophone } from '@tabler/icons-react';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
@@ -59,7 +61,6 @@ export async function CompanionProfile({ id }: { id: number }) {
       getAudioUrlByCompanionId(id),
     ]);
 
-  console.log(audio);
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
   const initialMedia = images.map((img) => {
@@ -104,9 +105,15 @@ export async function CompanionProfile({ id }: { id: number }) {
             companionId={id}
             totalImages={total}
           />
-
           <Card className="mt-8">
             <CardContent className="p-6">
+              <div className="flex flex-col w-full gap-4 pb-4">
+                <h2 className="text-xl">
+                  <IconMicrophone className="inline-block mr-2" />
+                  Ouça minha voz
+                </h2>
+                <AudioPlayer songUrl={audio.publicUrl} />
+              </div>
               <h2 className="text-2xl font-semibold mb-4 max-">
                 Sobre {companion.name}
               </h2>
@@ -239,11 +246,6 @@ export async function CompanionProfile({ id }: { id: number }) {
               <div className="mt-6 text-sm text-muted-foreground">
                 <p>Idiomas: {companion.languages.join(', ')}</p>
               </div>
-              <audio
-                controls
-                className="w-full mt-4 rounded-lg border shadow-sm"
-                src={audio.publicUrl}
-              />
             </CardContent>
           </Card>
         </div>

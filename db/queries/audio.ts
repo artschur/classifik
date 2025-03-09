@@ -16,8 +16,8 @@ export async function uploadAudio({ audioFile, companionId, clerkId }: {
     companionId: number;
     clerkId: string;
 }) {
+
     try {
-        console.log("Uploading audio file:", audioFile);
         const fileName = `audio/${clerkId}/${Date.now()}-${audioFile.name}`;
 
         const upload = await supabase.storage.from("images").upload(fileName, audioFile, {
@@ -54,6 +54,7 @@ export async function uploadAudio({ audioFile, companionId, clerkId }: {
 
 export async function getAudioUrlByCompanionId(companionId: number): Promise<{ id: number; publicUrl: string; }> {
     try {
+        console.log("fetched audio");
         const [audio] = await db
             .select({
                 id: audioRecordingsTable.id,
