@@ -37,7 +37,7 @@ import {
 import { ImageGrid } from '@/components/imageGrid';
 import { getLastSignInByClerkId } from '@/db/queries/userActions';
 import { WhatsAppButton } from './ui/whatsapp-button';
-import { IconBrandInstagram } from '@tabler/icons-react';
+
 import {
   getImagesByCompanionId,
   getVerificationVideosByCompanionId,
