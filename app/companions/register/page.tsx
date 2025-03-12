@@ -1,4 +1,4 @@
-import { isVerificationPending } from '@/app/actions/document-verification';
+import {   isCompanionVerified, isVerificationPending } from '@/app/actions/document-verification';
 import { RegisterCompanionForm } from '@/components/formCompanionRegister';
 import { SkeletonForm } from '@/components/skeletons/skeletonForm';
 import { getAvailableCities } from '@/db/queries';
@@ -17,10 +17,11 @@ async function CompanionFormWithData() {
     redirect('/');
   }
 
-  const [cities, companion, stillVerifying] = await Promise.all([
+  const [cities, companion, stillVerifying, isVerified] = await Promise.all([
     getAvailableCities(),
     getCompanionToEdit(userId),
     isVerificationPending(userId),
+    isCompanionVerified(userId),
   ]);
 
   if (stillVerifying) {

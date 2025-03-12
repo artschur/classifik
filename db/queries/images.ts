@@ -1,5 +1,6 @@
 'use server';
 
+import { File } from 'node-fetch';
 import { createClient } from '@supabase/supabase-js';
 import imageCompression from 'browser-image-compression';
 import { db } from '..';
