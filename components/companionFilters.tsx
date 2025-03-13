@@ -92,7 +92,7 @@ export function CompanionFilters({
   const createQueryString = (
     params: Record<string, string | number | number[] | null>
   ) => {
-    const current = new URLSearchParams(searchParams.toString());
+    const current = new URLSearchParams(searchParams?.toString());
     Object.entries(params).forEach(([key, value]) => {
       if (value === null || value === '') {
         current.delete(key);
@@ -110,9 +110,7 @@ export function CompanionFilters({
     filters: Record<string, string | number | number[] | null>
   ) => {
     const queryString = createQueryString(filters);
-    startTransition(() => {
-      router.push(`?${queryString}`, { scroll: false });
-    });
+    window.location.href = `?${queryString}`;
     setIsOpen(false);
   };
 
@@ -171,7 +169,7 @@ export function CompanionFilters({
     <div className="mb-6 space-y-4">
       <div className="flex justify-between items-center">
         <Select
-          value={searchParams.get('sort')?.split('-')[1] || undefined}
+          value={searchParams?.get('sort')?.split('-')[1] || undefined}
           onValueChange={(value) => handleSort(value || null)}
         >
           <SelectTrigger className="w-[180px] rounded-full">
