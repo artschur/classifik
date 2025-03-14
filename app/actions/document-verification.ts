@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/db';
-import { documentsTable, companionsTable, imagesTable } from '@/db/schema';
+import { documentsTable, companionsTable, imagesTable, audioRecordingsTable } from '@/db/schema';
 import { auth } from '@clerk/nextjs/server';
 import { getCompanionIdByClerkId } from '@/db/queries/companions';
 import { createClient } from '@supabase/supabase-js';
@@ -201,10 +201,8 @@ export async function deleteDocument(documentId: number) {
             throw new Error('Document not found');
         }
 
-        // Determine if this is stored in images or documents bucket
         const bucket = documentToDelete.document_type === 'verification_video' ? 'images' : 'documents';
 
-        // Delete from storage
         const { error: deleteStorageError } = await supabase
             .storage
             .from(bucket)
@@ -216,7 +214,6 @@ export async function deleteDocument(documentId: number) {
 
         await db.delete(documentsTable).where(eq(documentsTable.id, documentId));
 
-        // If it's a verification video, also remove from images table
         if (documentToDelete.document_type === 'verification_video') {
             await db.delete(imagesTable).where(eq(imagesTable.storage_path, documentToDelete.storage_path));
         }
@@ -235,23 +232,43 @@ export async function deleteDocument(documentId: number) {
     }
 }
 
-export async function isCompanionVerified(clerkId: string): Promise<boolean> {
+interface StatusOfItems {
+    isImageUploaded: boolean;
+    isAudioUploaded: boolean;
+    isVerificationVideoUploaded: boolean;
+    isDocumentUploaded: boolean;
+}
+export async function verifyItemsIfOnboardingComplete(clerkId: string): Promise<StatusOfItems> {
     try {
+        const [imageResult, audioResult, verificationVideoResult, documentResult] = await Promise.all([
+            db.select().from(imagesTable).where(eq(imagesTable.authId, clerkId)), //
+            db.select().from(audioRecordingsTable).where(and(eq(documentsTable.authId, clerkId), eq(documentsTable.document_type, 'audio'))),
+            db.select().from(imagesTable).where(and(eq(documentsTable.authId, clerkId), eq(imagesTable.is_verification_video, true))),
+            db.select().from(documentsTable).where(and(eq(documentsTable.authId, clerkId), eq(documentsTable.document_type, 'document'))),
+        ]);
 
-        const [companion] = await db.select({ verified: companionsTable.verified })
-            .from(companionsTable)
-            .where(eq(companionsTable.auth_id, clerkId));
+        const isImageUploaded = imageResult.length > 0;
+        const isAudioUploaded = audioResult.length > 0;
+        const isVerificationVideoUploaded = verificationVideoResult.length > 0;
+        const isDocumentUploaded = documentResult.length > 0;
 
-        if (!companion) {
-            throw new Error('Companion not found');
-        }
-        return companion.verified;
-
+        return {
+            isImageUploaded,
+            isAudioUploaded,
+            isVerificationVideoUploaded,
+            isDocumentUploaded
+        };
     } catch (error) {
-        console.error('Error checking verification status:', error);
-        return false;
+        console.error('Error checking items status:', error);
+        return {
+            isImageUploaded: false,
+            isAudioUploaded: false,
+            isVerificationVideoUploaded: false,
+            isDocumentUploaded: false
+        };
     }
 }
+
 export async function isVerificationPending(clerkId: string): Promise<boolean> {
     try {
         const [companionResult, documentsData] = await Promise.all([

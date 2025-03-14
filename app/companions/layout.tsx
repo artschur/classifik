@@ -4,6 +4,7 @@ import { CompanionPageBreadcrumb } from '@/components/companionPageBreadcrumb';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import type React from 'react'; // Added import for React
+import { Suspense } from 'react';
 
 export default function CompanionsLayout({
   children,
@@ -15,7 +16,7 @@ export default function CompanionsLayout({
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <CompanionPageBreadcrumb />
-        {children}
+        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
       </div>
     </div>
   );
