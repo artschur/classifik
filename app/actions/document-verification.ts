@@ -241,9 +241,9 @@ interface StatusOfItems {
 export async function verifyItemsIfOnboardingComplete(clerkId: string): Promise<StatusOfItems> {
     try {
         const [imageResult, audioResult, verificationVideoResult, documentResult] = await Promise.all([
-            db.select().from(imagesTable).where(eq(imagesTable.authId, clerkId)), //
-            db.select().from(audioRecordingsTable).where(and(eq(documentsTable.authId, clerkId), eq(documentsTable.document_type, 'audio'))),
-            db.select().from(imagesTable).where(and(eq(documentsTable.authId, clerkId), eq(imagesTable.is_verification_video, true))),
+            db.select().from(imagesTable).where(eq(imagesTable.authId, clerkId)),
+            db.select().from(audioRecordingsTable).where(and(eq(audioRecordingsTable.authId, clerkId))),
+            db.select().from(imagesTable).where(and(eq(imagesTable.authId, clerkId), eq(imagesTable.is_verification_video, true))),
             db.select().from(documentsTable).where(and(eq(documentsTable.authId, clerkId), eq(documentsTable.document_type, 'document'))),
         ]);
 

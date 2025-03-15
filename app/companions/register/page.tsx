@@ -28,16 +28,19 @@ async function CompanionFormWithData() {
       verifyItemsIfOnboardingComplete(userId),
     ]);
 
-  if (!allVerificationStatus.isAudioUploaded) {
+  if (
+    !allVerificationStatus.isAudioUploaded &&
+    allVerificationStatus.isImageUploaded
+  ) {
     redirect('/companions/register/audio');
   }
 
-  if (!allVerificationStatus.isImageUploaded) {
-    redirect('/companions/register');
-  }
-
-  if (!allVerificationStatus.isVerificationVideoUploaded) {
-    redirect('/companions/register/verification');
+  if (
+    !allVerificationStatus.isVerificationVideoUploaded &&
+    allVerificationStatus.isAudioUploaded &&
+    allVerificationStatus.isImageUploaded
+  ) {
+    redirect('/companions/verification');
   }
 
   if (stillVerifying) {

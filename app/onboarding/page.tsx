@@ -13,10 +13,6 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 export default function OnboardPage() {
-  // const handleOnboardClick = useCallback((isCompanion: boolean) => {
-  //   handleOnboard({ isCompanion });
-  // }, []);
-
   return (
     <section className="w-full min-h-screen flex items-center justify-center p-12">
       <Spotlight />

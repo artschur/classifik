@@ -8,7 +8,6 @@ import {
   uploadDocument,
   getDocumentsByAuthId,
   deleteDocument,
-  isCompanionVerified,
 } from '@/app/actions/document-verification';
 import { useUser } from '@clerk/nextjs';
 import { useToast } from '@/hooks/use-toast';
@@ -112,13 +111,7 @@ export function DocumentVerificationForm() {
       if (isLoaded && user?.id) {
         setIsLoading(true);
         try {
-          const [result, verified] = await Promise.all([
-            getDocumentsByAuthId(user.id),
-            isCompanionVerified(user.id),
-          ]);
-
-          // Set verification status
-          setCompanionVerified(!!verified);
+          const [result] = await Promise.all([getDocumentsByAuthId(user.id)]);
 
           if (result.success) {
             setDocuments(result.documents as Document[]);

@@ -31,6 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useRouter } from 'next/navigation';
 
 interface AudioFormClientProps {
   companionId: number;
@@ -48,6 +49,7 @@ export default function AudioFormClient({
     publicUrl: string;
   } | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     let isMounted = true;
@@ -133,6 +135,8 @@ export default function AudioFormClient({
         title: 'Audio enviado',
         description: 'Seu áudio foi enviado com sucesso.',
       });
+
+      router.push('/companions/verification');
 
       setAudioBlob(null);
     } catch (error) {

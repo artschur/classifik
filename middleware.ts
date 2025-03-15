@@ -8,15 +8,6 @@ export default clerkMiddleware(async (auth, req) => {
     const { userId, sessionClaims, redirectToSignIn } = await auth();
     if (isProtectedRoute(req)) await auth.protect();
 
-    if (
-        userId &&
-        !sessionClaims?.metadata?.onboardingComplete &&
-        req.nextUrl.pathname !== '/onboarding'
-    ) {
-        const onboardingUrl = new URL('/onboarding', req.url);
-        return NextResponse.redirect(onboardingUrl);
-    }
-
     if (userId && !isProtectedRoute(req)) {
         return NextResponse.next();
     }
