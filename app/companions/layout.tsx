@@ -16,7 +16,7 @@ export default function CompanionsLayout({
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <CompanionPageBreadcrumb />
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        {children}
       </div>
     </div>
   );
