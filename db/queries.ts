@@ -1,3 +1,5 @@
+"use server";
+
 import { stat } from 'fs';
 import { db } from './index';
 import {

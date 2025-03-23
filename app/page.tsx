@@ -3,23 +3,22 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   Search,
-  MessageSquare,
-  CheckCircle,
   Shield,
   MapPin,
   Clock,
   Star,
   Heart,
   ChevronRight,
+  AudioLines,
+  FileCheck,
+  Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { CityCard } from '@/components/v0/city-card';
-import { NurseCard } from '@/components/v0/companion-card';
 import { FeatureItem } from '@/components/v0/feature-tem';
 import { ProcessStep } from '@/components/v0/process-step';
 import { SectionHeading } from '@/components/v0/section-heading';
-import { ServiceCard } from '@/components/v0/service-card-private-chat';
+import { CitySelectionModal } from '@/components/city-selection-modal';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Onesugar - O site de acompanhantes premium em Portugal',
@@ -79,157 +78,163 @@ export const metadata: Metadata = {
   category: 'adult services',
 };
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
+        {/* Hero Section - Improved padding for mobile */}
         <section
-          className="w-full py-12 md:py-24 lg:py-32 bg-muted"
+          className="w-full py-12 sm:py-16 md:py-24 lg:py-32 bg-muted min-h-[60vh] sm:min-h-[60vh] md:min-h-[60vh] flex items-center"
           aria-labelledby="hero-heading"
         >
-          <div className="container mx-auto md:px-6">
+          <div className="container px-4 mx-auto md:px-6">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
+              <div className="flex flex-col justify-center space-y-4 sm:space-y-6">
+                <div className="space-y-3 sm:space-y-4">
                   <h1
                     id="hero-heading"
-                    className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none"
+                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter"
                   >
-                    Encontre enfermeiros qualificados em Portugal
+                    Acompanhantes premium em Portugal.
                   </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Serviços de enfermagem em Lisboa, Porto e outras cidades com
-                    verificação garantida.
+                  <p className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
+                    Descubra as acompanhantes mais sofisticadas de Portugal com
+                    total discrição e segurança.
                   </p>
                 </div>
-                <div className="w-full max-w-sm space-y-2">
-                  <div className="bg-background rounded-lg shadow-lg p-4">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <h3 className="font-medium">O que você precisa?</h3>
-                        <div className="flex gap-2">
-                          <Input
-                            type="text"
-                            placeholder="Tipo de serviço"
-                            className="flex-1"
-                            aria-label="Tipo de serviço"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="font-medium">Onde?</h3>
-                        <div className="flex gap-2">
-                          <Input
-                            type="text"
-                            placeholder="Cidade ou código postal"
-                            className="flex-1"
-                            aria-label="Cidade ou código postal"
-                          />
-                        </div>
-                      </div>
-                      <Button className="w-full">
-                        <Search className="mr-2 h-4 w-4" />
-                        Pesquisar enfermeiros
+                <div className="w-full space-y-4 mt-2 sm:mt-4">
+                  <Suspense
+                    fallback={
+                      <Button
+                        disabled
+                        variant="outline"
+                        className="gap-2 w-full sm:w-auto py-4 sm:py-6 px-4 sm:px-6 text-sm sm:text-base"
+                      >
+                        <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                        Carregando cidades...
                       </Button>
-                    </div>
-                  </div>
+                    }
+                  >
+                    <CitySelectionModal
+                      triggerButton={
+                        <Button
+                          variant="default"
+                          className="gap-2 w-full sm:w-auto py-4 sm:py-6 px-4 sm:px-6 text-sm sm:text-base"
+                        >
+                          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                          Encontrar por cidade
+                        </Button>
+                      }
+                    />
+                  </Suspense>
                 </div>
               </div>
-              <div className="mx-auto aspect-video overflow-hidden rounded-xl object-cover lg:aspect-square">
-                <Image
-                  src="/placeholder.svg?height=800&width=800"
-                  width={800}
-                  height={800}
-                  alt="Enfermeiros qualificados prestando serviços em Portugal"
-                  className="h-full w-full object-cover"
-                />
-              </div>
             </div>
           </div>
         </section>
 
+        {/* Features Section - Improved grid for mobile */}
         <section
-          className="w-full py-12 md:py-24 lg:py-32"
+          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
+          aria-labelledby="features-heading"
+        >
+          <div className="container px-4 mx-auto md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
+              <SectionHeading
+                title="Recursos exclusivos para sua segurança"
+                description="Oferecemos ferramentas inovadoras para garantir sua satisfação e confiança."
+              />
+            </div>
+            <div className="mx-auto grid max-w-5xl items-center gap-6 py-8 sm:py-10 md:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:gap-8">
+              <FeatureItem
+                icon={AudioLines}
+                title="Áudios de verificação"
+                description="Confirme a autenticidade através de mensagens de voz exclusivas das acompanhantes."
+              />
+              <FeatureItem
+                icon={FileCheck}
+                title="Verificação completa"
+                description="Documentos verificados para garantir sua segurança e tranquilidade."
+              />
+              <FeatureItem
+                icon={Video}
+                title="Vídeos exclusivos"
+                description="Assista a vídeos de verificação para ter certeza da autenticidade dos perfis."
+              />
+              <FeatureItem
+                icon={Star}
+                title="Avaliações reais"
+                description="Acesse opiniões genuínas de outros clientes sobre cada acompanhante."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* How it works Section - Improved grid for mobile */}
+        <section
+          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
           aria-labelledby="how-it-works-heading"
         >
-          <div className="container mx-auto md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="container px-4 mx-auto md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
-                title="Como o mynurses funciona"
-                description="Encontre o enfermeiro ideal para suas necessidades em apenas três passos simples."
+                title="Como funciona o OneSugar"
+                description="Encontre sua acompanhante ideal em apenas três passos simples."
               />
             </div>
-            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 md:grid-cols-3 md:gap-12">
+            <div className="mx-auto grid max-w-5xl items-center gap-8 py-8 sm:py-10 md:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:gap-12">
+              <ProcessStep
+                icon={MapPin}
+                title="Escolha sua cidade"
+                description="Selecione sua localização e descubra as melhores acompanhantes disponíveis na sua região."
+              />
               <ProcessStep
                 icon={Search}
-                title="Pesquise"
-                description="Encontre enfermeiros qualificados na sua área com base nas suas necessidades específicas."
+                title="Conheça seu perfil"
+                description="Explore fotos autênticas, vídeos de verificação exclusivos e todas as informações essenciais."
               />
               <ProcessStep
-                icon={MessageSquare}
-                title="Contacte"
-                description="Comunique diretamente com os enfermeiros para discutir os seus requisitos e agendar serviços."
-              />
-              <ProcessStep
-                icon={CheckCircle}
-                title="Receba cuidados"
-                description="Receba cuidados de enfermagem de qualidade no conforto da sua casa ou local preferido."
+                icon={Heart}
+                title="Entre em contato"
+                description="Conecte-se diretamente com a acompanhante escolhida de forma totalmente privada e segura."
               />
             </div>
           </div>
         </section>
 
+        {/* Why choose us Section - Improved layout for mobile */}
         <section
-          className="w-full py-12 md:py-24 lg:py-32 bg-muted"
-          aria-labelledby="services-heading"
-        >
-          <div className="container mx-auto md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <SectionHeading
-                title="Serviços de enfermagem populares"
-                description="Descubra os serviços mais procurados na nossa plataforma."
-              />
-            </div>
-            <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-              {/* {services.map((service, index) => ( */}
-              {/* <ServiceCard key={index} title={service} /> */}
-              {/* ))} */}
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="w-full py-12 md:py-24 lg:py-32"
+          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
           aria-labelledby="why-choose-heading"
         >
-          <div className="container mx-auto md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
+          <div className="container px-4 mx-auto md:px-6">
+            <div className="grid gap-8 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <SectionHeading
-                  title="Por que escolher o mynurses?"
-                  description="Conectamos você com enfermeiros qualificados e verificados em toda Portugal."
+                  title="Por que escolher o OneSugar?"
+                  description="A plataforma número um para encontros premium em Portugal com total segurança e discrição."
                   centered={false}
                 />
                 <div className="space-y-4">
                   <FeatureItem
                     icon={Shield}
-                    title="Verificação garantida"
-                    description="Todos os enfermeiros são verificados quanto às suas credenciais e experiência."
+                    title="Verificação exclusiva"
+                    description="Todas as acompanhantes passam por um rigoroso processo de verificação para garantir autenticidade e qualidade."
                   />
                   <FeatureItem
                     icon={MapPin}
-                    title="Cobertura nacional"
-                    description="Serviços disponíveis em Lisboa, Porto e outras cidades em todo o país."
+                    title="Presença nacional"
+                    description="Encontre acompanhantes de alto padrão em Lisboa, Porto e nas principais cidades de Portugal."
                   />
                   <FeatureItem
                     icon={Clock}
                     title="Disponibilidade flexível"
-                    description="Encontre enfermeiros disponíveis quando você precisar, incluindo serviços de urgência."
+                    description="Agende encontros que se adaptam à sua rotina, com opções para todos os momentos."
                   />
                   <FeatureItem
                     icon={Star}
-                    title="Avaliações transparentes"
-                    description="Leia avaliações de outros pacientes para escolher o melhor profissional."
+                    title="Avaliações genuínas"
+                    description="Acesse avaliações reais de outros clientes para escolher a experiência perfeita."
                   />
                 </div>
               </div>
@@ -237,97 +242,82 @@ export default function HomePage() {
                 src="/placeholder.svg?height=800&width=800"
                 width={800}
                 height={800}
-                alt="Enfermeiro qualificado prestando cuidados a um paciente"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover lg:order-last lg:aspect-square"
+                alt="Acompanhante sofisticada sorrindo para a câmera"
+                className="mx-auto aspect-square overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full max-w-[400px] lg:max-w-none"
               />
             </div>
           </div>
         </section>
 
+        {/* Cities Section - Improved spacing for mobile */}
         <section
-          className="w-full py-12 md:py-24 lg:py-32 bg-muted"
-          aria-labelledby="featured-nurses-heading"
-        >
-          <div className="container mx-auto md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <SectionHeading
-                title="Enfermeiros em destaque"
-                description="Conheça alguns dos nossos profissionais mais bem avaliados."
-              />
-            </div>
-            <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-              {/* {nurses.map((nurse) => (
-                <NurseCard
-                  key={nurse.id}
-                  id={nurse.id}
-                  name={nurse.name}
-                  location={nurse.location}
-                  specialty={nurse.specialty}
-                  rating={nurse.rating}
-                  hourlyRate={nurse.hourlyRate}
-                  imageUrl={nurse.imageUrl}
-                />
-              ))} */}
-            </div>
-            <div className="flex justify-center">
-              <Button variant="outline" className="gap-1">
-                Ver mais enfermeiros
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="w-full py-12 md:py-24 lg:py-32"
+          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
           aria-labelledby="cities-heading"
         >
-          <div className="container mx-auto md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="container px-4 mx-auto md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
-                title="Cidades populares"
-                description="Encontre enfermeiros nas principais cidades de Portugal."
+                title="Principais cidades"
+                description="Explore acompanhantes premium nas cidades mais procuradas de Portugal."
               />
             </div>
-            <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-              {/* {cities.map((city) => (
-                <CityCard
-                  key={city.name}
-                  name={city.name}
-                  count={city.count}
-                  imageUrl={city.imageUrl}
+            <div className="flex justify-center mt-6 sm:mt-8">
+              <Suspense
+                fallback={
+                  <Button
+                    disabled
+                    variant="outline"
+                    className="gap-2 w-full sm:w-auto"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Carregando cidades...
+                  </Button>
+                }
+              >
+                <CitySelectionModal
+                  triggerButton={
+                    <Button
+                      variant="outline"
+                      className="gap-2 w-full sm:w-auto"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      Ver todas as cidades disponíveis
+                    </Button>
+                  }
                 />
-              ))} */}
+              </Suspense>
             </div>
           </div>
         </section>
 
+        {/* Join Section - Improved layout for mobile */}
         <section
-          className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground"
-          aria-labelledby="join-community-heading"
+          className="w-full py-10 sm:py-12 md:py-20 lg:py-28 bg-primary text-primary-foreground"
+          aria-labelledby="join-onesugar-heading"
         >
-          <div className="container mx-auto md:px-6">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
+          <div className="container px-4 mx-auto md:px-6">
+            <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
               <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
+                <div className="space-y-2 sm:space-y-3">
                   <h2
                     id="join-community-heading"
-                    className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl"
+                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter"
                   >
-                    Junte-se à nossa comunidade de enfermeiros
+                    Seja uma acompanhante OneSugar
                   </h2>
-                  <p className="max-w-[600px] md:text-xl">
-                    Aumente sua visibilidade, encontre novos pacientes e
-                    gerencie sua agenda de forma eficiente.
+                  <p className="max-w-[600px] text-base sm:text-lg md:text-xl">
+                    Aumente sua visibilidade, conquiste clientes e se promova de
+                    forma segura.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button variant="secondary">Saiba mais</Button>
+                <div className="flex flex-col w-full sm:w-auto sm:flex-row gap-3 mt-2 sm:mt-4">
                   <Button
                     variant="outline"
-                    className="bg-transparent text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary"
+                    className="w-full sm:w-auto bg-transparent text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary"
                   >
-                    Registar como enfermeiro
+                    <Link href="/onboarding" className="w-full">
+                      Cadastrar como acompanhante
+                    </Link>
                   </Button>
                 </div>
               </div>
@@ -335,38 +325,62 @@ export default function HomePage() {
                 src="/placeholder.svg?height=600&width=600"
                 width={600}
                 height={600}
-                alt="Grupo de enfermeiros profissionais da comunidade mynurses"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover"
+                alt="Acompanhante elegante com expressão confiante"
+                className="mx-auto aspect-square overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full max-w-[400px] lg:max-w-none"
               />
             </div>
           </div>
         </section>
 
+        {/* CTA Section - Improved button layout for mobile */}
         <section
-          className="w-full py-12 md:py-24 lg:py-32"
+          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
           aria-labelledby="cta-heading"
         >
-          <div className="container grid items-center justify-center gap-4 mx-auto text-center md:px-6">
-            <div className="space-y-3">
+          <div className="container grid items-center justify-center gap-4 mx-auto text-center px-4 md:px-6">
+            <div className="space-y-2 sm:space-y-3">
               <h2
                 id="cta-heading"
-                className="text-3xl font-bold tracking-tighter md:text-4xl/tight"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter"
               >
-                Pronto para encontrar o enfermeiro ideal?
+                Pronto para uma experiência inesquecível?
               </h2>
-              <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl">
-                Registe-se hoje e conecte-se com profissionais de enfermagem
-                qualificados em toda Portugal.
+              <p className="mx-auto max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl">
+                Descubra as acompanhantes mais requintadas de Portugal e viva
+                momentos únicos com total discrição.
               </p>
             </div>
-            <div className="mx-auto flex flex-col gap-2 min-[400px]:flex-row">
-              <Button size="lg" className="gap-1">
-                Começar agora
+            <div className="mx-auto flex flex-col sm:flex-row w-full sm:w-auto gap-3 mt-2 sm:mt-4">
+              <Button size="lg" className="gap-1 w-full sm:w-auto">
+                Explorar agora
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline">
-                Saber mais
-              </Button>
+              <Suspense
+                fallback={
+                  <Button
+                    disabled
+                    size="lg"
+                    variant="outline"
+                    className="gap-2 w-full sm:w-auto"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Carregando...
+                  </Button>
+                }
+              >
+                <CitySelectionModal
+                  triggerButton={
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="gap-2 w-full sm:w-auto"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      Buscar por cidade
+                    </Button>
+                  }
+                />
+              </Suspense>
             </div>
           </div>
         </section>
