@@ -17,10 +17,6 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'vacjsnuttfzgcdaaqjxd.supabase.co',
       },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-      },
     ],
   },
 };
