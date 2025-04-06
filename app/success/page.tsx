@@ -1,10 +1,6 @@
-import { kv } from "@/db";
-import { auth } from "@clerk/nextjs/server";
+import { db, kv } from "@/db";
 
 export default async function Success() {
-    const { userId } = await auth();
-    const stripeCustomerId = await kv.get(`stripe:user:${userId}`);
-
 
     return (
         <div className="flex flex-col items-center justify-center h-screen">

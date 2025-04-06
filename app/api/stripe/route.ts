@@ -1,16 +1,23 @@
+import { db } from '@/db';
 import { syncStripeDataToKV } from '@/db/queries/kv';
+import { companionsTable } from '@/db/schema';
 import { stripe } from '@/db/stripe';
+import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const allowedEvents: Stripe.Event.Type[] = [
   'checkout.session.completed',
-  'payment_intent.succeeded', // When payment is processed successfully
-  'payment_intent.payment_failed', // When payment fails
+  'payment_intent.succeeded',
+  'payment_intent.payment_failed',
   'payment_intent.created',
   'payment_intent.canceled',
+  'charge.updated',
 ];
+
+// Track processed events to prevent duplicates
+const processedEvents = new Set<string>();
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -18,9 +25,9 @@ export async function POST(req: Request) {
 
   if (!signature) return NextResponse.json({}, { status: 400 });
 
-  async function doEventProcessing() {
+  try {
     if (typeof signature !== 'string') {
-      throw new Error("[STRIPE HOOK] Header isn't a string???");
+      throw new Error("[STRIPE HOOK] Header isn't a string");
     }
 
     const event = stripe.webhooks.constructEvent(
@@ -29,21 +36,28 @@ export async function POST(req: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
 
-    await processEvent(event);
-  }
+    const session = event.data.object;
+    const clerkId = (session as any).metadata?.userId;
 
-  try {
-    await doEventProcessing();
+    await processEvent(event, clerkId);
+
+    return NextResponse.json({ received: true });
   } catch (err) {
     console.error('[STRIPE HOOK] Error processing event', err);
     return NextResponse.json({ error: 'Webhook Error' }, { status: 400 });
   }
-
-  return NextResponse.json({ received: true });
 }
 
-async function processEvent(event: Stripe.Event) {
+async function processEvent(event: Stripe.Event, clerkId: string) {
+  if (processedEvents.has(event.id)) {
+    console.log(`Event ${event.id} already processed, skipping`);
+    return;
+  }
+
+  processedEvents.add(event.id);
+
   if (!allowedEvents.includes(event.type as Stripe.Event.Type)) {
+    console.log(`Event type ${event.type} not in allowed list, skipping`);
     return;
   }
 
@@ -75,10 +89,18 @@ async function processEvent(event: Stripe.Event) {
   }
 
   try {
-    console.log(`Syncing data for customer ${customerId}`);
     await syncStripeDataToKV(customerId);
+    //also save to the db
+    if (event.type === 'checkout.session.completed') {
+      await db
+        .update(companionsTable)
+        .set({
+          stripe_customer_id: customerId,
+          has_active_ad: true,
+        })
+        .where(eq(companionsTable.auth_id, clerkId));
+    }
     console.log('Sync completed successfully');
-    return true;
   } catch (error) {
     console.error(`Error syncing data for customer ${customerId}:`, error);
     throw error;

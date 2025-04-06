@@ -1,11 +1,11 @@
 import { kv } from '@/db';
 import { stripe } from '@/db/stripe';
-import { currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET(req: Request) {
-  const user = await currentUser();
+  const { userId } = await auth();
 
-  if (!user) {
+  if (!userId) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -17,15 +17,21 @@ export async function GET(req: Request) {
     return new Response('Missing price ID', { status: 400 });
   }
 
-  const userId = user.id;
-
   // Get the stripeCustomerId from your KV store
   let stripeCustomerId = await kv.get(`stripe:user:${userId}`);
 
   if (!stripeCustomerId) {
-    // Create customer code as before
-  }
+    const customer = await stripe.customers.create({
+      metadata: {
+        userId: userId,
+      },
+    });
 
+    stripeCustomerId = customer.id;
+
+    await kv.set(`stripe:user:${userId}`, stripeCustomerId);
+  }
+  console.log('routes.ts checkout', userId, stripeCustomerId);
   const checkout = await stripe.checkout.sessions.create({
     customer: stripeCustomerId as string,
     success_url: 'http://localhost:3000/success',
@@ -38,6 +44,9 @@ export async function GET(req: Request) {
         quantity: 1,
       },
     ],
+    metadata: {
+      userId: userId,
+    },
   });
 
   return Response.redirect(checkout.url as string);

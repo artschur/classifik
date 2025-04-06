@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db, kv } from '..';
 import { companionsTable } from '../schema';
 import { stripe } from '../stripe';
+import { auth, clerkClient, createClerkClient } from '@clerk/nextjs/server';
 
 export interface AdPurchase {
   id: string;
@@ -19,59 +20,69 @@ export async function syncStripeDataToKV(
   customerId: string
 ): Promise<CustomerAdData> {
   try {
-    // Get payment intents or charges for this customer
     const payments = await stripe.paymentIntents.list({
       customer: customerId,
-      limit: 10,
+      limit: 2,
     });
 
-    const adPurchases: AdPurchase[] = [];
-
-    // Process successful payments
     const successfulPayments = payments.data.filter(
       (payment) => payment.status === 'succeeded'
     );
 
-    for (const payment of successfulPayments) {
-      // Fetch checkout session and line items as before
-      const sessions = await stripe.checkout.sessions.list({
+    // Process all payments in parallel
+    const purchasePromises = successfulPayments.map(async (payment) => {
+      const sessionsResponse = await stripe.checkout.sessions.list({
         payment_intent: payment.id,
       });
 
-      if (sessions.data.length > 0) {
-        const session = sessions.data[0];
-        const lineItems = await stripe.checkout.sessions.listLineItems(
-          session.id
-        );
+      if (sessionsResponse.data.length === 0) return [];
 
-        for (const item of lineItems.data) {
-          if (!item.price) continue;
-          const productId = item.price.product as string;
-          const product = await stripe.products.retrieve(productId);
-          const durationDays = product.metadata.duration || '30';
+      const session = sessionsResponse.data[0];
+      const lineItems = await stripe.checkout.sessions.listLineItems(
+        session.id
+      );
 
-          adPurchases.push({
-            id: payment.id,
-            productId:
-              typeof item.price.product === 'string'
-                ? item.price.product
-                : item.price.product.id,
-            productName: product.name,
-            purchaseDate: new Date(payment.created * 1000),
-            durationDays: parseInt(durationDays),
-          });
-        }
-      }
-    }
+      // Process all line items in parallel
+      const itemPromises = lineItems.data.map(async (item) => {
+        if (!item.price) return null;
 
+        const productId = item.price.product as string;
+        const product = await stripe.products.retrieve(productId);
+        const durationDays = product.metadata.duration || '30';
+
+        return {
+          id: payment.id,
+          productId:
+            typeof item.price.product === 'string'
+              ? item.price.product
+              : item.price.product.id,
+          productName: product.name,
+          purchaseDate: new Date(payment.created * 1000),
+          durationDays: parseInt(durationDays),
+        };
+      });
+
+      // Wait for all line items to be processed
+      const results = await Promise.all(itemPromises);
+      return results.filter(Boolean) as AdPurchase[]; // Remove nulls
+    });
+
+    // Wait for all payments to be processed
+    const purchaseArrays = await Promise.all(purchasePromises);
+
+    // Flatten the array of arrays
+    const adPurchases = purchaseArrays.flat();
+
+    // Sort purchases by date
     adPurchases.sort(
       (a, b) =>
         new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
     );
 
     const purchaseData: CustomerAdData = { adPurchases };
-    console.log(purchaseData);
-    await kv.set(`stripe:ads:${customerId}`, purchaseData);
+
+    await Promise.all([kv.set(`stripe:ads:${customerId}`, purchaseData)]);
+
     return purchaseData;
   } catch (error) {
     console.error('Error syncing purchase data to KV:', error);

@@ -42,7 +42,8 @@ export const companionsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     auth_id: text('auth_id').notNull().unique(),
-    stripe_customer_id: text('stripe_customer_id').notNull().unique(),
+    stripe_customer_id: text('stripe_customer_id').unique(),
+    has_active_ad: boolean('has_active_ad').default(false),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     instagramHandle: varchar('instagram', { length: 40 }).notNull(),

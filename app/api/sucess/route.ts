@@ -16,6 +16,6 @@ export async function GET(req: Request) {
     return redirect('/');
   }
 
-  await syncStripeDataToKV(stripeCustomerId as string);
+  await syncStripeDataToKV(stripeCustomerId as string, user.id);
   return redirect('/');
 }
