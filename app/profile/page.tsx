@@ -5,11 +5,12 @@ import AnalyticsMain from '@/components/analytics-main';
 import { AnalyticsTimeframe } from '@/components/timeframe-selection-analytics';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { kv } from '@/db';
 
 export default async function AnalyticsDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ days: string }>;
+  searchParams: Promise<{ days: string; }>;
 }) {
   const { userId } = await auth();
   const sParams = await searchParams;
@@ -20,7 +21,8 @@ export default async function AnalyticsDashboard({
 
   const days = sParams.days ? parseInt(sParams.days) : 7;
   const companion = await getRelevantInfoAnalytics({ clerkId: userId });
-
+  // const companionPlan = kv.get(
+  //   `stripe:plan:${companion.stripeCustomerId}`)
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex space-x-4 mb-6">
