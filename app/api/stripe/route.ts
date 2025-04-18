@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { syncStripeDataToKV } from '@/db/queries/kv';
-import { companionsTable } from '@/db/schema';
+import { companionsTable, paymentsTable } from '@/db/schema';
 import { stripe } from '@/db/stripe';
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
@@ -90,7 +90,9 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
 
   try {
     await syncStripeDataToKV(customerId);
+
     //also save to the db
+
     if (event.type === 'checkout.session.completed') {
       await db
         .update(companionsTable)

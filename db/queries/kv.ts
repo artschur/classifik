@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db, kv } from '..';
-import { companionsTable } from '../schema';
+import { companionsTable, paymentsTable } from '../schema';
 import { stripe } from '../stripe';
 import { auth, clerkClient, createClerkClient } from '@clerk/nextjs/server';
 
@@ -81,11 +81,51 @@ export async function syncStripeDataToKV(
 
     const purchaseData: CustomerAdData = { adPurchases };
 
-    await Promise.all([kv.set(`stripe:ads:${customerId}`, purchaseData)]);
+    await Promise.all([
+      kv.set(`stripe:ads:${customerId}`, purchaseData),
+      savePaymentToDB({
+        paymentId: adPurchases[0].id,
+        customerId,
+        durationDays: adPurchases[0].durationDays,
+      }),
+    ]);
 
     return purchaseData;
   } catch (error) {
     console.error('Error syncing purchase data to KV:', error);
+    throw error;
+  }
+}
+
+async function savePaymentToDB({
+  paymentId,
+  customerId,
+  durationDays,
+}: {
+  paymentId: string;
+  customerId: string;
+  durationDays: number;
+}) {
+  try {
+    Promise.all([
+      await db.insert(paymentsTable).values({
+        stripe_payment_id: paymentId,
+        stripe_customer_id: customerId,
+        date: new Date(),
+      }),
+      await db
+        .update(companionsTable)
+        .set({
+          ad_expiration_date: new Date(
+            Date.now() + durationDays * 24 * 60 * 60 * 1000
+          ),
+          has_active_ad: true,
+        })
+        .where(eq(companionsTable.stripe_customer_id, customerId)),
+    ]);
+    console.log('Payment saved to DB successfully');
+  } catch (error) {
+    console.error('Error saving payment to DB:', error);
     throw error;
   }
 }

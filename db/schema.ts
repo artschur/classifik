@@ -37,6 +37,23 @@ export const analyticsEventsTable = pgTable(
   })
 );
 
+export const paymentsTable = pgTable(
+  'payments',
+  {
+    id: serial('id').primaryKey(),
+    stripe_payment_id: text('stripe_payment_id').notNull(),
+    stripe_customer_id: text('stripe_customer_id')
+      .notNull()
+      .references(() => companionsTable.stripe_customer_id),
+    date: timestamp('date').notNull(),
+  },
+  (table) => ({
+    payments_stripe_idx: index('payments_stripe_idx').on(
+      table.stripe_payment_id
+    ),
+  })
+);
+
 export const companionsTable = pgTable(
   'companions',
   {
@@ -44,6 +61,7 @@ export const companionsTable = pgTable(
     auth_id: text('auth_id').notNull().unique(),
     stripe_customer_id: text('stripe_customer_id').unique(),
     has_active_ad: boolean('has_active_ad').default(false),
+    ad_expiration_date: timestamp('ad_expiration_date'),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     instagramHandle: varchar('instagram', { length: 40 }).notNull(),
