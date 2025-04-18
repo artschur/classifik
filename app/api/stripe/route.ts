@@ -89,18 +89,30 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
   }
 
   try {
-    await syncStripeDataToKV(customerId);
-
-    //also save to the db
-
     if (event.type === 'checkout.session.completed') {
-      await db
-        .update(companionsTable)
-        .set({
-          stripe_customer_id: customerId,
-          has_active_ad: true,
-        })
-        .where(eq(companionsTable.auth_id, clerkId));
+      const session = event.data.object as Stripe.Checkout.Session;
+      const customerId = session.customer as string;
+      const clerkId = session.metadata?.userId;
+
+      if (clerkId) {
+        await db
+          .update(companionsTable)
+          .set({
+            stripe_customer_id: customerId,
+            has_active_ad: true,
+          })
+          .where(eq(companionsTable.auth_id, clerkId));
+
+        console.log(
+          `Updated companion record for user ${clerkId} with Stripe ID ${customerId}`
+        );
+
+        await syncStripeDataToKV(customerId);
+      } else {
+        console.log(
+          `No clerk ID found in session metadata for customer ${customerId}`
+        );
+      }
     }
     console.log('Sync completed successfully');
   } catch (error) {
