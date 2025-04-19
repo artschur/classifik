@@ -64,6 +64,12 @@ export default async function Header() {
             >
               Encontre uma acompanhante
             </Link>
+            <Link href={"/checkout"}
+              className="text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
+              prefetch={true}
+            >
+              Impulsionar meu perfil
+            </Link>
             {userId && isAdmin((await auth()).userId as string) ? (
               <Link
                 href="/verify"
@@ -116,7 +122,7 @@ export default async function Header() {
                 side="right"
                 className="flex flex-col justify-end pb-12"
               >
-                <SheetTitle>{}</SheetTitle>
+                <SheetTitle>{ }</SheetTitle>
                 <nav className="flex flex-col space-y-2">
                   <Link
                     href="/location"

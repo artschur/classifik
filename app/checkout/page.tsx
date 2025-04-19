@@ -1,9 +1,9 @@
-'use client';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { hasCompanionPaid } from "@/db/queries/companions";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 // Define your product options
 const products = [
@@ -27,12 +27,17 @@ const products = [
     }
 ];
 
-export default function CheckoutPage() {
-    const router = useRouter();
+export default async function CheckoutPage() {
 
     const handleCheckout = (priceId: string) => {
-        router.push(`/api/checkout?priceId=${priceId}`);
+        redirect(`/api/checkout?priceId=${priceId}`);
     };
+
+    const { userId } = await auth();
+    const hasPaid = await hasCompanionPaid(userId as string);
+    if (hasPaid) {
+        redirect("/profile");
+    }
 
     return (
         <div className="container mx-auto py-10">

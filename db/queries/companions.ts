@@ -767,3 +767,19 @@ export async function getCompanionIdByClerkId(id: string): Promise<number> {
 
   return companion[0].id;
 }
+
+export async function hasCompanionPaid(clerkId: string): Promise<boolean> {
+  const [hasPaid] = await db
+    .select({
+      paid: companionsTable.has_active_ad,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, clerkId))
+    .limit(1);
+
+  if (!hasPaid) {
+    return false;
+  }
+
+  return hasPaid.paid ?? false;
+}
