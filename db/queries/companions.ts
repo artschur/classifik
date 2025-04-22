@@ -413,6 +413,8 @@ export async function getRelevantInfoAnalytics({
     .select({
       id: companionsTable.id,
       name: companionsTable.name,
+      stripeCustomerId: companionsTable.stripe_customer_id,
+      isPaying: companionsTable.has_active_ad,
       interactions: sql<number>`COALESCE(CAST(COUNT(CASE WHEN ${reviewsTable.liked_by} IS NOT NULL THEN 1 END) AS INTEGER), 0)`,
       averageRating: sql<number>`COALESCE(avg(${reviewsTable.rating}), 0)`,
     })
@@ -434,6 +436,8 @@ export async function getRelevantInfoAnalytics({
   return {
     id: companion.id,
     name: companion.name,
+    stripeCustomerId: companion.stripeCustomerId,
+    isPaying: companion.isPaying,
     interactions: companion.interactions,
     averageRating: Number(companion.averageRating).toFixed(1),
   };
