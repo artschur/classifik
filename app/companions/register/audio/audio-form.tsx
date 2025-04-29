@@ -117,15 +117,15 @@ export default function AudioFormClient({
       // Use the appropriate function based on whether audio exists
       const result = hasExistingAudio
         ? await updateAudio({
-            audioFile,
-            companionId,
-            clerkId: userId,
-          })
+          audioFile,
+          companionId,
+          clerkId: userId,
+        })
         : await uploadAudio({
-            audioFile,
-            companionId,
-            clerkId: userId,
-          });
+          audioFile,
+          companionId,
+          clerkId: userId,
+        });
 
       if (result.error) {
         throw new Error(result.error);
@@ -172,7 +172,7 @@ export default function AudioFormClient({
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 flex flex-row items-center justify-center">
             <div className="space-y-2">
               <Label>Áudio</Label>
               <AudioRecorder onAudioRecorded={handleAudioRecorded} />
@@ -187,8 +187,8 @@ export default function AudioFormClient({
               {isSubmitting
                 ? 'Enviando...'
                 : hasExistingAudio
-                ? 'Substituir gravação'
-                : 'Enviar gravação'}
+                  ? 'Substituir gravação'
+                  : 'Enviar gravação'}
             </Button>
           </CardFooter>
         </form>

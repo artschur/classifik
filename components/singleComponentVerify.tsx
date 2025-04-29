@@ -66,7 +66,7 @@ export default function SingleCompanionVerify({
   companion,
   onActionComplete,
 }: {
-  companion: CompanionFiltered & { description?: string };
+  companion: CompanionFiltered & { description?: string; };
   onActionComplete: (companionId: number) => void;
 }) {
   const { toast } = useToast();
@@ -114,16 +114,16 @@ export default function SingleCompanionVerify({
       try {
         await approveCompanion(companion.id);
         toast({
-          title: 'Companion Approved',
-          description: `${companion.name} has been successfully approved.`,
+          title: 'Companheira Aprovada',
+          description: `${companion.name} foi aprovada com sucesso.`,
           variant: 'success',
         });
         onActionComplete(companion.id);
       } catch (e) {
-        setError('Failed to approve companion. Please try again.');
+        setError('Falha ao aprovar a companheira. Por favor, tente novamente.');
         toast({
-          title: 'Error',
-          description: 'Failed to approve companion. Please try again.',
+          title: 'Erro',
+          description: 'Falha ao aprovar a companheira. Por favor, tente novamente.',
           variant: 'destructive',
         });
       }
@@ -138,16 +138,16 @@ export default function SingleCompanionVerify({
         await rejectCompanion(companion.id);
 
         toast({
-          title: 'Companion Rejected',
-          description: `${companion.name} has been rejected.`,
+          title: 'Companheira Rejeitada',
+          description: `${companion.name} foi rejeitada.`,
           variant: 'success',
         });
         onActionComplete(companion.id);
       } catch (e) {
-        setError('Failed to reject companion. Please try again.');
+        setError('Falha ao rejeitar a companheira. Por favor, tente novamente.');
         toast({
-          title: 'Error',
-          description: 'Failed to reject companion. Please try again.',
+          title: 'Erro',
+          description: 'Falha ao rejeitar a companheira. Por favor, tente novamente.',
           variant: 'destructive',
         });
       }
@@ -174,38 +174,37 @@ export default function SingleCompanionVerify({
             documents.map((doc) =>
               doc.id === docId
                 ? {
-                    ...doc,
-                    verified,
-                    verification_date: verified
-                      ? new Date().toISOString()
-                      : null,
-                    notes: verificationNotes || null,
-                  }
+                  ...doc,
+                  verified,
+                  verification_date: verified
+                    ? new Date().toISOString()
+                    : null,
+                  notes: verificationNotes || null,
+                }
                 : doc
             )
           );
 
           toast({
-            title: verified ? 'Document Verified' : 'Document Rejected',
-            description: `Document has been ${
-              verified ? 'verified' : 'rejected'
-            } successfully.`,
+            title: verified ? 'Documento Verificado' : 'Documento Rejeitado',
+            description: `O documento foi ${verified ? 'verificado' : 'rejeitado'
+              } com sucesso.`,
             variant: 'success',
           });
 
           setVerificationNotes('');
         } else {
           toast({
-            title: 'Error',
+            title: 'Erro',
             description:
-              result.error || 'An error occurred while verifying the document',
+              result.error || 'Ocorreu um erro ao verificar o documento',
             variant: 'destructive',
           });
         }
       } catch (error) {
         toast({
-          title: 'Error',
-          description: 'Failed to update document verification status.',
+          title: 'Erro',
+          description: 'Falha ao atualizar o status de verificação do documento.',
           variant: 'destructive',
         });
       } finally {
@@ -222,15 +221,15 @@ export default function SingleCompanionVerify({
         setDocuments(result.documents as Document[]);
       } else {
         toast({
-          title: 'Error',
-          description: 'Failed to fetch documents',
+          title: 'Erro',
+          description: 'Falha ao buscar documentos',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to fetch documents',
+        title: 'Erro',
+        description: 'Falha ao buscar documentos',
         variant: 'destructive',
       });
     } finally {
@@ -390,7 +389,7 @@ export default function SingleCompanionVerify({
               <div className="text-center py-8">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
                 <p className="mt-4 text-muted-foreground">
-                  No documents uploaded yet
+                  Nenhum documento enviado ainda
                 </p>
               </div>
             ) : (
@@ -414,36 +413,35 @@ export default function SingleCompanionVerify({
                   .map((doc) => (
                     <div
                       key={doc.id}
-                      className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 ${
-                        isVerificationVideo(doc)
-                          ? 'border-primary/50 bg-primary/5'
-                          : ''
-                      }`}
+                      className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 ${isVerificationVideo(doc)
+                        ? 'border-primary/50 bg-primary/5'
+                        : ''
+                        }`}
                       onClick={() => openDocumentDialog(doc)}
                     >
                       {renderDocumentPreview(doc)}
                       <div className="flex-1">
                         <p className="font-medium capitalize">
                           {isVerificationVideo(doc)
-                            ? 'Verification Video'
+                            ? 'Vídeo de Verificação'
                             : doc.document_type.replace('_', ' ')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Uploaded on{' '}
+                          Enviado em{' '}
                           {new Date(doc.created_at).toLocaleDateString()}
                         </p>
                         <div className="flex items-center mt-1">
                           {doc.verified ? (
                             <span className="text-xs flex items-center text-green-600">
                               <CheckCircle size={12} className="mr-1" />{' '}
-                              Verified
+                              Verificado
                               {isVerificationVideo(doc) &&
-                                ' (Will be auto-deleted for privacy)'}
+                                ' (Será excluído automaticamente para privacidade)'}
                             </span>
                           ) : (
                             <span className="text-xs flex items-center text-amber-600">
-                              <FileText size={12} className="mr-1" /> Pending
-                              verification
+                              <FileText size={12} className="mr-1" /> Pendente
+                              de verificação
                             </span>
                           )}
                         </div>
@@ -464,7 +462,7 @@ export default function SingleCompanionVerify({
                             }}
                             disabled={documentVerifyingId === doc.id}
                           >
-                            <Check className="h-4 w-4 mr-1" /> Verify
+                            <Check className="h-4 w-4 mr-1" /> Verificar
                           </Button>
                         ) : (
                           <Button
@@ -481,7 +479,7 @@ export default function SingleCompanionVerify({
                             }}
                             disabled={documentVerifyingId === doc.id}
                           >
-                            <X className="h-4 w-4 mr-1" /> Unverify
+                            <X className="h-4 w-4 mr-1" /> Desverificar
                           </Button>
                         )}
                       </div>
@@ -495,7 +493,7 @@ export default function SingleCompanionVerify({
 
       <CardFooter className="flex flex-col gap-4">
         <Textarea
-          placeholder="Add verification notes (optional)"
+          placeholder="Adicionar notas de verificação (opcional)"
           className="mb-2"
           value={verificationNotes}
           onChange={(e) => setVerificationNotes(e.target.value)}
@@ -518,7 +516,7 @@ export default function SingleCompanionVerify({
           </Button>
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}
-        {isPending && <p className="text-gray-500 text-sm">Processing...</p>}
+        {isPending && <p className="text-gray-500 text-sm">Processando...</p>}
       </CardFooter>
 
       {/* Document Detail Dialog */}
@@ -530,7 +528,7 @@ export default function SingleCompanionVerify({
           <DialogHeader>
             <DialogTitle className="capitalize">
               {selectedDocument?.document_type === 'verification_video'
-                ? 'Verification Video'
+                ? 'Vídeo de Verificação'
                 : selectedDocument?.document_type.replace('_', ' ')}
             </DialogTitle>
           </DialogHeader>
@@ -545,11 +543,11 @@ export default function SingleCompanionVerify({
                       className="w-full h-full rounded-md"
                       autoPlay={false}
                     >
-                      Your browser does not support the video tag.
+                      Seu navegador não suporta a tag de vídeo.
                     </video>
                     {selectedDocument.verified && (
                       <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs">
-                        Verified (Will be deleted)
+                        Verificado (será excluído)
                       </div>
                     )}
                   </div>
@@ -561,7 +559,7 @@ export default function SingleCompanionVerify({
                       rel="noopener noreferrer"
                       className="flex items-center text-primary"
                     >
-                      <FileText className="mr-2" /> View PDF Document
+                      <FileText className="mr-2" /> Ver documento PDF
                     </a>
                   </div>
                 ) : (
@@ -579,16 +577,16 @@ export default function SingleCompanionVerify({
                   <p className="text-sm mb-1">
                     <strong>Status:</strong>{' '}
                     {selectedDocument.verified
-                      ? 'Verified'
-                      : 'Pending verification'}
+                      ? 'Verificado'
+                      : 'Pendente de verificação'}
                   </p>
                   <p className="text-sm mb-1">
-                    <strong>Uploaded:</strong>{' '}
+                    <strong>Enviado:</strong>{' '}
                     {new Date(selectedDocument.created_at).toLocaleDateString()}
                   </p>
                   {selectedDocument.verification_date && (
                     <p className="text-sm mb-1">
-                      <strong>Verified on:</strong>{' '}
+                      <strong>Verificado em:</strong>{' '}
                       {new Date(
                         selectedDocument.verification_date
                       ).toLocaleDateString()}
@@ -597,11 +595,11 @@ export default function SingleCompanionVerify({
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">Notes</label>
+                  <label className="text-sm font-medium">Notas</label>
                   <Textarea
                     value={verificationNotes || selectedDocument.notes || ''}
                     onChange={(e) => setVerificationNotes(e.target.value)}
-                    placeholder="Add verification notes..."
+                    placeholder="Adicionar notas de verificação..."
                     className="mt-1"
                   />
                 </div>
@@ -618,7 +616,7 @@ export default function SingleCompanionVerify({
                     }
                     disabled={documentVerifyingId === selectedDocument.id}
                   >
-                    <X className="h-4 w-4 mr-1" /> Reject
+                    <X className="h-4 w-4 mr-1" /> Rejeitar
                   </Button>
                   <Button
                     className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
@@ -632,7 +630,7 @@ export default function SingleCompanionVerify({
                     }
                     disabled={documentVerifyingId === selectedDocument.id}
                   >
-                    <Check className="h-4 w-4 mr-1" /> Verify
+                    <Check className="h-4 w-4 mr-1" /> Verificar
                   </Button>
                 </div>
               </>
