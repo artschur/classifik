@@ -88,7 +88,7 @@ export default async function AnalyticsDashboard({
               }
               return 0; // Default if no purchases found
             })()
-          }dias restantes
+          } dias restantes
         </p>
       </div>
 

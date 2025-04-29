@@ -19,12 +19,17 @@ const allowedEvents: Stripe.Event.Type[] = [
 // Track processed events to prevent duplicates
 const processedEvents = new Set<string>();
 
+export async function GET(req: Request) {
+  return Response.json({ message: 'Hello from Stripe webhook!' });
+}
+
 export async function POST(req: Request) {
+  console.log('hey');
   const body = await req.text();
   const signature = (await headers()).get('Stripe-Signature');
 
+  console.log(body);
   if (!signature) return NextResponse.json({}, { status: 400 });
-
   try {
     if (typeof signature !== 'string') {
       throw new Error("[STRIPE HOOK] Header isn't a string");
@@ -49,6 +54,7 @@ export async function POST(req: Request) {
 }
 
 async function processEvent(event: Stripe.Event, clerkId: string) {
+  console.log('processing event');
   if (processedEvents.has(event.id)) {
     console.log(`Event ${event.id} already processed, skipping`);
     return;

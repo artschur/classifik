@@ -1,11 +1,14 @@
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { hasCompanionPaid } from "@/db/queries/companions";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { ProductCard } from "./productCard";
 
-// Define your product options
+export interface Product {
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+}
 const products = [
     {
         id: "price_1RAt1OCuEJW1dWBav2YzW54D",
@@ -29,10 +32,6 @@ const products = [
 
 export default async function CheckoutPage() {
 
-    const handleCheckout = (priceId: string) => {
-        redirect(`/api/checkout?priceId=${priceId}`);
-    };
-
     const { userId } = await auth();
     const hasPaid = await hasCompanionPaid(userId as string);
     if (hasPaid) {
@@ -41,29 +40,13 @@ export default async function CheckoutPage() {
 
     return (
         <div className="container mx-auto py-10">
-            <h1 className="text-2xl font-bold mb-6">Select Ad Duration</h1>
+            <h1 className="text-2xl font-bold mb-6">Selecione duração do Anúncio</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {products.map((product) => (
-                    <Card key={product.id} className="flex flex-col">
-                        <CardHeader>
-                            <CardTitle>{product.name}</CardTitle>
-                            <CardDescription>{product.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                            <p className="text-3xl font-bold">{product.price}</p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button
-                                className="w-full"
-                                onClick={() => handleCheckout(product.id)}
-                            >
-                                Select
-                            </Button>
-                        </CardFooter>
-                    </Card>
+                    <ProductCard key={product.id} product={product} />
                 ))}
             </div>
         </div>
     );
-}
+};;

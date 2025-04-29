@@ -303,32 +303,16 @@ export function RegisterCompanionForm({
 
   const [companionId, setCompanionId] = React.useState<number | null>(null);
 
-  const handleFileUpload = async (files: File[]) => {
-    if (!files.length) return;
-    setUploadStatus('Enviando arquivos...');
 
-    try {
       if (!companionId) {
         throw new Error('Companion ID not found');
       }
       const results = await Promise.all(
-        files.map((file) => uploadImage(file, companionId))
+        files.map((file : File) => uploadImage(file, companionId))
       );
 
-      const errors = results.filter((r) => r.error);
-      if (errors.length > 0) {
-        setUploadStatus(`Falha ao enviar ${errors.length} arquivos`);
-        toast({
-          title: 'Falha no upload',
-          description: `Falha ao enviar ${errors.length} arquivos`,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Imagens enviadas',
-          description: `${files.length} imagens enviadas com sucesso`,
-          variant: 'success',
-        });
+
+
       }
 
       if (isLoaded && user?.id) {

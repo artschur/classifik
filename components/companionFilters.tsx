@@ -1,7 +1,7 @@
 'use client';
 
 import { useDebouncedCallback } from 'use-debounce';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Select,
@@ -58,13 +58,18 @@ export function CompanionFilters({
 }: {
   initialFilters: FilterTypesCompanions;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [searchValue, setSearchValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+
+  const [searchValue, setSearchValue] = useState(searchParams?.get('search') || '');
+
   const [pendingFilters, setPendingFilters] =
     useState<FilterTypesCompanions>(initialFilters);
+
+  useEffect(() => {
+    setSearchValue(searchParams?.get('search') || '');
+  }, [searchParams]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -73,15 +78,18 @@ export function CompanionFilters({
   };
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
+    // Use null for empty searches to clear the parameter
+    const searchParam = value.trim() === '' ? null : value;
+
     setPendingFilters((prev) => ({
       ...prev,
-      search: value,
+      search: searchParam ?? undefined,
     }));
 
     startTransition(() => {
       updateFilters({
         ...pendingFilters,
-        search: value,
+        search: searchParam,
         silicone: pendingFilters.silicone?.toString() || null,
         tattoos: pendingFilters.tattoos?.toString() || null,
         smoker: pendingFilters.smoker?.toString() || null,
@@ -93,6 +101,9 @@ export function CompanionFilters({
     params: Record<string, string | number | number[] | null>
   ) => {
     const current = new URLSearchParams(searchParams?.toString());
+
+    current.set('page', '1');
+
     Object.entries(params).forEach(([key, value]) => {
       if (value === null || value === '') {
         current.delete(key);
@@ -102,7 +113,7 @@ export function CompanionFilters({
         current.set(key, value.toString());
       }
     });
-    current.set('page', '1');
+
     return current.toString();
   };
 
@@ -296,13 +307,12 @@ export function CompanionFilters({
                       <Badge
                         key={char}
                         variant="outline"
-                        className={`cursor-pointer ${
-                          pendingFilters[
-                            char.toLowerCase() as keyof FilterTypesCompanions
-                          ] === 'true'
-                            ? 'bg-primary text-primary-foreground'
-                            : ''
-                        }`}
+                        className={`cursor-pointer ${pendingFilters[
+                          char.toLowerCase() as keyof FilterTypesCompanions
+                        ] === 'true'
+                          ? 'bg-primary text-primary-foreground'
+                          : ''
+                          }`}
                         onClick={() =>
                           handlePendingFilter(
                             char.toLowerCase(),
@@ -344,11 +354,10 @@ export function CompanionFilters({
                         <Badge
                           key={color}
                           variant="outline"
-                          className={`cursor-pointer ${
-                            isSelected
-                              ? 'bg-primary text-primary-foreground'
-                              : ''
-                          }`}
+                          className={`cursor-pointer ${isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : ''
+                            }`}
                           onClick={() =>
                             handlePendingFilter(
                               'hairColor',
