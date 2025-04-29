@@ -15,12 +15,18 @@ export default async function CompanionPage({
 }) {
   const { id } = await params;
   const [reviews] = await Promise.all([getReviewsByCompanionId(parseInt(id))]);
+  const reviewsRating =
+    reviews.length > 0
+      ? reviews.map((review) => review.rating).sort((a, b) => a - b)[
+          Math.floor(reviews.length / 2)
+        ]
+      : 'Sem avaliações';
 
   return (
     <div className="flex flex-col gap-4">
       <PageViewTracker companionId={parseInt(id)} />
       <Suspense fallback={<CompanionSkeleton />}>
-        <CompanionProfile id={parseInt(id)} />
+        <CompanionProfile id={parseInt(id)} reviewsRating={reviewsRating} />
       </Suspense>
       <Suspense fallback={<ReviewsSkeleton />}>
         <CompanionReviews id={parseInt(id)} initialReviews={reviews} />

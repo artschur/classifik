@@ -2,10 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { DocumentVerificationForm } from '@/components/documentVerificationForm';
 import { getCompanionByClerkId } from '@/db/queries/companions';
-import {
-  isCompanionVerified,
-  isVerificationPending,
-} from '@/app/actions/document-verification';
+import { isVerificationPending } from '@/app/actions/document-verification';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,12 +27,6 @@ export default async function DocumentVerificationPage() {
 
   if (isPendingVerification) {
     redirect('/companions/verification/pending');
-  }
-
-  const isCompleteVerification: boolean = await isCompanionVerified(userId);
-
-  if (isCompleteVerification) {
-    redirect('/companions/verification/success');
   }
 
   return (

@@ -6,20 +6,5 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { sessionClaims } = await auth();
-  if (
-    sessionClaims?.metadata?.onboardingComplete === true &&
-    sessionClaims?.metadata?.isCompanion === true
-  ) {
-    redirect('/companions/register');
-  }
-
-  if (
-    sessionClaims?.metadata?.onboardingComplete === true &&
-    sessionClaims?.metadata?.isCompanion === false
-  ) {
-    redirect('/location');
-  }
-
   return <>{children}</>;
 }

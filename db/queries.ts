@@ -1,3 +1,5 @@
+"use server";
+
 import { stat } from 'fs';
 import { db } from './index';
 import {
@@ -11,6 +13,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { CitySummary, CompanionById } from '../types/types';
 import { getImagesByCompanionId } from './queries/images';
+import { unstable_cache } from 'next/cache';
 
 
 
@@ -62,19 +65,28 @@ export async function getCompanionCharacteristics(id: number) {
 }
 
 export async function getCompanionById(id: number): Promise<CompanionById> {
-  const [details, characteristics, images] = await Promise.all([
-    getCompanionDetails(id),
-    getCompanionCharacteristics(id),
-    getImagesByCompanionId(id),
-  ]);
+  const cachedGetCompanionById = unstable_cache(
+    async (companionId: number) => {
+      const [details, characteristics, images] = await Promise.all([
+        getCompanionDetails(companionId),
+        getCompanionCharacteristics(companionId),
+        getImagesByCompanionId(companionId),
+      ]);
 
-  const imagesUrls = images.images.map((image) => image.publicUrl);
+      const imagesUrls = images.images.map((image) => image.publicUrl);
 
-  return {
-    ...details,
-    ...characteristics,
-    images: imagesUrls,
-  };
+      return {
+        ...details,
+        ...characteristics,
+        images: imagesUrls,
+      };
+    },
+    [`companion-${id}`],
+    { revalidate: 3600, tags: ['companion'] }
+  );
+
+  return await cachedGetCompanionById(id);
+
 }
 
 export async function getAvailableCities(): Promise<City[]> {
@@ -91,11 +103,19 @@ export async function getAvailableCities(): Promise<City[]> {
 }
 
 export async function getAvailableCitiesSummary(): Promise<CitySummary[]> {
-  return await db
-    .select({
-      slug: citiesTable.slug,
-      city: citiesTable.city,
-    })
-    .from(citiesTable)
-    .groupBy(citiesTable.id);
+  const cachedCitiesSummary = unstable_cache(
+    async () => {
+      return await db
+        .select({
+          slug: citiesTable.slug,
+          city: citiesTable.city,
+        })
+        .from(citiesTable)
+        .groupBy(citiesTable.id);
+    },
+    ['cities-summary'],
+    { revalidate: 3600, tags: ['cities'] }
+  );
+
+  return await cachedCitiesSummary();
 }

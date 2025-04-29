@@ -144,7 +144,6 @@ export default function SingleCompanionVerify({
         });
         onActionComplete(companion.id);
       } catch (e) {
-        console.log(e);
         setError('Failed to reject companion. Please try again.');
         toast({
           title: 'Error',
@@ -219,7 +218,6 @@ export default function SingleCompanionVerify({
     setIsLoadingDocs(true);
     try {
       const result = await getDocumentsByCompanionId(companion.id);
-      console.log(result);
       if (result.success) {
         setDocuments(result.documents as Document[]);
       } else {

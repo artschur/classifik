@@ -426,9 +426,9 @@ export function RegisterCompanionForm({
         variant: 'success',
         title: 'Perfil criado com sucesso',
         description:
-          'Seja bem vindo(a) à nossa plataforma. Agora você precisa verificar sua identidade.',
+          'Seja bem vindo(a) à nossa plataforma. Agora vamos gravar seu audio',
       });
-      router.push('/companions/verification');
+      router.push('/companions/register/audio');
       return;
     }
     try {

@@ -37,24 +37,35 @@ import {
 import { ImageGrid } from '@/components/imageGrid';
 import { getLastSignInByClerkId } from '@/db/queries/userActions';
 import { WhatsAppButton } from './ui/whatsapp-button';
-import { IconBrandInstagram } from '@tabler/icons-react';
+
 import {
   getImagesByCompanionId,
   getVerificationVideosByCompanionId,
 } from '@/db/queries/images';
 import { InstagramButton } from './ui/instagramButton';
+import { getAudioUrlByCompanionId } from '@/db/queries/audio';
+import AudioPlayer from '@/audio-player';
+import { IconMicrophone } from '@tabler/icons-react';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
   return <span>{lastSignIn}</span>;
 }
 
-export async function CompanionProfile({ id }: { id: number }) {
-  const [companion, { images, total }, verificationVideo] = await Promise.all([
-    getCompanionById(id),
-    getImagesByCompanionId(id, 3, 0),
-    getVerificationVideosByCompanionId(id),
-  ]);
+export async function CompanionProfile({
+  id,
+  reviewsRating,
+}: {
+  id: number;
+  reviewsRating: number | 'Sem avaliações';
+}) {
+  const [companion, { images, total }, verificationVideo, audio] =
+    await Promise.all([
+      getCompanionById(id),
+      getImagesByCompanionId(id, 3, 0),
+      getVerificationVideosByCompanionId(id),
+      getAudioUrlByCompanionId(id),
+    ]);
 
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -82,7 +93,7 @@ export async function CompanionProfile({ id }: { id: number }) {
           )}
           <div className="flex items-center text-yellow-400">
             <Star className="w-5 h-5 mr-1" />
-            <span className="font-semibold">4.9</span>
+            <span className="font-semibold">{reviewsRating}</span>
           </div>
           <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground">
@@ -100,13 +111,21 @@ export async function CompanionProfile({ id }: { id: number }) {
             companionId={id}
             totalImages={total}
           />
-
           <Card className="mt-8">
             <CardContent className="p-6">
+              {audio && (
+                <div className="flex flex-col w-full gap-4 pb-4">
+                  <h2 className="text-xl">
+                    <IconMicrophone className="inline-block mr-2" />
+                    Ouça minha voz
+                  </h2>
+                  <AudioPlayer songUrl={audio.publicUrl} />
+                </div>
+              )}
               <h2 className="text-2xl font-semibold mb-4 max-">
                 Sobre {companion.name}
               </h2>
-              <p className="text-muted-foreground mb-6 whitespace-normal break-words overflow-wrap-anywhere">
+              <p className="text-muted-foreground mb-6 whitespace-normal truncate break-words overflow-wrap-anywhere">
                 {companion.description}
               </p>
 
@@ -204,7 +223,9 @@ export async function CompanionProfile({ id }: { id: number }) {
         <div>
           <Card className="sticky top-20">
             <CardContent className="p-6 gap-2 flex flex-col">
-              <div>{companion.shortDescription}</div>
+              <div className="break-words overflow-wrap-anywhere whitespace-normal">
+                {companion.shortDescription}
+              </div>
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <span className="text-2xl font-bold">

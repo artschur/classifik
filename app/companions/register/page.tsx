@@ -1,4 +1,7 @@
-import { isVerificationPending } from '@/app/actions/document-verification';
+import {
+  isVerificationPending,
+  verifyItemsIfOnboardingComplete,
+} from '@/app/actions/document-verification';
 import { RegisterCompanionForm } from '@/components/formCompanionRegister';
 import { SkeletonForm } from '@/components/skeletons/skeletonForm';
 import { getAvailableCities } from '@/db/queries';
@@ -17,11 +20,28 @@ async function CompanionFormWithData() {
     redirect('/');
   }
 
-  const [cities, companion, stillVerifying] = await Promise.all([
-    getAvailableCities(),
-    getCompanionToEdit(userId),
-    isVerificationPending(userId),
-  ]);
+  const [cities, companion, stillVerifying, allVerificationStatus] =
+    await Promise.all([
+      getAvailableCities(),
+      getCompanionToEdit(userId),
+      isVerificationPending(userId),
+      verifyItemsIfOnboardingComplete(userId),
+    ]);
+
+  if (
+    !allVerificationStatus.isAudioUploaded &&
+    allVerificationStatus.isImageUploaded
+  ) {
+    redirect('/companions/register/audio');
+  }
+
+  if (
+    !allVerificationStatus.isVerificationVideoUploaded &&
+    allVerificationStatus.isAudioUploaded &&
+    allVerificationStatus.isImageUploaded
+  ) {
+    redirect('/companions/verification');
+  }
 
   if (stillVerifying) {
     redirect('/companions/verification/pending');

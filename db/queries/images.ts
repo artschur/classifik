@@ -1,7 +1,6 @@
 'use server';
 
 import { createClient } from '@supabase/supabase-js';
-import imageCompression from 'browser-image-compression';
 import { db } from '..';
 import { imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
@@ -20,14 +19,6 @@ const compressionOptions = {
   useWebWorker: true,
 };
 
-async function compressImage(file: File): Promise<File> {
-  try {
-    return await imageCompression(file, compressionOptions);
-  } catch (error) {
-    console.error('Compression failed:', error);
-    return file;
-  }
-}
 
 function sanitizeFilename(filename: string): string {
   // Remove accented characters and replace spaces with underscores
@@ -60,10 +51,6 @@ export async function uploadImage(
     }
 
     let compressedFile: File = file;
-
-    if (fileType === 'image') {
-      compressedFile = await compressImage(file);
-    }
 
     const ext = compressedFile.name.split('.').pop() || '';
     let baseName = compressedFile.name.split('.')[0];

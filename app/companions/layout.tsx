@@ -4,6 +4,7 @@ import { CompanionPageBreadcrumb } from '@/components/companionPageBreadcrumb';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import type React from 'react'; // Added import for React
+import { Suspense } from 'react';
 
 export default function CompanionsLayout({
   children,

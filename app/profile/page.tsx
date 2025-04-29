@@ -3,6 +3,8 @@ import { getRelevantInfoAnalytics } from '@/db/queries/companions';
 import { auth } from '@clerk/nextjs/server';
 import AnalyticsMain from '@/components/analytics-main';
 import { AnalyticsTimeframe } from '@/components/timeframe-selection-analytics';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default async function AnalyticsDashboard({
   searchParams,
@@ -21,10 +23,18 @@ export default async function AnalyticsDashboard({
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold">Dashboard de Métricas</h1>
+      <div className="flex space-x-4 mb-6">
+        <Link href={'/companions/register'}>
+          <Button variant="default">Suas informações</Button>
+        </Link>
+        <Link href={'/companions/register/audio/'}>
+          <Button variant="default">Audios</Button>
+        </Link>
+      </div>
+      <h1 className="text-3xl font-bold">Olá {companion.name}!</h1>
       <p className="text-xl font-sans text-gray-300 pt-4">
-        Olá {companion.name}. <br /> Aqui você verá a interação de seus clientes
-        com o seu perfil.
+        Esse é seu dashboard de métricas. <br /> Aqui você verá a interação de
+        seus clientes com o seu perfil.
       </p>
       <div className="pt-8">
         <AnalyticsTimeframe days={days} />
