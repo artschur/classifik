@@ -136,9 +136,9 @@ const formSections = [
 interface RegisterCompanionFormProps {
   cities: City[];
   companionData?:
-    | (RegisterCompanionFormValues & { companionId: number })
-    | null
-    | undefined; // Optional companion data for editing
+  | (RegisterCompanionFormValues & { companionId: number; })
+  | null
+  | undefined; // Optional companion data for editing
 }
 
 export function RegisterCompanionForm({
@@ -149,7 +149,7 @@ export function RegisterCompanionForm({
   const [uploadStatus, setUploadStatus] = React.useState('');
   const [isRegistering, setIsRegistering] = React.useState(false);
   const [images, setImages] = React.useState<
-    { publicUrl: string; storagePath: string }[]
+    { publicUrl: string; storagePath: string; }[]
   >([]);
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
@@ -303,16 +303,32 @@ export function RegisterCompanionForm({
 
   const [companionId, setCompanionId] = React.useState<number | null>(null);
 
+  const handleFileUpload = async (files: File[]) => {
+    if (!files.length) return;
+    setUploadStatus('Enviando arquivos...');
 
+    try {
       if (!companionId) {
         throw new Error('Companion ID not found');
       }
       const results = await Promise.all(
-        files.map((file : File) => uploadImage(file, companionId))
+        files.map((file) => uploadImage(file, companionId))
       );
 
-
-
+      const errors = results.filter((r) => r.error);
+      if (errors.length > 0) {
+        setUploadStatus(`Falha ao enviar ${errors.length} arquivos`);
+        toast({
+          title: 'Falha no upload',
+          description: `Falha ao enviar ${errors.length} arquivos`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Imagens enviadas',
+          description: `${files.length} imagens enviadas com sucesso`,
+          variant: 'success',
+        });
       }
 
       if (isLoaded && user?.id) {
@@ -404,7 +420,7 @@ export function RegisterCompanionForm({
     }
   };
 
-  async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
+  async function onSubmit(data: RegisterCompanionFormValues & { id?: number; }) {
     if (!companionData) {
       toast({
         variant: 'success',
@@ -1123,8 +1139,8 @@ export function RegisterCompanionForm({
                           {selectedImages.size === 0
                             ? null
                             : selectedImages.size === 1
-                            ? 'imagem selecionada'
-                            : 'imagens selecionadas'}
+                              ? 'imagem selecionada'
+                              : 'imagens selecionadas'}
                         </p>
                         {selectedImages.size > 0 && (
                           <AlertDialog>
@@ -1177,7 +1193,7 @@ export function RegisterCompanionForm({
                             className={cn(
                               'relative aspect-square group cursor-pointer',
                               selectedImages.has(image.storagePath) &&
-                                'ring-2 ring-primary ring-offset-2'
+                              'ring-2 ring-primary ring-offset-2'
                             )}
                             onClick={() =>
                               toggleImageSelection(image.storagePath)

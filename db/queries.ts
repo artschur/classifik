@@ -1,4 +1,4 @@
-"use server";
+'use server';
 
 import { stat } from 'fs';
 import { db } from './index';
@@ -14,8 +14,6 @@ import { eq } from 'drizzle-orm';
 import { CitySummary, CompanionById } from '../types/types';
 import { getImagesByCompanionId } from './queries/images';
 import { unstable_cache } from 'next/cache';
-
-
 
 export async function getCompanionDetails(id: number) {
   const result = await db
@@ -34,6 +32,9 @@ export async function getCompanionDetails(id: number) {
       gender_identity: companionsTable.gender_identity,
       languages: companionsTable.languages,
       last_seen: companionsTable.last_seen,
+      // stripe_customer_id: companionsTable.stripe_customer_id,
+      has_active_ad: companionsTable.has_active_ad,
+      ad_expiration_date: companionsTable.ad_expiration_date,
     })
     .from(companionsTable)
     .where(eq(companionsTable.id, id))
@@ -86,7 +87,6 @@ export async function getCompanionById(id: number): Promise<CompanionById> {
   );
 
   return await cachedGetCompanionById(id);
-
 }
 
 export async function getAvailableCities(): Promise<City[]> {

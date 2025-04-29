@@ -45,6 +45,7 @@ export type CompanionById = Omit<
   | 'reviews_summary'
   | 'city_id'
   | 'neighborhood_id'
+  | 'stripe_customer_id'
 > & {
   // Add characteristics fields with exact names from select query
   weight: Characteristic['weight'];
