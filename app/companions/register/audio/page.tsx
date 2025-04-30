@@ -19,7 +19,7 @@ export default async function AudioPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Audio for {companion.name}</h1>
+      <h1 className="text-2xl font-bold mb-6">Audio para {companion.name}</h1>
 
       <Suspense
         fallback={

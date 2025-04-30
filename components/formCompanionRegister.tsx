@@ -136,9 +136,9 @@ const formSections = [
 interface RegisterCompanionFormProps {
   cities: City[];
   companionData?:
-    | (RegisterCompanionFormValues & { companionId: number })
-    | null
-    | undefined; // Optional companion data for editing
+  | (RegisterCompanionFormValues & { companionId: number; })
+  | null
+  | undefined; // Optional companion data for editing
 }
 
 export function RegisterCompanionForm({
@@ -149,7 +149,7 @@ export function RegisterCompanionForm({
   const [uploadStatus, setUploadStatus] = React.useState('');
   const [isRegistering, setIsRegistering] = React.useState(false);
   const [images, setImages] = React.useState<
-    { publicUrl: string; storagePath: string }[]
+    { publicUrl: string; storagePath: string; }[]
   >([]);
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
@@ -420,7 +420,7 @@ export function RegisterCompanionForm({
     }
   };
 
-  async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
+  async function onSubmit(data: RegisterCompanionFormValues & { id?: number; }) {
     if (!companionData) {
       toast({
         variant: 'success',
@@ -1139,8 +1139,8 @@ export function RegisterCompanionForm({
                           {selectedImages.size === 0
                             ? null
                             : selectedImages.size === 1
-                            ? 'imagem selecionada'
-                            : 'imagens selecionadas'}
+                              ? 'imagem selecionada'
+                              : 'imagens selecionadas'}
                         </p>
                         {selectedImages.size > 0 && (
                           <AlertDialog>
@@ -1193,7 +1193,7 @@ export function RegisterCompanionForm({
                             className={cn(
                               'relative aspect-square group cursor-pointer',
                               selectedImages.has(image.storagePath) &&
-                                'ring-2 ring-primary ring-offset-2'
+                              'ring-2 ring-primary ring-offset-2'
                             )}
                             onClick={() =>
                               toggleImageSelection(image.storagePath)

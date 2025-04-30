@@ -18,7 +18,7 @@ import { eq, and, gte, lte, desc, asc, SQL, inArray, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
 import { getImagesByAuthId } from './images';
-import { unstable_cache } from "next/cache";
+import { unstable_cache } from 'next/cache';
 
 function buildCompanionConditions(
   cityId: number,
@@ -26,12 +26,14 @@ function buildCompanionConditions(
 ): SQL[] {
   const conditions: SQL[] = [
     eq(companionsTable.city_id, cityId),
-    eq(companionsTable.verified, true)
+    eq(companionsTable.verified, true),
   ];
 
   if (filters?.search) {
     conditions.push(
-      sql`LOWER(${companionsTable.name}) LIKE LOWER(${'%' + filters.search + '%'})`
+      sql`LOWER(${companionsTable.name}) LIKE LOWER(${
+        '%' + filters.search + '%'
+      })`
     );
   }
 
@@ -39,8 +41,10 @@ function buildCompanionConditions(
     const [minPrice, maxPrice] = filters.price.split('-').map(Number);
     if (minPrice && maxPrice) {
       conditions.push(
-        sql`${gte(companionsTable.price, minPrice)} and ${lte(companionsTable.price
-          , maxPrice)}`
+        sql`${gte(companionsTable.price, minPrice)} and ${lte(
+          companionsTable.price,
+          maxPrice
+        )}`
       );
     }
   }
@@ -49,7 +53,10 @@ function buildCompanionConditions(
     const [minAge, maxAge] = filters.age.split('-').map(Number);
     if (minAge && maxAge) {
       conditions.push(
-        sql`${gte(companionsTable.age, minAge)} and ${lte(companionsTable.age, maxAge)}`
+        sql`${gte(companionsTable.age, minAge)} and ${lte(
+          companionsTable.age,
+          maxAge
+        )}`
       );
     }
   }
@@ -64,7 +71,13 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
     const [minHeight, maxHeight] = filters.height.split('-').map(Number);
     if (minHeight && maxHeight) {
       conditions.push(
-        sql`${gte(characteristicsTable.height, (minHeight / 100).toString())} and ${lte(characteristicsTable.height, (maxHeight / 100).toString())}`
+        sql`${gte(
+          characteristicsTable.height,
+          (minHeight / 100).toString()
+        )} and ${lte(
+          characteristicsTable.height,
+          (maxHeight / 100).toString()
+        )}`
       );
     }
   }
@@ -73,7 +86,10 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
     const [minWeight, maxWeight] = filters.weight.split('-').map(Number);
     if (minWeight && maxWeight) {
       conditions.push(
-        sql`${gte(characteristicsTable.weight, minWeight.toString())} and ${lte(characteristicsTable.weight, maxWeight.toString())}`
+        sql`${gte(characteristicsTable.weight, minWeight.toString())} and ${lte(
+          characteristicsTable.weight,
+          maxWeight.toString()
+        )}`
       );
     }
   }
@@ -83,22 +99,30 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
       .split(',')
       .map((color) => color.trim().toLowerCase());
     conditions.push(
-      inArray(
-        sql`LOWER(${characteristicsTable.hair_color})`,
-        hairColors
-      )
+      inArray(sql`LOWER(${characteristicsTable.hair_color})`, hairColors)
     );
   }
 
-  if (filters?.silicone) conditions.push(eq(characteristicsTable.silicone, true));
+  if (filters?.silicone)
+    conditions.push(eq(characteristicsTable.silicone, true));
   if (filters?.tattoos) conditions.push(eq(characteristicsTable.tattoos, true));
   if (filters?.smoker) conditions.push(eq(characteristicsTable.smoker, true));
 
   return conditions;
 }
-
 function buildSortConditions(filters?: FilterTypesCompanions): SQL[] {
   const sortConditions: SQL[] = [];
+
+  sortConditions.push(
+    desc(
+      sql`CASE 
+        WHEN ${companionsTable.has_active_ad} = true AND 
+             ${companionsTable.ad_expiration_date} > NOW() 
+        THEN 1
+        ELSE 0
+      END`
+    )
+  );
 
   if (filters?.sort) {
     switch (filters.sort) {
@@ -113,7 +137,6 @@ function buildSortConditions(filters?: FilterTypesCompanions): SQL[] {
 
   return sortConditions;
 }
-
 // Function to get city ID from slug
 async function getCityIdFromSlug(citySlug: string): Promise<number | null> {
   const [cityRow] = await db
@@ -126,7 +149,9 @@ async function getCityIdFromSlug(citySlug: string): Promise<number | null> {
 }
 
 // Function to fetch companion images
-async function getCompanionImages(companionIds: number[]): Promise<Map<string, string[]>> {
+async function getCompanionImages(
+  companionIds: number[]
+): Promise<Map<string, string[]>> {
   if (companionIds.length === 0) return new Map();
 
   const images = await db
@@ -153,7 +178,10 @@ function buildCompanionsQuery(
   characteristicConditions: SQL[],
   sortConditions: SQL[]
 ) {
-  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
+  const allConditions = [
+    ...companionConditions,
+    ...characteristicConditions,
+  ].filter(Boolean);
 
   return db
     .select({
@@ -164,6 +192,7 @@ function buildCompanionsQuery(
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
+        hasActiveAd: companionsTable.has_active_ad,
       },
       city: {
         name: citiesTable.city,
@@ -182,9 +211,26 @@ function buildCompanionsQuery(
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
     .where(and(...allConditions))
-    .orderBy(...sortConditions);
+    .orderBy(
+      ...(sortConditions
+        ? sortConditions
+        : [
+            desc(
+              sql`CASE 
+              WHEN ${companionsTable.has_active_ad} = true AND 
+                   ${companionsTable.ad_expiration_date} > NOW() 
+              THEN 1
+              ELSE 0
+            END`
+            ),
+            desc(companionsTable.id),
+          ])
+    );
 }
 
 // New function to count total companions for pagination
@@ -198,12 +244,18 @@ export async function countCompanionsPages(
 
   const companionConditions = buildCompanionConditions(cityId, filters);
   const characteristicConditions = buildCharacteristicConditions(filters);
-  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
+  const allConditions = [
+    ...companionConditions,
+    ...characteristicConditions,
+  ].filter(Boolean);
 
   const [{ count }] = await db
     .select({ count: sql<number>`count(DISTINCT ${companionsTable.id})` })
     .from(companionsTable)
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
     .where(and(...allConditions));
 
   return Math.ceil(count / pageSize);
@@ -241,7 +293,7 @@ export const getCompanionsToFilter = unstable_cache(
     if (results.length === 0) return [];
 
     // Get companion IDs for fetching related data
-    const companionIds = results.map(r => r.companion.id);
+    const companionIds = results.map((r) => r.companion.id);
 
     // Fetch images in parallel with any other potential data fetches
     const imagesMap = await getCompanionImages(companionIds);
@@ -262,10 +314,10 @@ export const getCompanionsToFilter = unstable_cache(
       images: imagesMap.get(String(companion.id)) || [],
     }));
   },
-  ["companions-filter"],
+  ['companions-filter'],
   {
-    revalidate: 3600, // Cache for 1 hour
-    tags: ["companions"]
+    revalidate: 3600,
+    tags: ['companions', 'companions-filter'],
   }
 );
 
@@ -361,35 +413,39 @@ export async function getRelevantInfoAnalytics({
     .select({
       id: companionsTable.id,
       name: companionsTable.name,
+      stripeCustomerId: companionsTable.stripe_customer_id,
+      isPaying: companionsTable.has_active_ad,
       interactions: sql<number>`COALESCE(CAST(COUNT(CASE WHEN ${reviewsTable.liked_by} IS NOT NULL THEN 1 END) AS INTEGER), 0)`,
       averageRating: sql<number>`COALESCE(avg(${reviewsTable.rating}), 0)`,
     })
     .from(companionsTable)
     .leftJoin(reviewsTable, eq(reviewsTable.companion_id, companionsTable.id))
     .where(eq(companionsTable.auth_id, clerkId))
-    .groupBy(companionsTable.id, companionsTable.name)  // Include name in GROUP BY
+    .groupBy(companionsTable.id, companionsTable.name) // Include name in GROUP BY
     .limit(1);
 
   if (!companion) {
     return {
       id: 0,
-      name: "Usuário",
+      name: 'Usuário',
       interactions: 0,
-      averageRating: 0
+      averageRating: 0,
     };
   }
 
   return {
     id: companion.id,
     name: companion.name,
+    stripeCustomerId: companion.stripeCustomerId,
+    isPaying: companion.isPaying,
     interactions: companion.interactions,
-    averageRating: Number(companion.averageRating).toFixed(1)
+    averageRating: Number(companion.averageRating).toFixed(1),
   };
 }
 
 export async function getCompanionNameByClerkId(
   clerkId: string
-): Promise<{ name: string; id: number; }> {
+): Promise<{ name: string; id: number }> {
   const [companion] = await db
     .select({
       name: companionsTable.name,
@@ -405,12 +461,11 @@ export async function getCompanionNameByClerkId(
     name: companion.name,
     id: companion.id,
   };
-};
+}
 
 export async function getCompanionByClerkId(
   clerkId: string
 ): Promise<CompanionFiltered> {
-
   const query = db
     .select({
       id: companionsTable.id,
@@ -444,7 +499,9 @@ export async function getCompanionByClerkId(
     getImagesByAuthId(clerkId),
   ]);
 
-  const imageUrls = (images as { publicUrl: string; }[]).map((image) => image.publicUrl);
+  const imageUrls = (images as { publicUrl: string }[]).map(
+    (image) => image.publicUrl
+  );
 
   return {
     ...response[0],
@@ -454,7 +511,7 @@ export async function getCompanionByClerkId(
 
 export async function getCompanionToEdit(
   clerkId: string
-): Promise<(RegisterCompanionFormValues & { companionId: number; }) | null> {
+): Promise<(RegisterCompanionFormValues & { companionId: number }) | null> {
   // Fetch companion base data
   const [companion] = await db
     .select({
@@ -612,7 +669,7 @@ export async function updateCompanionFromForm(
 }
 
 export async function getUnverifiedCompanions(): Promise<
-  (CompanionFiltered & { description: string; })[]
+  (CompanionFiltered & { description: string })[]
 > {
   let query = db
     .select({
@@ -642,13 +699,16 @@ export async function getUnverifiedCompanions(): Promise<
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
     .where(eq(companionsTable.verified, false));
 
   const results = await query;
   if (results.length === 0) return [];
 
-  const companionIds = results.map(r => r.companion.id);
+  const companionIds = results.map((r) => r.companion.id);
 
   const imagesPromise = db
     .select({
@@ -695,7 +755,6 @@ export async function approveCompanion(id: number) {
 }
 
 export async function rejectCompanion(id: number) {
-
   await db.transaction(async (tx) => {
     await tx.delete(companionsTable).where(eq(companionsTable.id, id));
   });
@@ -711,4 +770,20 @@ export async function getCompanionIdByClerkId(id: string): Promise<number> {
     .limit(1);
 
   return companion[0].id;
+}
+
+export async function hasCompanionPaid(clerkId: string): Promise<boolean> {
+  const [hasPaid] = await db
+    .select({
+      paid: companionsTable.has_active_ad,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, clerkId))
+    .limit(1);
+
+  if (!hasPaid) {
+    return false;
+  }
+
+  return hasPaid.paid ?? false;
 }

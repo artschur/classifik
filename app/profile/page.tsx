@@ -5,11 +5,24 @@ import AnalyticsMain from '@/components/analytics-main';
 import { AnalyticsTimeframe } from '@/components/timeframe-selection-analytics';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { kv } from '@/db';
+
+interface AdPurchase {
+  id: string;
+  productId: string;
+  productName: string;
+  purchaseDate: string; // Consider using Date if you parse it
+  durationDays: number;
+}
+
+interface AdPurchases {
+  adPurchases: AdPurchase[];
+}
 
 export default async function AnalyticsDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ days: string }>;
+  searchParams: Promise<{ days: string; }>;
 }) {
   const { userId } = await auth();
   const sParams = await searchParams;
@@ -20,6 +33,11 @@ export default async function AnalyticsDashboard({
 
   const days = sParams.days ? parseInt(sParams.days) : 7;
   const companion = await getRelevantInfoAnalytics({ clerkId: userId });
+  const { adPurchases }: AdPurchases = (await kv.get(
+    `stripe:ads:${companion.stripeCustomerId}`
+  )) || { adPurchases: [] };
+
+  console.log('Ad Purchases:', adPurchases);
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -36,6 +54,44 @@ export default async function AnalyticsDashboard({
         Esse é seu dashboard de métricas. <br /> Aqui você verá a interação de
         seus clientes com o seu perfil.
       </p>
+      <div className='p-8 text-white'>Plano de pagamento</div>
+      <div className="p-4 rounded-lg bg-card">
+        <h3 className="text-lg font-semibold">Plano Atual</h3>
+        <p className="text-2xl font-bold">{companion.isPaying ? 'Ativo' : 'Inativo'}</p>
+        <p className="text-lg font-semibold">
+          {
+            (() => {
+              if (adPurchases && adPurchases.length > 0) {
+                try {
+                  const purchase = adPurchases[0];
+                  const purchaseDate = new Date(purchase.purchaseDate);
+                  // Check if the date is valid
+                  if (isNaN(purchaseDate.getTime())) {
+                    console.error("Invalid purchase date:", purchase.purchaseDate);
+                    return '?'; // Or handle appropriately
+                  }
+                  const durationDays = purchase.durationDays;
+                  const expirationDate = new Date(purchaseDate);
+                  expirationDate.setDate(purchaseDate.getDate() + durationDays);
+
+                  const today = new Date();
+                  const timeDiff = expirationDate.getTime() - today.getTime(); // Difference in milliseconds
+                  // Convert milliseconds to days and round up
+                  const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+                  // Ensure remaining days is not negative
+                  return Math.max(0, daysRemaining);
+                } catch (error) {
+                  console.error("Error calculating remaining days:", error);
+                  return '?'; // Indicate an error occurred
+                }
+              }
+              return 0; // Default if no purchases found
+            })()
+          } dias restantes
+        </p>
+      </div>
+
       <div className="pt-8">
         <AnalyticsTimeframe days={days} />
       </div>

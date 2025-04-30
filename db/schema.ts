@@ -15,22 +15,41 @@ import {
 } from 'drizzle-orm/pg-core';
 
 export const analyticsEventsTable = pgTable(
-  "analytics_events",
+  'analytics_events',
   {
-    id: serial("id").primaryKey(),
-    companionId: integer("companion_id").references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
-    event_type: text("event_type").notNull(), // 'page_view', 'whatsapp_click', etc.
-    metadata: json("metadata"),
-    created_at: timestamp("created_at").defaultNow(),
-    user_agent: text("user_agent"),
-    ip_hash: text("ip_hash"), // Store hashed IPs for unique visitor counting
+    id: serial('id').primaryKey(),
+    companionId: integer('companion_id')
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
+      .notNull(),
+    event_type: text('event_type').notNull(), // 'page_view', 'whatsapp_click', etc.
+    metadata: json('metadata'),
+    created_at: timestamp('created_at').defaultNow(),
+    user_agent: text('user_agent'),
+    ip_hash: text('ip_hash'), // Store hashed IPs for unique visitor counting
   },
   (table) => ({
-    analytics_events_companion_idx: index("analytics_events_companion_idx").on(
+    analytics_events_companion_idx: index('analytics_events_companion_idx').on(
       table.companionId
     ),
-    analytics_events_type_idx: index("analytics_events_type_idx").on(
+    analytics_events_type_idx: index('analytics_events_type_idx').on(
       table.event_type
+    ),
+  })
+);
+
+export const paymentsTable = pgTable(
+  'payments',
+  {
+    id: serial('id').primaryKey(),
+    stripe_payment_id: text('stripe_payment_id').notNull(),
+    stripe_customer_id: text('stripe_customer_id')
+      .notNull()
+      .references(() => companionsTable.stripe_customer_id),
+    date: timestamp('date').notNull(),
+  },
+  (table) => ({
+    payments_stripe_idx: index('payments_stripe_idx').on(
+      table.stripe_payment_id
     ),
   })
 );
@@ -40,6 +59,11 @@ export const companionsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     auth_id: text('auth_id').notNull().unique(),
+
+    stripe_customer_id: text('stripe_customer_id').unique(),
+    has_active_ad: boolean('has_active_ad').default(false),
+    ad_expiration_date: timestamp('ad_expiration_date'),
+
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
     instagramHandle: varchar('instagram', { length: 40 }).notNull(),
@@ -78,6 +102,9 @@ export const companionsTable = pgTable(
   },
   (table) => ({
     companions_auth_idx: index('companions_auth_idx').on(table.auth_id),
+    companions_stipe_idx: index('companions_stripe_idx').on(
+      table.stripe_customer_id
+    ),
     companions_price_idx: index('companions_price_idx').on(table.price),
     companions_age_idx: index('companions_age_idx').on(table.age),
     companions_verified_idx: index('companions_verified_idx').on(
@@ -133,7 +160,9 @@ export const reviewsTable = pgTable(
     userImageUrl: text('user_image_url'),
     username: text('username').notNull(),
     comment: text('comment').notNull(),
-    liked_by: text('liked_by').array().default(sql`ARRAY[]::TEXT[]`),
+    liked_by: text('liked_by')
+      .array()
+      .default(sql`ARRAY[]::TEXT[]`),
     rating: integer('rating').notNull().default(5),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
@@ -168,11 +197,15 @@ export const imagesTable = pgTable(
   {
     id: serial('id').primaryKey(),
     authId: text('owner_id'),
-    companionId: integer('companion_id').references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
+    companionId: integer('companion_id')
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
+      .notNull(),
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
     created_at: timestamp('created_at').defaultNow().notNull(),
-    is_verification_video: boolean('is_verification_video').default(false).notNull(), // Add this field
+    is_verification_video: boolean('is_verification_video')
+      .default(false)
+      .notNull(), // Add this field
   },
   (table) => ({
     images_owner_idx: index('images_ownimages_auth_idx').on(table.authId),
@@ -182,20 +215,20 @@ export const imagesTable = pgTable(
 );
 
 export const audioRecordingsTable = pgTable(
-  "audio_recordings",
+  'audio_recordings',
   {
-    id: serial("id").primaryKey(),
-    authId: text("owner_id").notNull(),
-    companionId: integer("companion_id").notNull(),
-    storage_path: text("storage_path").notNull(),
-    public_url: text("public_url").notNull(),
-    created_at: timestamp("created_at").defaultNow().notNull(),
+    id: serial('id').primaryKey(),
+    authId: text('owner_id').notNull(),
+    companionId: integer('companion_id').notNull(),
+    storage_path: text('storage_path').notNull(),
+    public_url: text('public_url').notNull(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => ({
-    audio_owner_idx: index("audio_owner_idx").on(table.authId),
-    audio_companion_idx: index("audio_companion_idx").on(table.companionId),
-    audio_created_idx: index("audio_created_idx").on(table.created_at),
-  }),
+    audio_owner_idx: index('audio_owner_idx').on(table.authId),
+    audio_companion_idx: index('audio_companion_idx').on(table.companionId),
+    audio_created_idx: index('audio_created_idx').on(table.created_at),
+  })
 );
 
 export const documentsTable = pgTable(
@@ -203,7 +236,9 @@ export const documentsTable = pgTable(
   {
     id: serial('id').primaryKey(),
     authId: text('owner_id').notNull(),
-    companionId: integer('companion_id').references(() => companionsTable.id, { onDelete: 'cascade' }).notNull(),
+    companionId: integer('companion_id')
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
+      .notNull(),
     document_type: varchar('document_type', { length: 50 }).notNull(), // ID, passport, etc.
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
@@ -215,7 +250,9 @@ export const documentsTable = pgTable(
   },
   (table) => ({
     documents_owner_idx: index('documents_auth_idx').on(table.authId),
-    documents_companion_idx: index('documents_companion_idx').on(table.companionId),
+    documents_companion_idx: index('documents_companion_idx').on(
+      table.companionId
+    ),
     documents_type_idx: index('documents_type_idx').on(table.document_type),
   })
 );
