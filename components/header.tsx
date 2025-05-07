@@ -48,26 +48,29 @@ export default async function Header() {
             />
             <span className="font-bold text-xl hidden sm:inline">onesugar</span>
           </Link>
+          <Link href={"https://wa.me/351912979481"}>
+            Contato
+          </Link>
           <nav className="hidden md:flex gap-x-16">
             <Link
               href="/companions/register"
               className="text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
               prefetch={false}
             >
-              Registre-se
+              Registro
             </Link>
             <Link
               href="/location"
               className="text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
               prefetch={false}
             >
-              Encontre uma acompanhante
+              Acompanhante
             </Link>
             <Link href={"/checkout"}
               className="text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
               prefetch={true}
             >
-              Impulsionar meu perfil
+              Anúncios
             </Link>
             {userId && isAdmin((await auth()).userId as string) ? (
               <Link

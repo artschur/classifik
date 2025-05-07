@@ -13,10 +13,9 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const authorizedIds = [
-  `user_2s07vybL9GSrjPbhjljghGwzl1X`,
-  'user_2sqI4uTepu0PyRSqlCYxM9ExFW8',
-  'user_2sqAwSVd5g0wjbJ8ewbR7zzyUCm',
-  'user_2tulS8cCaz8h2jmcWSRmak5gcSX',
+  `user_2wYHzDclTd4kDn7lCymwRzxsUli`,
+  'user_2wbWQFZpqPydugGRwP4XKRpifIV',
+  'user_2wUrNhvJel2On5NiLkgOswjKndD',
 ];
 
 async function FetchUnverifiedCompanions() {
