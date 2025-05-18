@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Onesugar' }],
   creator: 'Onesugar',
   publisher: 'Onesugar',
-  metadataBase: new URL('https://onesugar.pt'),
+  metadataBase: new URL('https://onesugar.app'),
   alternates: {
     canonical: '/',
     languages: {
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://onesugar.pt/images/og-image.jpg',
+        url: 'https://onesugar.app/images/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'Onesugar - Acompanhantes Premium',
@@ -84,10 +84,19 @@ export default async function HomePage() {
       <main className="flex-1">
         {/* Hero Section - Improved padding for mobile */}
         <section
-          className="w-full py-12 sm:py-16 md:py-24 lg:py-32 bg-muted min-h-[60vh] sm:min-h-[60vh] md:min-h-[60vh] flex items-center"
+          className="w-full py-12 sm:py-16 md:py-24 lg:py-32 bg-muted min-h-[60vh] sm:min-h-[60vh] md:min-h-[60vh] flex items-center relative"
           aria-labelledby="hero-heading"
         >
-          <div className="container px-4 mx-auto md:px-6">
+          <div className="absolute inset-0">
+            <Image
+              src="/banner-onesugar.png"
+              alt="Background Image"
+              layout="fill"
+              objectFit="cover"
+              className="opacity-50"
+            />
+          </div>
+          <div className="container px-4 mx-auto md:px-6 relative z-10">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
               <div className="flex flex-col justify-center space-y-4 sm:space-y-6">
                 <div className="space-y-3 sm:space-y-4">
@@ -239,11 +248,12 @@ export default async function HomePage() {
                 </div>
               </div>
               <Image
-                src="/placeholder.svg?height=800&width=800"
+                src="/acompanhantes-onesugar.png"
                 width={800}
                 height={800}
                 alt="Acompanhante sofisticada sorrindo para a câmera"
                 className="mx-auto aspect-square overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full max-w-[400px] lg:max-w-none"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
               />
             </div>
           </div>
@@ -322,11 +332,12 @@ export default async function HomePage() {
                 </div>
               </div>
               <Image
-                src="/placeholder.svg?height=600&width=600"
-                width={600}
-                height={600}
-                alt="Acompanhante elegante com expressão confiante"
-                className="mx-auto aspect-square overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full max-w-[400px] lg:max-w-none"
+                src="/selecione-onesugar.png"
+                width={800}
+                height={800}
+                alt="Acompanhante sofisticada sorrindo para a câmera"
+                className="mx-auto overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full h-full"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
               />
             </div>
           </div>
