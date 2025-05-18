@@ -1,0 +1,51 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+export function AgeVerificationModal() {
+    const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        const hasVerified = localStorage.getItem("age-verified");
+        if (!hasVerified) {
+            setIsOpen(true);
+        }
+    }, []);
+
+    const handleConfirm = () => {
+        localStorage.setItem("age-verified", "true");
+        setIsOpen(false);
+    };
+
+    return (
+        <AlertDialog open={isOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Verificação de Idade</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Você precisa ter 18 anos ou mais para acessar este site. Ao clicar em
+                        confirmar, você declara que tem 18 anos ou mais.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel asChild>
+                        <a href="https://www.google.com">Sair</a>
+                    </AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirm}>
+                        Confirmar, tenho 18 anos ou mais
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}

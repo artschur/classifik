@@ -48,9 +48,6 @@ export default async function Header() {
             />
             <span className="font-bold text-xl hidden sm:inline">onesugar</span>
           </Link>
-          <Link href={"https://wa.me/351912979481"}>
-            Contato
-          </Link>
           <nav className="hidden md:flex gap-x-16">
             <Link
               href="/companions/register"
