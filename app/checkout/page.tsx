@@ -12,24 +12,27 @@ export interface Product {
 const products = [
     {
         // id: "price_1RAt1OCuEJW1dWBav2YzW54D",
-        id: "price_1RIsByEJQRIZgEwenkVNKNPt",
+        // id: "price_1RIsByEJQRIZgEwenkVNKNPt",
+        id: "price_1RQ8O9EJQRIZgEweScjlRZY1",
         name: "7 Dias De Anúncio",
         description: "Seu perfil vai ser visivel no topo da sua cidade por 7 dias",
-        price: "€15.00"
+        price: "€52.00"
     },
     {
         // id: "price_1RAt2nCuEJW1dWBajoTLZQF1",
-        id: "price_1RIsBwEJQRIZgEwebyRvlBN8",
+        // id: "price_1RIsBwEJQRIZgEwebyRvlBN8",
+        id: "price_1RQ8P3EJQRIZgEweJhQTQK43",
         name: "14 Dias De Anúncio",
         description: "Seu anúncio ficará visível por 14 dias",
-        price: "€25.00"
+        price: "€95.00"
     },
     {
         // id: "price_1RAt3DCuEJW1dWBajo4sXGXG",
-        id: "price_1RIsBuEJQRIZgEweQPe3PrRW",
+        // id: "price_1RIsBuEJQRIZgEweQPe3PrRW",
+        id: "price_1RQ8PYEJQRIZgEwe5Fqd4EwJ",
         name: "30 Dias De Anúncio",
         description: "Seu anúncio ficará visível por 30 dias",
-        price: "€40.00"
+        price: "€140.00"
     }
 ];
 
