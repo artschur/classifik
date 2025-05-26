@@ -47,8 +47,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Onesugar - Acompanhantes Premium em Portugal',
-    description:
-      'Serviços de acompanhantes premium e discretas em Lisboa, Porto e todo Portugal.',
+    description: 'Serviços de acompanhantes premium e discretas em Lisboa, Porto e todo Portugal.',
     url: 'https://onesugar.pt',
     siteName: 'Onesugar',
     locale: 'pt_PT',
@@ -107,8 +106,8 @@ export default async function HomePage() {
                     Acompanhantes premium em Portugal.
                   </h1>
                   <p className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
-                    Descubra as acompanhantes mais sofisticadas de Portugal com
-                    total discrição e segurança.
+                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e
+                    segurança.
                   </p>
                 </div>
                 <div className="w-full space-y-4 mt-2 sm:mt-4">
@@ -274,11 +273,7 @@ export default async function HomePage() {
             <div className="flex justify-center mt-6 sm:mt-8">
               <Suspense
                 fallback={
-                  <Button
-                    disabled
-                    variant="outline"
-                    className="gap-2 w-full sm:w-auto"
-                  >
+                  <Button disabled variant="outline" className="gap-2 w-full sm:w-auto">
                     <MapPin className="h-4 w-4" />
                     Carregando cidades...
                   </Button>
@@ -286,10 +281,7 @@ export default async function HomePage() {
               >
                 <CitySelectionModal
                   triggerButton={
-                    <Button
-                      variant="outline"
-                      className="gap-2 w-full sm:w-auto"
-                    >
+                    <Button variant="outline" className="gap-2 w-full sm:w-auto">
                       <MapPin className="h-4 w-4" />
                       Ver todas as cidades disponíveis
                     </Button>
@@ -316,8 +308,7 @@ export default async function HomePage() {
                     Seja uma acompanhante OneSugar
                   </h2>
                   <p className="max-w-[600px] text-base sm:text-lg md:text-xl">
-                    Aumente sua visibilidade, conquiste clientes e se promova de
-                    forma segura.
+                    Aumente sua visibilidade, conquiste clientes e se promova de forma segura.
                   </p>
                 </div>
                 <div className="flex flex-col w-full sm:w-auto sm:flex-row gap-3 mt-2 sm:mt-4">
@@ -344,10 +335,7 @@ export default async function HomePage() {
         </section>
 
         {/* CTA Section - Improved button layout for mobile */}
-        <section
-          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
-          aria-labelledby="cta-heading"
-        >
+        <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="cta-heading">
           <div className="container grid items-center justify-center gap-4 mx-auto text-center px-4 md:px-6">
             <div className="space-y-2 sm:space-y-3">
               <h2
@@ -357,8 +345,8 @@ export default async function HomePage() {
                 Pronto para uma experiência inesquecível?
               </h2>
               <p className="mx-auto max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl">
-                Descubra as acompanhantes mais requintadas de Portugal e viva
-                momentos únicos com total discrição.
+                Descubra as acompanhantes mais requintadas de Portugal e viva momentos únicos com
+                total discrição.
               </p>
             </div>
             <div className="mx-auto flex flex-col sm:flex-row w-full sm:w-auto gap-3 mt-2 sm:mt-4">
@@ -368,12 +356,7 @@ export default async function HomePage() {
               </Button>
               <Suspense
                 fallback={
-                  <Button
-                    disabled
-                    size="lg"
-                    variant="outline"
-                    className="gap-2 w-full sm:w-auto"
-                  >
+                  <Button disabled size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
                     <MapPin className="h-4 w-4" />
                     Carregando...
                   </Button>
@@ -381,11 +364,7 @@ export default async function HomePage() {
               >
                 <CitySelectionModal
                   triggerButton={
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="gap-2 w-full sm:w-auto"
-                    >
+                    <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
                       <MapPin className="h-4 w-4" />
                       Buscar por cidade
                     </Button>
