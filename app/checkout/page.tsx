@@ -15,7 +15,7 @@ const products = [
     // id: "price_1RIsByEJQRIZgEwenkVNKNPt",
     // id: "price_1RQ8O9EJQRIZgEweScjlRZY1",
     id: 'price_1RQA2eEJQRIZgEwex35RbMMP',
-    name: '7 Dias De Anúncio',
+    name: 'Plus',
     description: 'Seu perfil vai ser visivel no topo da sua cidade por 7 dias',
     price: '€30.00',
   },
@@ -24,7 +24,7 @@ const products = [
     // id: "price_1RIsBwEJQRIZgEwebyRvlBN8",
     // id: 'price_1RQ8P3EJQRIZgEweJhQTQK43',
     id: 'price_1RQA37EJQRIZgEwee89HkBet',
-    name: '14 Dias De Anúncio',
+    name: 'Vip',
     description: 'Seu anúncio ficará visível por 14 dias',
     price: '€40.00',
   },
@@ -32,7 +32,7 @@ const products = [
     // id: "price_1RAt3DCuEJW1dWBajo4sXGXG",
     // id: "price_1RIsBuEJQRIZgEweQPe3PrRW",
     id: 'price_1RQA3iEJQRIZgEwe0vUw7ehc',
-    name: '30 Dias De Anúncio',
+    name: 'Premium',
     description: 'Seu anúncio ficará visível por 30 dias',
     price: '€60.00',
   },
@@ -49,8 +49,8 @@ export default async function CheckoutPage() {
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">Selecione duração do Anúncio</h1>
       <p className="mb-4">
-        Escolha a duração do seu anúncio. Após o pagamento, seu perfil será
-        visível no topo da sua cidade, atraindo mais clientes.
+        Escolha a duração do seu anúncio. Após o pagamento, seu perfil será visível no topo da sua
+        cidade, atraindo mais clientes.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {products.map((product) => (
