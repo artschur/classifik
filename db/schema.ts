@@ -28,13 +28,9 @@ export const analyticsEventsTable = pgTable(
     ip_hash: text('ip_hash'), // Store hashed IPs for unique visitor counting
   },
   (table) => ({
-    analytics_events_companion_idx: index('analytics_events_companion_idx').on(
-      table.companionId
-    ),
-    analytics_events_type_idx: index('analytics_events_type_idx').on(
-      table.event_type
-    ),
-  })
+    analytics_events_companion_idx: index('analytics_events_companion_idx').on(table.companionId),
+    analytics_events_type_idx: index('analytics_events_type_idx').on(table.event_type),
+  }),
 );
 
 export const paymentsTable = pgTable(
@@ -46,12 +42,11 @@ export const paymentsTable = pgTable(
       .notNull()
       .references(() => companionsTable.stripe_customer_id),
     date: timestamp('date').notNull(),
+    plan_type: varchar('payment_type', { length: 50 }).notNull(),
   },
   (table) => ({
-    payments_stripe_idx: index('payments_stripe_idx').on(
-      table.stripe_payment_id
-    ),
-  })
+    payments_stripe_idx: index('payments_stripe_idx').on(table.stripe_payment_id),
+  }),
 );
 
 export const companionsTable = pgTable(
@@ -63,6 +58,7 @@ export const companionsTable = pgTable(
     stripe_customer_id: text('stripe_customer_id').unique(),
     has_active_ad: boolean('has_active_ad').default(false),
     ad_expiration_date: timestamp('ad_expiration_date'),
+    plan_type: varchar('plan_type', { length: 50 }),
 
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
@@ -81,9 +77,7 @@ export const companionsTable = pgTable(
     city_id: integer('location_id')
       .notNull()
       .references(() => citiesTable.id),
-    neighborhood_id: integer('neighborhood_id').references(
-      () => neighborhoodsTable.id
-    ),
+    neighborhood_id: integer('neighborhood_id').references(() => neighborhoodsTable.id),
 
     verified: boolean('verified').default(false).notNull(),
 
@@ -102,16 +96,12 @@ export const companionsTable = pgTable(
   },
   (table) => ({
     companions_auth_idx: index('companions_auth_idx').on(table.auth_id),
-    companions_stipe_idx: index('companions_stripe_idx').on(
-      table.stripe_customer_id
-    ),
+    companions_stipe_idx: index('companions_stripe_idx').on(table.stripe_customer_id),
     companions_price_idx: index('companions_price_idx').on(table.price),
     companions_age_idx: index('companions_age_idx').on(table.age),
-    companions_verified_idx: index('companions_verified_idx').on(
-      table.verified
-    ),
+    companions_verified_idx: index('companions_verified_idx').on(table.verified),
     compations_city_idx: index('compations_city_idx').on(table.city_id),
-  })
+  }),
 );
 
 export const characteristicsTable = pgTable(
@@ -134,19 +124,11 @@ export const characteristicsTable = pgTable(
     smoker: boolean('smoker'),
   },
   (table) => ({
-    characteristics_companion_idx: index('characteristics_companion_idx').on(
-      table.companion_id
-    ),
-    characteristics_ethnicity_idx: index('characteristics_ethnicity_idx').on(
-      table.ethnicity
-    ),
-    characteristics_eyes_idx: index('characteristics_eyes_idx').on(
-      table.eye_color
-    ),
-    characteristics_hair_idx: index('characteristics_hair_idx').on(
-      table.hair_color
-    ),
-  })
+    characteristics_companion_idx: index('characteristics_companion_idx').on(table.companion_id),
+    characteristics_ethnicity_idx: index('characteristics_ethnicity_idx').on(table.ethnicity),
+    characteristics_eyes_idx: index('characteristics_eyes_idx').on(table.eye_color),
+    characteristics_hair_idx: index('characteristics_hair_idx').on(table.hair_color),
+  }),
 );
 
 export const reviewsTable = pgTable(
@@ -168,10 +150,8 @@ export const reviewsTable = pgTable(
     updated_at: timestamp('updated_at').defaultNow(),
   },
   (table) => ({
-    reviews_companion_idx: index('reviews_companion_idx').on(
-      table.companion_id
-    ),
-  })
+    reviews_companion_idx: index('reviews_companion_idx').on(table.companion_id),
+  }),
 );
 
 export const citiesTable = pgTable(
@@ -185,11 +165,8 @@ export const citiesTable = pgTable(
   },
   (table) => ({
     cities_slug_idx: index('cities_slug_idx').on(table.slug),
-    cities_city_state_idx: index('cities_city_state_idx').on(
-      table.state,
-      table.city
-    ),
-  })
+    cities_city_state_idx: index('cities_city_state_idx').on(table.state, table.city),
+  }),
 );
 
 export const imagesTable = pgTable(
@@ -203,15 +180,13 @@ export const imagesTable = pgTable(
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
     created_at: timestamp('created_at').defaultNow().notNull(),
-    is_verification_video: boolean('is_verification_video')
-      .default(false)
-      .notNull(), // Add this field
+    is_verification_video: boolean('is_verification_video').default(false).notNull(), // Add this field
   },
   (table) => ({
     images_owner_idx: index('images_ownimages_auth_idx').on(table.authId),
     images_companion_idx: index('images_companion_idx').on(table.companionId),
     images_created_idx: index('images_created_idx').on(table.created_at),
-  })
+  }),
 );
 
 export const audioRecordingsTable = pgTable(
@@ -228,7 +203,7 @@ export const audioRecordingsTable = pgTable(
     audio_owner_idx: index('audio_owner_idx').on(table.authId),
     audio_companion_idx: index('audio_companion_idx').on(table.companionId),
     audio_created_idx: index('audio_created_idx').on(table.created_at),
-  })
+  }),
 );
 
 export const documentsTable = pgTable(
@@ -250,11 +225,9 @@ export const documentsTable = pgTable(
   },
   (table) => ({
     documents_owner_idx: index('documents_auth_idx').on(table.authId),
-    documents_companion_idx: index('documents_companion_idx').on(
-      table.companionId
-    ),
+    documents_companion_idx: index('documents_companion_idx').on(table.companionId),
     documents_type_idx: index('documents_type_idx').on(table.document_type),
-  })
+  }),
 );
 
 export const neighborhoodsTable = pgTable(
@@ -270,17 +243,14 @@ export const neighborhoodsTable = pgTable(
   (table) => ({
     neighborhoods_slug_idx: index('neighborhoods_slug_idx').on(table.slug),
     neighborhoods_city_idx: index('neighborhoods_city_idx').on(table.city_id),
-  })
+  }),
 );
 
 export type Companion = typeof companionsTable.$inferSelect;
 export type NewCompanion = typeof companionsTable.$inferInsert;
 
 export type Characteristic = typeof characteristicsTable.$inferSelect;
-export type NewCharacteristic = Omit<
-  typeof characteristicsTable.$inferInsert,
-  'companion_id'
-> & {
+export type NewCharacteristic = Omit<typeof characteristicsTable.$inferInsert, 'companion_id'> & {
   weight: number;
   height: number;
 };

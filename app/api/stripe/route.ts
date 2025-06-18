@@ -24,7 +24,6 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  console.log('hey');
   const body = await req.text();
   const signature = (await headers()).get('Stripe-Signature');
 
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET!,
     );
 
     const session = event.data.object;
@@ -99,26 +98,12 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerId = session.customer as string;
       const clerkId = session.metadata?.userId;
-
-      if (clerkId) {
-        await db
-          .update(companionsTable)
-          .set({
-            stripe_customer_id: customerId,
-            has_active_ad: true,
-          })
-          .where(eq(companionsTable.auth_id, clerkId));
-
-        console.log(
-          `Updated companion record for user ${clerkId} with Stripe ID ${customerId}`
-        );
-
-        await syncStripeDataToKV(customerId);
-      } else {
-        console.log(
-          `No clerk ID found in session metadata for customer ${customerId}`
-        );
+      if (!clerkId) {
+        console.error('No Clerk ID found in session metadata');
+        return;
       }
+    
+      await syncStripeDataToKV(customerId);
     }
     console.log('Sync completed successfully');
   } catch (error) {
