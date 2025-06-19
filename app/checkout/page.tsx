@@ -11,30 +11,22 @@ export interface Product {
 }
 const products = [
   {
-    // id: "price_1RAt1OCuEJW1dWBav2YzW54D",
-    // id: "price_1RIsByEJQRIZgEwenkVNKNPt",
-    // id: "price_1RQ8O9EJQRIZgEweScjlRZY1",
-    id: 'price_1RQA2eEJQRIZgEwex35RbMMP',
-    name: 'Plus',
+    id: 'price_1RbnIFCZhSZjuUHNWbRH1gx9',
+    name: 'Basico',
     description: 'Seu perfil vai ser visivel no topo da sua cidade por 7 dias',
-    price: '€30.00',
-  },
-  {
-    // id: "price_1RAt2nCuEJW1dWBajoTLZQF1",
-    // id: "price_1RIsBwEJQRIZgEwebyRvlBN8",
-    // id: 'price_1RQ8P3EJQRIZgEweJhQTQK43',
-    id: 'price_1RQA37EJQRIZgEwee89HkBet',
-    name: 'Vip',
-    description: 'Seu anúncio ficará visível por 14 dias',
     price: '€40.00',
   },
   {
-    // id: "price_1RAt3DCuEJW1dWBajo4sXGXG",
-    // id: "price_1RIsBuEJQRIZgEweQPe3PrRW",
-    id: 'price_1RQA3iEJQRIZgEwe0vUw7ehc',
-    name: 'Premium',
+    id: 'price_1RbnIqCZhSZjuUHNMppbWPE3',
+    name: 'Plus',
+    description: 'Seu anúncio ficará visível por 14 dias',
+    price: '€45.00',
+  },
+  {
+    id: 'price_1RbnJcCZhSZjuUHNg5ae8KRf',
+    name: 'VIP',
     description: 'Seu anúncio ficará visível por 30 dias',
-    price: '€60.00',
+    price: '€50.00',
   },
 ];
 

@@ -77,6 +77,8 @@ export const metadata: Metadata = {
   category: 'adult services',
 };
 
+console.log('Stripe key:', process.env.STRIPE_SECRET_KEY?.slice(0, 10));
+
 export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">

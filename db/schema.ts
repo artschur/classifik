@@ -41,11 +41,14 @@ export const paymentsTable = pgTable(
     stripe_customer_id: text('stripe_customer_id')
       .notNull()
       .references(() => companionsTable.stripe_customer_id),
+    max_allowed_date: timestamp('max_allowed_date').notNull(),
+    clerk_id: text('clerk_id').notNull(),
     date: timestamp('date').notNull(),
     plan_type: varchar('payment_type', { length: 50 }).notNull(),
   },
   (table) => ({
     payments_stripe_idx: index('payments_stripe_idx').on(table.stripe_payment_id),
+    payments_clerk_idx: index('payments_clerk_idx').on(table.clerk_id),
   }),
 );
 

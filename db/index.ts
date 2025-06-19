@@ -8,6 +8,4 @@ export const kv = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-config({ path: '.env' }); // or .env.local
-
 export const db = drizzle(process.env.DATABASE_URL!);

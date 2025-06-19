@@ -1,15 +1,8 @@
 'use client';
 
 import { Spotlight } from '@/components/spotlightNew';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import { Button } from '@/components/ui/button';
-import { handleOnboard } from './actions';
-import { useCallback } from 'react';
-import { redirect } from 'next/navigation';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+
 import Link from 'next/link';
 
 export default function OnboardPage() {
@@ -56,9 +49,7 @@ export default function OnboardPage() {
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold">
-                  Ser um cliente OneSugar.
-                </h4>
+                <h4 className="text-sm font-semibold">Ser um cliente OneSugar.</h4>
                 <ul className="text-sm list-disc pl-4 space-y-1">
                   <li>Tenha acesso a mais perfis.</li>
                   <li>Leie e deixe reviews</li>
@@ -69,9 +60,7 @@ export default function OnboardPage() {
             </HoverCardContent>
           </HoverCard>
         </div>
-        <p className="text-neutral-300 text-sm mt-4">
-          Crie sua conta gratuitamente
-        </p>
+        <p className="text-neutral-300 text-sm mt-4">Crie sua conta gratuitamente</p>
       </div>
     </section>
   );

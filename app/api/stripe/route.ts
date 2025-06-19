@@ -1,8 +1,7 @@
-import { db } from '@/db';
+import { kv } from '@/db';
 import { syncStripeDataToKV } from '@/db/queries/kv';
-import { companionsTable, paymentsTable } from '@/db/schema';
 import { stripe } from '@/db/stripe';
-import { eq } from 'drizzle-orm';
+import { clerkClient } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -98,12 +97,23 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerId = session.customer as string;
       const clerkId = session.metadata?.userId;
+      const plan = session.metadata?.planType;
+
       if (!clerkId) {
         console.error('No Clerk ID found in session metadata');
         return;
       }
-    
-      await syncStripeDataToKV(customerId);
+
+      const client = await clerkClient();
+      await Promise.all([
+        client.users.updateUser(clerkId, {
+          publicMetadata: {
+            plan: plan,
+            stripeCustomerId: customerId,
+          },
+        }),
+        syncStripeDataToKV(customerId),
+      ]);
     }
     console.log('Sync completed successfully');
   } catch (error) {

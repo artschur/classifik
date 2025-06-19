@@ -2,11 +2,20 @@ import { eq } from 'drizzle-orm';
 import { db, kv } from '..';
 import { companionsTable, paymentsTable } from '../schema';
 import { stripe } from '../stripe';
+import { auth } from '@clerk/nextjs/server';
+
+export enum PlanType {
+  FREE = 'free',
+  BASICO = 'basico',
+  PLUS = 'plus',
+  VIP = 'vip',
+}
 
 export interface AdPurchase {
   id: string;
   productId: string;
-  productName: 'basico' | 'plus' | 'vip';
+  productName: PlanType;
+  priceId: string;
   purchaseDate: Date;
   durationDays: number;
 }
@@ -14,6 +23,12 @@ export interface AdPurchase {
 export interface CustomerAdData {
   adPurchases: AdPurchase[];
 }
+
+export const priceIdToPlan: Record<string, { name: string; duration: number }> = {
+  price_1RbnIFCZhSZjuUHNWbRH1gx9: { name: 'basico', duration: 30 },
+  price_1RbnIqCZhSZjuUHNMppbWPE3: { name: 'plus', duration: 30 },
+  price_1RbnJcCZhSZjuUHNg5ae8KRf: { name: 'vip', duration: 30 },
+};
 
 export async function syncStripeDataToKV(customerId: string): Promise<CustomerAdData> {
   try {
@@ -40,13 +55,14 @@ export async function syncStripeDataToKV(customerId: string): Promise<CustomerAd
         if (!item.price) return null;
 
         const productId = item.price.product as string;
-        const product = await stripe.products.retrieve(productId);
+        const productName = priceIdToPlan[item.price.id].name;
 
         return {
           id: payment.id,
+          priceId: item.price.id,
           productId:
             typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
-          productName: product.metadata.plan as 'basico' | 'plus' | 'vip',
+          productName: productId,
           purchaseDate: new Date(payment.created * 1000),
           durationDays: 30,
         };
@@ -96,11 +112,18 @@ async function savePaymentToDB({
   planType: string;
 }) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
     Promise.all([
       await db.insert(paymentsTable).values({
         stripe_payment_id: paymentId,
         stripe_customer_id: customerId,
         plan_type: planType,
+        clerk_id: userId,
+        max_allowed_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         date: new Date(),
       }),
       await db
@@ -119,50 +142,15 @@ async function savePaymentToDB({
   }
 }
 
-export async function hasActiveAdvertisement({ userId }: { userId: string }): Promise<boolean> {
-  try {
-    let stripeCustomerId = await kv.get<string>(`stripe:user:${userId}`);
+export async function hasActiveAd(clerkId: string) {
+  const [lastDayAllowed] = await db
+    .select({ date: paymentsTable.date })
+    .from(paymentsTable)
+    .where(eq(paymentsTable.clerk_id, clerkId));
 
-    if (!stripeCustomerId) {
-      const user = await db
-        .select({
-          stripeCustomerId: companionsTable.stripe_customer_id,
-        })
-        .from(companionsTable)
-        .where(eq(companionsTable.auth_id, userId));
-
-      const { stripeCustomerId } = user[0];
-
-      if (!stripeCustomerId) {
-        console.error('No Stripe customer ID found for user:', userId);
-        return false;
-      }
-      await kv.set(`stripe:user:${userId}`, stripeCustomerId);
-    }
-    const adData = await kv.get<CustomerAdData>(`stripe:ads:${stripeCustomerId}`);
-
-    if (!adData) {
-      // Sync from Stripe if not found
-      if (stripeCustomerId) {
-        const freshData = await syncStripeDataToKV(stripeCustomerId);
-        return validateAd(freshData.adPurchases);
-      }
-      return false;
-    }
-
-    return validateAd(adData.adPurchases);
-  } catch (error) {
-    console.error('Error checking active ad status:', error);
+  if (!lastDayAllowed) {
     return false;
   }
-}
-
-function validateAd(purchases: AdPurchase[]): boolean {
-  const now = new Date();
-
-  return purchases.some((purchase) => {
-    const expiryDate = new Date(purchase.purchaseDate);
-    expiryDate.setDate(expiryDate.getDate() + purchase.durationDays);
-    return now < expiryDate;
-  });
+  const currentDate = new Date();
+  return lastDayAllowed.date > currentDate;
 }

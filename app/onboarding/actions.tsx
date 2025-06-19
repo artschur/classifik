@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 
 export async function handleOnboard({ isCompanion }: { isCompanion: boolean }) {
   const client = await clerkClient();
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     return { message: 'No Logged In User' };
@@ -16,6 +16,7 @@ export async function handleOnboard({ isCompanion }: { isCompanion: boolean }) {
       publicMetadata: {
         onboardingComplete: true,
         isCompanion: isCompanion,
+        plan: 'free',
       },
     });
     return { message: 'User metadata Updated' };

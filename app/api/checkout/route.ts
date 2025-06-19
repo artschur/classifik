@@ -35,7 +35,7 @@ export async function GET(req: Request) {
   const checkout = await stripe.checkout.sessions.create({
     customer: stripeCustomerId as string,
     success_url: 'http://localhost:3000/success',
-    cancel_url: 'https://classifik.vercel.app/cancelled',
+    cancel_url: 'http://localhost:3000/cancelled',
     currency: 'eur',
     mode: 'payment',
     line_items: [
@@ -46,6 +46,8 @@ export async function GET(req: Request) {
     ],
     metadata: {
       userId: userId,
+      stripeCustomerId: stripeCustomerId as string,
+      planType: priceId,
     },
   });
 
