@@ -1,19 +1,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChartNoAxesColumnIncreasing, Heart, Menu } from 'lucide-react';
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from '@clerk/nextjs';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import Image from 'next/image';
 import { auth } from '@clerk/nextjs/server';
 import { ModeToggle } from './modeToggle';
@@ -22,6 +11,7 @@ export const admins = [
   `user_2wYHzDclTd4kDn7lCymwRzxsUli`,
   'user_2wbWQFZpqPydugGRwP4XKRpifIV',
   'user_2wUrNhvJel2On5NiLkgOswjKndD',
+  'user_2s07vybL9GSrjPbhjljghGwzl1X',
 ];
 
 export const isAdmin = (userId: string): boolean => {
@@ -34,11 +24,7 @@ export default async function Header() {
     <header className="sticky top-0 z-50 transition-all duration-200 bg-white/70 backdrop-blur-md dark:bg-gray-950/70">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center space-x-2"
-            prefetch={false}
-          >
+          <Link href="/" className="flex items-center space-x-2" prefetch={false}>
             <Image
               src="/sugar-logo.svg"
               width={50}
@@ -63,7 +49,8 @@ export default async function Header() {
             >
               Acompanhante
             </Link>
-            <Link href={"/checkout"}
+            <Link
+              href={'/checkout'}
               className="text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
               prefetch={true}
             >
@@ -101,10 +88,7 @@ export default async function Header() {
                 </Button>
               </SignInButton>
               <SignUpButton>
-                <Button
-                  className="hidden sm:inline-flex rounded-full"
-                  size="sm"
-                >
+                <Button className="hidden sm:inline-flex rounded-full" size="sm">
                   Registrar
                 </Button>
               </SignUpButton>
@@ -117,11 +101,8 @@ export default async function Header() {
                   <span className="sr-only">Abrir menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="flex flex-col justify-end pb-12"
-              >
-                <SheetTitle>{ }</SheetTitle>
+              <SheetContent side="right" className="flex flex-col justify-end pb-12">
+                <SheetTitle>{}</SheetTitle>
                 <nav className="flex flex-col space-y-2">
                   <Link
                     href="/location"
@@ -147,19 +128,12 @@ export default async function Header() {
                   <SignedOut>
                     <div className="space-y-2">
                       <SignInButton>
-                        <Button
-                          variant="ghost"
-                          className="rounded-full"
-                          size="sm"
-                        >
+                        <Button variant="ghost" className="rounded-full" size="sm">
                           Login
                         </Button>
                       </SignInButton>
                       <SignUpButton>
-                        <Button
-                          className=" sm:inline-flex rounded-full"
-                          size="sm"
-                        >
+                        <Button className=" sm:inline-flex rounded-full" size="sm">
                           Registrar
                         </Button>
                       </SignUpButton>

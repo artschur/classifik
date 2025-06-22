@@ -12,6 +12,7 @@ const isPublicApiRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, req) => {
   // Skip auth for Stripe webhooks and other public API routes
+  console.log('Middleware triggered for:', req.nextUrl.pathname);
   if (isPublicApiRoute(req)) {
     return NextResponse.next();
   }

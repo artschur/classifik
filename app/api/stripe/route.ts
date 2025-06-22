@@ -26,7 +26,6 @@ export async function POST(req: Request) {
   const body = await req.text();
   const signature = (await headers()).get('Stripe-Signature');
 
-  console.log(body);
   if (!signature) return NextResponse.json({}, { status: 400 });
   try {
     if (typeof signature !== 'string') {
@@ -104,6 +103,10 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
         return;
       }
 
+      console.log(
+        `🎯 Processing checkout completion for user ${clerkId}, customer ${customerId}, plan ${plan}`,
+      );
+
       const client = await clerkClient();
       await Promise.all([
         client.users.updateUser(clerkId, {
@@ -112,7 +115,7 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
             stripeCustomerId: customerId,
           },
         }),
-        syncStripeDataToKV(customerId),
+        syncStripeDataToKV(customerId, clerkId),
       ]);
     }
     console.log('Sync completed successfully');
