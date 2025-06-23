@@ -1,7 +1,7 @@
-import { hasCompanionPaid } from '@/db/queries/companions';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { ProductCard } from './productCard';
+import { hasActiveAd } from '@/db/queries/kv';
 
 export interface Product {
   id: string;
@@ -32,7 +32,7 @@ const products = [
 
 export default async function CheckoutPage() {
   const { userId } = await auth();
-  const hasPaid = await hasCompanionPaid(userId as string);
+  const hasPaid = await hasActiveAd(userId as string);
   if (hasPaid) {
     redirect('/profile');
   }

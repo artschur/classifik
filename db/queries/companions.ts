@@ -372,6 +372,7 @@ export async function getRelevantInfoAnalytics({ clerkId }: { clerkId: string })
     .select({
       id: companionsTable.id,
       name: companionsTable.name,
+      plan: companionsTable.plan_type,
       stripeCustomerId: companionsTable.stripe_customer_id,
       isPaying: companionsTable.has_active_ad,
       interactions: sql<number>`COALESCE(CAST(COUNT(CASE WHEN ${reviewsTable.liked_by} IS NOT NULL THEN 1 END) AS INTEGER), 0)`,
@@ -395,6 +396,7 @@ export async function getRelevantInfoAnalytics({ clerkId }: { clerkId: string })
   return {
     id: companion.id,
     name: companion.name,
+    plan: companion.plan,
     stripeCustomerId: companion.stripeCustomerId,
     isPaying: companion.isPaying,
     interactions: companion.interactions,
@@ -710,20 +712,4 @@ export async function getCompanionIdByClerkId(id: string): Promise<number> {
     .limit(1);
 
   return companion[0].id;
-}
-
-export async function hasCompanionPaid(clerkId: string): Promise<boolean> {
-  const [hasPaid] = await db
-    .select({
-      paid: companionsTable.has_active_ad,
-    })
-    .from(companionsTable)
-    .where(eq(companionsTable.auth_id, clerkId))
-    .limit(1);
-
-  if (!hasPaid) {
-    return false;
-  }
-
-  return hasPaid.paid ?? false;
 }
