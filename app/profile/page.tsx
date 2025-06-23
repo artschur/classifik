@@ -37,8 +37,6 @@ export default async function AnalyticsDashboard({
     `stripe:ads:${companion.stripeCustomerId}`,
   )) || { adPurchases: [] };
 
-  console.log('Ad Purchases:', adPurchases);
-
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex space-x-4 mb-6">

@@ -151,11 +151,10 @@ async function savePaymentToDB({
 
     console.log(`👤 Using userId: ${userId}`);
 
-
-
     // ✅ Fixed: Properly await Promise.all
-    await Promise.all([
-      db.insert(paymentsTable).values({
+
+    await db.transaction(async (tx) => {
+      await tx.insert(paymentsTable).values({
         stripe_payment_id: paymentId,
         stripe_customer_id: customerId,
         plan_type: planType,
@@ -163,15 +162,15 @@ async function savePaymentToDB({
         max_allowed_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         date: new Date(),
       }),
-      db
-        .update(companionsTable)
-        .set({
-          ad_expiration_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          has_active_ad: true,
-          plan_type: planType,
-        })
-        .where(eq(companionsTable.stripe_customer_id, customerId)),
-    ]);
+        await tx
+          .update(companionsTable)
+          .set({
+            ad_expiration_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            has_active_ad: true,
+            plan_type: planType,
+          })
+          .where(eq(companionsTable.stripe_customer_id, customerId));
+    });
 
     console.log('✅ Payment saved to DB successfully');
   } catch (error) {

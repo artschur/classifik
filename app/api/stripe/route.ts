@@ -51,16 +51,13 @@ export async function POST(req: Request) {
 }
 
 async function processEvent(event: Stripe.Event, clerkId: string) {
-  console.log('processing event');
   if (processedEvents.has(event.id)) {
-    console.log(`Event ${event.id} already processed, skipping`);
     return;
   }
 
   processedEvents.add(event.id);
 
   if (!allowedEvents.includes(event.type as Stripe.Event.Type)) {
-    console.log(`Event type ${event.type} not in allowed list, skipping`);
     return;
   }
 
@@ -79,8 +76,6 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
     } else {
       customerId = (object as any).customer;
     }
-
-    console.log(`Extracted customer ID: ${customerId}`);
   } catch (error) {
     console.error('Error extracting customer ID:', error);
     throw error;

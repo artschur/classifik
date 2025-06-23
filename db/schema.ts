@@ -44,7 +44,7 @@ export const paymentsTable = pgTable(
     max_allowed_date: timestamp('max_allowed_date').notNull(),
     clerk_id: text('clerk_id').notNull(),
     date: timestamp('date').notNull(),
-    plan_type: varchar('payment_type', { length: 50 }).notNull(),
+    plan_type: varchar('plan_type', { length: 50 }).notNull(),
   },
   (table) => ({
     payments_stripe_idx: index('payments_stripe_idx').on(table.stripe_payment_id),
@@ -61,7 +61,7 @@ export const companionsTable = pgTable(
     stripe_customer_id: text('stripe_customer_id').unique(),
     has_active_ad: boolean('has_active_ad').default(false),
     ad_expiration_date: timestamp('ad_expiration_date'),
-    plan_type: varchar('plan_type', { length: 50 }),
+    plan_type: varchar('plan_type', { length: 50 }).default('free'),
 
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
