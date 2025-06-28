@@ -5,10 +5,13 @@ import { getCompanionNameByClerkId } from '@/db/queries/companions';
 import AudioFormClient from './audio-form';
 
 export default async function AudioPage() {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     redirect('/sign-in');
+  }
+  if (sessionClaims.plan !== 'vip') {
+    redirect('/checkout');
   }
 
   const companion = await getCompanionNameByClerkId(userId);

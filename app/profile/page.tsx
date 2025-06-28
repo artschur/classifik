@@ -24,7 +24,7 @@ export default async function AnalyticsDashboard({
 }: {
   searchParams: Promise<{ days: string }>;
 }) {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
   const sParams = await searchParams;
 
   if (!userId) {
@@ -43,9 +43,11 @@ export default async function AnalyticsDashboard({
         <Link href={'/companions/register'}>
           <Button variant="default">Suas informações</Button>
         </Link>
-        <Link href={'/companions/register/audio/'}>
-          <Button variant="default">Audios</Button>
-        </Link>
+        {sessionClaims.plan === 'vip' ? (
+          <Link href={'/companions/register/audio/'}>
+            <Button variant="default">Audios</Button>
+          </Link>
+        ) : null}
       </div>
       <h1 className="text-3xl font-bold">Olá {companion.name}!</h1>
       <p className="text-xl font-sans text-gray-300 pt-4">
