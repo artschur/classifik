@@ -3,13 +3,16 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
-export async function handleOnboard({ isCompanion }: { isCompanion: boolean }) {
+export async function handleOnboard(formData: FormData) {
   const client = await clerkClient();
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
 
   if (!userId) {
-    return { message: 'No Logged In User' };
+    throw new Error('No Logged In User');
   }
+
+  // Extract isCompanion from form data and convert to boolean
+  const isCompanion = formData.get('isCompanion') === 'true';
 
   try {
     await client.users.updateUser(userId, {
@@ -19,10 +22,10 @@ export async function handleOnboard({ isCompanion }: { isCompanion: boolean }) {
         plan: 'free',
       },
     });
-    return { message: 'User metadata Updated' };
   } catch (e) {
-    return { message: 'Error Updating User Metadata' };
-  } finally {
-    isCompanion ? redirect('/companions/register') : redirect('/location');
+    throw new Error('Error Updating User Metadata');
   }
+
+  // Redirect based on user type
+  isCompanion ? redirect('/companions/register') : redirect('/location');
 }

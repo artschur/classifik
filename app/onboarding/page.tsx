@@ -1,11 +1,21 @@
-'use client';
-
 import { Spotlight } from '@/components/spotlightNew';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { handleOnboard } from './actions';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
-import Link from 'next/link';
+export default async function OnboardPage() {
+  const { sessionClaims } = await auth();
+  if (sessionClaims?.metadata.onboardingComplete) {
+    // If the user has already completed onboarding, redirect them to the appropriate page
+    const isCompanion = sessionClaims.metadata.isCompanion;
+    if (isCompanion) {
+      return redirect('/companions/register');
+    } else {
+      return redirect('/location');
+    }
+  }
 
-export default function OnboardPage() {
   return (
     <section className="w-full min-h-screen flex items-center justify-center p-12">
       <Spotlight />
@@ -18,13 +28,16 @@ export default function OnboardPage() {
         </p>
         <div className="flex gap-4 mt-4">
           <HoverCard>
-            <HoverCardTrigger>
-              <Link
-                href={'/companions/register'}
-                className="px-6 py-3 bg-primary/80 rounded-lg hover:bg-white/20 transition-all"
-              >
-                Sou Acompanhante
-              </Link>
+            <HoverCardTrigger asChild>
+              <form action={handleOnboard}>
+                <input type="hidden" name="isCompanion" value="true" />
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary/80 rounded-lg hover:bg-white/20 transition-all"
+                >
+                  Sou Acompanhante
+                </button>
+              </form>
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <div className="space-y-2">
@@ -39,13 +52,16 @@ export default function OnboardPage() {
           </HoverCard>
 
           <HoverCard>
-            <HoverCardTrigger>
-              <Link
-                href={'/location'}
-                className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
-              >
-                Sou Cliente
-              </Link>
+            <HoverCardTrigger asChild>
+              <form action={handleOnboard}>
+                <input type="hidden" name="isCompanion" value="false" />
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
+                >
+                  Sou Cliente
+                </button>
+              </form>
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <div className="space-y-2">
