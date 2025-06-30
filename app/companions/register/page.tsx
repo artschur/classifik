@@ -24,14 +24,6 @@ async function CompanionFormWithData() {
     verifyItemsIfOnboardingComplete(userId),
   ]);
 
-  if (
-    !allVerificationStatus.isAudioUploaded &&
-    allVerificationStatus.isImageUploaded &&
-    sessionClaims.metadata.plan === 'vip'
-  ) {
-    redirect('/companions/register/audio');
-  }
-
   if (!allVerificationStatus.isVerificationVideoUploaded && allVerificationStatus.isImageUploaded) {
     redirect('/companions/verification');
   }
