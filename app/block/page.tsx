@@ -1,17 +1,7 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import {
-  getCompanionIdByClerkId,
-  getBlockedUsers,
-} from '@/db/queries/companions';
-import { BlockManagementForm } from '@/components/block-management-form';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { getCompanionIdByClerkId, getBlockedUsers } from '@/db/queries/companions';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, Users, X, User, Mail, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
@@ -35,17 +25,12 @@ export default async function BlockPage() {
     redirect('/sign-in');
   }
 
-  console.log('Session claims:', sessionClaims);
-  console.log('Metadata:', sessionClaims?.metadata);
-  console.log('isCompanion:', sessionClaims?.metadata?.isCompanion);
-
   if (!sessionClaims?.metadata?.isCompanion) {
     console.log('User is not a companion, redirecting to onboarding');
     redirect('/onboarding');
   }
 
   if (sessionClaims?.metadata?.plan !== PlanType.VIP) {
-    console.log('User does not have VIP plan, redirecting to profile');
     redirect('/checkout');
   }
 
@@ -60,9 +45,7 @@ export default async function BlockPage() {
     const clerkUsers = clerkResponse.data || [];
 
     // Create a set of blocked user IDs for quick lookup
-    const blockedUserIds = new Set(
-      blockedUsers.map((user) => user.blocked_user_id)
-    );
+    const blockedUserIds = new Set(blockedUsers.map((user) => user.blocked_user_id));
 
     return (
       <div className="container mx-auto py-8 px-4 max-w-6xl">
@@ -85,8 +68,8 @@ export default async function BlockPage() {
                 Lista de Usuários ({clerkUsers.length})
               </CardTitle>
               <CardDescription>
-                Todos os usuários registrados no sistema. Clique em "Bloquear"
-                para impedir que vejam seu perfil.
+                Todos os usuários registrados no sistema. Clique em "Bloquear" para impedir que
+                vejam seu perfil.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -113,14 +96,10 @@ export default async function BlockPage() {
                               <Avatar className="h-10 w-10">
                                 <AvatarImage
                                   src={user.imageUrl}
-                                  alt={
-                                    user.username || user.firstName || 'User'
-                                  }
+                                  alt={user.username || user.firstName || 'User'}
                                 />
                                 <AvatarFallback>
-                                  {user.firstName?.[0] ||
-                                    user.username?.[0] ||
-                                    'U'}
+                                  {user.firstName?.[0] || user.username?.[0] || 'U'}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
@@ -129,9 +108,7 @@ export default async function BlockPage() {
                                     ? `${user.firstName} ${user.lastName}`
                                     : user.username || 'Usuário sem nome'}
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                  ID: {user.id}
-                                </div>
+                                <div className="text-sm text-muted-foreground">ID: {user.id}</div>
                               </div>
                             </div>
                           </TableCell>
@@ -139,8 +116,7 @@ export default async function BlockPage() {
                             <div className="flex items-center gap-2">
                               <Mail className="w-4 h-4 text-muted-foreground" />
                               <span className="text-sm">
-                                {user.emailAddresses?.[0]?.emailAddress ||
-                                  'N/A'}
+                                {user.emailAddresses?.[0]?.emailAddress || 'N/A'}
                               </span>
                             </div>
                           </TableCell>
@@ -165,11 +141,7 @@ export default async function BlockPage() {
                                   await unblockUserAction(companionId, user.id);
                                 }}
                               >
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  type="submit"
-                                >
+                                <Button variant="outline" size="sm" type="submit">
                                   <X className="w-4 h-4 mr-1" />
                                   Desbloquear
                                 </Button>
@@ -178,18 +150,12 @@ export default async function BlockPage() {
                               <form
                                 action={async () => {
                                   'use server';
-                                  await import(
-                                    '@/app/actions/block-actions'
-                                  ).then(({ blockUserAction }) =>
-                                    blockUserAction(companionId, user.id)
+                                  await import('@/app/actions/block-actions').then(
+                                    ({ blockUserAction }) => blockUserAction(companionId, user.id),
                                   );
                                 }}
                               >
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  type="submit"
-                                >
+                                <Button variant="destructive" size="sm" type="submit">
                                   <ShieldAlert className="w-4 h-4 mr-1" />
                                   Bloquear
                                 </Button>
@@ -210,10 +176,7 @@ export default async function BlockPage() {
                   const isCurrentUser = user.id === userId;
 
                   return (
-                    <div
-                      key={user.id}
-                      className="border rounded-lg p-4 space-y-3"
-                    >
+                    <div key={user.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-12 w-12">
                           <AvatarImage
@@ -233,9 +196,7 @@ export default async function BlockPage() {
                           <div className="text-sm text-muted-foreground truncate">
                             {user.emailAddresses?.[0]?.emailAddress || 'N/A'}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            ID: {user.id}
-                          </div>
+                          <div className="text-xs text-muted-foreground">ID: {user.id}</div>
                         </div>
                       </div>
 
@@ -271,18 +232,12 @@ export default async function BlockPage() {
                             <form
                               action={async () => {
                                 'use server';
-                                await import(
-                                  '@/app/actions/block-actions'
-                                ).then(({ blockUserAction }) =>
-                                  blockUserAction(companionId, user.id)
+                                await import('@/app/actions/block-actions').then(
+                                  ({ blockUserAction }) => blockUserAction(companionId, user.id),
                                 );
                               }}
                             >
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                type="submit"
-                              >
+                              <Button variant="destructive" size="sm" type="submit">
                                 <ShieldAlert className="w-4 h-4 mr-1" />
                                 Bloquear
                               </Button>
@@ -306,8 +261,7 @@ export default async function BlockPage() {
                   Usuários Bloqueados ({blockedUsers.length})
                 </CardTitle>
                 <CardDescription>
-                  Lista detalhada de usuários que você bloqueou de ver seu
-                  perfil.
+                  Lista detalhada de usuários que você bloqueou de ver seu perfil.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -318,9 +272,7 @@ export default async function BlockPage() {
                       className="flex items-center justify-between p-4 border rounded-lg"
                     >
                       <div>
-                        <p className="font-medium">
-                          {blockedUser.blocked_user_id}
-                        </p>
+                        <p className="font-medium">{blockedUser.blocked_user_id}</p>
                         {blockedUser.reason && (
                           <p className="text-sm text-muted-foreground">
                             Motivo: {blockedUser.reason}
@@ -329,19 +281,14 @@ export default async function BlockPage() {
                         <p className="text-xs text-muted-foreground">
                           Bloqueado em:{' '}
                           {blockedUser.created_at
-                            ? new Date(
-                                blockedUser.created_at
-                              ).toLocaleDateString('pt-BR')
+                            ? new Date(blockedUser.created_at).toLocaleDateString('pt-BR')
                             : 'Data desconhecida'}
                         </p>
                       </div>
                       <form
                         action={async () => {
                           'use server';
-                          await unblockUserAction(
-                            companionId,
-                            blockedUser.blocked_user_id
-                          );
+                          await unblockUserAction(companionId, blockedUser.blocked_user_id);
                         }}
                       >
                         <Button variant="outline" size="sm" type="submit">
