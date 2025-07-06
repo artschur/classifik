@@ -1,11 +1,35 @@
 import { Spotlight } from '@/components/spotlightNew';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { handleOnboard } from './actions';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { isUserACompanion } from '@/db/queries/companions';
+import { useClerk } from '@clerk/nextjs';
 
 export default async function OnboardPage() {
-  const { sessionClaims } = await auth();
+  const { userId, sessionClaims } = await auth();
+
+  if (!userId) {
+    return redirect('/sign-in');
+  }
+
+  const clerk = await clerkClient();
+
+  const isCompanion = await isUserACompanion(userId);
+  if (isCompanion) {
+    await auth().then(async ({ userId }) => {
+      if (userId) {
+        await clerk.users.updateUserMetadata(userId, {
+          publicMetadata: {
+            isCompanion: true,
+            onboardingComplete: true,
+          },
+        });
+      }
+    });
+    return redirect('/companions/profile');
+  }
+
   if (sessionClaims?.metadata.onboardingComplete) {
     // If the user has already completed onboarding, redirect them to the appropriate page
     const isCompanion = sessionClaims.metadata.isCompanion;

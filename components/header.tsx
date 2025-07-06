@@ -54,7 +54,7 @@ export default async function Header() {
               className="text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
               prefetch={true}
             >
-              Anúncios
+              Comprar
             </Link>
             {userId && isAdmin((await auth()).userId as string) ? (
               <Link

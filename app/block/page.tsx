@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Users, X, User, Mail } from 'lucide-react';
+import { Shield, Users, X, User, Mail, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { unblockUserAction } from '@/app/actions/block-actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -26,6 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { PlanType } from '@/db/queries/kv';
 
 export default async function BlockPage() {
   const { userId, sessionClaims } = await auth();
@@ -34,10 +35,19 @@ export default async function BlockPage() {
     redirect('/sign-in');
   }
 
-  //   // Check if user is a companion
-  //   if (!sessionClaims?.metadata?.isCompanion) {
-  //     redirect('/');
-  //   }
+  console.log('Session claims:', sessionClaims);
+  console.log('Metadata:', sessionClaims?.metadata);
+  console.log('isCompanion:', sessionClaims?.metadata?.isCompanion);
+
+  if (!sessionClaims?.metadata?.isCompanion) {
+    console.log('User is not a companion, redirecting to onboarding');
+    redirect('/onboarding');
+  }
+
+  if (sessionClaims?.metadata?.plan !== PlanType.VIP) {
+    console.log('User does not have VIP plan, redirecting to profile');
+    redirect('/checkout');
+  }
 
   try {
     const companionId = await getCompanionIdByClerkId(userId);
@@ -67,22 +77,6 @@ export default async function BlockPage() {
         </div>
 
         <div className="grid gap-6">
-          {/* Block New User Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Bloquear Novo Usuário
-              </CardTitle>
-              <CardDescription>
-                Digite o ID do usuário do Clerk que você deseja bloquear.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BlockManagementForm companionId={companionId} />
-            </CardContent>
-          </Card>
-
           {/* Users Table */}
           <Card>
             <CardHeader>
@@ -96,8 +90,9 @@ export default async function BlockPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
+              {/* Desktop Table View */}
+              <div className="hidden md:block rounded-md border overflow-x-auto">
+                <Table className="min-w-full">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Usuário</TableHead>
@@ -113,7 +108,7 @@ export default async function BlockPage() {
 
                       return (
                         <TableRow key={user.id}>
-                          <TableCell>
+                          <TableCell className="min-w-[250px]">
                             <div className="flex items-center gap-3">
                               <Avatar className="h-10 w-10">
                                 <AvatarImage
@@ -161,7 +156,7 @@ export default async function BlockPage() {
                           <TableCell className="text-right">
                             {isCurrentUser ? (
                               <Button variant="ghost" size="sm" disabled>
-                                Não disponível
+                                N/A
                               </Button>
                             ) : isBlocked ? (
                               <form
@@ -195,7 +190,7 @@ export default async function BlockPage() {
                                   size="sm"
                                   type="submit"
                                 >
-                                  <Shield className="w-4 h-4 mr-1" />
+                                  <ShieldAlert className="w-4 h-4 mr-1" />
                                   Bloquear
                                 </Button>
                               </form>
@@ -206,6 +201,98 @@ export default async function BlockPage() {
                     })}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {clerkUsers.map((user: any) => {
+                  const isBlocked = blockedUserIds.has(user.id);
+                  const isCurrentUser = user.id === userId;
+
+                  return (
+                    <div
+                      key={user.id}
+                      className="border rounded-lg p-4 space-y-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage
+                            src={user.imageUrl}
+                            alt={user.username || user.firstName || 'User'}
+                          />
+                          <AvatarFallback>
+                            {user.firstName?.[0] || user.username?.[0] || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">
+                            {user.firstName && user.lastName
+                              ? `${user.firstName} ${user.lastName}`
+                              : user.username || 'Usuário sem nome'}
+                          </div>
+                          <div className="text-sm text-muted-foreground truncate">
+                            {user.emailAddresses?.[0]?.emailAddress || 'N/A'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            ID: {user.id}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          {isCurrentUser ? (
+                            <Badge variant="secondary">Você</Badge>
+                          ) : isBlocked ? (
+                            <Badge variant="destructive">Bloqueado</Badge>
+                          ) : (
+                            <Badge variant="outline">Ativo</Badge>
+                          )}
+                        </div>
+
+                        <div>
+                          {isCurrentUser ? (
+                            <Button variant="ghost" size="sm" disabled>
+                              N/A
+                            </Button>
+                          ) : isBlocked ? (
+                            <form
+                              action={async () => {
+                                'use server';
+                                await unblockUserAction(companionId, user.id);
+                              }}
+                            >
+                              <Button variant="outline" size="sm" type="submit">
+                                <X className="w-4 h-4 mr-1" />
+                                Desbloquear
+                              </Button>
+                            </form>
+                          ) : (
+                            <form
+                              action={async () => {
+                                'use server';
+                                await import(
+                                  '@/app/actions/block-actions'
+                                ).then(({ blockUserAction }) =>
+                                  blockUserAction(companionId, user.id)
+                                );
+                              }}
+                            >
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                type="submit"
+                              >
+                                <ShieldAlert className="w-4 h-4 mr-1" />
+                                Bloquear
+                              </Button>
+                            </form>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
