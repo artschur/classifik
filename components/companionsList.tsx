@@ -67,8 +67,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
     })
     .map((media) => (typeof media === 'object' ? media.publicUrl : media));
 
-  const getPlanBadge = (planType: string) => {
-    console.log(planType);
+  const getPlanBadge = (planType?: string | null) => {
     switch (planType) {
       case 'basico':
         return <Badge className="bg-blue-100 text-blue-800 border-blue-200">BÁSICO</Badge>;

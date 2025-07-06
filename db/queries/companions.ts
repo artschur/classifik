@@ -456,6 +456,7 @@ export async function getCompanionByClerkId(clerkId: string): Promise<CompanionF
       piercings: characteristicsTable.piercings,
       smoker: characteristicsTable.smoker,
       verified: companionsTable.verified,
+      planType: companionsTable.plan_type,
     })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, clerkId))
@@ -642,6 +643,7 @@ export async function getUnverifiedCompanions(): Promise<
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
+        planType: companionsTable.plan_type,
       },
       city: {
         name: citiesTable.city,
@@ -699,6 +701,7 @@ export async function getUnverifiedCompanions(): Promise<
     piercings: characteristics.piercings,
     smoker: characteristics.smoker,
     ethinicity: characteristics.ethnicity,
+    planType: companion.planType,
     images: imagesMap.get(String(companion.id)) || [],
   }));
 }
