@@ -9,6 +9,7 @@ import {
   NewCharacteristic,
   imagesTable,
   reviewsTable,
+  blockedUsersTable,
 } from '../schema';
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
@@ -20,21 +21,31 @@ import { getEmail } from './userActions';
 import { getImagesByAuthId } from './images';
 import { unstable_cache } from 'next/cache';
 
-function buildCompanionConditions(cityId: number, filters?: FilterTypesCompanions): SQL[] {
+function buildCompanionConditions(
+  cityId: number,
+  filters?: FilterTypesCompanions
+): SQL[] {
   const conditions: SQL[] = [
     eq(companionsTable.city_id, cityId),
     eq(companionsTable.verified, true),
   ];
 
   if (filters?.search) {
-    conditions.push(sql`LOWER(${companionsTable.name}) LIKE LOWER(${'%' + filters.search + '%'})`);
+    conditions.push(
+      sql`LOWER(${companionsTable.name}) LIKE LOWER(${
+        '%' + filters.search + '%'
+      })`
+    );
   }
 
   if (filters?.price) {
     const [minPrice, maxPrice] = filters.price.split('-').map(Number);
     if (minPrice && maxPrice) {
       conditions.push(
-        sql`${gte(companionsTable.price, minPrice)} and ${lte(companionsTable.price, maxPrice)}`,
+        sql`${gte(companionsTable.price, minPrice)} and ${lte(
+          companionsTable.price,
+          maxPrice
+        )}`
       );
     }
   }
@@ -43,7 +54,10 @@ function buildCompanionConditions(cityId: number, filters?: FilterTypesCompanion
     const [minAge, maxAge] = filters.age.split('-').map(Number);
     if (minAge && maxAge) {
       conditions.push(
-        sql`${gte(companionsTable.age, minAge)} and ${lte(companionsTable.age, maxAge)}`,
+        sql`${gte(companionsTable.age, minAge)} and ${lte(
+          companionsTable.age,
+          maxAge
+        )}`
       );
     }
   }
@@ -58,10 +72,13 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
     const [minHeight, maxHeight] = filters.height.split('-').map(Number);
     if (minHeight && maxHeight) {
       conditions.push(
-        sql`${gte(characteristicsTable.height, (minHeight / 100).toString())} and ${lte(
+        sql`${gte(
           characteristicsTable.height,
-          (maxHeight / 100).toString(),
-        )}`,
+          (minHeight / 100).toString()
+        )} and ${lte(
+          characteristicsTable.height,
+          (maxHeight / 100).toString()
+        )}`
       );
     }
   }
@@ -72,18 +89,23 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
       conditions.push(
         sql`${gte(characteristicsTable.weight, minWeight.toString())} and ${lte(
           characteristicsTable.weight,
-          maxWeight.toString(),
-        )}`,
+          maxWeight.toString()
+        )}`
       );
     }
   }
 
   if (filters?.hairColor) {
-    const hairColors = filters.hairColor.split(',').map((color) => color.trim().toLowerCase());
-    conditions.push(inArray(sql`LOWER(${characteristicsTable.hair_color})`, hairColors));
+    const hairColors = filters.hairColor
+      .split(',')
+      .map((color) => color.trim().toLowerCase());
+    conditions.push(
+      inArray(sql`LOWER(${characteristicsTable.hair_color})`, hairColors)
+    );
   }
 
-  if (filters?.silicone) conditions.push(eq(characteristicsTable.silicone, true));
+  if (filters?.silicone)
+    conditions.push(eq(characteristicsTable.silicone, true));
   if (filters?.tattoos) conditions.push(eq(characteristicsTable.tattoos, true));
   if (filters?.smoker) conditions.push(eq(characteristicsTable.smoker, true));
 
@@ -99,8 +121,8 @@ function buildSortConditions(filters?: FilterTypesCompanions): SQL[] {
              ${companionsTable.ad_expiration_date} > NOW()
         THEN 1
         ELSE 0
-      END`,
-    ),
+      END`
+    )
   );
 
   if (filters?.sort) {
@@ -128,7 +150,9 @@ async function getCityIdFromSlug(citySlug: string): Promise<number | null> {
 }
 
 // Function to fetch companion images
-async function getCompanionImages(companionIds: number[]): Promise<Map<string, string[]>> {
+async function getCompanionImages(
+  companionIds: number[]
+): Promise<Map<string, string[]>> {
   if (companionIds.length === 0) return new Map();
 
   const images = await db
@@ -153,9 +177,12 @@ function buildCompanionsQuery(
   cityId: number,
   companionConditions: SQL[],
   characteristicConditions: SQL[],
-  sortConditions: SQL[],
+  sortConditions: SQL[]
 ) {
-  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
+  const allConditions = [
+    ...companionConditions,
+    ...characteristicConditions,
+  ].filter(Boolean);
 
   return db
     .select({
@@ -185,7 +212,10 @@ function buildCompanionsQuery(
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
     .where(and(...allConditions))
     .orderBy(
       ...(sortConditions
@@ -197,10 +227,10 @@ function buildCompanionsQuery(
                    ${companionsTable.ad_expiration_date} > NOW()
               THEN 1
               ELSE 0
-            END`,
+            END`
             ),
             desc(companionsTable.id),
-          ]),
+          ])
     );
 }
 
@@ -208,19 +238,25 @@ function buildCompanionsQuery(
 export async function countCompanionsPages(
   citySlug: string,
   pageSize: number,
-  filters?: FilterTypesCompanions,
+  filters?: FilterTypesCompanions
 ): Promise<number> {
   const cityId = await getCityIdFromSlug(citySlug);
   if (!cityId) return 0;
 
   const companionConditions = buildCompanionConditions(cityId, filters);
   const characteristicConditions = buildCharacteristicConditions(filters);
-  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
+  const allConditions = [
+    ...companionConditions,
+    ...characteristicConditions,
+  ].filter(Boolean);
 
   const [{ count }] = await db
     .select({ count: sql<number>`count(DISTINCT ${companionsTable.id})` })
     .from(companionsTable)
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
     .where(and(...allConditions));
 
   return Math.ceil(count / pageSize);
@@ -231,7 +267,7 @@ export const getCompanionsToFilter = unstable_cache(
   async (
     citySlug: string,
     page: number,
-    filters?: FilterTypesCompanions,
+    filters?: FilterTypesCompanions
   ): Promise<CompanionFiltered[]> => {
     const pageSize = 9;
     const offset = (page - 1) * pageSize;
@@ -250,7 +286,7 @@ export const getCompanionsToFilter = unstable_cache(
       cityId,
       companionConditions,
       characteristicConditions,
-      sortConditions,
+      sortConditions
     );
 
     // Execute the paginated query to get companions
@@ -283,10 +319,12 @@ export const getCompanionsToFilter = unstable_cache(
   {
     revalidate: 3600,
     tags: ['companions', 'companions-filter'],
-  },
+  }
 );
 
-export async function registerCompanion(companionData: RegisterCompanionFormValues) {
+export async function registerCompanion(
+  companionData: RegisterCompanionFormValues
+) {
   let {
     name,
     email,
@@ -367,7 +405,11 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
   }
 }
 
-export async function getRelevantInfoAnalytics({ clerkId }: { clerkId: string }) {
+export async function getRelevantInfoAnalytics({
+  clerkId,
+}: {
+  clerkId: string;
+}) {
   const [companion] = await db
     .select({
       id: companionsTable.id,
@@ -405,7 +447,7 @@ export async function getRelevantInfoAnalytics({ clerkId }: { clerkId: string })
 }
 
 export async function getCompanionNameByClerkId(
-  clerkId: string,
+  clerkId: string
 ): Promise<{ name: string; id: number }> {
   const [companion] = await db
     .select({
@@ -424,7 +466,9 @@ export async function getCompanionNameByClerkId(
   };
 }
 
-export async function getCompanionByClerkId(clerkId: string): Promise<CompanionFiltered> {
+export async function getCompanionByClerkId(
+  clerkId: string
+): Promise<CompanionFiltered> {
   const query = db
     .select({
       id: companionsTable.id,
@@ -447,12 +491,20 @@ export async function getCompanionByClerkId(clerkId: string): Promise<CompanionF
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, clerkId))
     .limit(1)
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id));
 
-  const [response, images] = await Promise.all([query, getImagesByAuthId(clerkId)]);
+  const [response, images] = await Promise.all([
+    query,
+    getImagesByAuthId(clerkId),
+  ]);
 
-  const imageUrls = (images as { publicUrl: string }[]).map((image) => image.publicUrl);
+  const imageUrls = (images as { publicUrl: string }[]).map(
+    (image) => image.publicUrl
+  );
 
   return {
     ...response[0],
@@ -461,7 +513,7 @@ export async function getCompanionByClerkId(clerkId: string): Promise<CompanionF
 }
 
 export async function getCompanionToEdit(
-  clerkId: string,
+  clerkId: string
 ): Promise<(RegisterCompanionFormValues & { companionId: number }) | null> {
   // Fetch companion base data
   const [companion] = await db
@@ -539,7 +591,7 @@ export async function getCompanionToEdit(
     phoneNumber:
       row.phoneNumber && !row.phoneNumber.startsWith('+')
         ? `+${row.phoneNumber}`
-        : (row.phoneNumber ?? ''),
+        : row.phoneNumber ?? '',
     instagramHandle: row.instagramHandle ?? '',
     description: row.description ?? '',
     price: row.price ?? 0,
@@ -566,7 +618,10 @@ export async function getCompanionToEdit(
   };
 }
 
-export async function updateCompanionFromForm(clerkId: string, data: RegisterCompanionFormValues) {
+export async function updateCompanionFromForm(
+  clerkId: string,
+  data: RegisterCompanionFormValues
+) {
   await db.transaction(async (tx) => {
     // Update companionsTable
     await tx
@@ -610,8 +665,8 @@ export async function updateCompanionFromForm(clerkId: string, data: RegisterCom
               .from(companionsTable)
               .where(eq(companionsTable.auth_id, clerkId))
               .limit(1)
-          )[0].id,
-        ),
+          )[0].id
+        )
       );
   });
 }
@@ -647,7 +702,10 @@ export async function getUnverifiedCompanions(): Promise<
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id)
+    )
     .where(eq(companionsTable.verified, false));
 
   const results = await query;
@@ -691,7 +749,10 @@ export async function getUnverifiedCompanions(): Promise<
 }
 
 export async function approveCompanion(id: number) {
-  await db.update(companionsTable).set({ verified: true }).where(eq(companionsTable.id, id));
+  await db
+    .update(companionsTable)
+    .set({ verified: true })
+    .where(eq(companionsTable.id, id));
 
   return { success: true, id };
 }
@@ -712,4 +773,79 @@ export async function getCompanionIdByClerkId(id: string): Promise<number> {
     .limit(1);
 
   return companion[0].id;
+}
+
+// Blocked Users Management Functions
+export async function blockUser(
+  companionId: number,
+  blockedUserId: string,
+  reason?: string
+) {
+  try {
+    await db.insert(blockedUsersTable).values({
+      companion_id: companionId,
+      blocked_user_id: blockedUserId,
+      reason: reason || null,
+    });
+    return { success: true };
+  } catch (error) {
+    // If user is already blocked, return success
+    if (error instanceof Error && error.message.includes('duplicate key')) {
+      return { success: true };
+    }
+    throw error;
+  }
+}
+
+export async function unblockUser(companionId: number, blockedUserId: string) {
+  await db
+    .delete(blockedUsersTable)
+    .where(
+      and(
+        eq(blockedUsersTable.companion_id, companionId),
+        eq(blockedUsersTable.blocked_user_id, blockedUserId)
+      )
+    );
+  return { success: true };
+}
+
+export async function getBlockedUsers(companionId: number) {
+  return await db
+    .select({
+      id: blockedUsersTable.id,
+      blocked_user_id: blockedUsersTable.blocked_user_id,
+      reason: blockedUsersTable.reason,
+      created_at: blockedUsersTable.created_at,
+    })
+    .from(blockedUsersTable)
+    .where(eq(blockedUsersTable.companion_id, companionId))
+    .orderBy(desc(blockedUsersTable.created_at));
+}
+
+export async function isUserBlocked(
+  companionId: number,
+  userId: string
+): Promise<boolean> {
+  const blockedUser = await db
+    .select({ id: blockedUsersTable.id })
+    .from(blockedUsersTable)
+    .where(
+      and(
+        eq(blockedUsersTable.companion_id, companionId),
+        eq(blockedUsersTable.blocked_user_id, userId)
+      )
+    )
+    .limit(1);
+
+  return blockedUser.length > 0;
+}
+
+export async function companionExists(companionId: number): Promise<boolean> {
+  const companion = await db
+    .select({ id: companionsTable.id })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, companionId))
+    .limit(1);
+
+  return companion.length > 0;
 }

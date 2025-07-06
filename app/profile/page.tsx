@@ -34,7 +34,7 @@ export default async function AnalyticsDashboard({
   const days = sParams.days ? parseInt(sParams.days) : 7;
   const companion = await getRelevantInfoAnalytics({ clerkId: userId });
   const { adPurchases }: AdPurchases = (await kv.get(
-    `stripe:ads:${companion.stripeCustomerId}`,
+    `stripe:ads:${companion.stripeCustomerId}`
   )) || { adPurchases: [] };
 
   return (
@@ -48,16 +48,21 @@ export default async function AnalyticsDashboard({
             <Button variant="default">Audios</Button>
           </Link>
         ) : null}
+        <Link href={'/block'}>
+          <Button variant="outline">Gerenciar Bloqueios</Button>
+        </Link>
       </div>
       <h1 className="text-3xl font-bold">Olá {companion.name}!</h1>
       <p className="text-xl font-sans text-gray-300 pt-4">
-        Esse é seu dashboard de métricas. <br /> Aqui você verá a interação de seus clientes com o
-        seu perfil.
+        Esse é seu dashboard de métricas. <br /> Aqui você verá a interação de
+        seus clientes com o seu perfil.
       </p>
       <div className="p-8 text-white">Plano de pagamento</div>
       <div className="p-4 rounded-lg bg-card">
         <h3 className="text-lg font-semibold">Plano Atual</h3>
-        <p className="text-2xl font-bold capitalize">{companion.plan ?? 'Free'}</p>
+        <p className="text-2xl font-bold capitalize">
+          {companion.plan ?? 'Free'}
+        </p>
         <p className="text-lg font-semibold">
           {(() => {
             if (adPurchases && adPurchases.length > 0) {
@@ -66,7 +71,10 @@ export default async function AnalyticsDashboard({
                 const purchaseDate = new Date(purchase.purchaseDate);
                 // Check if the date is valid
                 if (isNaN(purchaseDate.getTime())) {
-                  console.error('Invalid purchase date:', purchase.purchaseDate);
+                  console.error(
+                    'Invalid purchase date:',
+                    purchase.purchaseDate
+                  );
                   return '?'; // Or handle appropriately
                 }
                 const durationDays = purchase.durationDays;
@@ -76,7 +84,9 @@ export default async function AnalyticsDashboard({
                 const today = new Date();
                 const timeDiff = expirationDate.getTime() - today.getTime(); // Difference in milliseconds
                 // Convert milliseconds to days and round up
-                const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                const daysRemaining = Math.ceil(
+                  timeDiff / (1000 * 60 * 60 * 24)
+                );
 
                 // Ensure remaining days is not negative
                 return Math.max(0, daysRemaining);
@@ -110,7 +120,10 @@ export default async function AnalyticsDashboard({
           <div className="space-y-6 py-2">
             <div className="grid grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-40 rounded-lg bg-card animate-pulse" />
+                <div
+                  key={i}
+                  className="h-40 rounded-lg bg-card animate-pulse"
+                />
               ))}
             </div>
             <div className="h-[400px] w-full rounded-lg bg-card animate-pulse" />

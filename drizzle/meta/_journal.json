@@ -134,6 +134,13 @@
       "when": 1741543998134,
       "tag": "0018_bright_dreaming_celestial",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1741544000000,
+      "tag": "0019_blocked_users_table",
+      "breakpoints": true
     }
   ]
 }

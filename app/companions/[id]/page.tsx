@@ -7,6 +7,10 @@ import {
 } from '@/components/CompanionProfile';
 import { getReviewsByCompanionId } from '@/db/queries/reviews';
 import { PageViewTracker } from '@/components/analytics-components';
+import { auth } from '@clerk/nextjs/server';
+import { isUserBlocked } from '@/db/queries/companions';
+import { BlockedProfileMessage } from '@/components/blocked-profile-message';
+import { redirect } from 'next/navigation';
 
 export default async function CompanionPage({
   params,
@@ -14,7 +18,22 @@ export default async function CompanionPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [reviews] = await Promise.all([getReviewsByCompanionId(parseInt(id))]);
+  const companionId = parseInt(id);
+
+  // Check if user is blocked
+  const { userId } = await auth();
+  let isBlocked = false;
+
+  if (userId) {
+    isBlocked = await isUserBlocked(companionId, userId);
+  }
+
+  // If user is blocked, show blocked message
+  if (isBlocked) {
+    return <BlockedProfileMessage />;
+  }
+
+  const [reviews] = await Promise.all([getReviewsByCompanionId(companionId)]);
   const reviewsRating =
     reviews.length > 0
       ? reviews.map((review) => review.rating).sort((a, b) => a - b)[
@@ -24,12 +43,12 @@ export default async function CompanionPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageViewTracker companionId={parseInt(id)} />
+      <PageViewTracker companionId={companionId} />
       <Suspense fallback={<CompanionSkeleton />}>
-        <CompanionProfile id={parseInt(id)} reviewsRating={reviewsRating} />
+        <CompanionProfile id={companionId} reviewsRating={reviewsRating} />
       </Suspense>
       <Suspense fallback={<ReviewsSkeleton />}>
-        <CompanionReviews id={parseInt(id)} initialReviews={reviews} />
+        <CompanionReviews id={companionId} initialReviews={reviews} />
       </Suspense>
     </div>
   );
