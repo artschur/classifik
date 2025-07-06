@@ -168,6 +168,7 @@ function buildCompanionsQuery(
         age: companionsTable.age,
         verified: companionsTable.verified,
         hasActiveAd: companionsTable.has_active_ad,
+        planType: companionsTable.plan_type,
       },
       city: {
         name: citiesTable.city,
@@ -277,6 +278,7 @@ export const getCompanionsToFilter = unstable_cache(
       piercings: characteristics.piercings,
       smoker: characteristics.smoker,
       ethinicity: characteristics.ethnicity,
+      planType: companion.planType,
       images: imagesMap.get(String(companion.id)) || [],
     }));
   },
