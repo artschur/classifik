@@ -2,30 +2,58 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { ProductCard } from './productCard';
 import { hasActiveAd } from '@/db/queries/kv';
-
 export interface Product {
   id: string;
   name: string;
   description: string;
+  benefits: string[];
   price: string;
 }
-const products = [
+
+const products: Product[] = [
   {
     id: 'price_1RbnIFCZhSZjuUHNWbRH1gx9',
-    name: 'Basico',
-    description: 'Seu perfil vai ser visivel no topo da sua cidade por 7 dias',
+    name: 'Básico',
+    description: 'Presença estratégica com recursos essenciais para se destacar. 30 dias',
+    benefits: [
+      'Destaque na listagem da cidade escolhida',
+      'Exibição antes dos anúncios gratuitos',
+      'Selo “BÁSICO” no perfil',
+      'Suporte via sistema de atendimento prioritário',
+    ],
     price: '€40.00',
   },
   {
     id: 'price_1RbnIqCZhSZjuUHNMppbWPE3',
     name: 'Plus',
-    description: 'Seu anúncio ficará visível por 14 dias',
+    description: 'Mais visibilidade e prioridade para o seu perfil. 30 dias.',
+    benefits: [
+      'Posição de maior destaque na cidade escolhida',
+      'Prioridade nas buscas (acima de anúncios Básico e Gratuito)',
+      'Listagem acima dos perfis do plano Básico',
+      'Selo “PLUS” visível no seu perfil',
+      'Suporte com atendimento prioritário',
+      'Acesso à lista de bloqueios/clientes indesejados',
+      'Anúncio principal com mais chances de visualização',
+    ],
     price: '€45.00',
   },
   {
     id: 'price_1RbnJcCZhSZjuUHNg5ae8KRf',
     name: 'VIP',
-    description: 'Seu anúncio ficará visível por 30 dias',
+    description: 'Máximo destaque e prioridade total para o seu perfil. 30 dias.',
+    benefits: [
+      'Destaque absoluto na sua cidade',
+      'Prioridade máxima nos resultados de busca',
+      'Posição preferencial na seção de visitas por cidade',
+      'Listado antes de todos os perfis do site',
+      'Visibilidade superior aos planos Básico e Plus',
+      'Selo “VIP” exclusivo no seu perfil',
+      'Possibilidade de gravar um áudio de apresentação',
+      'Suporte premium com atendimento dedicado',
+      'Acesso completo à lista de bloqueios/clientes indesejados',
+      'Máxima exposição na plataforma',
+    ],
     price: '€50.00',
   },
 ];

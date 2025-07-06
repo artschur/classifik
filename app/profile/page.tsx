@@ -44,13 +44,15 @@ export default async function AnalyticsDashboard({
           <Button variant="default">Suas informações</Button>
         </Link>
         {sessionClaims.plan === 'vip' ? (
-          <Link href={'/companions/register/audio/'}>
-            <Button variant="default">Audios</Button>
-          </Link>
+          <div className="flex space-x-2">
+            <Link href={'/companions/register/audio/'}>
+              <Button variant="default">Audios</Button>
+            </Link>
+            <Link href={'/block'}>
+              <Button variant="outline">Gerenciar Bloqueios</Button>
+            </Link>
+          </div>
         ) : null}
-        <Link href={'/block'}>
-          <Button variant="outline">Gerenciar Bloqueios</Button>
-        </Link>
       </div>
       <h1 className="text-3xl font-bold">Olá {companion.name}!</h1>
       <p className="text-xl font-sans text-gray-300 pt-4">
