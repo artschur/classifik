@@ -5,41 +5,26 @@ import {
 import { RegisterCompanionForm } from '@/components/formCompanionRegister';
 import { SkeletonForm } from '@/components/skeletons/skeletonForm';
 import { getAvailableCities } from '@/db/queries';
-import {
-  getCompanionByClerkId,
-  getCompanionToEdit,
-} from '@/db/queries/companions';
+import { getCompanionToEdit } from '@/db/queries/companions';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 async function CompanionFormWithData() {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     redirect('/');
   }
 
-  const [cities, companion, stillVerifying, allVerificationStatus] =
-    await Promise.all([
-      getAvailableCities(),
-      getCompanionToEdit(userId),
-      isVerificationPending(userId),
-      verifyItemsIfOnboardingComplete(userId),
-    ]);
+  const [cities, companion, stillVerifying, allVerificationStatus] = await Promise.all([
+    getAvailableCities(),
+    getCompanionToEdit(userId),
+    isVerificationPending(userId),
+    verifyItemsIfOnboardingComplete(userId),
+  ]);
 
-  if (
-    !allVerificationStatus.isAudioUploaded &&
-    allVerificationStatus.isImageUploaded
-  ) {
-    redirect('/companions/register/audio');
-  }
-
-  if (
-    !allVerificationStatus.isVerificationVideoUploaded &&
-    allVerificationStatus.isAudioUploaded &&
-    allVerificationStatus.isImageUploaded
-  ) {
+  if (!allVerificationStatus.isVerificationVideoUploaded && allVerificationStatus.isImageUploaded) {
     redirect('/companions/verification');
   }
 

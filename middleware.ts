@@ -2,12 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 // Define protected routes
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/location',
-  '/location/(.*)',
-  '/companions',
-]);
+const isPublicRoute = createRouteMatcher(['/', '/location', '/location/(.*)', '/companions']);
 
 // Define public API routes that should bypass auth
 const isPublicApiRoute = createRouteMatcher([

@@ -2,11 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import type {
-  CompanionFiltered,
-  FilterTypesCompanions,
-  Media,
-} from '@/types/types';
+import type { CompanionFiltered, FilterTypesCompanions, Media } from '@/types/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -71,6 +67,27 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
     })
     .map((media) => (typeof media === 'object' ? media.publicUrl : media));
 
+  const getPlanBadge = (planType?: string | null) => {
+    switch (planType) {
+      case 'basico':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">BÁSICO</Badge>;
+      case 'plus':
+        return <Badge className="bg-purple-100 text-purple-800 border-purple-200">PLUS</Badge>;
+      case 'vip':
+        return (
+          <Badge className="bg-gold-100 text-gold-800 border-gold-200 bg-gradient-to-r from-yellow-200 to-yellow-300 text-yellow-900">
+            VIP
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="text-gray-600">
+            FREE
+          </Badge>
+        );
+    }
+  };
+
   return (
     <Link
       href={`/companions/${companion.id}`}
@@ -115,28 +132,23 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold">{companion.name}</h3>
-            <Badge variant="secondary">{companion.age} years</Badge>
+            <div className="flex items-center gap-2">
+              {getPlanBadge(companion.planType)}
+              <Badge variant="secondary">{companion.age} years</Badge>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
             {companion.shortDescription}
           </p>
           <div className="flex flex-wrap gap-2">
             {companion.silicone && <Badge variant="outline">Silicone</Badge>}
-            {companion.ethinicity && (
-              <Badge variant="outline">{companion.ethinicity}</Badge>
-            )}
-            {companion.eyeColor && (
-              <Badge variant="outline">{companion.eyeColor}</Badge>
-            )}
-            {companion.hairColor && (
-              <Badge variant="outline">{companion.hairColor}</Badge>
-            )}
+            {companion.ethinicity && <Badge variant="outline">{companion.ethinicity}</Badge>}
+            {companion.eyeColor && <Badge variant="outline">{companion.eyeColor}</Badge>}
+            {companion.hairColor && <Badge variant="outline">{companion.hairColor}</Badge>}
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
-          <span className="text-lg font-bold">
-            € {companion.price.toFixed(2)}
-          </span>
+          <span className="text-lg font-bold">€ {companion.price.toFixed(2)}</span>
         </CardFooter>
       </Card>
     </Link>

@@ -1,8 +1,7 @@
-import { db } from '@/db';
+import { kv } from '@/db';
 import { syncStripeDataToKV } from '@/db/queries/kv';
-import { companionsTable, paymentsTable } from '@/db/schema';
 import { stripe } from '@/db/stripe';
-import { eq } from 'drizzle-orm';
+import { clerkClient } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -24,11 +23,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  console.log('hey');
   const body = await req.text();
   const signature = (await headers()).get('Stripe-Signature');
 
-  console.log(body);
   if (!signature) return NextResponse.json({}, { status: 400 });
   try {
     if (typeof signature !== 'string') {
@@ -38,7 +35,7 @@ export async function POST(req: Request) {
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET!,
     );
 
     const session = event.data.object;
@@ -54,16 +51,13 @@ export async function POST(req: Request) {
 }
 
 async function processEvent(event: Stripe.Event, clerkId: string) {
-  console.log('processing event');
   if (processedEvents.has(event.id)) {
-    console.log(`Event ${event.id} already processed, skipping`);
     return;
   }
 
   processedEvents.add(event.id);
 
   if (!allowedEvents.includes(event.type as Stripe.Event.Type)) {
-    console.log(`Event type ${event.type} not in allowed list, skipping`);
     return;
   }
 
@@ -82,8 +76,6 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
     } else {
       customerId = (object as any).customer;
     }
-
-    console.log(`Extracted customer ID: ${customerId}`);
   } catch (error) {
     console.error('Error extracting customer ID:', error);
     throw error;
@@ -99,26 +91,27 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerId = session.customer as string;
       const clerkId = session.metadata?.userId;
+      const plan = session.metadata?.planType;
 
-      if (clerkId) {
-        await db
-          .update(companionsTable)
-          .set({
-            stripe_customer_id: customerId,
-            has_active_ad: true,
-          })
-          .where(eq(companionsTable.auth_id, clerkId));
-
-        console.log(
-          `Updated companion record for user ${clerkId} with Stripe ID ${customerId}`
-        );
-
-        await syncStripeDataToKV(customerId);
-      } else {
-        console.log(
-          `No clerk ID found in session metadata for customer ${customerId}`
-        );
+      if (!clerkId) {
+        console.error('No Clerk ID found in session metadata');
+        return;
       }
+
+      console.log(
+        `🎯 Processing checkout completion for user ${clerkId}, customer ${customerId}, plan ${plan}`,
+      );
+
+      const client = await clerkClient();
+      await Promise.all([
+        client.users.updateUser(clerkId, {
+          publicMetadata: {
+            plan: plan,
+            stripeCustomerId: customerId,
+          },
+        }),
+        syncStripeDataToKV(customerId, clerkId),
+      ]);
     }
     console.log('Sync completed successfully');
   } catch (error) {

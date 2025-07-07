@@ -16,6 +16,7 @@ const authorizedIds = [
   `user_2wYHzDclTd4kDn7lCymwRzxsUli`,
   'user_2wbWQFZpqPydugGRwP4XKRpifIV',
   'user_2wUrNhvJel2On5NiLkgOswjKndD',
+  'user_2s07vybL9GSrjPbhjljghGwzl1X',
 ];
 
 async function FetchUnverifiedCompanions() {

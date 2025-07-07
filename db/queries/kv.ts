@@ -2,12 +2,20 @@ import { eq } from 'drizzle-orm';
 import { db, kv } from '..';
 import { companionsTable, paymentsTable } from '../schema';
 import { stripe } from '../stripe';
-import { auth, clerkClient, createClerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
+
+export enum PlanType {
+  FREE = 'free',
+  BASICO = 'basico',
+  PLUS = 'plus',
+  VIP = 'vip',
+}
 
 export interface AdPurchase {
   id: string;
   productId: string;
-  productName: string;
+  productName: string; // Changed from PlanType to string
+  priceId: string;
   purchaseDate: Date;
   durationDays: number;
 }
@@ -16,18 +24,31 @@ export interface CustomerAdData {
   adPurchases: AdPurchase[];
 }
 
+export const priceIdToPlan: Record<string, { name: string; duration: number }> = {
+  price_1RbnIFCZhSZjuUHNWbRH1gx9: { name: 'basico', duration: 30 },
+  price_1RbnIqCZhSZjuUHNMppbWPE3: { name: 'plus', duration: 30 },
+  price_1RbnJcCZhSZjuUHNg5ae8KRf: { name: 'vip', duration: 30 },
+};
+
 export async function syncStripeDataToKV(
-  customerId: string
+  customerId: string,
+  userIdFromWebhook: string, // Add optional parameter
 ): Promise<CustomerAdData> {
   try {
+    console.log(`🔄 Starting sync for customer: ${customerId}`);
+
     const payments = await stripe.paymentIntents.list({
       customer: customerId,
-      limit: 2,
+      limit: 5,
     });
 
-    const successfulPayments = payments.data.filter(
-      (payment) => payment.status === 'succeeded'
-    );
+    const successfulPayments = payments.data.filter((payment) => payment.status === 'succeeded');
+    console.log(`✅ Found ${successfulPayments.length} successful payments`);
+
+    if (successfulPayments.length === 0) {
+      console.log('⚠️ No successful payments found');
+      return { adPurchases: [] };
+    }
 
     // Process all payments in parallel
     const purchasePromises = successfulPayments.map(async (payment) => {
@@ -38,61 +59,60 @@ export async function syncStripeDataToKV(
       if (sessionsResponse.data.length === 0) return [];
 
       const session = sessionsResponse.data[0];
-      const lineItems = await stripe.checkout.sessions.listLineItems(
-        session.id
-      );
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
 
       // Process all line items in parallel
       const itemPromises = lineItems.data.map(async (item) => {
         if (!item.price) return null;
 
-        const productId = item.price.product as string;
-        const product = await stripe.products.retrieve(productId);
-        const durationDays = product.metadata.duration || '30';
+        const planInfo = priceIdToPlan[item.price.id];
+        const productName = planInfo?.name || 'unknown';
+
+        console.log(`📦 Processing item: ${item.price.id} -> ${productName}`);
 
         return {
           id: payment.id,
+          priceId: item.price.id,
           productId:
-            typeof item.price.product === 'string'
-              ? item.price.product
-              : item.price.product.id,
-          productName: product.name,
+            typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
+          productName: productName,
           purchaseDate: new Date(payment.created * 1000),
-          durationDays: parseInt(durationDays),
+          durationDays: planInfo?.duration || 30,
         };
       });
 
-      // Wait for all line items to be processed
       const results = await Promise.all(itemPromises);
-      return results.filter(Boolean) as AdPurchase[]; // Remove nulls
+      return results.filter(Boolean) as AdPurchase[];
     });
 
-    // Wait for all payments to be processed
     const purchaseArrays = await Promise.all(purchasePromises);
-
-    // Flatten the array of arrays
     const adPurchases = purchaseArrays.flat();
 
-    // Sort purchases by date
     adPurchases.sort(
-      (a, b) =>
-        new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
+      (a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime(),
     );
 
     const purchaseData: CustomerAdData = { adPurchases };
 
+    console.log(`💾 Saving purchase data for ${adPurchases.length} purchases`);
+
+    // ✅ Fixed: Pass userIdFromWebhook if available
     await Promise.all([
       kv.set(`stripe:ads:${customerId}`, purchaseData),
-      savePaymentToDB({
-        paymentId: adPurchases[0].id,
-        customerId,
-        durationDays: adPurchases[0].durationDays,
-      }),
+      adPurchases.length > 0
+        ? savePaymentToDB({
+            paymentId: adPurchases[0].id,
+            customerId,
+            planType: adPurchases[0].productName,
+            userIdFromWebhook, // Pass the userId from webhook
+          })
+        : Promise.resolve(),
     ]);
 
+    console.log('✅ Sync completed successfully');
     return purchaseData;
   } catch (error) {
-    console.error('Error syncing purchase data to KV:', error);
+    console.error('❌ Error syncing purchase data to KV:', error);
     throw error;
   }
 }
@@ -100,86 +120,83 @@ export async function syncStripeDataToKV(
 async function savePaymentToDB({
   paymentId,
   customerId,
-  durationDays,
+  planType,
+  userIdFromWebhook,
 }: {
   paymentId: string;
   customerId: string;
-  durationDays: number;
+  planType: string;
+  userIdFromWebhook: string;
 }) {
   try {
-    Promise.all([
-      await db.insert(paymentsTable).values({
+    console.log(`💾 Saving payment to DB: ${paymentId}, plan: ${planType}`);
+
+    let userId = userIdFromWebhook;
+
+    // If still no userId, try to get from Stripe customer metadata
+    if (!userId) {
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (customer && !customer.deleted && customer.metadata?.userId) {
+          userId = customer.metadata.userId;
+        }
+      } catch (error) {
+        console.error('Failed to retrieve customer metadata:', error);
+      }
+    }
+
+    if (!userId) {
+      throw new Error('Unable to determine userId for payment');
+    }
+
+    console.log(`👤 Using userId: ${userId}`);
+
+    // ✅ Fixed: Properly await Promise.all
+
+    await db.transaction(async (tx) => {
+      await tx.insert(paymentsTable).values({
         stripe_payment_id: paymentId,
         stripe_customer_id: customerId,
+        plan_type: planType,
+        clerk_id: userId,
+        max_allowed_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         date: new Date(),
       }),
-      await db
-        .update(companionsTable)
-        .set({
-          ad_expiration_date: new Date(
-            Date.now() + durationDays * 24 * 60 * 60 * 1000
-          ),
-          has_active_ad: true,
-        })
-        .where(eq(companionsTable.stripe_customer_id, customerId)),
-    ]);
-    console.log('Payment saved to DB successfully');
+        await tx
+          .update(companionsTable)
+          .set({
+            ad_expiration_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            has_active_ad: true,
+            plan_type: planType,
+          })
+          .where(eq(companionsTable.stripe_customer_id, customerId));
+    });
+
+    console.log('✅ Payment saved to DB successfully');
   } catch (error) {
-    console.error('Error saving payment to DB:', error);
-    throw error;
+    console.error('❌ Error saving payment to DB:', error);
+    console.error('Details:', { paymentId, customerId, planType, userIdFromWebhook });
+    throw error; // Re-throw to propagate the error
   }
 }
 
-export async function hasActiveAdvertisement({
-  userId,
-}: {
-  userId: string;
-}): Promise<boolean> {
+export async function hasActiveAd(clerkId: string) {
   try {
-    let stripeCustomerId = await kv.get<string>(`stripe:user:${userId}`);
+    const [lastDayAllowed] = await db
+      .select({ date: paymentsTable.max_allowed_date }) // ✅ Fixed: use max_allowed_date
+      .from(paymentsTable)
+      .where(eq(paymentsTable.clerk_id, clerkId))
+      .orderBy(paymentsTable.date) // Get the latest payment
+      .limit(1);
 
-    if (!stripeCustomerId) {
-      const user = await db
-        .select({
-          stripeCustomerId: companionsTable.stripe_customer_id,
-        })
-        .from(companionsTable)
-        .where(eq(companionsTable.auth_id, userId));
-
-      const { stripeCustomerId } = user[0];
-
-      if (!stripeCustomerId) {
-        console.error('No Stripe customer ID found for user:', userId);
-        return false;
-      }
-      await kv.set(`stripe:user:${userId}`, stripeCustomerId);
-    }
-    const adData = await kv.get<CustomerAdData>(
-      `stripe:ads:${stripeCustomerId}`
-    );
-
-    if (!adData) {
-      // Sync from Stripe if not found
-      if (stripeCustomerId) {
-        const freshData = await syncStripeDataToKV(stripeCustomerId);
-        return checkForActiveAd(freshData.adPurchases);
-      }
+    if (!lastDayAllowed) {
       return false;
     }
 
-    return checkForActiveAd(adData.adPurchases);
+    const currentDate = new Date();
+    return lastDayAllowed.date > currentDate;
   } catch (error) {
-    console.error('Error checking active ad status:', error);
+    console.error('❌ Error checking active ad status:', error);
     return false;
   }
-}
-
-function checkForActiveAd(purchases: AdPurchase[]): boolean {
-  const now = new Date();
-
-  return purchases.some((purchase) => {
-    const expiryDate = new Date(purchase.purchaseDate);
-    expiryDate.setDate(expiryDate.getDate() + purchase.durationDays);
-    return now < expiryDate;
-  });
 }

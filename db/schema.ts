@@ -45,12 +45,16 @@ export const paymentsTable = pgTable(
     stripe_customer_id: text('stripe_customer_id')
       .notNull()
       .references(() => companionsTable.stripe_customer_id),
+    max_allowed_date: timestamp('max_allowed_date').notNull(),
+    clerk_id: text('clerk_id').notNull(),
     date: timestamp('date').notNull(),
+    plan_type: varchar('plan_type', { length: 50 }).notNull(),
   },
   (table) => ({
     payments_stripe_idx: index('payments_stripe_idx').on(
       table.stripe_payment_id
     ),
+    payments_clerk_idx: index('payments_clerk_idx').on(table.clerk_id),
   })
 );
 
@@ -63,6 +67,7 @@ export const companionsTable = pgTable(
     stripe_customer_id: text('stripe_customer_id').unique(),
     has_active_ad: boolean('has_active_ad').default(false),
     ad_expiration_date: timestamp('ad_expiration_date'),
+    plan_type: varchar('plan_type', { length: 50 }).default('free'),
 
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull().unique(),
@@ -273,6 +278,31 @@ export const neighborhoodsTable = pgTable(
   })
 );
 
+export const blockedUsersTable = pgTable(
+  'blocked_users',
+  {
+    id: serial('id').primaryKey(),
+    companion_id: integer('companion_id')
+      .references(() => companionsTable.id, { onDelete: 'cascade' })
+      .notNull(),
+    blocked_user_id: text('blocked_user_id').notNull(), // Clerk ID of the blocked user
+    reason: text('reason'), // Optional reason for blocking
+    created_at: timestamp('created_at').defaultNow(),
+  },
+  (table) => ({
+    blocked_users_companion_idx: index('blocked_users_companion_idx').on(
+      table.companion_id
+    ),
+    blocked_users_user_idx: index('blocked_users_user_idx').on(
+      table.blocked_user_id
+    ),
+    blocked_users_unique_idx: index('blocked_users_unique_idx').on(
+      table.companion_id,
+      table.blocked_user_id
+    ),
+  })
+);
+
 export type Companion = typeof companionsTable.$inferSelect;
 export type NewCompanion = typeof companionsTable.$inferInsert;
 
@@ -296,3 +326,6 @@ export type NewNeighborhood = typeof neighborhoodsTable.$inferInsert;
 
 export type Document = typeof documentsTable.$inferSelect;
 export type NewDocument = typeof documentsTable.$inferInsert;
+
+export type BlockedUser = typeof blockedUsersTable.$inferSelect;
+export type NewBlockedUser = typeof blockedUsersTable.$inferInsert;

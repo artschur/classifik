@@ -21,6 +21,7 @@ export async function getCompanionDetails(id: number) {
       name: companionsTable.name,
       email: companionsTable.email,
       auth_id: companionsTable.auth_id,
+      plan_type: companionsTable.plan_type,
       instagramHandle: companionsTable.instagramHandle,
       phone: companionsTable.phone,
       price: companionsTable.price,
@@ -83,7 +84,7 @@ export async function getCompanionById(id: number): Promise<CompanionById> {
       };
     },
     [`companion-${id}`],
-    { revalidate: 3600, tags: ['companion'] }
+    { revalidate: 3600, tags: ['companion'] },
   );
 
   return await cachedGetCompanionById(id);
@@ -114,7 +115,7 @@ export async function getAvailableCitiesSummary(): Promise<CitySummary[]> {
         .groupBy(citiesTable.id);
     },
     ['cities-summary'],
-    { revalidate: 3600, tags: ['cities'] }
+    { revalidate: 3600, tags: ['cities'] },
   );
 
   return await cachedCitiesSummary();

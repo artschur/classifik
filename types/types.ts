@@ -19,6 +19,7 @@ export type CompanionFiltered = Pick<
   piercings: boolean | null;
   smoker: boolean | null;
   images: (string | Media)[];
+  planType?: string | null;
 };
 
 export type FilterTypesCompanions = {

@@ -1,18 +1,45 @@
-'use client';
-
 import { Spotlight } from '@/components/spotlightNew';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import { Button } from '@/components/ui/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { handleOnboard } from './actions';
-import { useCallback } from 'react';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
+import { isUserACompanion } from '@/db/queries/companions';
+import { useClerk } from '@clerk/nextjs';
 
-export default function OnboardPage() {
+export default async function OnboardPage() {
+  const { userId, sessionClaims } = await auth();
+
+  if (!userId) {
+    return redirect('/sign-in');
+  }
+
+  const clerk = await clerkClient();
+
+  const isCompanion = await isUserACompanion(userId);
+  if (isCompanion) {
+    await auth().then(async ({ userId }) => {
+      if (userId) {
+        await clerk.users.updateUserMetadata(userId, {
+          publicMetadata: {
+            isCompanion: true,
+            onboardingComplete: true,
+          },
+        });
+      }
+    });
+    return redirect('/profile');
+  }
+
+  if (sessionClaims?.metadata.onboardingComplete) {
+    // If the user has already completed onboarding, redirect them to the appropriate page
+    const isCompanion = sessionClaims.metadata.isCompanion;
+    if (isCompanion) {
+      return redirect('/companions/register');
+    } else {
+      return redirect('/location');
+    }
+  }
+
   return (
     <section className="w-full min-h-screen flex items-center justify-center p-12">
       <Spotlight />
@@ -25,13 +52,16 @@ export default function OnboardPage() {
         </p>
         <div className="flex gap-4 mt-4">
           <HoverCard>
-            <HoverCardTrigger>
-              <Link
-                href={'/companions/register'}
-                className="px-6 py-3 bg-primary/80 rounded-lg hover:bg-white/20 transition-all"
-              >
-                Sou Acompanhante
-              </Link>
+            <HoverCardTrigger asChild>
+              <form action={handleOnboard}>
+                <input type="hidden" name="isCompanion" value="true" />
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary/80 rounded-lg hover:bg-white/20 transition-all"
+                >
+                  Sou Acompanhante
+                </button>
+              </form>
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <div className="space-y-2">
@@ -46,19 +76,20 @@ export default function OnboardPage() {
           </HoverCard>
 
           <HoverCard>
-            <HoverCardTrigger>
-              <Link
-                href={'/location'}
-                className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
-              >
-                Sou Cliente
-              </Link>
+            <HoverCardTrigger asChild>
+              <form action={handleOnboard}>
+                <input type="hidden" name="isCompanion" value="false" />
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
+                >
+                  Sou Cliente
+                </button>
+              </form>
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold">
-                  Ser um cliente OneSugar.
-                </h4>
+                <h4 className="text-sm font-semibold">Ser um cliente OneSugar.</h4>
                 <ul className="text-sm list-disc pl-4 space-y-1">
                   <li>Tenha acesso a mais perfis.</li>
                   <li>Leie e deixe reviews</li>
@@ -69,9 +100,7 @@ export default function OnboardPage() {
             </HoverCardContent>
           </HoverCard>
         </div>
-        <p className="text-neutral-300 text-sm mt-4">
-          Crie sua conta gratuitamente
-        </p>
+        <p className="text-neutral-300 text-sm mt-4">Crie sua conta gratuitamente</p>
       </div>
     </section>
   );
