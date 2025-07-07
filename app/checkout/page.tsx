@@ -13,7 +13,7 @@ export interface Product {
 
 const products: Product[] = [
   {
-    id: 'price_1RbnIFCZhSZjuUHNWbRH1gx9',
+    id: 'price_1RbA64EJQRIZgEweCCUj68A6',
     name: 'Básico',
     description: 'Presença estratégica com recursos essenciais para se destacar. 30 dias',
     benefits: [
@@ -25,7 +25,7 @@ const products: Product[] = [
     price: '€40.00',
   },
   {
-    id: 'price_1RbnIqCZhSZjuUHNMppbWPE3',
+    id: 'price_1RQA37EJQRIZgEwee89HkBet',
     name: 'Plus',
     description: 'Mais visibilidade e prioridade para o seu perfil. 30 dias.',
     benefits: [
@@ -40,7 +40,7 @@ const products: Product[] = [
     price: '€45.00',
   },
   {
-    id: 'price_1RbnJcCZhSZjuUHNg5ae8KRf',
+    id: 'price_1RQA3iEJQRIZgEwe0vUw7ehc',
     name: 'VIP',
     description: 'Máximo destaque e prioridade total para o seu perfil. 30 dias.',
     benefits: [
@@ -72,7 +72,7 @@ export default async function CheckoutPage() {
   ]);
 
   if (isUserVerified) {
-    redirect('/verification/pending');
+    redirect('/companions/verification/pending');
   }
 
   if (hasPaid) {
