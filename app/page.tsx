@@ -247,7 +247,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <Image
-                src="/acompanhantes-onesugar.jpg"
+                src="/selecione-onesugar.png"
                 width={800}
                 height={800}
                 alt="Acompanhante sofisticada sorrindo para a câmera"
@@ -323,7 +323,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <Image
-                src="/selecione-onesugar.png"
+                src="/acompanhantes-onesugar.jpg"
                 width={800}
                 height={800}
                 alt="Acompanhante sofisticada sorrindo para a câmera"

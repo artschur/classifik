@@ -81,10 +81,10 @@ export default async function CheckoutPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Selecione duração do Anúncio</h1>
+      <h1 className="text-2xl font-bold mb-6">Selecione seu Anúncio</h1>
       <p className="mb-4">
-        Escolha a duração do seu anúncio. Após o pagamento, seu perfil será visível no topo da sua
-        cidade, atraindo mais clientes.
+        Escolha o seu anúncio. Após o pagamento, seu perfil será visível no topo da sua cidade,
+        atraindo mais clientes.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {products.map((product) => (
