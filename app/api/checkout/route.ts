@@ -52,8 +52,8 @@ export async function GET(req: Request) {
 
     const checkout = await stripe.checkout.sessions.create({
       customer: stripeCustomerId as string,
-      success_url: 'http://localhost:3000/success',
-      cancel_url: 'http://localhost:3000/cancelled',
+      success_url: 'https://onesugar.app/success',
+      cancel_url: 'https://onesugar.app/cancelled',
       currency: 'eur',
       mode: 'payment',
       line_items: [

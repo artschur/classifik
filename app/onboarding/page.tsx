@@ -27,7 +27,7 @@ export default async function OnboardPage() {
         });
       }
     });
-    return redirect('/companions/profile');
+    return redirect('/profile');
   }
 
   if (sessionClaims?.metadata.onboardingComplete) {
