@@ -25,9 +25,9 @@ export interface CustomerAdData {
 }
 
 export const priceIdToPlan: Record<string, { name: string; duration: number }> = {
-  price_1RbnIFCZhSZjuUHNWbRH1gx9: { name: 'basico', duration: 30 },
-  price_1RbnIqCZhSZjuUHNMppbWPE3: { name: 'plus', duration: 30 },
-  price_1RbnJcCZhSZjuUHNg5ae8KRf: { name: 'vip', duration: 30 },
+  price_1RbA64EJQRIZgEweCCUj68A6: { name: 'basico', duration: 30 },
+  price_1RQA37EJQRIZgEwee89HkBet: { name: 'plus', duration: 30 },
+  price_1RQA3iEJQRIZgEwe0vUw7ehc: { name: 'vip', duration: 30 },
 };
 
 export async function syncStripeDataToKV(
@@ -154,7 +154,7 @@ async function savePaymentToDB({
     // ✅ Fixed: Properly await Promise.all
 
     await db.transaction(async (tx) => {
-      await tx.insert(paymentsTable).values({
+      (await tx.insert(paymentsTable).values({
         stripe_payment_id: paymentId,
         stripe_customer_id: customerId,
         plan_type: planType,
@@ -169,7 +169,7 @@ async function savePaymentToDB({
             has_active_ad: true,
             plan_type: planType,
           })
-          .where(eq(companionsTable.stripe_customer_id, customerId));
+          .where(eq(companionsTable.stripe_customer_id, customerId)));
     });
 
     console.log('✅ Payment saved to DB successfully');
