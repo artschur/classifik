@@ -43,7 +43,7 @@ export default async function AnalyticsDashboard({
         <Link href={'/companions/register'}>
           <Button variant="default">Suas informações</Button>
         </Link>
-        {sessionClaims.plan === 'vip' ? (
+        {sessionClaims.metadata.plan === 'vip' ? (
           <div className="flex space-x-2">
             <Link href={'/companions/register/audio/'}>
               <Button variant="default">Audios</Button>

@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { ProductCard } from './productCard';
 import { hasActiveAd } from '@/db/queries/kv';
+import { isVerificationPending } from '../actions/document-verification';
 export interface Product {
   id: string;
   name: string;
@@ -60,7 +61,20 @@ const products: Product[] = [
 
 export default async function CheckoutPage() {
   const { userId } = await auth();
-  const hasPaid = await hasActiveAd(userId as string);
+
+  if (!userId) {
+    redirect('/sign-in');
+  }
+
+  const [isUserVerified, hasPaid] = await Promise.all([
+    isVerificationPending(userId),
+    hasActiveAd(userId as string),
+  ]);
+
+  if (isUserVerified) {
+    redirect('/verification/pending');
+  }
+
   if (hasPaid) {
     redirect('/profile');
   }

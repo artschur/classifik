@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { getCompanionNameByClerkId } from '@/db/queries/companions';
 import AudioFormClient from './audio-form';
+import { isVerificationPending } from '@/app/actions/document-verification';
 
 export default async function AudioPage() {
   const { userId, sessionClaims } = await auth();
@@ -10,11 +11,19 @@ export default async function AudioPage() {
   if (!userId) {
     redirect('/sign-in');
   }
-  if (sessionClaims.plan !== 'vip') {
-    redirect('/checkout');
+
+  const [isUserVerified, companion] = await Promise.all([
+    isVerificationPending(userId),
+    getCompanionNameByClerkId(userId),
+  ]);
+
+  if (isUserVerified) {
+    redirect('/verification/pending');
   }
 
-  const companion = await getCompanionNameByClerkId(userId);
+  if (sessionClaims.metadata.plan !== 'vip') {
+    redirect('/checkout');
+  }
 
   if (!companion) {
     return <div>Companion not found</div>;

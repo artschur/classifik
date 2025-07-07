@@ -284,7 +284,7 @@ export const getCompanionsToFilter = unstable_cache(
   },
   ['companions-filter'],
   {
-    revalidate: 3600,
+    revalidate: 1800,
     tags: ['companions', 'companions-filter'],
   },
 );
