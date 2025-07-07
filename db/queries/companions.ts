@@ -366,6 +366,7 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
 
     return newCompanion;
   } catch (error) {
+    console.log(error);
     throw new Error('Failed to register companion');
   }
 }
