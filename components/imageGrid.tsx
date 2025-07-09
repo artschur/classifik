@@ -7,6 +7,8 @@ import { X, Play, Pause, Plus } from 'lucide-react';
 import type { Media } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import { getImagesByCompanionId } from '@/db/queries/images';
+import { useSwipeable } from 'react-swipeable';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ImageGridProps {
   initialImages: (Media | string)[];
@@ -139,6 +141,52 @@ export function ImageGrid({
       }));
     }
   };
+
+  // Modal navigation helpers
+  const getCurrentModalIndex = () =>
+    selectedMedia
+      ? images.findIndex(
+          (media) => getMediaUrl(media) === getMediaUrl(selectedMedia)
+        )
+      : -1;
+  const handleModalNav = useCallback(
+    (direction: 'prev' | 'next') => {
+      if (!selectedMedia) return;
+      const currentIndex = getCurrentModalIndex();
+      if (currentIndex === -1) return;
+      let newIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
+      if (newIndex < 0) newIndex = images.length - 1;
+      if (newIndex >= images.length) newIndex = 0;
+      setSelectedMedia(images[newIndex]);
+    },
+    [selectedMedia, images]
+  );
+  // Keyboard navigation for modal
+  useEffect(() => {
+    if (!selectedMedia) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        handleModalNav('prev');
+      } else if (e.key === 'ArrowRight') {
+        handleModalNav('next');
+      } else if (e.key === 'Escape') {
+        setSelectedMedia(null);
+        Object.values(videoRefs.current).forEach((video) => {
+          if (video) video.pause();
+        });
+        setIsPlaying({});
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedMedia, handleModalNav]);
+  // Swipe handlers for modal
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => handleModalNav('next'),
+    onSwipedRight: () => handleModalNav('prev'),
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
 
   return (
     <>
@@ -273,25 +321,65 @@ export function ImageGrid({
           }}
         >
           <div
-            className="relative max-w-5xl w-full h-auto mx-4 transform transition-all duration-300 ease-in-out scale-95 hover:scale-100"
+            className="relative max-w-5xl w-full h-auto mx-4"
             onClick={(e) => e.stopPropagation()}
+            {...swipeHandlers}
           >
+            {/* Modal arrows, only if more than one image */}
+            {images.length > 1 && (
+              <>
+                <button
+                  aria-label="Previous image"
+                  onClick={() => handleModalNav('prev')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/60 hover:bg-primary hover:text-white rounded-full p-2 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  style={{ marginLeft: '1.5rem' }}
+                >
+                  <ChevronLeft size={32} />
+                </button>
+                <button
+                  aria-label="Next image"
+                  onClick={() => handleModalNav('next')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/60 hover:bg-primary hover:text-white rounded-full p-2 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  style={{ marginRight: '1.5rem' }}
+                >
+                  <ChevronRight size={32} />
+                </button>
+              </>
+            )}
+            {/* Pill indicator below modal */}
+            {selectedMedia && images.length > 1 && (
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-[-2.5rem] flex justify-center w-auto">
+                <span className="px-4 py-1 rounded-full bg-black/70 text-white text-sm font-medium shadow-md">
+                  {getCurrentModalIndex() + 1} / {images.length}
+                </span>
+              </div>
+            )}
             {isVideo(selectedMedia) ? (
-              <video
-                src={getMediaUrl(selectedMedia)}
-                className="w-full h-auto max-h-[90vh] rounded-lg shadow-2xl"
-                controls
-                autoPlay
-                playsInline
-              />
+              <div className="flex justify-center items-center transition-transform duration-300 ease-in-out scale-95 hover:scale-100">
+                <video
+                  src={getMediaUrl(selectedMedia)}
+                  className="w-auto h-[60vh] max-h-[80vh] md:w-full md:h-auto md:max-h-[80vh] rounded-lg shadow-2xl object-contain"
+                  controls
+                  autoPlay
+                  playsInline
+                />
+              </div>
             ) : (
-              <div className="relative aspect-video">
+              <div className="relative flex justify-center items-center w-full h-full">
                 <Image
                   src={getMediaUrl(selectedMedia)}
                   alt="Expanded media"
-                  fill
                   className="object-contain rounded-lg shadow-2xl"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 50vw"
+                  sizes="100vw"
+                  width={100}
+                  height={100}
+                  style={{
+                    maxWidth: '80vw',
+                    maxHeight: '80vh',
+                    width: '100%',
+                    height: 'auto',
+                    minHeight: '400px',
+                  }}
                 />
               </div>
             )}
