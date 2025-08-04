@@ -8,13 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCompanionsToFilter } from '@/db/queries/companions';
 import { useEffect, useState } from 'react';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 export function CompanionsList({
   location,
@@ -106,18 +100,20 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
                       fill={true}
                       className="object-cover"
                     />
+                    <Image
+                      src={'/watermark.png'}
+                      width={100}
+                      height={100}
+                      alt="Marca d'água"
+                      className="absolute inset-0 m-auto h-16 w-16 opacity-80 invert"
+                    />
                   </div>
                 </CarouselItem>
               ))
             ) : (
               <CarouselItem>
                 <div className="relative aspect-[4/3]">
-                  <Image
-                    src="/image.png"
-                    alt={companion.name}
-                    fill={true}
-                    className="object-cover"
-                  />
+                  <Image src="/image.png" alt={companion.name} fill={true} className="object-cover" />
                 </div>
               </CarouselItem>
             )}
@@ -137,9 +133,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
               <Badge variant="secondary">{companion.age} years</Badge>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-            {companion.shortDescription}
-          </p>
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{companion.shortDescription}</p>
           <div className="flex flex-wrap gap-2">
             {companion.silicone && <Badge variant="outline">Silicone</Badge>}
             {companion.ethinicity && <Badge variant="outline">{companion.ethinicity}</Badge>}

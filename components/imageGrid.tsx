@@ -16,14 +16,8 @@ interface ImageGridProps {
   totalImages: number;
 }
 
-export function ImageGrid({
-  initialImages,
-  companionId,
-  totalImages,
-}: ImageGridProps) {
-  const [selectedMedia, setSelectedMedia] = useState<Media | string | null>(
-    null
-  );
+export function ImageGrid({ initialImages, companionId, totalImages }: ImageGridProps) {
+  const [selectedMedia, setSelectedMedia] = useState<Media | string | null>(null);
   const [isPlaying, setIsPlaying] = useState<{ [key: string]: boolean }>({});
   const [images, setImages] = useState<(Media | string)[]>(() =>
     initialImages.map((img) => {
@@ -34,7 +28,7 @@ export function ImageGrid({
         } as Media;
       }
       return img;
-    })
+    }),
   );
   const [loadedVideos, setLoadedVideos] = useState<Set<string>>(new Set());
   const [videoStates, setVideoStates] = useState<{
@@ -45,8 +39,7 @@ export function ImageGrid({
   const isVideo = (media: Media | string) =>
     (typeof media === 'object' && media.type === 'video') ||
     (typeof media === 'string' && media.match(/\.(mp4|webm|ogg)$/i));
-  const getMediaUrl = (media: Media | string) =>
-    typeof media === 'object' ? media.publicUrl : media;
+  const getMediaUrl = (media: Media | string) => (typeof media === 'object' ? media.publicUrl : media);
 
   const setVideoRef = (mediaUrl: string) => (el: HTMLVideoElement | null) => {
     videoRefs.current[mediaUrl] = el;
@@ -57,9 +50,7 @@ export function ImageGrid({
   const [hasMore, setHasMore] = useState(totalImages > 3);
 
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>(
-    Object.fromEntries(
-      images.filter(isVideo).map((media) => [getMediaUrl(media), null])
-    )
+    Object.fromEntries(images.filter(isVideo).map((media) => [getMediaUrl(media), null])),
   );
 
   const loadMoreImages = useCallback(() => {
@@ -144,11 +135,7 @@ export function ImageGrid({
 
   // Modal navigation helpers
   const getCurrentModalIndex = () =>
-    selectedMedia
-      ? images.findIndex(
-          (media) => getMediaUrl(media) === getMediaUrl(selectedMedia)
-        )
-      : -1;
+    selectedMedia ? images.findIndex((media) => getMediaUrl(media) === getMediaUrl(selectedMedia)) : -1;
   const handleModalNav = useCallback(
     (direction: 'prev' | 'next') => {
       if (!selectedMedia) return;
@@ -159,7 +146,7 @@ export function ImageGrid({
       if (newIndex >= images.length) newIndex = 0;
       setSelectedMedia(images[newIndex]);
     },
-    [selectedMedia, images]
+    [selectedMedia, images],
   );
   // Keyboard navigation for modal
   useEffect(() => {
@@ -206,24 +193,18 @@ export function ImageGrid({
               <div className="relative w-full h-full">
                 {isVideoMedia ? (
                   <>
-                    {!videoStates[mediaUrl]?.ready && (
-                      <div className="absolute inset-0 bg-neutral-900 animate-pulse" />
-                    )}
+                    {!videoStates[mediaUrl]?.ready && <div className="absolute inset-0 bg-neutral-900 animate-pulse" />}
                     <video
                       ref={setVideoRef(mediaUrl)}
                       src={mediaUrl}
                       className={`absolute inset-0 w-full h-full object-cover ${
-                        videoStates[mediaUrl]?.ready
-                          ? 'opacity-100'
-                          : 'opacity-0'
+                        videoStates[mediaUrl]?.ready ? 'opacity-100' : 'opacity-0'
                       } transition-opacity duration-300`}
                       playsInline
                       muted
                       loop
                       preload="auto"
-                      onLoadedData={(e) =>
-                        handleVideoState(mediaUrl, e.target as HTMLVideoElement)
-                      }
+                      onLoadedData={(e) => handleVideoState(mediaUrl, e.target as HTMLVideoElement)}
                       onSeeked={(e) => {
                         const video = e.target as HTMLVideoElement;
                         if (video.currentTime === 0.1) {
@@ -252,13 +233,22 @@ export function ImageGrid({
                     </Button>
                   </>
                 ) : (
-                  <Image
-                    src={mediaUrl || '/placeholder.svg'}
-                    alt={`Media ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
+                  <div>
+                    <Image
+                      src={mediaUrl || '/placeholder.svg'}
+                      alt={`Media ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                    <Image
+                      src={'/watermark.png'}
+                      width={100}
+                      height={100}
+                      alt="Marca d'água"
+                      className="absolute inset-0 m-auto h-16 w-16 opacity-60"
+                    />
+                  </div>
                 )}
               </div>
               {index === images.length - 1 && hasMore && (
@@ -273,16 +263,12 @@ export function ImageGrid({
                     {nextBatchLoading ? (
                       <div className="flex flex-col items-center">
                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-2"></div>
-                        <span className="text-xl font-medium">
-                          Carregando...
-                        </span>
+                        <span className="text-xl font-medium">Carregando...</span>
                       </div>
                     ) : (
                       <>
                         <Plus className="h-10 w-10 mx-auto mb-2 stroke-2" />
-                        <span className="text-xl font-medium">
-                          Ver próximas 3 fotos
-                        </span>
+                        <span className="text-xl font-medium">Ver próximas 3 fotos</span>
                         <p className="text-sm text-white/70">
                           {images.length} de {totalImages}
                         </p>
@@ -320,11 +306,7 @@ export function ImageGrid({
             setIsPlaying({});
           }}
         >
-          <div
-            className="relative max-w-5xl w-full h-auto mx-4"
-            onClick={(e) => e.stopPropagation()}
-            {...swipeHandlers}
-          >
+          <div className="relative max-w-5xl w-full h-auto mx-4" onClick={(e) => e.stopPropagation()} {...swipeHandlers}>
             {/* Modal arrows, only if more than one image */}
             {images.length > 1 && (
               <>

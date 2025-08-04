@@ -1,18 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-  Search,
-  Shield,
-  MapPin,
-  Clock,
-  Star,
-  Heart,
-  ChevronRight,
-  AudioLines,
-  FileCheck,
-  Video,
-} from 'lucide-react';
+import { Search, Shield, MapPin, Clock, Star, Heart, ChevronRight, AudioLines, FileCheck, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeatureItem } from '@/components/v0/feature-tem';
 import { ProcessStep } from '@/components/v0/process-step';
@@ -87,13 +76,7 @@ export default async function HomePage() {
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0">
-            <Image
-              src="/banner-onesugar.png"
-              alt="Background Image"
-              width={1920}
-              height={1080}
-              className="opacity-50"
-            />
+            <Image src="/banner-onesugar.png" alt="Background Image" width={1920} height={1080} className="opacity-50" />
           </div>
           <div className="container px-4 mx-auto md:px-6 relative z-10">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
@@ -106,8 +89,7 @@ export default async function HomePage() {
                     Acompanhantes premium em Portugal.
                   </h1>
                   <p className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
-                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e
-                    segurança.
+                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
                   </p>
                 </div>
                 <div className="w-full space-y-4 mt-2 sm:mt-4">
@@ -142,11 +124,8 @@ export default async function HomePage() {
         </section>
 
         {/* Features Section - Improved grid for mobile */}
-        <section
-          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
-          aria-labelledby="features-heading"
-        >
-          <div className="container px-4 mx-auto md:px-6">
+        <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="features-heading">
+          <div className="container px-4 mx-auto mt-4 md:mt-12 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
                 title="Recursos exclusivos para sua segurança"
@@ -179,10 +158,7 @@ export default async function HomePage() {
         </section>
 
         {/* How it works Section - Improved grid for mobile */}
-        <section
-          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
-          aria-labelledby="how-it-works-heading"
-        >
+        <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="how-it-works-heading">
           <div className="container px-4 mx-auto md:px-6">
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
@@ -211,10 +187,7 @@ export default async function HomePage() {
         </section>
 
         {/* Why choose us Section - Improved layout for mobile */}
-        <section
-          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
-          aria-labelledby="why-choose-heading"
-        >
+        <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="why-choose-heading">
           <div className="container px-4 mx-auto md:px-6">
             <div className="grid gap-8 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
@@ -259,10 +232,7 @@ export default async function HomePage() {
         </section>
 
         {/* Cities Section - Improved spacing for mobile */}
-        <section
-          className="w-full py-10 sm:py-12 md:py-20 lg:py-28"
-          aria-labelledby="cities-heading"
-        >
+        <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="cities-heading">
           <div className="container px-4 mx-auto md:px-6">
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
@@ -338,15 +308,11 @@ export default async function HomePage() {
         <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="cta-heading">
           <div className="container grid items-center justify-center gap-4 mx-auto text-center px-4 md:px-6">
             <div className="space-y-2 sm:space-y-3">
-              <h2
-                id="cta-heading"
-                className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter"
-              >
+              <h2 id="cta-heading" className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter">
                 Pronto para uma experiência inesquecível?
               </h2>
               <p className="mx-auto max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl">
-                Descubra as acompanhantes mais requintadas de Portugal e viva momentos únicos com
-                total discrição.
+                Descubra as acompanhantes mais requintadas de Portugal e viva momentos únicos com total discrição.
               </p>
             </div>
             <div className="mx-auto flex flex-col sm:flex-row w-full sm:w-auto gap-3 mt-2 sm:mt-4">
