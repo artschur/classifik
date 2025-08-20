@@ -1,5 +1,6 @@
 import { kv } from '@/db';
 import { syncStripeDataToKV } from '@/db/queries/kv';
+import { upsertSubscriptionFromStripe } from '@/db/queries/subscriptions';
 import { stripe } from '@/db/stripe';
 import { clerkClient } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
@@ -13,6 +14,11 @@ const allowedEvents: Stripe.Event.Type[] = [
   'payment_intent.created',
   'payment_intent.canceled',
   'charge.updated',
+  'customer.subscription.created',
+  'customer.subscription.updated',
+  'customer.subscription.deleted',
+  'invoice.payment_succeeded',
+  'invoice.payment_failed',
 ];
 
 // Track processed events to prevent duplicates
@@ -35,7 +41,7 @@ export async function POST(req: Request) {
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!,
+      process.env.STRIPE_WEBHOOK_SECRET!
     );
 
     const session = event.data.object;
@@ -90,7 +96,7 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerId = session.customer as string;
-      const clerkId = session.metadata?.userId;
+      const clerkId = session.metadata?.userId as string | undefined;
       const plan = session.metadata?.planType;
 
       if (!clerkId) {
@@ -99,20 +105,86 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       }
 
       console.log(
-        `🎯 Processing checkout completion for user ${clerkId}, customer ${customerId}, plan ${plan}`,
+        `🎯 Processing checkout completion for user ${clerkId}, customer ${customerId}, plan ${plan}`
       );
 
       const client = await clerkClient();
-      await Promise.all([
-        client.users.updateUser(clerkId, {
-          publicMetadata: {
-            plan: plan,
-            stripeCustomerId: customerId,
-          },
-        }),
-        syncStripeDataToKV(customerId, clerkId),
-      ]);
+      await client.users.updateUser(clerkId, {
+        publicMetadata: {
+          plan: plan,
+          stripeCustomerId: customerId,
+        },
+      });
+
+      if (session.mode === 'subscription' && session.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(
+          session.subscription as string
+        );
+        await upsertSubscriptionFromStripe({
+          subscription,
+          clerkId,
+          stripeCustomerId: customerId,
+        });
+      } else {
+        await syncStripeDataToKV(customerId, clerkId);
+      }
     }
+
+    if (
+      event.type === 'customer.subscription.created' ||
+      event.type === 'customer.subscription.updated' ||
+      event.type === 'customer.subscription.deleted'
+    ) {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+
+      let clerkId: string | undefined;
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (!('deleted' in customer) && customer.metadata?.userId) {
+          clerkId = customer.metadata.userId;
+        }
+      } catch (e) {
+        console.warn('Unable to retrieve customer for subscription', e);
+      }
+
+      if (!clerkId) {
+        console.warn('⚠️ Missing Clerk ID for subscription event');
+        return;
+      }
+
+      await upsertSubscriptionFromStripe({
+        subscription,
+        clerkId,
+        stripeCustomerId: customerId,
+      });
+    }
+
+    // Handle failed payments
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice;
+      const customerId = invoice.customer as string;
+      const subscriptionId = (invoice as any).subscription as string;
+
+      let clerkId: string | undefined;
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (!('deleted' in customer) && customer.metadata?.userId) {
+          clerkId = customer.metadata.userId;
+        }
+      } catch (e) {
+        console.warn('Unable to retrieve customer for failed payment', e);
+      }
+
+      if (clerkId && subscriptionId) {
+        console.log(
+          `💳 Payment failed for user ${clerkId}, subscription ${subscriptionId}`
+        );
+        // You could send an email notification here
+        // The subscription will be marked as 'past_due' in the database
+      }
+    }
+
     console.log('Sync completed successfully');
   } catch (error) {
     console.error(`Error syncing data for customer ${customerId}:`, error);

@@ -58,6 +58,40 @@ export const paymentsTable = pgTable(
   })
 );
 
+export const subscriptionsTable = pgTable(
+  'subscriptions',
+  {
+    id: serial('id').primaryKey(),
+    stripe_subscription_id: text('stripe_subscription_id').notNull().unique(),
+    stripe_customer_id: text('stripe_customer_id')
+      .notNull()
+      .references(() => companionsTable.stripe_customer_id),
+    clerk_id: text('clerk_id').notNull(),
+    price_id: text('price_id'),
+    product_id: text('product_id'),
+    plan_type: varchar('plan_type', { length: 50 }),
+    status: varchar('status', { length: 50 }).notNull(),
+    cancel_at_period_end: boolean('cancel_at_period_end')
+      .default(false)
+      .notNull(),
+    current_period_start: timestamp('current_period_start').notNull(),
+    current_period_end: timestamp('current_period_end').notNull(),
+    created_at: timestamp('created_at').defaultNow(),
+    updated_at: timestamp('updated_at').defaultNow(),
+  },
+  (table) => ({
+    subscriptions_subscription_idx: index('subscriptions_subscription_idx').on(
+      table.stripe_subscription_id
+    ),
+    subscriptions_clerk_idx: index('subscriptions_clerk_idx').on(
+      table.clerk_id
+    ),
+    subscriptions_status_idx: index('subscriptions_status_idx').on(
+      table.status
+    ),
+  })
+);
+
 export const companionsTable = pgTable(
   'companions',
   {
