@@ -61,6 +61,15 @@ export async function GET(req: Request) {
           quantity: 1,
         },
       ],
+      subscription_data: {
+        trial_period_days: 60, // 2 months = 60 days
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'cancel', // Cancel if no payment method at trial end
+          },
+        },
+      },
+      payment_method_collection: 'if_required', // Allow trials without payment method
       metadata: {
         userId: userId,
         stripeCustomerId: stripeCustomerId as string,

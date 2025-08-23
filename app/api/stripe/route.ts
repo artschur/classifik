@@ -17,6 +17,9 @@ const allowedEvents: Stripe.Event.Type[] = [
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
+  'customer.subscription.trial_will_end',
+  'customer.subscription.paused',
+  'customer.subscription.resumed',
   'invoice.payment_succeeded',
   'invoice.payment_failed',
 ];
@@ -133,7 +136,10 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
     if (
       event.type === 'customer.subscription.created' ||
       event.type === 'customer.subscription.updated' ||
-      event.type === 'customer.subscription.deleted'
+      event.type === 'customer.subscription.deleted' ||
+      event.type === 'customer.subscription.trial_will_end' ||
+      event.type === 'customer.subscription.paused' ||
+      event.type === 'customer.subscription.resumed'
     ) {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
@@ -158,6 +164,29 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
         clerkId,
         stripeCustomerId: customerId,
       });
+
+      // Handle trial-specific events
+      if (event.type === 'customer.subscription.trial_will_end') {
+        console.log(
+          `⚠️ Trial ending soon for user ${clerkId}, subscription ${subscription.id}`
+        );
+        // You could send an email notification here
+        // The trial ends in 3 days (or immediately if trial is less than 3 days)
+      }
+
+      if (event.type === 'customer.subscription.paused') {
+        console.log(
+          `⏸️ Subscription paused for user ${clerkId}, subscription ${subscription.id}`
+        );
+        // Subscription was paused due to missing payment method after trial
+      }
+
+      if (event.type === 'customer.subscription.resumed') {
+        console.log(
+          `▶️ Subscription resumed for user ${clerkId}, subscription ${subscription.id}`
+        );
+        // Subscription was resumed after adding payment method
+      }
     }
 
     // Handle failed payments
