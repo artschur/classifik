@@ -24,12 +24,16 @@ export interface CustomerAdData {
   adPurchases: AdPurchase[];
 }
 
+var basicPriceId = process.env.STRIPE_BASIC_PRICE_ID || '';
+var plusPriceId = process.env.STRIPE_PLUS_PRICE_ID || '';
+var vipPriceId = process.env.STRIPE_VIP_PRICE_ID || '';
+
 export const priceIdToPlan: Record<string, { name: string; duration: number }> =
   {
     // Replace these with your new recurring price IDs from Stripe Dashboard
-    price_1RxzBnCZhSZjuUHNjN9cpvjP: { name: 'basico', duration: 30 },
-    price_1RQA37EJQRIZgEwee89HkBet: { name: 'plus', duration: 30 },
-    price_1RQA3iEJQRIZgEwe0vUw7ehc: { name: 'vip', duration: 30 },
+    [basicPriceId]: { name: 'basico', duration: 30 },
+    [plusPriceId]: { name: 'plus', duration: 30 },
+    [vipPriceId]: { name: 'vip', duration: 30 },
   };
 
 export async function syncStripeDataToKV(
