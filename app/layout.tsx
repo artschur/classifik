@@ -62,12 +62,13 @@ export default function RootLayout({
             <CustomToaster
               isEnabled={true}
               autoShow={true}
-              autoShowDelay={5000}
+              autoShowDelay={2000}
               title="2 Meses Grátis em Qualquer Plano!"
               description="Comece seu período de teste gratuito hoje. Sem compromisso!"
               type="info"
               buttonText="Começar Teste Grátis"
               buttonUrl="/checkout"
+              persistent={true}
             />
 
             <Navbar />

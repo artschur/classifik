@@ -10,6 +10,7 @@ interface Toast {
   description?: string;
   type: 'success' | 'error' | 'info' | 'warning';
   duration?: number;
+  persistent?: boolean;
 }
 
 interface CustomToasterProps {
@@ -21,6 +22,7 @@ interface CustomToasterProps {
   type?: 'success' | 'error' | 'info' | 'warning';
   buttonText?: string;
   buttonUrl?: string;
+  persistent?: boolean;
 }
 
 export function CustomToaster({
@@ -32,6 +34,7 @@ export function CustomToaster({
   type = 'info',
   buttonText,
   buttonUrl,
+  persistent = true,
 }: CustomToasterProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -48,8 +51,7 @@ export function CustomToaster({
   const showToast = (
     toastTitle: string,
     toastDescription?: string,
-    toastType: 'success' | 'error' | 'info' | 'warning' = 'info',
-    duration = 5000
+    toastType: 'success' | 'error' | 'info' | 'warning' = 'info'
   ) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
@@ -57,15 +59,10 @@ export function CustomToaster({
       title: toastTitle,
       description: toastDescription,
       type: toastType,
-      duration,
+      persistent,
     };
 
     setToasts((prev) => [...prev, newToast]);
-
-    // Auto remove after duration
-    setTimeout(() => {
-      removeToast(id);
-    }, duration);
   };
 
   const removeToast = (id: string) => {
@@ -153,9 +150,9 @@ export const showCustomToast = (
   title: string,
   description?: string,
   type: 'success' | 'error' | 'info' | 'warning' = 'info',
-  duration = 5000
+  persistent: boolean = false
 ) => {
   // This would need to be implemented with a global state management solution
   // For now, you can use the built-in toast from your existing setup
-  console.log('Toast triggered:', { title, description, type, duration });
+  console.log('Toast triggered:', { title, description, type, persistent });
 };
