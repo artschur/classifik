@@ -47,26 +47,35 @@ export async function GET(req: Request) {
     }
 
     console.log(
-      `🛒 Creating checkout for user ${userId}, customer ${stripeCustomerId}, plan ${planInfo.name}`,
+      `🛒 Creating checkout for user ${userId}, customer ${stripeCustomerId}, plan ${planInfo.name}`
     );
 
     const checkout = await stripe.checkout.sessions.create({
       customer: stripeCustomerId as string,
       success_url: 'https://onesugar.app/success',
       cancel_url: 'https://onesugar.app/cancelled',
-      currency: 'eur',
-      mode: 'payment',
+      mode: 'subscription',
       line_items: [
         {
           price: priceId,
           quantity: 1,
         },
       ],
+      subscription_data: {
+        trial_period_days: 60, // 2 months = 60 days
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'cancel', // Cancel if no payment method at trial end
+          },
+        },
+      },
+      payment_method_collection: 'if_required', // Allow trials without payment method
       metadata: {
         userId: userId,
         stripeCustomerId: stripeCustomerId as string,
-        planType: planInfo.name, // ✅ Fixed: store the plan name, not priceId
+        planType: planInfo.name,
       },
+      allow_promotion_codes: true,
     });
 
     return Response.redirect(checkout.url as string);

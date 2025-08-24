@@ -10,6 +10,8 @@ import Navbar from '@/components/header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { WhatsAppButton } from '@/components/whatsapp-button';
 import { AgeVerificationModal } from '@/components/age-verification-modal';
+import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
+import { CustomToaster } from '@/components/custom-toaster';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -44,6 +46,31 @@ export default function RootLayout({
             <Analytics />
             <Toaster />
             <AgeVerificationModal />
+            {/* Global Popup - Uncomment and customize as needed */}
+
+            <GlobalPopupWrapper
+              isEnabled={false}
+              title="Ganhe 2 meses grátis no seu Plano!"
+              description="Por tempo limitado! Aproveite!"
+              confirmText="Mostre-me!"
+              cancelText="Não quero"
+              showCloseButton={true}
+            />
+
+            {/* Custom Toaster - Alternative toaster positioned at bottom right */}
+
+            <CustomToaster
+              isEnabled={true}
+              autoShow={true}
+              autoShowDelay={2000}
+              title="2 Meses Grátis em Qualquer Plano!"
+              description="Comece seu período de teste gratuito hoje. Sem compromisso!"
+              type="info"
+              buttonText="Começar Teste Grátis"
+              buttonUrl="/checkout"
+              persistent={true}
+            />
+
             <Navbar />
             <main className="flex-grow">{children}</main>
             <WhatsAppButton />

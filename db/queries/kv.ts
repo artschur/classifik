@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 import { db, kv } from '..';
-import { companionsTable, paymentsTable } from '../schema';
+import { companionsTable, paymentsTable, subscriptionsTable } from '../schema';
 import { stripe } from '../stripe';
 import { auth } from '@clerk/nextjs/server';
 
@@ -24,15 +24,21 @@ export interface CustomerAdData {
   adPurchases: AdPurchase[];
 }
 
-export const priceIdToPlan: Record<string, { name: string; duration: number }> = {
-  price_1RbA64EJQRIZgEweCCUj68A6: { name: 'basico', duration: 30 },
-  price_1RQA37EJQRIZgEwee89HkBet: { name: 'plus', duration: 30 },
-  price_1RQA3iEJQRIZgEwe0vUw7ehc: { name: 'vip', duration: 30 },
-};
+var basicPriceId = process.env.STRIPE_BASIC_PRICE_ID || '';
+var plusPriceId = process.env.STRIPE_PLUS_PRICE_ID || '';
+var vipPriceId = process.env.STRIPE_VIP_PRICE_ID || '';
+
+export const priceIdToPlan: Record<string, { name: string; duration: number }> =
+  {
+    // Replace these with your new recurring price IDs from Stripe Dashboard
+    [basicPriceId]: { name: 'basico', duration: 30 },
+    [plusPriceId]: { name: 'plus', duration: 30 },
+    [vipPriceId]: { name: 'vip', duration: 30 },
+  };
 
 export async function syncStripeDataToKV(
   customerId: string,
-  userIdFromWebhook: string, // Add optional parameter
+  userIdFromWebhook: string // Add optional parameter
 ): Promise<CustomerAdData> {
   try {
     console.log(`🔄 Starting sync for customer: ${customerId}`);
@@ -42,7 +48,9 @@ export async function syncStripeDataToKV(
       limit: 5,
     });
 
-    const successfulPayments = payments.data.filter((payment) => payment.status === 'succeeded');
+    const successfulPayments = payments.data.filter(
+      (payment) => payment.status === 'succeeded'
+    );
     console.log(`✅ Found ${successfulPayments.length} successful payments`);
 
     if (successfulPayments.length === 0) {
@@ -59,7 +67,9 @@ export async function syncStripeDataToKV(
       if (sessionsResponse.data.length === 0) return [];
 
       const session = sessionsResponse.data[0];
-      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      const lineItems = await stripe.checkout.sessions.listLineItems(
+        session.id
+      );
 
       // Process all line items in parallel
       const itemPromises = lineItems.data.map(async (item) => {
@@ -74,7 +84,9 @@ export async function syncStripeDataToKV(
           id: payment.id,
           priceId: item.price.id,
           productId:
-            typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
+            typeof item.price.product === 'string'
+              ? item.price.product
+              : item.price.product.id,
           productName: productName,
           purchaseDate: new Date(payment.created * 1000),
           durationDays: planInfo?.duration || 30,
@@ -89,7 +101,8 @@ export async function syncStripeDataToKV(
     const adPurchases = purchaseArrays.flat();
 
     adPurchases.sort(
-      (a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime(),
+      (a, b) =>
+        new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
     );
 
     const purchaseData: CustomerAdData = { adPurchases };
@@ -154,7 +167,7 @@ async function savePaymentToDB({
     // ✅ Fixed: Properly await Promise.all
 
     await db.transaction(async (tx) => {
-      (await tx.insert(paymentsTable).values({
+      await tx.insert(paymentsTable).values({
         stripe_payment_id: paymentId,
         stripe_customer_id: customerId,
         plan_type: planType,
@@ -169,19 +182,44 @@ async function savePaymentToDB({
             has_active_ad: true,
             plan_type: planType,
           })
-          .where(eq(companionsTable.stripe_customer_id, customerId)));
+          .where(eq(companionsTable.stripe_customer_id, customerId));
     });
 
     console.log('✅ Payment saved to DB successfully');
   } catch (error) {
     console.error('❌ Error saving payment to DB:', error);
-    console.error('Details:', { paymentId, customerId, planType, userIdFromWebhook });
+    console.error('Details:', {
+      paymentId,
+      customerId,
+      planType,
+      userIdFromWebhook,
+    });
     throw error; // Re-throw to propagate the error
   }
 }
 
 export async function hasActiveAd(clerkId: string) {
   try {
+    // 1) Prefer active subscription (active or trialing, not expired)
+    const now = new Date();
+    const [activeSub] = await db
+      .select({
+        status: subscriptionsTable.status,
+        end: subscriptionsTable.current_period_end,
+      })
+      .from(subscriptionsTable)
+      .where(
+        and(
+          eq(subscriptionsTable.clerk_id, clerkId),
+          inArray(subscriptionsTable.status, ['active', 'trialing']),
+          gt(subscriptionsTable.current_period_end, now)
+        )
+      )
+      .limit(1);
+
+    if (activeSub?.end && activeSub.end > now) return true;
+
+    // 2) Fallback to legacy one-off payment window
     const [lastDayAllowed] = await db
       .select({ date: paymentsTable.max_allowed_date }) // ✅ Fixed: use max_allowed_date
       .from(paymentsTable)
