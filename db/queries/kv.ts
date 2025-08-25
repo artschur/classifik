@@ -24,21 +24,20 @@ export interface CustomerAdData {
   adPurchases: AdPurchase[];
 }
 
-var basicPriceId = process.env.STRIPE_BASIC_PRICE_ID || '';
-var plusPriceId = process.env.STRIPE_PLUS_PRICE_ID || '';
-var vipPriceId = process.env.STRIPE_VIP_PRICE_ID || '';
+export const BASIC_PRICE_ID = process.env.STRIPE_BASIC_PRICE_ID || '';
+export const PLUS_PRICE_ID = process.env.STRIPE_PLUS_PRICE_ID || '';
+export const VIP_PRICE_ID = process.env.STRIPE_VIP_PRICE_ID || '';
 
-export const priceIdToPlan: Record<string, { name: string; duration: number }> =
-  {
-    // Replace these with your new recurring price IDs from Stripe Dashboard
-    [basicPriceId]: { name: 'basico', duration: 30 },
-    [plusPriceId]: { name: 'plus', duration: 30 },
-    [vipPriceId]: { name: 'vip', duration: 30 },
-  };
+export const priceIdToPlan: Record<string, { name: string; duration: number }> = {
+  // Replace these with your new recurring price IDs from Stripe Dashboard
+  [BASIC_PRICE_ID]: { name: 'basico', duration: 30 },
+  [PLUS_PRICE_ID]: { name: 'plus', duration: 30 },
+  [VIP_PRICE_ID]: { name: 'vip', duration: 30 },
+};
 
 export async function syncStripeDataToKV(
   customerId: string,
-  userIdFromWebhook: string // Add optional parameter
+  userIdFromWebhook: string, // Add optional parameter
 ): Promise<CustomerAdData> {
   try {
     console.log(`🔄 Starting sync for customer: ${customerId}`);
@@ -48,9 +47,7 @@ export async function syncStripeDataToKV(
       limit: 5,
     });
 
-    const successfulPayments = payments.data.filter(
-      (payment) => payment.status === 'succeeded'
-    );
+    const successfulPayments = payments.data.filter((payment) => payment.status === 'succeeded');
     console.log(`✅ Found ${successfulPayments.length} successful payments`);
 
     if (successfulPayments.length === 0) {
@@ -67,9 +64,7 @@ export async function syncStripeDataToKV(
       if (sessionsResponse.data.length === 0) return [];
 
       const session = sessionsResponse.data[0];
-      const lineItems = await stripe.checkout.sessions.listLineItems(
-        session.id
-      );
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
 
       // Process all line items in parallel
       const itemPromises = lineItems.data.map(async (item) => {
@@ -83,10 +78,7 @@ export async function syncStripeDataToKV(
         return {
           id: payment.id,
           priceId: item.price.id,
-          productId:
-            typeof item.price.product === 'string'
-              ? item.price.product
-              : item.price.product.id,
+          productId: typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
           productName: productName,
           purchaseDate: new Date(payment.created * 1000),
           durationDays: planInfo?.duration || 30,
@@ -100,10 +92,7 @@ export async function syncStripeDataToKV(
     const purchaseArrays = await Promise.all(purchasePromises);
     const adPurchases = purchaseArrays.flat();
 
-    adPurchases.sort(
-      (a, b) =>
-        new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
-    );
+    adPurchases.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
 
     const purchaseData: CustomerAdData = { adPurchases };
 
@@ -167,7 +156,7 @@ async function savePaymentToDB({
     // ✅ Fixed: Properly await Promise.all
 
     await db.transaction(async (tx) => {
-      await tx.insert(paymentsTable).values({
+      (await tx.insert(paymentsTable).values({
         stripe_payment_id: paymentId,
         stripe_customer_id: customerId,
         plan_type: planType,
@@ -182,7 +171,7 @@ async function savePaymentToDB({
             has_active_ad: true,
             plan_type: planType,
           })
-          .where(eq(companionsTable.stripe_customer_id, customerId));
+          .where(eq(companionsTable.stripe_customer_id, customerId)));
     });
 
     console.log('✅ Payment saved to DB successfully');
@@ -212,8 +201,8 @@ export async function hasActiveAd(clerkId: string) {
         and(
           eq(subscriptionsTable.clerk_id, clerkId),
           inArray(subscriptionsTable.status, ['active', 'trialing']),
-          gt(subscriptionsTable.current_period_end, now)
-        )
+          gt(subscriptionsTable.current_period_end, now),
+        ),
       )
       .limit(1);
 
