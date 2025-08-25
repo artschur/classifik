@@ -23,6 +23,7 @@ interface CustomToasterProps {
   buttonText?: string;
   buttonUrl?: string;
   persistent?: boolean;
+  cookieKey?: string;
 }
 
 export function CustomToaster({
@@ -35,18 +36,36 @@ export function CustomToaster({
   buttonText,
   buttonUrl,
   persistent = true,
+  cookieKey = 'toaster-dismissed',
 }: CustomToasterProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [hasBeenDismissed, setHasBeenDismissed] = useState(false);
 
   useEffect(() => {
-    if (isEnabled && autoShow) {
+    // Check if user has dismissed the toaster before
+    const checkDismissed = () => {
+      if (typeof document !== 'undefined') {
+        const dismissed = document.cookie
+          .split('; ')
+          .find((row) => row.startsWith(`${cookieKey}=`));
+        if (dismissed) {
+          setHasBeenDismissed(true);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const isDismissed = checkDismissed();
+
+    if (isEnabled && autoShow && !isDismissed) {
       const timer = setTimeout(() => {
         showToast(title, description, type);
       }, autoShowDelay);
 
       return () => clearTimeout(timer);
     }
-  }, [isEnabled, autoShow, autoShowDelay, title, description, type]);
+  }, [isEnabled, autoShow, autoShowDelay, title, description, type, cookieKey]);
 
   const showToast = (
     toastTitle: string,
@@ -67,6 +86,14 @@ export function CustomToaster({
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
+
+    // Save cookie when user dismisses the toaster
+    if (typeof document !== 'undefined') {
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 30); // Cookie expires in 30 days
+      document.cookie = `${cookieKey}=true; expires=${expires.toUTCString()}; path=/`;
+      setHasBeenDismissed(true);
+    }
   };
 
   const getIcon = (type: Toast['type']) => {
@@ -97,7 +124,7 @@ export function CustomToaster({
     }
   };
 
-  if (!isEnabled) return null;
+  if (!isEnabled || hasBeenDismissed) return null;
 
   return (
     <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2">

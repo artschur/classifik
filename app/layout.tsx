@@ -69,6 +69,7 @@ export default function RootLayout({
               buttonText="Começar Teste Grátis"
               buttonUrl="/checkout"
               persistent={true}
+              cookieKey="trial-toaster-dismissed"
             />
 
             <Navbar />
