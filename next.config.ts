@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'vacjsnuttfzgcdaaqjxd.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.ctfassets.net', // Contentful assets domain
+      },
     ],
   },
 };
