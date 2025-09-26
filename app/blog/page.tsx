@@ -23,15 +23,15 @@ export default async function BlogPage(): Promise<any> {
   if (!posts || posts.length === 0) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-8">Our Blog</h1>
-        <p className="text-gray-600">No posts found.</p>
+        <h1 className="text-3xl font-bold mb-8">Nosso Blog</h1>
+        <p className="text-gray-600">Nenhum post encontrado.</p>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8">Our Blog</h1>
+      <h1 className="text-3xl font-bold mb-8">Nosso Blog</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {posts.map((post: any, index: number) => {
@@ -78,14 +78,14 @@ export default async function BlogPage(): Promise<any> {
 
               <div className="p-5">
                 <h2 className="text-xl font-bold mb-2">
-                  <Link href={`/blog/${encodeURIComponent(slugStr)}`} className="hover:text-blue-600 transition-colors">
+                  <Link href={`/blog/${encodeURIComponent(slugStr)}`} className="hover:text-red-400 transition-colors">
                     {title}
                   </Link>
                 </h2>
 
                 {excerpt && <p className="text-gray-600 mb-4">{excerpt}</p>}
 
-                <Link href={`/blog/${encodeURIComponent(slugStr)}`} className="text-blue-600 font-medium hover:underline">
+                <Link href={`/blog/${encodeURIComponent(slugStr)}`} className="text-red-400 font-medium hover:underline">
                   Read more →
                 </Link>
               </div>
