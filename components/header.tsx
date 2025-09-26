@@ -68,6 +68,14 @@ const navItems: NavItem[] = [
     className:
       'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
   },
+  {
+    label: 'Blog',
+    href: '/blog',
+    icon: <User className="h-4 w-4" />,
+    prefetch: true,
+    className:
+      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+  }
 ];
 
 export default async function Header() {
