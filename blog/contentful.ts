@@ -29,10 +29,10 @@ export const client = createClient({
 
 export const previewClient = previewAccessToken
   ? createClient({
-      space: spaceId!,
-      accessToken: previewAccessToken,
-      host: 'preview.contentful.com',
-    })
+    space: spaceId!,
+    accessToken: previewAccessToken,
+    host: 'preview.contentful.com',
+  })
   : null;
 
 export const getClient = (preview = false) =>
@@ -46,14 +46,14 @@ export async function getBlogPosts({
   skip = 0,
   preview = false,
   featured = false,
-  orderBy = '-sys.createdAt',
+  orderBy = ['-sys.createdAt'],
   recommendedFor = null,
 }: {
   limit?: number;
   skip?: number;
   preview?: boolean;
   featured?: boolean;
-  orderBy?: string;
+  orderBy?: string[];
   recommendedFor?: string | null;
 } = {}): Promise<EntryCollection<any>> {
   const query: Record<string, any> = {
@@ -120,7 +120,7 @@ export async function getBlogPostBySlug(
       query: value, // broad full-text search across fields
       include: 3,
       limit: 5,
-      order: '-sys.createdAt',
+      order: ['-sys.createdAt'],
     });
     post = res.items && res.items.length > 0 ? res.items[0] : null;
   }
@@ -161,7 +161,7 @@ export async function getBlogPostBySlug(
     if (ids.length > 0) {
       // fetch referenced entries by sys.id
       const recRes = await c.getEntries({
-        'sys.id[in]': ids.join(','),
+        'sys.id[in]': ids,
         include: 1,
         limit: ids.length,
       });
@@ -173,7 +173,7 @@ export async function getBlogPostBySlug(
       limit: recommendedLimit,
       preview,
       recommendedFor: post.sys.id,
-      orderBy: '-sys.createdAt',
+      orderBy: ['-sys.createdAt'],
     });
     recommended = fallbackRes.items || [];
   }
@@ -192,9 +192,9 @@ export function serializePost(entry: Entry<any> | null) {
     const directSlug =
       typeof fields.slug === 'string'
         ? fields.slug
-        : fields.slug && fields.slug.current
-        ? fields.slug.current
-        : null;
+        : (fields.slug as any)?.current
+          ? (fields.slug as any).current
+          : null;
     if (directSlug) return directSlug;
     const alt =
       (typeof fields.handle === 'string' && fields.handle) ||
@@ -210,7 +210,7 @@ export function serializePost(entry: Entry<any> | null) {
     image: fields.image || fields.featuredImage || null,
     recommendedIds:
       Array.isArray(fields.recommendedPosts) &&
-      fields.recommendedPosts.length > 0
+        fields.recommendedPosts.length > 0
         ? fields.recommendedPosts.map((r: any) => r?.sys?.id).filter(Boolean)
         : [],
     raw: entry,

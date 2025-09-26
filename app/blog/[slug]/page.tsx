@@ -56,8 +56,8 @@ function isRichTextDocument(value: unknown): boolean {
   );
 }
 
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
 
   // Get the current post by slug or id (supports preview mode)
   const { post, recommended } = await getBlogPostBySlug(slug, false, 3);
