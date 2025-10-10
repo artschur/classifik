@@ -37,7 +37,7 @@ export function BlockedProfileMessage() {
         <CardContent className="space-y-6">
           <div className="text-muted-foreground">
             <p className="mb-4">
-              A acompanhante bloqueou seu acesso a este perfil. Isso pode
+              A sugar bloqueou seu acesso a este perfil. Isso pode
               acontecer por diversos motivos, como:
             </p>
             <ul className="text-left space-y-2 max-w-md mx-auto">
@@ -51,7 +51,7 @@ export function BlockedProfileMessage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-red-500 mt-1">•</span>
-                <span>Preferência pessoal da acompanhante</span>
+                <span>Preferência pessoal da sugar</span>
               </li>
             </ul>
           </div>

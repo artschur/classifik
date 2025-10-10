@@ -27,7 +27,7 @@ export function CompanionPageBreadcrumb() {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Acompanhantes</BreadcrumbPage>
+          <BreadcrumbPage>Sugars</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

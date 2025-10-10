@@ -195,7 +195,7 @@ export function CompanionFilters({
 
         <input
           type="text"
-          placeholder="Procure acompanhantes..."
+          placeholder="Procure sugars..."
           className="w-3/12 rounded-full border-primary border px-4 p-2 bg-background hidden md:block"
           value={searchValue}
           onChange={handleSearch}

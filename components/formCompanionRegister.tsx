@@ -428,7 +428,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
               <CardDescription>
                 {companionData
                   ? 'Edite seu detalhes.'
-                  : 'Insira seus detalhes e apareça na melhor plataforma de acompanhantes de portugal.'}
+                  : 'Insira seus detalhes e apareça na melhor plataforma de sugars de portugal.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1059,7 +1059,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             className={cn(
                               'relative aspect-square group cursor-pointer',
                               selectedImages.has(image.storagePath) &&
-                                'ring-2 ring-primary ring-offset-2',
+                              'ring-2 ring-primary ring-offset-2',
                             )}
                             onClick={() => toggleImageSelection(image.storagePath)}
                           >

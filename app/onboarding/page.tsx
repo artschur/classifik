@@ -48,7 +48,7 @@ export default async function OnboardPage() {
           Bem vindo ao <br /> OneSugar
         </h1>
         <p className="mt-4 font-normal text-base text-neutral-300 max-w-lg text-center mx-auto">
-          as mais doces acompanhantes de portugal, em um só lugar.
+          as mais doces sugars de portugal, em um só lugar.
         </p>
         <div className="flex gap-4 mt-4">
           <HoverCard>
@@ -59,7 +59,7 @@ export default async function OnboardPage() {
                   type="submit"
                   className="px-6 py-3 bg-primary/80 rounded-lg hover:bg-white/20 transition-all"
                 >
-                  Sou Acompanhante
+                  Sou Sugar
                 </button>
               </form>
             </HoverCardTrigger>

@@ -71,7 +71,7 @@ export function CitySelectionModal({ triggerButton }: CitySelectionModalProps) {
         <DialogHeader>
           <DialogTitle>Escolha sua cidade</DialogTitle>
           <DialogDescription>
-            Descubra acompanhantes premium na sua região e viva experiências
+            Descubra sugars premium na sua região e viva experiências
             únicas com total discrição.
           </DialogDescription>
         </DialogHeader>

@@ -10,18 +10,18 @@ import { CitySelectionModal } from '@/components/city-selection-modal';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Onesugar - O site de acompanhantes premium em Portugal',
+  title: 'Onesugar - O site de sugars premium em Portugal',
   description:
-    'Encontre acompanhantes premium e discretas em Portugal. Serviços exclusivos em Lisboa, Porto e outras cidades com verificação e privacidade garantida.',
+    'Encontre sugars premium e discretas em Portugal. Serviços exclusivos em Lisboa, Porto e outras cidades com verificação e privacidade garantida.',
   applicationName: 'Onesugar',
   keywords: [
-    'Acompanhantes Portugal',
-    'Acompanhantes premium',
+    'Sugars Portugal',
+    'Sugars premium',
     'Escorts Lisboa',
     'Escorts Porto',
-    'Serviços de acompanhantes',
+    'Serviços de sugars',
     'Encontros discretos',
-    'Acompanhantes verificadas',
+    'Sugars verificadas',
   ],
   authors: [{ name: 'Onesugar' }],
   creator: 'Onesugar',
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Onesugar - Acompanhantes Premium em Portugal',
-    description: 'Serviços de acompanhantes premium e discretas em Lisboa, Porto e todo Portugal.',
+    title: 'Onesugar - Sugars Premium em Portugal',
+    description: 'Serviços de Sugars premium e discretas em Lisboa, Porto e todo Portugal.',
     url: 'https://onesugar.pt',
     siteName: 'Onesugar',
     locale: 'pt_PT',
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
         url: 'https://onesugar.app/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Onesugar - Acompanhantes Premium',
+        alt: 'Onesugar - Sugars Premium',
       },
     ],
   },
@@ -86,10 +86,10 @@ export default async function HomePage() {
                     id="hero-heading"
                     className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter"
                   >
-                    Acompanhantes premium em Portugal.
+                    Sugars premium em Portugal.
                   </h1>
                   <p className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
-                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                    Descubra as Sugars mais sofisticadas de Portugal com total discrição e segurança.
                   </p>
                 </div>
                 <div className="w-full space-y-4 mt-2 sm:mt-4">
@@ -136,7 +136,7 @@ export default async function HomePage() {
               <FeatureItem
                 icon={AudioLines}
                 title="Áudios de verificação"
-                description="Confirme a autenticidade através de mensagens de voz exclusivas das acompanhantes."
+                description="Confirme a autenticidade através de mensagens de voz exclusivas das Sugars."
               />
               <FeatureItem
                 icon={FileCheck}
@@ -151,7 +151,7 @@ export default async function HomePage() {
               <FeatureItem
                 icon={Star}
                 title="Avaliações reais"
-                description="Acesse opiniões genuínas de outros clientes sobre cada acompanhante."
+                description="Acesse opiniões genuínas de outros clientes sobre cada Sugar."
               />
             </div>
           </div>
@@ -163,14 +163,14 @@ export default async function HomePage() {
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
                 title="Como funciona o OneSugar"
-                description="Encontre sua acompanhante ideal em apenas três passos simples."
+                description="Encontre sua Sugar ideal em apenas três passos simples."
               />
             </div>
             <div className="mx-auto grid max-w-5xl items-center gap-8 py-8 sm:py-10 md:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:gap-12">
               <ProcessStep
                 icon={MapPin}
                 title="Escolha sua cidade"
-                description="Selecione sua localização e descubra as melhores acompanhantes disponíveis na sua região."
+                description="Selecione sua localização e descubra as melhores Sugars disponíveis na sua região."
               />
               <ProcessStep
                 icon={Search}
@@ -180,7 +180,7 @@ export default async function HomePage() {
               <ProcessStep
                 icon={Heart}
                 title="Entre em contato"
-                description="Conecte-se diretamente com a acompanhante escolhida de forma totalmente privada e segura."
+                description="Conecte-se diretamente com a Sugar escolhida de forma totalmente privada e segura."
               />
             </div>
           </div>
@@ -200,12 +200,12 @@ export default async function HomePage() {
                   <FeatureItem
                     icon={Shield}
                     title="Verificação exclusiva"
-                    description="Todas as acompanhantes passam por um rigoroso processo de verificação para garantir autenticidade e qualidade."
+                    description="Todas as Sugars passam por um rigoroso processo de verificação para garantir autenticidade e qualidade."
                   />
                   <FeatureItem
                     icon={MapPin}
                     title="Presença nacional"
-                    description="Encontre acompanhantes de alto padrão em Lisboa, Porto e nas principais cidades de Portugal."
+                    description="Encontre sugars de alto padrão em Lisboa, Porto e nas principais cidades de Portugal."
                   />
                   <FeatureItem
                     icon={Clock}
@@ -223,7 +223,7 @@ export default async function HomePage() {
                 src="/selecione-onesugar.png"
                 width={800}
                 height={800}
-                alt="Acompanhante sofisticada sorrindo para a câmera"
+                alt="Sugar sofisticada sorrindo para a câmera"
                 className="mx-auto aspect-square overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full max-w-[400px] lg:max-w-none"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
               />
@@ -237,7 +237,7 @@ export default async function HomePage() {
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
                 title="Principais cidades"
-                description="Explore acompanhantes premium nas cidades mais procuradas de Portugal."
+                description="Explore sugars premium nas cidades mais procuradas de Portugal."
               />
             </div>
             <div className="flex justify-center mt-6 sm:mt-8">
@@ -275,7 +275,7 @@ export default async function HomePage() {
                     id="join-community-heading"
                     className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter"
                   >
-                    Seja uma acompanhante OneSugar
+                    Seja uma sugar OneSugar
                   </h2>
                   <p className="max-w-[600px] text-base sm:text-lg md:text-xl">
                     Aumente sua visibilidade, conquiste clientes e se promova de forma segura.
@@ -287,7 +287,7 @@ export default async function HomePage() {
                     className="w-full sm:w-auto bg-transparent text-primary-foreground border-primary-foreground hover:bg-primary-foreground hover:text-primary"
                   >
                     <Link href="/onboarding" className="w-full">
-                      Cadastrar como acompanhante
+                      Cadastrar como sugar
                     </Link>
                   </Button>
                 </div>
@@ -312,7 +312,7 @@ export default async function HomePage() {
                 Pronto para uma experiência inesquecível?
               </h2>
               <p className="mx-auto max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl">
-                Descubra as acompanhantes mais requintadas de Portugal e viva momentos únicos com total discrição.
+                Descubra as sugars mais requintadas de Portugal e viva momentos únicos com total discrição.
               </p>
             </div>
             <div className="mx-auto flex flex-col sm:flex-row w-full sm:w-auto gap-3 mt-2 sm:mt-4">

@@ -53,7 +53,7 @@ export default function VerifyCompanionPage() {
           <FileCheck className="h-4 w-4" />
           <AlertDialogTitle>Verificação de Documentos</AlertDialogTitle>
           <AlertDialogDescription>
-            Cada acompanhante precisa mandar um documento e um vídeo de verificação para entrar na
+            Cada sugar precisa mandar um documento e um vídeo de verificação para entrar na
             plataforma.
           </AlertDialogDescription>
         </AlertDialog>
@@ -63,10 +63,10 @@ export default function VerifyCompanionPage() {
           <AlertDialogTitle>Requisitos de Verificação</AlertDialogTitle>
           <AlertDialogDescription>
             <ul className="list-disc pl-5 mt-1 space-y-1">
-              <li>Verifique se o vídeo de verificação mostra claramente o rosto do acompanhante</li>
+              <li>Verifique se o vídeo de verificação mostra claramente o rosto do sugar</li>
               <li>Verifique se eles seguram um papel com a data e "onesugar" escrito nele</li>
               <li>Garanta que o documento de identificação corresponde às informações do perfil</li>
-              <li>Todos os acompanhantes devem ter 18+ anos para serem verificados</li>
+              <li>Todos os sugars devem ter 18+ anos para serem verificados</li>
             </ul>
           </AlertDialogDescription>
         </AlertDialog>

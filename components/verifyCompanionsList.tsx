@@ -32,7 +32,7 @@ export default function VerifyCompanionsList({
       ))}
       {companions.length === 0 && (
         <p className="text-lg text-center text-gray-500">
-          Não há mais acompanhantes para verificar.
+          Não há mais sugars para verificar.
         </p>
       )}
     </div>
