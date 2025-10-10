@@ -97,7 +97,7 @@ export default async function CheckoutPage() {
       <div className="flex flex-col items-start justify-start my-6 p-6 border border-neutral-800 rounded-lg bg-card">
         <h2 className="text-neutral-100 text-xl">
           Na escolha de um plano, os 2 primeiros meses são grátis (apenas para
-          os 15 primeiros clientes)
+          as 15 primeiras sugars )
         </h2>
         <p className="text-lg text-neutral-400">Cancele quando quiser!</p>
       </div>
