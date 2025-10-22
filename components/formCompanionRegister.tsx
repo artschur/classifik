@@ -58,6 +58,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { IconBrandInstagram, IconLanguage } from '@tabler/icons-react';
+import { registerCompanionAction } from '@/app/actions/register';
 
 const pageOneSchema = z.object({
   // Companion Info
@@ -172,7 +173,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         setIsRegistering(true);
         const formData = form.getValues();
         try {
-          const companion = await registerCompanion(formData);
+          const companion = await registerCompanionAction(formData);
           toast({
             variant: 'success',
             title: 'Perfil criado',

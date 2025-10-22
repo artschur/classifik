@@ -13,7 +13,7 @@ import {
 } from '../schema';
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { CompanionFiltered, FilterTypesCompanions } from '../../types/types';
 import { eq, and, gte, lte, desc, asc, SQL, inArray, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -193,16 +193,16 @@ function buildCompanionsQuery(
       ...(sortConditions
         ? sortConditions
         : [
-            desc(
-              sql`CASE
+          desc(
+            sql`CASE
               WHEN ${companionsTable.has_active_ad} = true AND
                    ${companionsTable.ad_expiration_date} > NOW()
               THEN 1
               ELSE 0
             END`,
-            ),
-            desc(companionsTable.id),
-          ]),
+          ),
+          desc(companionsTable.id),
+        ]),
     );
 }
 
@@ -289,10 +289,14 @@ export const getCompanionsToFilter = unstable_cache(
   },
 );
 
-export async function registerCompanion(companionData: RegisterCompanionFormValues) {
-  let {
+export async function registerCompanion(
+  companionData: RegisterCompanionFormValues,
+  clerkId: string,
+  emailFromAuth: string,
+) {
+  // Destructure companionData and ensure the provided email is used.
+  const {
     name,
-    email,
     phoneNumber,
     instagramHandle,
     shortDescription,
@@ -302,7 +306,7 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
     gender,
     gender_identity,
     languages,
-    city, // assuming this is an integer id for the city
+    city,
     weight,
     height,
     ethnicity,
@@ -316,49 +320,43 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
     smoker,
   } = companionData;
 
-  const userSession = await auth();
-
-  if (!userSession?.userId) {
-    throw new Error('User not authenticated');
-  }
+  // The function now trusts the email passed from the server action.
+  const email = emailFromAuth;
 
   try {
-    email = await getEmail();
     const newCompanion = await db.transaction(async (tx) => {
-      // 1) Insert into companionsTable
       const [companion] = await tx
         .insert(companionsTable)
         .values({
-          auth_id: userSession.userId,
-          name: name,
-          email: email,
+          auth_id: clerkId, // Use the clerkId passed from the action
+          name,
+          email, // Use the email passed from the action
           phone: phoneNumber,
-          instagramHandle: instagramHandle,
-          shortDescription: shortDescription,
-          description: description,
-          price: price,
-          age: age,
-          gender: gender,
-          gender_identity: gender_identity,
-          languages: languages,
+          instagramHandle,
+          shortDescription,
+          description,
+          price,
+          age,
+          gender,
+          gender_identity,
+          languages,
           city_id: city,
         } as NewCompanion)
         .returning({ id: companionsTable.id });
 
-      // 2) Insert into characteristicsTable
       await tx.insert(characteristicsTable).values({
-        height: height,
-        ethnicity: ethnicity,
+        height,
+        ethnicity,
         companion_id: companion.id,
-        eye_color: eye_color,
-        hair_color: hair_color,
-        hair_length: hair_length,
-        shoe_size: shoe_size,
-        silicone: silicone,
-        tattoos: tattoos,
-        piercings: piercings,
-        weight: weight,
-        smoker: smoker,
+        eye_color,
+        hair_color,
+        hair_length,
+        shoe_size,
+        silicone,
+        tattoos,
+        piercings,
+        weight,
+        smoker,
       } as any);
 
       return companion;
@@ -366,8 +364,9 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
 
     return newCompanion;
   } catch (error) {
-    console.log(error);
-    throw new Error('Failed to register companion');
+    console.error('Failed to register companion in DB:', error);
+    // Re-throw a more specific error
+    throw new Error(`Database operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
