@@ -68,7 +68,7 @@ const pageOneSchema = z.object({
     .min(10, 'Descrição curta precisa ter ao menos 10 caractéres')
     .max(60, 'Descrição curta pode ter no máximo 60 caractéres'),
   phoneNumber: z.string().min(8, 'Numero de telefone precisa ter ao menos 8 caractéres'),
-  instagramHandle: z.string().min(1, 'Instagram handle is required'),
+  instagramHandle: z.string().optional(),
   description: z.string().min(30, 'Descrição precisa ter ao menos 30 caractéres'),
   price: z.number().min(1, 'Seu preço precisa ser positivo'),
   age: z.number().min(18, 'Você precisa ter mais de 18 anos!').max(100),
