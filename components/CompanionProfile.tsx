@@ -248,11 +248,14 @@ export async function CompanionProfile({
                 companionId={id}
                 className="w-full"
               />
-              <InstagramButton
-                instagramHandle={companion.instagramHandle}
-                className="w-full"
-                companionId={id}
-              />
+              {
+                companion.instagramHandle && (
+                  <InstagramButton
+                    instagramHandle={companion.instagramHandle}
+                    className="w-full"
+                    companionId={id}
+                  />)}
+
               <div className="mt-6 text-sm text-muted-foreground">
                 <p>Idiomas: {companion.languages.join(', ')}</p>
               </div>
