@@ -5,6 +5,12 @@ export interface Media {
   type?: 'image' | 'video';
 }
 
+export type CompanionPreview = Pick<Companion, 'id' | 'name' | 'age'> & {
+  price: number | string;
+  city: string;
+  images: (string | Media)[];
+};
+
 export type CompanionFiltered = Pick<
   Companion,
   'id' | 'name' | 'shortDescription' | 'price' | 'age' | 'verified'

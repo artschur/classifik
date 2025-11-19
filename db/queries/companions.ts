@@ -14,7 +14,7 @@ import {
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { CompanionFiltered, FilterTypesCompanions } from '../../types/types';
+import { CompanionFiltered, CompanionPreview, FilterTypesCompanions } from '../../types/types';
 import { eq, and, gte, lte, desc, asc, SQL, inArray, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
@@ -213,6 +213,43 @@ function buildCompanionsQuery(
     );
 }
 
+enum PlanType {
+  PRO = 'pro',
+  VIP = 'vip',
+  FREE = 'free',
+}
+
+export async function getRandomCompanions(plan?: PlanType): Promise<CompanionPreview[]> {
+  const conditions: SQL[] = [eq(companionsTable.verified, true)];
+  if (plan) {
+    conditions.push(eq(companionsTable.plan_type, plan));
+  }
+
+  const results = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      age: companionsTable.age,
+      price: companionsTable.price,
+      city: citiesTable.city,
+      mainImageUrl: imagesTable.public_url,
+    })
+    .from(companionsTable)
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .leftJoin(imagesTable, and(eq(imagesTable.companionId, companionsTable.id)))
+    .where(and(...conditions))
+    .orderBy(sql`RANDOM()`)
+    .limit(10);
+
+  return results.map((row) => ({
+    id: row.id,
+    name: row.name,
+    age: row.age,
+    price: row.price,
+    city: row.city,
+    images: row.mainImageUrl ? [row.mainImageUrl] : [],
+  }));
+}
 // New function to count total companions for pagination
 export async function countCompanionsPages(
   citySlug: string,
