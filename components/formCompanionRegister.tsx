@@ -990,9 +990,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                     name="neighborhood"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bairro</FormLabel>
+                        <FormLabel>Conselho</FormLabel>
                         <FormControl>
-                          <Input placeholder="Digite seu bairro" {...field} />
+                          <Input placeholder="Digite seu conselho" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
