@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -31,21 +32,23 @@ export default function Footer() {
 
             {/* Right section - Classifik Attribution */}
             <div className="flex flex-col pr-12 items-center md:items-end space-y-3">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/logo_classifik.png"
-                  width={40}
-                  height={40}
-                  alt="Classifik Agency"
-                  className="rounded-md"
-                />
-                <div className="flex flex-col">
-                  <span className="text-xs text-neutral-400 uppercase tracking-wide font-medium">
-                    Desenvolvido por
-                  </span>
-                  <span className="text-sm text-neutral-200 font-semibold">Agência Classifik</span>
+              <Link href={"https://agenciaclassifik.com.br/"}>
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/logo_classifik.png"
+                    width={40}
+                    height={40}
+                    alt="Classifik Agency"
+                    className="rounded-md"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-neutral-400 uppercase tracking-wide font-medium">
+                      Desenvolvido por
+                    </span>
+                    <span className="text-sm text-neutral-200 font-semibold">Agência Classifik</span>
+                  </div>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
