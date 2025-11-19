@@ -201,6 +201,13 @@ function buildCompanionsQuery(
               ELSE 0
             END`,
           ),
+          desc(
+            sql`CASE
+                WHEN ${companionsTable.plan_type} = 'vip' THEN 2
+                WHEN ${companionsTable.plan_type} = 'pro' THEN 1
+                ELSE 0
+              END`,
+          ),
           desc(companionsTable.id),
         ]),
     );
