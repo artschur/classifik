@@ -10,18 +10,20 @@ import { CitySelectionModal } from '@/components/city-selection-modal';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Onesugar - O site de sugars premium em Portugal',
+  title: 'Onesugar - O site de Acompanhantes premium em Portugal',
   description:
-    'Encontre sugars premium e discretas em Portugal. Serviços exclusivos em Lisboa, Porto e outras cidades com verificação e privacidade garantida.',
+    'Encontre acompanhantes premium e discretas em Portugal. Serviços exclusivos em Lisboa, Porto e outras cidades com verificação e privacidade garantida.',
   applicationName: 'Onesugar',
   keywords: [
-    'Sugars Portugal',
-    'Sugars premium',
+    'Acompanhantes Portugal',
+    'Acompanhantes premium',
     'Escorts Lisboa',
+    'Acompanhante Lisboa',
+    'Acompanhantes Porto',
     'Escorts Porto',
-    'Serviços de sugars',
+    'Serviços de Acompanhantes',
     'Encontros discretos',
-    'Sugars verificadas',
+    'Acompanhantes verificadas',
   ],
   authors: [{ name: 'Onesugar' }],
   creator: 'Onesugar',
@@ -36,7 +38,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Onesugar - Sugars Premium em Portugal',
-    description: 'Serviços de Sugars premium e discretas em Lisboa, Porto e todo Portugal.',
+    description: 'Serviços de Acompanhantes premium e discretas em Lisboa, Porto e todo Portugal.',
     url: 'https://onesugar.pt',
     siteName: 'Onesugar',
     locale: 'pt_PT',
@@ -46,7 +48,7 @@ export const metadata: Metadata = {
         url: 'https://onesugar.app/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Onesugar - Sugars Premium',
+        alt: 'Onesugar - Acompanhantes Premium',
       },
     ],
   },
