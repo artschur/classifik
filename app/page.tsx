@@ -9,6 +9,9 @@ import { SectionHeading } from '@/components/v0/section-heading';
 import { CitySelectionModal } from '@/components/city-selection-modal';
 import { Suspense } from 'react';
 
+import { PlanType } from '@/db/queries/kv';
+import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
+
 export const metadata: Metadata = {
   title: 'Onesugar - O site de Acompanhantes premium em Portugal',
   description:
@@ -124,6 +127,10 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        <HeroCarouselWrapper
+          plans={[PlanType.VIP, PlanType.PLUS, PlanType.FREE, PlanType.BASICO]}
+        />
 
         {/* Features Section - Improved grid for mobile */}
         <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="features-heading">

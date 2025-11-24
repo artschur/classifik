@@ -20,6 +20,7 @@ import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
 import { getImagesByAuthId } from './images';
 import { unstable_cache } from 'next/cache';
+import { PlanType } from './kv';
 
 function buildCompanionConditions(cityId: number, filters?: FilterTypesCompanions): SQL[] {
   const conditions: SQL[] = [
@@ -203,8 +204,9 @@ function buildCompanionsQuery(
           ),
           desc(
             sql`CASE
-                WHEN ${companionsTable.plan_type} = 'vip' THEN 2
-                WHEN ${companionsTable.plan_type} = 'pro' THEN 1
+                WHEN ${companionsTable.plan_type} = 'vip' THEN 3
+                WHEN ${companionsTable.plan_type} = 'plus' THEN 2
+                WHEN ${companionsTable.plan_type} = 'basico' THEN 1
                 ELSE 0
               END`,
           ),
@@ -213,16 +215,10 @@ function buildCompanionsQuery(
     );
 }
 
-enum PlanType {
-  PRO = 'pro',
-  VIP = 'vip',
-  FREE = 'free',
-}
-
-export async function getRandomCompanions(plan?: PlanType): Promise<CompanionPreview[]> {
+export async function getRandomCompanions(plans?: PlanType[]): Promise<CompanionPreview[]> {
   const conditions: SQL[] = [eq(companionsTable.verified, true)];
-  if (plan) {
-    conditions.push(eq(companionsTable.plan_type, plan));
+  if (plans) {
+    conditions.push(inArray(companionsTable.plan_type, plans!));
   }
 
   const results = await db

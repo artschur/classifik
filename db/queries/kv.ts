@@ -103,11 +103,11 @@ export async function syncStripeDataToKV(
       kv.set(`stripe:ads:${customerId}`, purchaseData),
       adPurchases.length > 0
         ? savePaymentToDB({
-            paymentId: adPurchases[0].id,
-            customerId,
-            planType: adPurchases[0].productName,
-            userIdFromWebhook, // Pass the userId from webhook
-          })
+          paymentId: adPurchases[0].id,
+          customerId,
+          planType: adPurchases[0].productName,
+          userIdFromWebhook, // Pass the userId from webhook
+        })
         : Promise.resolve(),
     ]);
 
