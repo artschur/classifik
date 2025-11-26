@@ -219,8 +219,17 @@ export async function getRandomCompanions(plans?: PlanType[]): Promise<Companion
   const conditions: SQL[] = [eq(companionsTable.verified, true)];
   if (plans) {
     conditions.push(inArray(companionsTable.plan_type, plans!));
-
   }
+
+  const planTypeOrder = sql`
+    CASE ${companionsTable.plan_type}
+      WHEN 'free' THEN 1
+      WHEN 'basico' THEN 2
+      WHEN 'plus' THEN 3
+      WHEN 'vip' THEN 4
+      ELSE 5
+    END
+  `;
 
   const results = await db
     .select({
@@ -235,7 +244,7 @@ export async function getRandomCompanions(plans?: PlanType[]): Promise<Companion
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
     .leftJoin(imagesTable, and(eq(imagesTable.companionId, companionsTable.id)))
     .where(and(...conditions))
-    .orderBy(sql`RANDOM()`, companionsTable.id)
+    .orderBy(planTypeOrder, sql`RANDOM()`, companionsTable.id)
     .limit(10);
 
   return results.map((row) => ({

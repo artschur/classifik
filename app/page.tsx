@@ -129,7 +129,7 @@ export default async function HomePage() {
         </section>
 
         <HeroCarouselWrapper
-          plans={[PlanType.VIP, PlanType.PLUS, PlanType.FREE, PlanType.BASICO]}
+          plans={[PlanType.VIP, PlanType.PLUS, PlanType.BASICO]}
         />
 
         {/* Features Section - Improved grid for mobile */}
