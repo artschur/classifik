@@ -33,8 +33,7 @@ export default async function DocumentVerificationPage() {
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8">Verificação de Documentos</h1>
       <p className="text-muted-foreground mb-8">
-        Para verificar sua conta, faça o upload dos documentos necessários. Sua
-        conta estará disponível assim que nossa equipe revisar seus documentos.
+        Envie os documentos necessários para verificar sua conta. A verificação será concluída após a análise.
       </p>
       <DocumentVerificationForm />
     </div>

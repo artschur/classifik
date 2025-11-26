@@ -24,6 +24,7 @@ async function CompanionFormWithData() {
     verifyItemsIfOnboardingComplete(userId),
   ]);
 
+  console.log('All Verification Status:', allVerificationStatus);
   if (!allVerificationStatus.isVerificationVideoUploaded && allVerificationStatus.isImageUploaded) {
     redirect('/companions/verification');
   }
