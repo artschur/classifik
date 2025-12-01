@@ -123,4 +123,10 @@ export const regions: Region[] = [
       { slug: 'lagos', city: 'Lagos' },
     ],
   },
+  {
+    name: 'Madeira',
+    cities: [
+      { slug: 'madeira', city: 'Madeira' },
+    ],
+  },
 ];

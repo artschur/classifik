@@ -316,7 +316,8 @@ export const getCompanionsToFilter = unstable_cache(
     const imagesMap = await getCompanionImages(companionIds);
 
     // Map the results to the expected output format
-    return results.map(({ companion, city, characteristics }) => ({
+    const planOrder: Record<string, number> = { 'vip': 0, 'plus': 1, 'basico': 2, 'free': 3 };
+    const output = results.map(({ companion, city, characteristics }) => ({
       ...companion,
       city: city.name,
       weight: characteristics.weight,
@@ -330,7 +331,13 @@ export const getCompanionsToFilter = unstable_cache(
       ethinicity: characteristics.ethnicity,
       planType: companion.planType,
       images: imagesMap.get(String(companion.id)) || [],
-    }));
+    })).sort((a, b) => {
+      const aPlan = (a.planType || '').toLowerCase();
+      const bPlan = (b.planType || '').toLowerCase();
+      return (planOrder[aPlan] ?? 999) - (planOrder[bPlan] ?? 999);
+    });
+    return output
+
   },
   ['companions-filter'],
   {
