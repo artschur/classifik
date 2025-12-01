@@ -172,7 +172,7 @@ export async function CompanionProfile({
               </div>
             </CardContent>
           </Card>
-          <Card className="w-full shadow-md mt-8">
+          {/*<Card className="w-full shadow-md mt-8">
             <CardHeader className="pb-4">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-2xl font-bold">
@@ -188,7 +188,7 @@ export async function CompanionProfile({
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            {/*<CardContent className="space-y-6">
               <div className="flex justify-center">
                 {verificationVideo[0] && (
                   <video
@@ -216,8 +216,8 @@ export async function CompanionProfile({
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </CardContent>*/}
+          {/*</Card>*/}
         </div>
 
         <div>
