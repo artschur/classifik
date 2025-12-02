@@ -1182,6 +1182,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                   type="button"
                   onClick={handleNextPage}
                   disabled={isRegistering || form.formState.isSubmitting}
+                  className={currentPage === 0 ? 'ml-auto' : ''}
                 >
                   {currentPage === 2 && isRegistering ? (
                     <>
