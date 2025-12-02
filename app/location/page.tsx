@@ -1,4 +1,4 @@
-import { SelectCidadesCadastradas } from '@/components/selectCidades';
+import { SearchableCities } from '@/components/searchableCities';
 import { getAvailableCitiesSummary } from '@/db/queries';
 import { regions as staticRegions } from '@/types/types';
 import { Suspense } from 'react';
@@ -17,7 +17,7 @@ async function CitiesList() {
     }))
     .filter((region) => region.cities.length > 0);
 
-  return <SelectCidadesCadastradas regions={filteredRegions} />;
+  return <SearchableCities regions={filteredRegions} />;
 }
 
 export default function LocationsPage() {
