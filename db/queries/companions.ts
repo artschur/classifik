@@ -14,12 +14,13 @@ import {
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { CompanionFiltered, FilterTypesCompanions } from '../../types/types';
+import { CompanionFiltered, CompanionPreview, FilterTypesCompanions } from '../../types/types';
 import { eq, and, gte, lte, desc, asc, SQL, inArray, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getEmail } from './userActions';
 import { getImagesByAuthId } from './images';
 import { unstable_cache } from 'next/cache';
+import { PlanType } from './kv';
 
 function buildCompanionConditions(cityId: number, filters?: FilterTypesCompanions): SQL[] {
   const conditions: SQL[] = [
@@ -201,11 +202,60 @@ function buildCompanionsQuery(
               ELSE 0
             END`,
           ),
+          desc(
+            sql`CASE
+                WHEN ${companionsTable.plan_type} = 'vip' THEN 3
+                WHEN ${companionsTable.plan_type} = 'plus' THEN 2
+                WHEN ${companionsTable.plan_type} = 'basico' THEN 1
+                ELSE 0
+              END`,
+          ),
           desc(companionsTable.id),
         ]),
     );
 }
 
+export async function getRandomCompanions(plans?: PlanType[]): Promise<CompanionPreview[]> {
+  const conditions: SQL[] = [eq(companionsTable.verified, true)];
+  if (plans) {
+    conditions.push(inArray(companionsTable.plan_type, plans!));
+  }
+
+  const planTypeOrder = sql`
+    CASE ${companionsTable.plan_type}
+      WHEN 'free' THEN 1
+      WHEN 'basico' THEN 2
+      WHEN 'plus' THEN 3
+      WHEN 'vip' THEN 4
+      ELSE 5
+    END
+  `;
+
+  const results = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      age: companionsTable.age,
+      price: companionsTable.price,
+      city: citiesTable.city,
+      mainImageUrl: imagesTable.public_url,
+    })
+    .from(companionsTable)
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .leftJoin(imagesTable, and(eq(imagesTable.companionId, companionsTable.id)))
+    .where(and(...conditions))
+    .orderBy(planTypeOrder, sql`RANDOM()`, companionsTable.id)
+    .limit(10);
+
+  return results.map((row) => ({
+    id: row.id,
+    name: row.name,
+    age: row.age,
+    price: row.price,
+    city: row.city,
+    images: row.mainImageUrl ? [row.mainImageUrl] : [],
+  }));
+}
 // New function to count total companions for pagination
 export async function countCompanionsPages(
   citySlug: string,
@@ -266,7 +316,8 @@ export const getCompanionsToFilter = unstable_cache(
     const imagesMap = await getCompanionImages(companionIds);
 
     // Map the results to the expected output format
-    return results.map(({ companion, city, characteristics }) => ({
+    const planOrder: Record<string, number> = { 'vip': 0, 'plus': 1, 'basico': 2, 'free': 3 };
+    const output = results.map(({ companion, city, characteristics }) => ({
       ...companion,
       city: city.name,
       weight: characteristics.weight,
@@ -280,7 +331,13 @@ export const getCompanionsToFilter = unstable_cache(
       ethinicity: characteristics.ethnicity,
       planType: companion.planType,
       images: imagesMap.get(String(companion.id)) || [],
-    }));
+    })).sort((a, b) => {
+      const aPlan = (a.planType || '').toLowerCase();
+      const bPlan = (b.planType || '').toLowerCase();
+      return (planOrder[aPlan] ?? 999) - (planOrder[bPlan] ?? 999);
+    });
+    return output
+
   },
   ['companions-filter'],
   {

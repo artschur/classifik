@@ -25,7 +25,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'onesugar',
-  description: 'as mais doces sugars de portugal',
+  description: 'as mais doces acompanhantes de portugal',
 };
 
 export default function RootLayout({

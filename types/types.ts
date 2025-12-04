@@ -5,6 +5,12 @@ export interface Media {
   type?: 'image' | 'video';
 }
 
+export type CompanionPreview = Pick<Companion, 'id' | 'name' | 'age'> & {
+  price: number | string;
+  city: string;
+  images: (string | Media)[];
+};
+
 export type CompanionFiltered = Pick<
   Companion,
   'id' | 'name' | 'shortDescription' | 'price' | 'age' | 'verified'
@@ -115,6 +121,12 @@ export const regions: Region[] = [
       { slug: 'vilamoura', city: 'Vilamoura' },
       { slug: 'tavira', city: 'Tavira' },
       { slug: 'lagos', city: 'Lagos' },
+    ],
+  },
+  {
+    name: 'Madeira',
+    cities: [
+      { slug: 'madeira', city: 'Madeira' },
     ],
   },
 ];
