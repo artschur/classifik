@@ -9,6 +9,8 @@ import CompanionsLayout from '@/app/companions/layout';
 import { stringify } from 'querystring';
 import Pagination from '@/components/ui/pagination';
 import { countCompanionsPages } from '@/db/queries/companions';
+import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
+import { PlanType } from '@/db/queries/kv';
 
 async function PaginationComponent({
   location,
@@ -40,6 +42,12 @@ export default async function CompanionsPage({
       <h1 className="text-3xl font-bold mb-6">
         Companions in {capitalizedCity}
       </h1>
+      <div className="mb-8">
+        <HeroCarouselWrapper
+          citySlug={city}
+          plans={[PlanType.VIP]}
+        />
+      </div>
       <CompanionFilters initialFilters={sParams} />
       <Suspense
         key={JSON.stringify(sParams)}
