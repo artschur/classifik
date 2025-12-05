@@ -215,10 +215,13 @@ function buildCompanionsQuery(
     );
 }
 
-export async function getRandomCompanions(plans?: PlanType[]): Promise<CompanionPreview[]> {
+export async function getRandomCompanions(plans?: PlanType[], citySlug?: string): Promise<CompanionPreview[]> {
   const conditions: SQL[] = [eq(companionsTable.verified, true)];
   if (plans) {
     conditions.push(inArray(companionsTable.plan_type, plans!));
+  }
+  if (citySlug) {
+    conditions.push(eq(citiesTable.slug, citySlug));
   }
 
   const planTypeOrder = sql`
