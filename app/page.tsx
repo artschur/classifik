@@ -77,13 +77,19 @@ export default async function HomePage() {
       <main className="flex-1">
         {/* Hero Section - Improved padding for mobile */}
         <section
-          className="w-full py-12 sm:py-16 md:py-24 lg:py-32  min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center relative"
+          className="w-full py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center isolate"
           aria-labelledby="hero-heading"
         >
-          <div className="absolute inset-0">
-            <Image src="/banner-onesugar.png" alt="Background Image" width={1920} height={1080} className="opacity-50" />
+          <div className="absolute inset-0 -z-10">
+            <Image
+              src="/banner-onesugar.png"
+              alt="Background Image"
+              fill
+              className="opacity-50 object-cover"
+              priority
+            />
           </div>
-          <div className="container px-4 mx-auto md:px-6 relative z-10">
+          <div className="container px-4 mx-auto md:px-6">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
               <div className="flex flex-col justify-center space-y-4 sm:space-y-6">
                 <div className="space-y-3 sm:space-y-4">
