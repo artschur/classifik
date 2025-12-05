@@ -73,9 +73,6 @@ export default async function AnalyticsDashboard({
 
   const days = sParams.days ? parseInt(sParams.days) : 7;
   const companion = await getRelevantInfoAnalytics({ clerkId: userId });
-  const { adPurchases }: AdPurchases = (await kv.get(
-    `stripe:ads:${companion.stripeCustomerId}`
-  )) || { adPurchases: [] };
 
   // Get remaining days for the current plan
   const remainingDays = await getRemainingDays(userId);
