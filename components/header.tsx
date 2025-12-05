@@ -45,7 +45,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    label: 'Registro',
+    label: 'Registo',
     href: '/companions/register',
     icon: <ChartNoAxesColumnIncreasing />,
     prefetch: false,
