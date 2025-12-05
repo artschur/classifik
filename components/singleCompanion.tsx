@@ -128,7 +128,7 @@ export default function SingleCompanionComponent({
               value={`${companion.age} anos`}
             />
             <CharacteristicItem
-              label="Cidade"
+              label="Distrito"
               icon={<MapPin className="w-5 h-5" />}
               value={companion.languages.join(', ')}
             />

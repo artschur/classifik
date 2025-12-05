@@ -942,7 +942,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cidade</FormLabel>
+                        <FormLabel>distrito</FormLabel>
                         <Select
                           onValueChange={(selected) => {
                             field.onChange(Number(selected));
@@ -967,7 +967,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue
-                                placeholder="Selecione sua cidade"
+                                placeholder="Selecione seu distrito"
                                 defaultValue={cities.find((c) => c.id === field.value)?.city || ''}
                               />
                             </SelectTrigger>

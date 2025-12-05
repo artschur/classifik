@@ -90,7 +90,7 @@ export function SearchableCities({ regions }: SearchableCitiesProps) {
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Procure cidades ou regiões... (⌘K)"
+            placeholder="Procure distritos ou regiões... (⌘K)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-12 py-3 text-lg rounded-full border-2 border-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
@@ -108,10 +108,10 @@ export function SearchableCities({ regions }: SearchableCitiesProps) {
         {searchQuery && (
           <p className="mt-2 text-sm text-muted-foreground px-4">
             {filteredCitiesCount === 0 ? (
-              <>Nenhuma cidade encontrada para &quot;{searchQuery}&quot;</>
+              <>Nenhuma distrito encontrada para &quot;{searchQuery}&quot;</>
             ) : (
               <>
-                {filteredCitiesCount} de {totalCities} cidades encontradas
+                {filteredCitiesCount} de {totalCities} distritos encontrados
               </>
             )}
           </p>
