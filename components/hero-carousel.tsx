@@ -55,7 +55,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
               const imageUrl = firstImage ? getImageUrl(firstImage) : "/placeholder.svg?height=400&width=300"
 
               return (
-                <Link href={`/companions/${companion.id}`} key={companion.id} className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <Link href={`/companions/${companion.id}`} key={companion.id + companion.name} className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   <Card
                     key={companion.id}
                     className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300"
