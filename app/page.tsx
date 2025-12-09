@@ -75,9 +75,8 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
-        {/* Hero Section - Improved padding for mobile */}
         <section
-          className="w-full py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center isolate"
+          className="relative w-full py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center"
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0 -z-10">
