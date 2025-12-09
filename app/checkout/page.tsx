@@ -23,9 +23,9 @@ const products: Product[] = [
     description:
       'Presença estratégica com recursos essenciais para se destacar. Assinatura mensal',
     benefits: [
-      'Destaque na listagem da cidade escolhida',
+      'Destaque na listagem do distrito escolhida',
       'Exibição antes dos anúncios gratuitos',
-      'Aparece no carrossel da página de localização da cidade',
+      'Aparece no carrossel da página de localização do distrito',
       'Selo "BÁSICO" no perfil',
       'Suporte via sistema de atendimento prioritário',
     ],
@@ -37,7 +37,7 @@ const products: Product[] = [
     description:
       'Mais visibilidade e prioridade para o seu perfil. Assinatura mensal.',
     benefits: [
-      'Posição de maior destaque na cidade escolhida',
+      'Posição de maior destaque no distrito escolhida',
       'Prioridade nas buscas (acima de anúncios Básico e Gratuito)',
       'Listagem acima dos perfis do plano Básico',
 
@@ -54,11 +54,11 @@ const products: Product[] = [
     description:
       'Máximo destaque e prioridade total para o seu perfil. Assinatura mensal.',
     benefits: [
-      'Destaque absoluto na sua cidade',
+      'Destaque absoluto no seu distrito',
       'Prioridade máxima nos resultados de busca',
-      'Posição preferencial na seção de visitas por cidade',
+      'Posição preferencial na seção de visitas por distrito',
       'Listado antes de todos os perfis do site',
-      'Aparece no carrossel da página de localização da cidade',
+      'Aparece no carrossel da página de localização da distrito',
       'Visibilidade superior aos planos Básico e Plus',
       'Selo "VIP" exclusivo no seu perfil',
       'Possibilidade de gravar um áudio de apresentação',
@@ -95,7 +95,7 @@ export default async function CheckoutPage() {
       <h1 className="text-2xl font-bold mb-6">Selecione seu Anúncio</h1>
       <p className="mb-4">
         Escolha o seu anúncio. Após o pagamento, seu perfil será visível no topo
-        da sua cidade, atraindo mais clientes.
+        do seu distrito, atraindo mais clientes.
       </p>
       <div className="flex flex-col items-start justify-start my-6 p-6 border border-neutral-800 rounded-lg bg-card">
         <h2 className="text-neutral-100 text-xl">

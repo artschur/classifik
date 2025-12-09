@@ -75,15 +75,20 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
-        {/* Hero Section - Improved padding for mobile */}
         <section
-          className="w-full py-12 sm:py-16 md:py-24 lg:py-32  min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center relative"
+          className="relative w-full py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center"
           aria-labelledby="hero-heading"
         >
-          <div className="absolute inset-0">
-            <Image src="/banner-onesugar.png" alt="Background Image" width={1920} height={1080} className="opacity-50" />
+          <div className="absolute inset-0 -z-10">
+            <Image
+              src="/banner-onesugar.png"
+              alt="Background Image"
+              fill
+              className="opacity-50 object-cover"
+              priority
+            />
           </div>
-          <div className="container px-4 mx-auto md:px-6 relative z-10">
+          <div className="container px-4 mx-auto md:px-6">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
               <div className="flex flex-col justify-center space-y-4 sm:space-y-6">
                 <div className="space-y-3 sm:space-y-4">
@@ -106,7 +111,7 @@ export default async function HomePage() {
                         className="gap-2 w-full sm:w-auto py-4 sm:py-6 px-4 sm:px-6 text-sm sm:text-base"
                       >
                         <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                        Carregando cidades...
+                        Carregando distritos...
                       </Button>
                     }
                   >
@@ -117,7 +122,7 @@ export default async function HomePage() {
                           className="gap-2 w-full sm:w-auto py-4 sm:py-6 px-4 sm:px-6 text-sm sm:text-base"
                         >
                           <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                          Encontrar por cidade
+                          Encontrar por distrito
                         </Button>
                       }
                     />
@@ -178,7 +183,7 @@ export default async function HomePage() {
             <div className="mx-auto grid max-w-5xl items-center gap-8 py-8 sm:py-10 md:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:gap-12">
               <ProcessStep
                 icon={MapPin}
-                title="Escolha sua cidade"
+                title="Escolha seu distrito"
                 description="Selecione sua localização e descubra as melhores Sugars disponíveis na sua região."
               />
               <ProcessStep
@@ -214,7 +219,7 @@ export default async function HomePage() {
                   <FeatureItem
                     icon={MapPin}
                     title="Presença nacional"
-                    description="Encontre sugars de alto padrão em Lisboa, Porto e nas principais cidades de Portugal."
+                    description="Encontre sugars de alto padrão em Lisboa, Porto e nos principais distrito de Portugal."
                   />
                   <FeatureItem
                     icon={Clock}
@@ -245,8 +250,8 @@ export default async function HomePage() {
           <div className="container px-4 mx-auto md:px-6">
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
-                title="Principais cidades"
-                description="Explore sugars premium nas cidades mais procuradas de Portugal."
+                title="Principais distritos"
+                description="Explore sugars premium nos distritos mais procuradas de Portugal."
               />
             </div>
             <div className="flex justify-center mt-6 sm:mt-8">
@@ -254,7 +259,7 @@ export default async function HomePage() {
                 fallback={
                   <Button disabled variant="outline" className="gap-2 w-full sm:w-auto">
                     <MapPin className="h-4 w-4" />
-                    Carregando cidades...
+                    Carregando distritos...
                   </Button>
                 }
               >
@@ -262,7 +267,7 @@ export default async function HomePage() {
                   triggerButton={
                     <Button variant="outline" className="gap-2 w-full sm:w-auto">
                       <MapPin className="h-4 w-4" />
-                      Ver todas as cidades disponíveis
+                      Ver todas os distritos disponíveis
                     </Button>
                   }
                 />
@@ -341,7 +346,7 @@ export default async function HomePage() {
                   triggerButton={
                     <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto">
                       <MapPin className="h-4 w-4" />
-                      Buscar por cidade
+                      Buscar por distrito
                     </Button>
                   }
                 />

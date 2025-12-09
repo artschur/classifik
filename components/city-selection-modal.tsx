@@ -63,13 +63,13 @@ export function CitySelectionModal({ triggerButton }: CitySelectionModalProps) {
         {triggerButton || (
           <Button variant="default" className="gap-2 w-48">
             <MapPin className="h-4 w-4" />
-            Encontrar por cidade
+            Encontrar por distrito
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Escolha sua cidade</DialogTitle>
+          <DialogTitle>Escolha seu distrito</DialogTitle>
           <DialogDescription>
             Descubra sugars premium na sua região e viva experiências
             únicas com total discrição.
@@ -77,7 +77,7 @@ export function CitySelectionModal({ triggerButton }: CitySelectionModalProps) {
         </DialogHeader>
         <div className="flex items-center space-x-2 py-2">
           <Input
-            placeholder="Pesquisar cidade..."
+            placeholder="Pesquisar distrito..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1"
@@ -120,7 +120,7 @@ export function CitySelectionModal({ triggerButton }: CitySelectionModalProps) {
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhuma cidade encontrada para "{searchQuery}"
+              Nenhum distrito encontrada para "{searchQuery}"
             </div>
           )}
         </ScrollArea>
