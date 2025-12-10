@@ -236,7 +236,7 @@ export function DocumentVerificationForm() {
                       <SelectContent>
                         <SelectItem value="id_card">Identidade</SelectItem>
                         <SelectItem value="passport">Passaporte</SelectItem>
-                        <SelectItem value="drivers_license">Carteira de Motorista</SelectItem>
+                        <SelectItem value="drivers_license">B.I</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
