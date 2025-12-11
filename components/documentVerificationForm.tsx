@@ -90,7 +90,8 @@ export function DocumentVerificationForm() {
               variant: 'destructive',
             });
           }
-        } catch {
+        } catch (error) {
+          console.error('Error fetching documents:', error);
           toast({
             title: 'Erro',
             description: 'Ocorreu um erro ao carregar os documentos.',
