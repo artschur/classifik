@@ -29,8 +29,8 @@ export async function uploadDocument(formData: FormData) {
       throw new Error('Missing required fields');
     }
 
-    // Special size limit for verification videos (100MB)
-    const maxSize = documentType === 'verification_video' ? 100000000 : 5000000; // 100MB or 5MB limit
+    // Size limit for all documents (50MB for documents bucket)
+    const maxSize = documentType === 'verification_video' ? 20000000 : 5000000; // 20MB or 5MB limit
 
     if (file.size > maxSize) {
       throw new Error(`File too large. Maximum size is ${maxSize === 5000000 ? '5MB' : '100MB'}`);
@@ -39,81 +39,53 @@ export async function uploadDocument(formData: FormData) {
     const fileExtension = file.name.split('.').pop();
     const fileName = `${userId}_${documentType}_${Date.now()}.${fileExtension}`;
 
-    // For verification videos, store them in the images bucket but mark them
-    if (documentType === 'verification_video') {
-      const storagePath = `verification_videos/${fileName}`;
+    // All documents including verification videos go to documents bucket
+    const storagePath = `documents/${userId}/${fileName}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(storagePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        throw new Error(`Error uploading file: ${uploadError.message}`);
-      }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('images').getPublicUrl(storagePath);
-
-      await Promise.all([
-        db.insert(documentsTable).values({
-          authId: userId,
-          companionId,
-          document_type: documentType,
-          storage_path: storagePath,
-          public_url: publicUrl,
-        }),
-        db.insert(imagesTable).values({
-          authId: userId,
-          companionId: companionId,
-          storage_path: storagePath,
-          public_url: publicUrl,
-          is_verification_video: true,
-        }),
-      ]);
-
-      revalidatePath('/verify');
-      revalidatePath('/companions/verification');
-      revalidatePath(`/${companionId}`);
-
-      return { success: true, publicUrl };
-    } else {
-      const storagePath = `documents/${userId}/${fileName}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(storagePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        throw new Error(`Error uploading file: ${uploadError.message}`);
-      }
-
-      // Get the public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('documents').getPublicUrl(storagePath);
-
-      // Save document information to database
-      await db.insert(documentsTable).values({
-        authId: userId,
-        companionId,
-        document_type: documentType,
-        storage_path: storagePath,
-        public_url: publicUrl,
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(storagePath, file, {
+        cacheControl: '3600',
+        upsert: false,
       });
 
-      // Revalidate the verification page
-      revalidatePath('/verify');
-      revalidatePath('/companions/verification');
-
-      return { success: true, publicUrl };
+    if (uploadError) {
+      throw new Error(`Error uploading file: ${uploadError.message}`);
     }
+
+    // Get the public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('documents').getPublicUrl(storagePath);
+
+    // Save document information to database
+    await db.insert(documentsTable).values({
+      authId: userId,
+      companionId,
+      document_type: documentType,
+      storage_path: storagePath,
+      public_url: publicUrl,
+    });
+
+    // For verification videos, also add to images table for tracking
+    if (documentType === 'verification_video') {
+      await db.insert(imagesTable).values({
+        authId: userId,
+        companionId: companionId,
+        storage_path: storagePath,
+        public_url: publicUrl,
+        is_verification_video: true,
+      });
+    }
+
+    // Revalidate the verification page
+    revalidatePath('/verify');
+    revalidatePath('/companions/verification');
+    if (documentType === 'verification_video') {
+      revalidatePath(`/${companionId}`);
+    }
+
+    return { success: true, publicUrl };
   } catch (error) {
     console.error('Error uploading document:', error);
     return {
@@ -206,7 +178,7 @@ export async function deleteDocument(documentId: number) {
       throw new Error('Document not found');
     }
 
-    const bucket = documentToDelete.document_type === 'verification_video' ? 'images' : 'documents';
+    const bucket = 'documents'; // All documents now in documents bucket
 
     const { error: deleteStorageError } = await supabase.storage
       .from(bucket)
@@ -340,10 +312,9 @@ export async function deleteAllDocumentsFromCompanion(companionId: number) {
         ),
       );
 
-    Promise.all([
-      await supabase.storage.from('images').remove([`${authId}/`]),
-      await supabase.storage.from('documents').remove([`documents/${authId}/`]),
-      await supabase.storage.from('images').remove([verificationVideoPath.storage_path]),
+    await Promise.all([
+      supabase.storage.from('images').remove([`${authId}/`]),
+      supabase.storage.from('documents').remove([`documents/${authId}/`]),
     ]);
 
     revalidatePath('/verify');

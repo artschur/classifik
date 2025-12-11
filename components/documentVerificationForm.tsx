@@ -38,11 +38,19 @@ import {
 } from '@/components/ui/select';
 import Image from 'next/image';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB - Documents bucket limit
+
 const DocumentFormSchema = z.object({
   documentType: z.string().min(1, 'Selecione um tipo de documento'),
-  file: z.any().refine((file) => file instanceof File, {
-    message: 'Envie um arquivo válido',
-  }),
+  file: z
+    .any()
+    .refine((file) => file instanceof File, {
+      message: 'Envie um arquivo válido',
+    })
+    .refine((file) => file.size <= MAX_FILE_SIZE, {
+      message: 'O arquivo deve ter no máximo 5MB',
+    }),
 });
 
 type Document = {
@@ -60,6 +68,7 @@ export function DocumentVerificationForm() {
   const [documents, setDocuments] = React.useState<Document[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [videoUploaded, setVideoUploaded] = React.useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = React.useState(false);
 
   const form = useForm<z.infer<typeof DocumentFormSchema>>({
     resolver: zodResolver(DocumentFormSchema),
@@ -106,13 +115,38 @@ export function DocumentVerificationForm() {
     fetchDocuments();
   }, [isLoaded, user?.id, toast]);
 
-  async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!isLoaded || !user?.id || !e.target.files || e.target.files.length === 0) {
+  async function handleVideoUpload(videoFile: File) {
+    if (!isLoaded || !user?.id) {
       return;
     }
 
-    const videoFile = e.target.files[0];
-    setIsSubmitting(true);
+    // Validate video size
+    if (videoFile.size > MAX_VIDEO_SIZE) {
+      toast({
+        title: 'Vídeo muito grande',
+        description: `O vídeo deve ter no máximo ${MAX_VIDEO_SIZE / 1024 / 1024}MB. Use um aplicativo para comprimir o vídeo antes de enviar.`,
+        variant: 'destructive',
+      });
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Validate video type
+    if (!videoFile.type.startsWith('video/')) {
+      toast({
+        title: 'Formato inválido',
+        description: 'Por favor, envie um arquivo de vídeo válido.',
+        variant: 'destructive',
+      });
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
+      return;
+    }
+
+    setIsUploadingVideo(true);
 
     try {
       const formData = new FormData();
@@ -141,15 +175,76 @@ export function DocumentVerificationForm() {
         console.error('Upload failed:', result.error);
         toast({
           title: 'Erro',
-          description: 'Falha ao enviar o vídeo.',
+          description: result.error || 'Falha ao enviar o vídeo.',
           variant: 'destructive',
         });
+        if (videoInputRef.current) {
+          videoInputRef.current.value = '';
+        }
       }
     } catch (error) {
       console.error('Error uploading video:', error);
       toast({
         title: 'Erro',
-        description: 'Ocorreu um erro ao enviar o vídeo.',
+        description: error instanceof Error ? error.message : 'Ocorreu um erro ao enviar o vídeo.',
+        variant: 'destructive',
+      });
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  }
+
+  async function onSubmit(data: z.infer<typeof DocumentFormSchema>) {
+    if (!isLoaded || !user?.id) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', data.file);
+      formData.append('documentType', data.documentType);
+
+      const result = await uploadDocument(formData);
+
+      if (result.success) {
+        toast({
+          title: 'Documento enviado',
+          description: 'Seu documento foi enviado com sucesso e está aguardando revisão.',
+          variant: 'success',
+        });
+
+        form.reset();
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+
+        const updatedDocs = await getDocumentsByAuthId(user.id);
+        if (updatedDocs.success) {
+          setDocuments(updatedDocs.documents as Document[]);
+        }
+      } else {
+        console.error('Upload failed:', result.error);
+        toast({
+          title: 'Erro',
+          description: result.error || 'Falha ao enviar o documento.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Ocorreu um erro ao enviar o documento.',
         variant: 'destructive',
       });
     } finally {
@@ -177,6 +272,20 @@ export function DocumentVerificationForm() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-2">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-900">
+                <p className="font-semibold mb-1">Limite de tamanho: 20MB</p>
+                <p>Se seu vídeo for maior, use um aplicativo de compressão:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li><strong>iPhone:</strong> Video Compress (App Store)</li>
+                  <li><strong>Android:</strong> Video Compressor (Play Store)</li>
+                  <li><strong>Online:</strong> clideo.com ou freeconvert.com</li>
+                </ul>
+              </div>
+            </div>
+          </div>
           <div className="mb-4">
             <p className="text-sm font-medium mb-2">Exemplo de como gravar seu vídeo:</p>
             <div className="w-full aspect-video">
@@ -196,16 +305,40 @@ export function DocumentVerificationForm() {
             </div>
           ) : (
             <div className="flex flex-col items-center">
-              <Input
-                ref={videoInputRef}
-                type="file"
-                accept="video/*"
-                className="max-w-md"
-                onChange={handleVideoUpload}
-                disabled={isSubmitting}
-              />
+              <div className="flex flex-col items-center gap-2 w-full max-w-md">
+                <Input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleVideoUpload(file);
+                    }
+                  }}
+                  disabled={isUploadingVideo}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={isUploadingVideo}
+                >
+                  {isUploadingVideo ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando vídeo...
+                    </>
+                  ) : (
+                    <>
+                      <VideoIcon className="mr-2 h-4 w-4" /> Escolher vídeo
+                    </>
+                  )}
+                </Button>
+              </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Envie um vídeo curto (15 segundos) mostrando seu rosto e segurando um papel com a
+                Envie um vídeo curto (10-15 segundos, máx. 20MB) mostrando seu rosto e segurando um papel com a
                 data de hoje e "Onesugar" escrito.
               </p>
             </div>
@@ -223,7 +356,7 @@ export function DocumentVerificationForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => console.log(data))} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="documentType"
@@ -261,6 +394,14 @@ export function DocumentVerificationForm() {
                           const file = e.target.files?.[0];
                           if (file) {
                             onChange(file);
+                            // Validate size immediately
+                            if (file.size > MAX_FILE_SIZE) {
+                              form.setError('file', {
+                                message: `O arquivo deve ter no máximo ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+                              });
+                            } else {
+                              form.clearErrors('file');
+                            }
                           }
                         }}
                         accept="image/jpeg,image/png,application/pdf"
@@ -271,7 +412,7 @@ export function DocumentVerificationForm() {
                 )}
               />
 
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isUploadingVideo}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
