@@ -942,7 +942,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>distrito</FormLabel>
+                        <FormLabel>Distrito</FormLabel>
                         <Select
                           onValueChange={(selected) => {
                             field.onChange(Number(selected));

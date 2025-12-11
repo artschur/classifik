@@ -137,13 +137,15 @@ export function DocumentVerificationForm() {
           setVideoUploaded(true);
         }
       } else {
+        console.error('Upload failed:', result.error);
         toast({
           title: 'Erro',
           description: 'Falha ao enviar o vídeo.',
           variant: 'destructive',
         });
       }
-    } catch {
+    } catch (error) {
+      console.error('Error uploading video:', error);
       toast({
         title: 'Erro',
         description: 'Ocorreu um erro ao enviar o vídeo.',
@@ -236,7 +238,7 @@ export function DocumentVerificationForm() {
                       <SelectContent>
                         <SelectItem value="id_card">Identidade</SelectItem>
                         <SelectItem value="passport">Passaporte</SelectItem>
-                        <SelectItem value="drivers_license">Carteira de Motorista</SelectItem>
+                        <SelectItem value="drivers_license">B.I</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
