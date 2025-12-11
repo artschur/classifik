@@ -137,13 +137,15 @@ export function DocumentVerificationForm() {
           setVideoUploaded(true);
         }
       } else {
+        console.error('Upload failed:', result.error);
         toast({
           title: 'Erro',
           description: 'Falha ao enviar o vídeo.',
           variant: 'destructive',
         });
       }
-    } catch {
+    } catch (error) {
+      console.error('Error uploading video:', error);
       toast({
         title: 'Erro',
         description: 'Ocorreu um erro ao enviar o vídeo.',
