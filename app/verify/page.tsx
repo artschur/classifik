@@ -11,13 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from '@/components/ui/alert-dialog';
-
-const authorizedIds = [
-  `user_2wYHzDclTd4kDn7lCymwRzxsUli`,
-  'user_2wbWQFZpqPydugGRwP4XKRpifIV',
-  'user_2wUrNhvJel2On5NiLkgOswjKndD',
-  'user_2s07vybL9GSrjPbhjljghGwzl1X',
-];
+import { isAdmin } from '@/components/header';
 
 async function FetchUnverifiedCompanions() {
   const userId = (await auth()).userId;
@@ -25,7 +19,7 @@ async function FetchUnverifiedCompanions() {
     return <RedirectToSignIn />;
   }
 
-  if (authorizedIds.includes(userId)) {
+  if (isAdmin(userId)) {
     const response = await getUnverifiedCompanions();
     return <VerifyCompanionsList initialCompanions={response} />;
   } else {

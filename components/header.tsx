@@ -29,6 +29,8 @@ export const admins = [
   'user_2wbWQFZpqPydugGRwP4XKRpifIV',
   'user_2wUrNhvJel2On5NiLkgOswjKndD',
   'user_2s07vybL9GSrjPbhjljghGwzl1X',
+  'user_36tf6wTk2mENoOHulwWyJfF48qy',
+  'user_31n1xQBKnF2DWIj5UR4zZUJP3ZG',
 ];
 
 export const isAdmin = (userId: string): boolean => {
