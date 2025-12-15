@@ -657,6 +657,7 @@ export async function updateCompanionFromForm(clerkId: string, data: RegisterCom
         gender_identity: data.gender_identity,
         languages: data.languages,
         city_id: data.city,
+        verified: false,
       } as NewCompanion)
       .where(eq(companionsTable.auth_id, clerkId));
 
