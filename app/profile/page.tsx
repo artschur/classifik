@@ -81,7 +81,7 @@ export default async function AnalyticsDashboard({
     <div className="container mx-auto py-8 px-4">
       <div className="flex space-x-4 mb-6">
         <Link href={'/companions/register'}>
-          <Button variant="default">Suas informações</Button>
+          <Button variant="default">Editar Perfil</Button>
         </Link>
         {sessionClaims.metadata.plan === 'vip' ? (
           <div className="flex space-x-2">
