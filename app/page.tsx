@@ -7,6 +7,7 @@ import { FeatureItem } from '@/components/v0/feature-tem';
 import { ProcessStep } from '@/components/v0/process-step';
 import { SectionHeading } from '@/components/v0/section-heading';
 import { CitySelectionModal } from '@/components/city-selection-modal';
+import { LeadSelectionModal } from '@/components/lead-selection-modal';
 import { Suspense } from 'react';
 
 import { PlanType } from '@/db/queries/kv';
@@ -74,6 +75,7 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
+      <LeadSelectionModal />
       <main className="flex-1">
         <section
           className="relative w-full py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center"

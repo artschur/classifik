@@ -4,7 +4,6 @@ import { handleOnboard } from './actions';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { isUserACompanion } from '@/db/queries/companions';
-import { useClerk } from '@clerk/nextjs';
 
 export default async function OnboardPage() {
   const { userId, sessionClaims } = await auth();
