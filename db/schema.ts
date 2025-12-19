@@ -44,7 +44,7 @@ export const paymentsTable = pgTable(
     stripe_payment_id: text('stripe_payment_id').notNull(),
     stripe_customer_id: text('stripe_customer_id')
       .notNull()
-      .references(() => companionsTable.stripe_customer_id),
+      .references(() => companionsTable.stripe_customer_id, { onDelete: 'cascade' }),
     max_allowed_date: timestamp('max_allowed_date').notNull(),
     clerk_id: text('clerk_id').notNull(),
     date: timestamp('date').notNull(),
@@ -65,7 +65,7 @@ export const subscriptionsTable = pgTable(
     stripe_subscription_id: text('stripe_subscription_id').notNull().unique(),
     stripe_customer_id: text('stripe_customer_id')
       .notNull()
-      .references(() => companionsTable.stripe_customer_id),
+      .references(() => companionsTable.stripe_customer_id, { onDelete: 'cascade' }),
     clerk_id: text('clerk_id').notNull(),
     price_id: text('price_id'),
     product_id: text('product_id'),
