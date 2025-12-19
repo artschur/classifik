@@ -61,13 +61,14 @@ type Document = {
   created_at: Date | null;
 };
 
-export function DocumentVerificationForm() {
+export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { isVerificationVideoUploaded: boolean; isDocumentUploaded: boolean } }) {
   const { isLoaded, user } = useUser();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [documents, setDocuments] = React.useState<Document[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [videoUploaded, setVideoUploaded] = React.useState(false);
+  const [videoUploaded, setVideoUploaded] = React.useState(uploadStatus?.isVerificationVideoUploaded ?? false);
+  const [documentUploaded, setDocumentUploaded] = React.useState(uploadStatus?.isDocumentUploaded ?? false);
   const [isUploadingVideo, setIsUploadingVideo] = React.useState(false);
 
   const form = useForm<z.infer<typeof DocumentFormSchema>>({
@@ -321,7 +322,7 @@ export function DocumentVerificationForm() {
                 />
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   className="w-full"
                   onClick={() => videoInputRef.current?.click()}
                   disabled={isUploadingVideo}

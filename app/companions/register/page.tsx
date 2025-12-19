@@ -4,9 +4,12 @@ import {
 } from '@/app/actions/document-verification';
 import { RegisterCompanionForm } from '@/components/formCompanionRegister';
 import { SkeletonForm } from '@/components/skeletons/skeletonForm';
+import { db } from '@/db';
 import { getAvailableCities } from '@/db/queries';
 import { getCompanionToEdit } from '@/db/queries/companions';
+import { companionsTable } from '@/db/schema';
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
@@ -17,21 +20,36 @@ async function CompanionFormWithData() {
     redirect('/');
   }
 
-  const [cities, companion, stillVerifying, allVerificationStatus] = await Promise.all([
+  const [cities, companion, stillVerifying, allVerificationStatus, companionVerificationStatus] = await Promise.all([
     getAvailableCities(),
     getCompanionToEdit(userId),
     isVerificationPending(userId),
     verifyItemsIfOnboardingComplete(userId),
+    db.select({ verified: companionsTable.verified })
+      .from(companionsTable)
+      .where(eq(companionsTable.auth_id, userId))
+      .limit(1),
   ]);
 
-  if (!allVerificationStatus.isVerificationVideoUploaded && allVerificationStatus.isImageUploaded) {
-    redirect('/companions/verification');
-  }
-
+  const isVerified = companionVerificationStatus[0]?.verified ?? false;
+  // If verification is pending (has all docs uploaded), show pending page
   if (stillVerifying) {
     redirect('/companions/verification/pending');
   }
 
+  // Only redirect to verification page if:
+  // 1. User is NOT already verified
+  // 2. Companion profile exists (registration completed)
+  // 3. Images are uploaded (completed registration form)
+  // 4. Verification video NOT uploaded yet
+  if (
+    !isVerified &&
+    companion &&
+    allVerificationStatus.isImageUploaded &&
+    !allVerificationStatus.isVerificationVideoUploaded
+  ) {
+    redirect('/companions/verification');
+  }
   return (
     <RegisterCompanionForm
       cities={cities}
