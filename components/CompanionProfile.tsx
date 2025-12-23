@@ -63,7 +63,7 @@ export async function CompanionProfile({
     await Promise.all([
       getCompanionById(id),
       getImagesByCompanionId(id, 3, 0),
-      getVerificationVideosByCompanionId(id),
+      // getVerificationVideosByCompanionId(id),
       getAudioUrlByCompanionId(id),
     ]);
 

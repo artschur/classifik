@@ -93,6 +93,10 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
               (doc: Document) => doc.document_type === 'verification_video',
             );
             setVideoUploaded(hasVerificationVideo);
+            const hasIdDocument = result.documents.some((doc: Document) =>
+              ['id_card', 'passport', 'drivers_license', 'selfie'].includes(doc.document_type),
+            );
+            setDocumentUploaded(hasIdDocument);
           } else {
             toast({
               title: 'Erro',
@@ -232,6 +236,10 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
         const updatedDocs = await getDocumentsByAuthId(user.id);
         if (updatedDocs.success) {
           setDocuments(updatedDocs.documents as Document[]);
+          const hasIdDocument = updatedDocs.documents.some((doc: Document) =>
+            ['id_card', 'passport', 'drivers_license', 'selfie'].includes(doc.document_type),
+          );
+          setDocumentUploaded(hasIdDocument);
         }
       } else {
         console.error('Upload failed:', result.error);
@@ -347,87 +355,89 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
         </CardContent>
       </Card>
 
-      {/* ID Document Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Documentos de Identidade</CardTitle>
-          <CardDescription>
-            Envie seus documentos de identificação para verificar sua conta.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="documentType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Documento</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+      {/* ID Document Upload Section - Only show after video is uploaded */}
+      {videoUploaded && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Documentos de Identidade</CardTitle>
+            <CardDescription>
+              Envie seus documentos de identificação para verificar sua conta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="documentType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Documento</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de documento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="id_card">Identidade</SelectItem>
+                          <SelectItem value="passport">Passaporte</SelectItem>
+                          <SelectItem value="drivers_license">B.I</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={({ field: { onChange } }) => (
+                    <FormItem>
+                      <FormLabel>Arquivo</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo de documento" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="id_card">Identidade</SelectItem>
-                        <SelectItem value="passport">Passaporte</SelectItem>
-                        <SelectItem value="drivers_license">B.I</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="file"
-                render={({ field: { onChange } }) => (
-                  <FormItem>
-                    <FormLabel>Arquivo</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            onChange(file);
-                            // Validate size immediately
-                            if (file.size > MAX_FILE_SIZE) {
-                              form.setError('file', {
-                                message: `O arquivo deve ter no máximo ${MAX_FILE_SIZE / 1024 / 1024}MB`,
-                              });
-                            } else {
-                              form.clearErrors('file');
+                        <Input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              onChange(file);
+                              // Validate size immediately
+                              if (file.size > MAX_FILE_SIZE) {
+                                form.setError('file', {
+                                  message: `O arquivo deve ter no máximo ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+                                });
+                              } else {
+                                form.clearErrors('file');
+                              }
                             }
-                          }
-                        }}
-                        accept="image/jpeg,image/png,application/pdf"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                          }}
+                          accept="image/jpeg,image/png,application/pdf"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button type="submit" disabled={isSubmitting || isUploadingVideo}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" /> Enviar Documento
-                  </>
-                )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                <Button type="submit" disabled={isSubmitting || isUploadingVideo}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" /> Enviar Documento
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

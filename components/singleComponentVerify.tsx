@@ -21,7 +21,6 @@ import {
   AlertTriangle,
   Sparkle,
 } from 'lucide-react';
-import type { RegisterCompanionFormValues } from './formCompanionRegister';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -327,6 +326,17 @@ export default function SingleCompanionVerify({
                 </>
               )}
             </div>
+
+            {companion.verificationVideoUrl && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-2">Vídeo de Verificação</h3>
+                <video
+                  src={companion.verificationVideoUrl}
+                  controls
+                  className="w-full max-h-96 rounded-lg"
+                />
+              </div>
+            )}
 
             <p className="text-sm text-muted-foreground">
               {companion.description}

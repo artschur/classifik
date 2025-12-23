@@ -18,7 +18,7 @@ async function FetchUnverifiedCompanions() {
   if (!userId) {
     return <RedirectToSignIn />;
   }
-
+  console.log(userId)
   if (isAdmin(userId)) {
     const response = await getUnverifiedCompanions();
     return <VerifyCompanionsList initialCompanions={response} />;

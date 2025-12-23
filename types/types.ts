@@ -26,6 +26,7 @@ export type CompanionFiltered = Pick<
   smoker: boolean | null;
   images: (string | Media)[];
   planType?: string | null;
+  verificationVideoUrl?: string | null;
 };
 
 export type FilterTypesCompanions = {

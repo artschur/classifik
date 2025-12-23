@@ -10,6 +10,7 @@ import {
   imagesTable,
   reviewsTable,
   blockedUsersTable,
+  documentsTable,
 } from '../schema';
 import { db } from '..';
 import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
@@ -739,7 +740,20 @@ export async function getUnverifiedCompanions(): Promise<
     .from(imagesTable)
     .where(inArray(imagesTable.companionId, companionIds));
 
-  const [images] = await Promise.all([imagesPromise]);
+  const videosPromise = db
+    .select({
+      companionId: documentsTable.companionId,
+      public_url: documentsTable.public_url,
+    })
+    .from(documentsTable)
+    .where(
+      and(
+        inArray(documentsTable.companionId, companionIds),
+        eq(documentsTable.document_type, 'verification_video'),
+      ),
+    );
+
+  const [images, videos] = await Promise.all([imagesPromise, videosPromise]);
 
   const imagesMap = images.reduce((acc, img) => {
     if (!acc.has(img.companionId.toString())) {
@@ -748,6 +762,11 @@ export async function getUnverifiedCompanions(): Promise<
     acc.get(img.companionId.toString())!.push(img.public_url);
     return acc;
   }, new Map<string, string[]>());
+
+  const videosMap = videos.reduce((acc, vid) => {
+    acc.set(vid.companionId.toString(), vid.public_url);
+    return acc;
+  }, new Map<string, string>());
 
   return results.map(({ companion, city, characteristics }) => ({
     ...companion,
@@ -764,6 +783,7 @@ export async function getUnverifiedCompanions(): Promise<
     ethinicity: characteristics.ethnicity,
     planType: companion.planType,
     images: imagesMap.get(String(companion.id)) || [],
+    verificationVideoUrl: videosMap.get(String(companion.id)) || null,
   }));
 }
 

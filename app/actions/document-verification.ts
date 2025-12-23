@@ -6,7 +6,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getCompanionIdByClerkId } from '@/db/queries/companions';
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { getClerkIdByCompanionId } from '@/db/queries/userActions';
 
 const supabase = createClient(
@@ -67,23 +67,11 @@ export async function uploadDocument(formData: FormData) {
       public_url: publicUrl,
     });
 
-    // For verification videos, also add to images table for tracking
-    if (documentType === 'verification_video') {
-      await db.insert(imagesTable).values({
-        authId: userId,
-        companionId: companionId,
-        storage_path: storagePath,
-        public_url: publicUrl,
-        is_verification_video: true,
-      });
-    }
+    // Verification videos are now tracked only in documentsTable
 
     // Revalidate the verification page
     revalidatePath('/verify');
     revalidatePath('/companions/verification');
-    if (documentType === 'verification_video') {
-      revalidatePath(`/${companionId}`);
-    }
 
     return { success: true, publicUrl };
   } catch (error) {
@@ -190,11 +178,7 @@ export async function deleteDocument(documentId: number) {
 
     await db.delete(documentsTable).where(eq(documentsTable.id, documentId));
 
-    if (documentToDelete.document_type === 'verification_video') {
-      await db
-        .delete(imagesTable)
-        .where(eq(imagesTable.storage_path, documentToDelete.storage_path));
-    }
+    // No longer deleting from imagesTable for verification videos
 
     revalidatePath('/verify');
     revalidatePath('/companions/verification');
@@ -226,13 +210,13 @@ export async function verifyItemsIfOnboardingComplete(clerkId: string): Promise<
         .where(and(eq(audioRecordingsTable.authId, clerkId))),
       db
         .select()
-        .from(imagesTable)
-        .where(and(eq(imagesTable.authId, clerkId), eq(imagesTable.is_verification_video, true))),
+        .from(documentsTable)
+        .where(and(eq(documentsTable.authId, clerkId), eq(documentsTable.document_type, 'verification_video'))),
       db
         .select()
         .from(documentsTable)
         .where(
-          and(eq(documentsTable.authId, clerkId), eq(documentsTable.document_type, 'document')),
+          and(eq(documentsTable.authId, clerkId), inArray(documentsTable.document_type, ['id_card', 'passport', 'drivers_license', 'selfie'])),
         ),
     ]);
 
