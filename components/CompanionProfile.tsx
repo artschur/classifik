@@ -59,7 +59,7 @@ export async function CompanionProfile({
   id: number;
   reviewsRating: number | 'Sem avaliações';
 }) {
-  const [companion, { images, total }, verificationVideo, audio] =
+  const [companion, { images, total }, audio] =
     await Promise.all([
       getCompanionById(id),
       getImagesByCompanionId(id, 3, 0),
