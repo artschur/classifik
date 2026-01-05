@@ -571,16 +571,24 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Idade</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="18"
-                              max={100}
-                              {...field}
-                              value={field.value?.toString() || ''}
-                              onChange={(e) => field.onChange(Number.parseInt(e.target.value, 10))}
-                            />
-                          </FormControl>
+                          <Select
+                            onValueChange={(value) => field.onChange(Number.parseInt(value, 10))}
+                            value={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione sua idade" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Array.from({ length: 22 }, (_, i) => i + 18).map((age) => (
+                                <SelectItem key={age} value={age.toString()}>
+                                  {age}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="40">40+</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
