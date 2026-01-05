@@ -138,7 +138,17 @@ export default async function HomePage() {
         <HeroCarouselWrapper
           plans={[PlanType.VIP, PlanType.PLUS, PlanType.BASICO]}
         />
-
+        <div className="flex justify-center w-full px-4">
+          <div className="w-full max-w-4xl aspect-video">
+            <iframe
+              className="w-full h-full rounded-lg border shadow-sm"
+              src="https://www.youtube.com/embed/t9drDCVVev0?si=6_99F1gh6o5ur1D5&autoplay=1&mute=1&loop=1&playlist=t9drDCVVev0"
+              title="YouTube video player"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+        </div>
         {/* Features Section - Improved grid for mobile */}
         <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="features-heading">
           <div className="container px-4 mx-auto mt-4 md:mt-12 md:px-6">
@@ -148,6 +158,7 @@ export default async function HomePage() {
                 description="Oferecemos ferramentas inovadoras para garantir sua satisfação e confiança."
               />
             </div>
+
             <div className="mx-auto grid max-w-5xl items-center gap-6 py-8 sm:py-10 md:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:gap-8">
               <FeatureItem
                 icon={AudioLines}
