@@ -132,7 +132,7 @@ export async function CompanionProfile({
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6">
                 <CharacteristicItem
                   label="Idade"
-                  value={`${companion.age} anos`}
+                  value={companion.age == 40 ? `${companion.age}+ anos` : `${companion.age} anos`}
                 />
                 <CharacteristicItem
                   label="Altura"
