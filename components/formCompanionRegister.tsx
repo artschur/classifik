@@ -101,6 +101,8 @@ const pageThreeSchema = z.object({
   city: z.number().min(1, 'Cidade é obrigatória'),
   state: z.string().length(2, 'Estado precisa conter ao menos 2 caractéres'),
   country: z.string().min(1, 'País é obrigatório'),
+  meets_at_hotel: z.boolean().default(false),
+  meets_at_own_place: z.boolean().default(false),
 });
 
 const RegisterCompanionFormSchema = z.object({
@@ -204,6 +206,8 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         neighborhood: companionData.neighborhood || '', // Provide default if null
         state: companionData.state || '', // Provide default if null
         country: companionData.country || '', // Provide default if null
+        meets_at_hotel: companionData.meets_at_hotel || false,
+        meets_at_own_place: companionData.meets_at_own_place || false,
       };
     } else {
       return {
@@ -232,6 +236,8 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         city: 1,
         state: '',
         country: '',
+        meets_at_hotel: false,
+        meets_at_own_place: false,
       };
     }
   };
@@ -1028,6 +1034,40 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       </FormItem>
                     )}
                   />
+
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="meets_at_hotel"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Atende em Hotel</FormLabel>
+                            <FormDescription>Você atende clientes em hotéis?</FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="meets_at_own_place"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Atende em Local Próprio</FormLabel>
+                            <FormDescription>Você atende clientes em seu local?</FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               )}
 

@@ -36,6 +36,8 @@ export async function getCompanionDetails(id: number) {
       // stripe_customer_id: companionsTable.stripe_customer_id,
       has_active_ad: companionsTable.has_active_ad,
       ad_expiration_date: companionsTable.ad_expiration_date,
+      meets_at_hotel: companionsTable.meets_at_hotel,
+      meets_at_own_place: companionsTable.meets_at_own_place,
     })
     .from(companionsTable)
     .where(eq(companionsTable.id, id))

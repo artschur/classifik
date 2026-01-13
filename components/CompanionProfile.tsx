@@ -169,6 +169,14 @@ export async function CompanionProfile({
                     value={companion.smoker ? 'Sim' : 'Não'}
                   />
                 )}
+                <CharacteristicItem
+                  label="Atende em Hotel"
+                  value={companion.meets_at_hotel ? 'Sim' : 'Não'}
+                />
+                <CharacteristicItem
+                  label="Atende em Local Próprio"
+                  value={companion.meets_at_own_place ? 'Sim' : 'Não'}
+                />
               </div>
             </CardContent>
           </Card>

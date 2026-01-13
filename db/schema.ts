@@ -124,6 +124,8 @@ export const companionsTable = pgTable(
       () => neighborhoodsTable.id
     ),
 
+    meets_at_hotel: boolean('meets_at_hotel').default(false).notNull(),
+    meets_at_own_place: boolean('meets_at_own_place').default(false).notNull(),
     verified: boolean('verified').default(false).notNull(),
 
     created_at: timestamp('created_at').defaultNow(),

@@ -379,6 +379,8 @@ export async function registerCompanion(
     tattoos,
     piercings,
     smoker,
+    meets_at_hotel,
+    meets_at_own_place,
   } = companionData;
 
   // The function now trusts the email passed from the server action.
@@ -402,6 +404,8 @@ export async function registerCompanion(
           gender_identity,
           languages,
           city_id: city,
+          meets_at_hotel,
+          meets_at_own_place,
         } as NewCompanion)
         .returning({ id: companionsTable.id });
 
@@ -553,6 +557,8 @@ export async function getCompanionToEdit(
       gender_identity: companionsTable.gender_identity,
       languages: companionsTable.languages,
       city: companionsTable.city_id,
+      meets_at_hotel: companionsTable.meets_at_hotel,
+      meets_at_own_place: companionsTable.meets_at_own_place,
     })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, clerkId))
@@ -638,6 +644,8 @@ export async function getCompanionToEdit(
     state: row.state ?? '',
     country: row.country ?? '',
     neighborhood: row.neighborhood ?? '',
+    meets_at_hotel: row.meets_at_hotel ?? false,
+    meets_at_own_place: row.meets_at_own_place ?? false,
   };
 }
 
@@ -658,7 +666,9 @@ export async function updateCompanionFromForm(clerkId: string, data: RegisterCom
         gender_identity: data.gender_identity,
         languages: data.languages,
         city_id: data.city,
-        verified: false,
+        meets_at_hotel: data.meets_at_hotel,
+        meets_at_own_place: data.meets_at_own_place,
+        updated_at: new Date(),
       } as NewCompanion)
       .where(eq(companionsTable.auth_id, clerkId));
 
