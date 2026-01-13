@@ -16,7 +16,7 @@ import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 export const metadata: Metadata = {
   title: 'Onesugar - O site de Acompanhantes premium em Portugal',
   description:
-    'A sua escolha segura para sugars e acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discreção que merece na Onesugar.',
+    'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discrição que merece na Onesugar.',
   applicationName: 'Onesugar',
   keywords: [
     'Acompanhantes Portugal',

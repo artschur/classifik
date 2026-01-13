@@ -25,7 +25,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'onesugar',
-  description: 'as mais doces acompanhantes de portugal',
+  description: 'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discrição que merece na Onesugar.',
 };
 
 export default function RootLayout({
