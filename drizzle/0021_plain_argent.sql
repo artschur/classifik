@@ -1,0 +1,1 @@
+ALTER TABLE "images" ALTER COLUMN "companion_id" SET NOT NULL;

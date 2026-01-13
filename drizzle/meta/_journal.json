@@ -141,6 +141,20 @@
       "when": 1741544000000,
       "tag": "0019_blocked_users_table",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1768315819539,
+      "tag": "0020_yielding_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1768317528256,
+      "tag": "0021_plain_argent",
+      "breakpoints": true
     }
   ]
 }

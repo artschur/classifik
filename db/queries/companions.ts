@@ -725,7 +725,15 @@ export async function getUnverifiedCompanions(): Promise<
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
     .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
-    .where(eq(companionsTable.verified, false));
+    .where(
+      and(
+        eq(companionsTable.verified, false),
+        sql`EXISTS (
+          SELECT 1 FROM ${imagesTable}
+          WHERE ${imagesTable.companionId} = ${companionsTable.id}
+        )`
+      )
+    );
 
   const results = await query;
   if (results.length === 0) return [];

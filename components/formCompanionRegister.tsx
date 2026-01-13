@@ -97,7 +97,7 @@ const pageTwoSchema = z.object({
 
 const pageThreeSchema = z.object({
   // Location
-  neighborhood: z.string().optional(),
+  neighborhood: z.string().min(1, 'Concelho é obrigatório'),
   city: z.number().min(1, 'Cidade é obrigatória'),
   state: z.string().length(2, 'Estado precisa conter ao menos 2 caractéres'),
   country: z.string().min(1, 'País é obrigatório'),
@@ -169,34 +169,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
   const handleNextPage = async () => {
     const isValid = await validateCurrentPage();
     if (isValid) {
-      if (currentPage === 2 && !companionData) {
-        setIsRegistering(true);
-        const formData = form.getValues();
-        try {
-          const companion = await registerCompanionAction(formData);
-          toast({
-            variant: 'success',
-            title: 'Perfil criado',
-            description: `Hey ${formData.name}! Agora vamos adicionar suas fotos.`,
-          });
-          // Store the companion ID for image uploads
-          setCompanionId(companion.id);
-          setCurrentPage(3);
-          scrollToTop();
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            title: 'Falha no registro',
-            description: error instanceof Error ? error.message : 'Algo deu errado',
-          });
-          return;
-        } finally {
-          setIsRegistering(false);
-        }
-      } else {
-        setCurrentPage((prev) => prev + 1);
-        scrollToTop();
-      }
+      // Just move to next page - don't create account yet
+      setCurrentPage((prev) => prev + 1);
+      scrollToTop();
     } else {
       form.trigger();
     }
@@ -282,10 +257,46 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
     setUploadStatus('Enviando arquivos...');
 
     try {
-      if (!companionId) {
+      let currentCompanionId = companionId;
+
+      // For new users without companionData, create companion FIRST
+      if (!companionData && !companionId) {
+        setIsRegistering(true);
+        const formData = form.getValues();
+        try {
+          const companion = await registerCompanionAction(formData);
+          currentCompanionId = companion.id;
+          setCompanionId(companion.id);
+          toast({
+            variant: 'success',
+            title: 'Perfil criado',
+            description: `Hey ${formData.name}! Agora fazendo upload das suas fotos.`,
+          });
+        } catch (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Falha no registro',
+            description: error instanceof Error ? error.message : 'Algo deu errado',
+          });
+          setUploadStatus('');
+          setIsRegistering(false);
+          return;
+        } finally {
+          setIsRegistering(false);
+        }
+      }
+
+      // For existing users, use their companionId
+      if (companionData && !currentCompanionId) {
+        currentCompanionId = companionData.companionId;
+      }
+
+      if (!currentCompanionId) {
         throw new Error('Companion ID not found');
       }
-      const results = await Promise.all(files.map((file) => uploadImage(file, companionId)));
+
+      // NOW upload images with the companionId
+      const results = await Promise.all(files.map((file) => uploadImage(file, currentCompanionId)));
 
       const errors = results.filter((r) => r.error);
       if (errors.length > 0) {
@@ -388,6 +399,17 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
 
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
     if (!companionData) {
+      // Validate that at least one photo has been uploaded
+      if (images.length === 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Fotos obrigatórias',
+          description: 'Por favor, adicione pelo menos uma foto antes de finalizar o cadastro.',
+        });
+        return;
+      }
+
+      // Companion already created during photo upload, just redirect
       toast({
         variant: 'success',
         title: 'Perfil criado com sucesso',
