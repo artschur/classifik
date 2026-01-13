@@ -41,7 +41,7 @@ export default function PendingVerificationPage() {
           </Suspense>
         </h1>
         <h1 className="text-xl pt-4">
-          Sua conta foi está em{' '}
+          Sua conta está em{' '}
           <span className="text-yellow-500"> processo de verificação.</span>
         </h1>
         <p className="text-muted-foreground max-w-[400px] pt-2">
