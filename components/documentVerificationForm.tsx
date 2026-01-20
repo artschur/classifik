@@ -36,17 +36,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import Image from 'next/image';
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB - Documents bucket limit
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB - Documents bucket limit
 
 const DocumentFormSchema = z.object({
   documentType: z.string().min(1, 'Selecione um tipo de documento'),
   file: z
     .any()
     .refine((file) => file instanceof File, {
-      message: 'Envie um arquivo válido',
+      message: 'Envie um arquivo válido, menos de 50MB',
     })
     .refine((file) => file.size <= MAX_FILE_SIZE, {
       message: 'O arquivo deve ter no máximo 5MB',

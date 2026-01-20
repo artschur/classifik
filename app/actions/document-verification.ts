@@ -29,13 +29,6 @@ export async function uploadDocument(formData: FormData) {
       throw new Error('Missing required fields');
     }
 
-    // Size limit for all documents (50MB for documents bucket)
-    const maxSize = documentType === 'verification_video' ? 20000000 : 5000000; // 20MB or 5MB limit
-
-    if (file.size > maxSize) {
-      throw new Error(`File too large. Maximum size is ${maxSize === 5000000 ? '5MB' : '100MB'}`);
-    }
-
     const fileExtension = file.name.split('.').pop();
     const fileName = `${userId}_${documentType}_${Date.now()}.${fileExtension}`;
 
