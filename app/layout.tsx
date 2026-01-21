@@ -9,7 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Navbar from '@/components/header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { WhatsAppButton } from '@/components/whatsapp-button';
-import { AgeVerificationModal } from '@/components/age-verification-modal';
+import { TwoStepModal } from '@/components/two-step-modal';
 import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
 import { CustomToaster } from '@/components/custom-toaster';
 
@@ -45,7 +45,7 @@ export default function RootLayout({
           >
             <Analytics />
             <Toaster />
-            <AgeVerificationModal />
+            <TwoStepModal />
             {/* Global Popup - Uncomment and customize as needed */}
 
             <GlobalPopupWrapper
