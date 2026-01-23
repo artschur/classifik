@@ -37,6 +37,35 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="pt" className={geistSans.className} suppressHydrationWarning>
         <body className="min-h-screen flex flex-col">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": "Onesugar",
+                "url": "https://onesugar.app",
+                "description": "A sua escolha segura para acompanhantes premium em Portugal.",
+                "address": [
+                  {
+                    "@type": "PostalAddress",
+                    "addressLocality": "Lisboa",
+                    "addressCountry": "PT"
+                  },
+                  {
+                    "@type": "PostalAddress",
+                    "addressLocality": "Porto",
+                    "addressCountry": "PT"
+                  }
+                ],
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+351-123-456-789",
+                  "contactType": "customer service"
+                }
+              })
+            }}
+          />
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
