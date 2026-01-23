@@ -96,11 +96,11 @@ export default async function HomePage() {
                     id="hero-heading"
                     className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter"
                   >
-                    Sugars premium em Portugal.
+                    Onesugar - Encontre sua Sugar Premium com Discrição
                   </h1>
-                  <p className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
-                    Descubra as Sugars mais sofisticadas de Portugal com total discrição e segurança.
-                  </p>
+                  <h2 className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
+                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                  </h2>
                 </div>
                 <div className="w-full space-y-4 mt-2 sm:mt-4">
                   <Suspense
