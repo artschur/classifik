@@ -96,10 +96,10 @@ export default async function HomePage() {
                     id="hero-heading"
                     className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter"
                   >
-                    Onesugar - Encontre sua Sugar Premium com Discrição
+                    Onesugar - Acompanhantes em Portugal: Encontre sua Sugar Premium com Discrição
                   </h1>
                   <h2 className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
-                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                    Descubra as acompanhantes mais sofisticadas de Portugal na Onesugar com total discrição e segurança.
                   </h2>
                 </div>
                 <div className="w-full space-y-4 mt-2 sm:mt-4">
@@ -152,7 +152,7 @@ export default async function HomePage() {
           <div className="container px-4 mx-auto mt-4 md:mt-12 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
-                title="Recursos exclusivos para sua segurança"
+                title="Recursos exclusivos da Onesugar para acompanhantes em Portugal"
                 description="Oferecemos ferramentas inovadoras para garantir sua satisfação e confiança."
               />
             </div>
@@ -187,8 +187,8 @@ export default async function HomePage() {
           <div className="container px-4 mx-auto md:px-6">
             <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 text-center">
               <SectionHeading
-                title="Como funciona o OneSugar"
-                description="Encontre sua Sugar ideal em apenas três passos simples."
+                title="Como funciona a Onesugar"
+                description="Encontre sua acompanhante ideal em apenas três passos simples."
               />
             </div>
             <div className="mx-auto grid max-w-5xl items-center gap-8 py-8 sm:py-10 md:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:gap-12">
@@ -199,12 +199,12 @@ export default async function HomePage() {
               />
               <ProcessStep
                 icon={Search}
-                title="Conheça seu perfil"
-                description="Explore fotos autênticas, vídeos de verificação exclusivos e todas as informações essenciais."
+                title="Conheça seu perfil de acompanhante na Onesugar"
+                description="Explore fotos autênticas, e todas as informações essenciais. Com segurança e discrição."
               />
               <ProcessStep
                 icon={Heart}
-                title="Entre em contato"
+                title="Entre em contato com acompanhantes em Portugal"
                 description="Conecte-se diretamente com a Sugar escolhida de forma totalmente privada e segura."
               />
             </div>
@@ -217,30 +217,30 @@ export default async function HomePage() {
             <div className="grid gap-8 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <SectionHeading
-                  title="Por que escolher o OneSugar?"
+                  title="Por que escolher a Onesugar?"
                   description="A plataforma número um para encontros premium em Portugal com total segurança e discrição."
                   centered={false}
                 />
                 <div className="space-y-4">
                   <FeatureItem
                     icon={Shield}
-                    title="Verificação exclusiva"
+                    title="Verificação exclusiva da Onesugar"
                     description="Todas as Sugars passam por um rigoroso processo de verificação para garantir autenticidade e qualidade."
                   />
                   <FeatureItem
                     icon={MapPin}
-                    title="Presença nacional"
+                    title="Presença nacional em Portugal"
                     description="Encontre sugars de alto padrão em Lisboa, Porto e nos principais distrito de Portugal."
                   />
                   <FeatureItem
                     icon={Clock}
-                    title="Disponibilidade flexível"
+                    title="Disponibilidade flexível para acompanhantes"
                     description="Agende encontros que se adaptam à sua rotina, com opções para todos os momentos."
                   />
                   <FeatureItem
                     icon={Star}
                     title="Avaliações genuínas"
-                    description="Acesse avaliações reais de outros clientes para escolher a experiência perfeita."
+                    description="Acesse avaliações reais de outros clientes sobre cada Sugar."
                   />
                 </div>
               </div>
@@ -300,7 +300,7 @@ export default async function HomePage() {
                     id="join-community-heading"
                     className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter"
                   >
-                    Seja uma sugar OneSugar
+                    Seja uma sugar na Onesugar
                   </h2>
                   <p className="max-w-[600px] text-base sm:text-lg md:text-xl">
                     Aumente sua visibilidade, conquiste clientes e se promova de forma segura.
@@ -333,9 +333,9 @@ export default async function HomePage() {
         <section className="w-full py-10 sm:py-12 md:py-20 lg:py-28" aria-labelledby="cta-heading">
           <div className="container grid items-center justify-center gap-4 mx-auto text-center px-4 md:px-6">
             <div className="space-y-2 sm:space-y-3">
-              <h2 id="cta-heading" className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter">
-                Pronto para uma experiência inesquecível?
-              </h2>
+              <h3 id="cta-heading" className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter">
+                Pronto para uma experiência inesquecível em Portugal?
+              </h3>
               <p className="mx-auto max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl">
                 Descubra as sugars mais requintadas de Portugal e viva momentos únicos com total discrição.
               </p>
