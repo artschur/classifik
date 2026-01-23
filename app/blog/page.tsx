@@ -2,19 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getBlogPosts } from '@/blog/contentful';
 
-// ISR: revalidate every 10 minutes
 export const revalidate = 600;
 
-/**
- * Blog listing page (Server Component)
- *
- * Contentful response types are intentionally typed as `any` to avoid TS errors
- * related to missing/mismatched Contentful typings in this project.
- *
- * Note: Return type is `Promise<any>` (instead of `JSX.Element`) to avoid
- * relying on the global `JSX` namespace which may not be available in some
- * TypeScript configurations.
- */
 export default async function BlogPage(): Promise<any> {
   const response: any = await getBlogPosts({ limit: 100 });
   const posts: any[] = (response && response.items) || [];
