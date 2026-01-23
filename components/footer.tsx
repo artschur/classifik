@@ -22,12 +22,17 @@ export default function Footer() {
               <p className="text-neutral-400 text-sm font-medium">a sweet hotter than usual 🌶️</p>
             </div>
 
-            {/* Center section - Copyright */}
+            {/* Center section - Copyright and NAP */}
             <div className="flex flex-col items-center space-y-2">
               <p className="text-neutral-500 text-xs text-center">
                 &copy; {new Date().getFullYear()} Onesugar.
               </p>
               <p className="text-neutral-500 text-xs text-center">Todos os direitos reservados.</p>
+              <div className="text-neutral-400 text-xs text-center space-y-1">
+                <p><strong>Nome:</strong> Onesugar</p>
+                <p><strong>Endereço:</strong> Lisboa, Portugal</p>
+                <p><strong>Telefone:</strong> +351 913 895 353</p>
+              </div>
             </div>
 
             {/* Right section - Classifik Attribution */}
