@@ -12,7 +12,13 @@ import { Product } from './page';
 
 export function ProductCard({ product }: { product: Product }) {
   const handleCheckout = async () => {
-    window.location.href = `/api/checkout?priceId=${product.id}`;
+    const res = await fetch('/api/can-checkout');
+    const data = await res.json();
+    if (data.canCheckout) {
+      window.location.href = `/api/checkout?priceId=${product.id}`;
+    } else {
+      window.location.href = data.redirect;
+    }
   };
 
   return (

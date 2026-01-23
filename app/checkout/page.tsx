@@ -71,25 +71,6 @@ const products: Product[] = [
 ];
 
 export default async function CheckoutPage() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    redirect('/sign-in');
-  }
-
-  const [isUserVerified, hasPaid] = await Promise.all([
-    isVerificationPending(userId),
-    hasActiveAd(userId as string),
-  ]);
-
-  if (isUserVerified) {
-    redirect('/companions/verification/pending');
-  }
-
-  if (hasPaid) {
-    redirect('/profile');
-  }
-
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">Selecione seu Anúncio</h1>
