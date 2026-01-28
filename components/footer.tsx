@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button"
 
 export default function Footer() {
   const navigationLinks = [
-    { label: "Termos e condições", href: "/termos" },
-    { label: "Privacidade", href: "/privacidade" },
-    { label: "Pagamentos", href: "/pagamentos" },
-    { label: "Cookies", href: "/cookies" },
-    { label: "Contacto", href: "/contato" },
+    { label: "Termos e Condições", href: "/termos-e-condicoes" },
+    { label: "Política de Privacidade", href: "/politica-de-privacidade" },
+    { label: "Política de Cookies", href: "/politica-de-cookies" },
     { label: "Sobre", href: "/sobre" },
   ]
 
