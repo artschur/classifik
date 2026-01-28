@@ -9,7 +9,11 @@ const isPublicRoute = createRouteMatcher([
   '/companions',
   '/companions/(.*)',
   '/blog',
-  '/blog/(.*)'
+  '/blog/(.*)',
+  '/politica-de-cookies',
+  '/politica-de-privacidade',
+  '/termos-e-condicoes',
+  '/sobre',
 ]);
 
 // Define public API routes that should bypass auth
