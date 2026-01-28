@@ -1,7 +1,17 @@
 import { MetadataRoute } from 'next';
+import { getAvailableCities } from '@/db/queries';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://onesugar.app';
+
+  const cities = await getAvailableCities();
+
+  const cityUrls = cities.map(city => ({
+    url: `${baseUrl}/location/${city.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
 
   return [
     {
@@ -46,6 +56,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
-
+    ...cityUrls,
   ];
 }
