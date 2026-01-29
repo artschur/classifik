@@ -56,7 +56,7 @@ const navItems: NavItem[] = [
       'text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
   },
   {
-    label: 'Sugars',
+    label: 'Acompanhantes',
     href: '/location',
     icon: <Heart />,
     prefetch: false,
