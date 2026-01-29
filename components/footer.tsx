@@ -75,23 +75,6 @@ export default function Footer() {
               <p className="text-neutral-500 text-xs">
                 &copy; {new Date().getFullYear()} Onesugar. Todos os direitos reservados.
               </p>
-              <Link href="https://agenciaclassifik.com.br/">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/logo_classifik.png"
-                    width={40}
-                    height={40}
-                    alt="Classifik Agency"
-                    className="rounded-md"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-xs text-neutral-400 uppercase tracking-wide font-medium">
-                      Desenvolvido por
-                    </span>
-                    <span className="text-sm text-neutral-200 font-semibold">Agência Classifik</span>
-                  </div>
-                </div>
-              </Link>
             </div>
           </div>
         </div>
