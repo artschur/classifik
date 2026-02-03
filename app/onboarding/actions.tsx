@@ -1,73 +1,58 @@
-'use server';
+"use server";
 
-import { PlanType } from '@/db/queries/kv';
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 export async function handleOnboard(formData: FormData) {
   try {
     const { userId } = await auth();
 
     if (!userId) {
-      throw new Error('No Logged In User');
+      throw new Error("No Logged In User");
     }
 
-    // Extract isCompanion from form data and convert to boolean
-    const isCompanionValue = formData.get('isCompanion');
-    const isCompanion = isCompanionValue === 'true';
-
-    console.log('Onboarding data:', {
-      userId,
-      isCompanion,
-      formDataValue: isCompanionValue,
-      formDataType: typeof isCompanionValue,
-    });
+    const isCompanionValue = formData.get("isCompanion");
+    const isCompanion = isCompanionValue === "true";
 
     if (isCompanionValue === null) {
-      throw new Error('Missing isCompanion value in form data');
+      throw new Error("Missing isCompanion value in form data");
     }
 
     const client = await clerkClient();
+    const user = await client.users.getUser(userId);
 
-    console.log('Updating user metadata...');
-
+    // 1. Prepare the new metadata
     const metadata = {
       onboardingComplete: true,
       isCompanion: isCompanion,
-      plan: (await client.users.getUser(userId)).publicMetadata.plan || 'free',
+      // Logic: Companions start at 'false' (trap active).
+      // Clients start at 'true' (trap bypassed).
+      hasUploadedDocs: isCompanion ? false : true,
+      plan: user.publicMetadata.plan || "free",
     };
 
-    console.log('Metadata to be set:', metadata);
-
-    const updatedUser = await client.users.updateUser(userId, {
+    // 2. Update Clerk
+    await client.users.updateUser(userId, {
       publicMetadata: metadata,
     });
 
-    console.log('User updated successfully:', {
-      userId: updatedUser.id,
-      metadata: updatedUser.publicMetadata,
-    });
-
-    console.log('Redirecting...');
-
-    // Redirect based on user type
+    // 3. Redirect logic
     if (isCompanion) {
-      redirect('/companions/register');
+      redirect("/companions/register");
     } else {
-      redirect('/location');
+      redirect("/location");
     }
   } catch (error) {
-    // Check if this is a Next.js redirect error (which is expected)
-    if (error && typeof error === 'object' && 'digest' in error) {
-      // This is likely a Next.js redirect error, re-throw it
+    // Next.js redirect errors must be re-thrown
+    if (error && typeof error === "object" && "digest" in error) {
       throw error;
     }
 
-    console.error('Error in handleOnboard:', error);
+    console.error("Error in handleOnboard:", error);
     throw new Error(
       `Error Updating User Metadata: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
     );
   }
 }
