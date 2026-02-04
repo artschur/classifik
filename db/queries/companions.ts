@@ -741,6 +741,10 @@ export async function getUnverifiedCompanions(): Promise<
         sql`EXISTS (
           SELECT 1 FROM ${imagesTable}
           WHERE ${imagesTable.companionId} = ${companionsTable.id}
+        )`,
+        sql`EXISTS (
+          SELECT 1 FROM ${documentsTable}
+          WHERE ${documentsTable.companionId} = ${companionsTable.id}
         )`
       )
     );
