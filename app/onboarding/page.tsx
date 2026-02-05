@@ -34,7 +34,7 @@ export default async function OnboardPage() {
     // If the user has already completed onboarding, redirect them to the appropriate page
     const isCompanion = sessionClaims.metadata.isCompanion;
     if (isCompanion) {
-      if (sessionClaims.metadata.hasUploadedDocs === false) {
+      if (sessionClaims.metadata?.hasUploadedDocs === false) {
         return redirect("/companions/verification");
       }
       return redirect("/companions/register");
