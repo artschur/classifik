@@ -38,6 +38,9 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims, redirectToSignIn } = await auth();
   if (!userId) return redirectToSignIn();
 
+  if (!sessionClaims?.metadata) {
+    return NextResponse.next();
+  }
   const hasDocs = sessionClaims.metadata.hasUploadedDocs;
 
   if (
