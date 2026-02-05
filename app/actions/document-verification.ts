@@ -70,8 +70,12 @@ export async function uploadDocument(formData: FormData) {
     // Check for both the video and at least one ID document
     if (status.isVerificationVideoUploaded && status.isDocumentUploaded) {
       const client = await clerkClient();
+      const user = await client.users.getUser(userId);
+      const existingPublicMetadata = user.publicMetadata || {};
+
       await client.users.updateUserMetadata(userId, {
         publicMetadata: {
+          ...existingPublicMetadata,
           hasUploadedDocs: true,
         },
       });
