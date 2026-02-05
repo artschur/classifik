@@ -38,8 +38,8 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims, redirectToSignIn } = await auth();
   if (!userId) return redirectToSignIn();
 
-  const hasDocs = sessionClaims.metadata.hasUploadedDocs;
-  const isCompanion = sessionClaims.metadata.isCompanion;
+  const hasDocs = sessionClaims?.metadata?.hasUploadedDocs;
+  const isCompanion = sessionClaims?.metadata?.isCompanion;
 
   if (
     isCompanion === true &&
