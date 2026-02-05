@@ -24,7 +24,7 @@ export default async function OnboardPage() {
       publicMetadata: {
         isCompanion: true,
         onboardingComplete: true,
-        hasUploadedDocs: sessionClaims.metadata.hasUploadedDocs ?? false,
+        hasUploadedDocs: sessionClaims?.metadata?.hasUploadedDocs ?? false,
       },
     });
     return redirect("/profile");
