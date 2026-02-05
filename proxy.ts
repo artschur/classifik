@@ -1,7 +1,4 @@
-import {
-  clerkMiddleware,
-  createRouteMatcher,
-} from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Define protected routes
@@ -30,18 +27,21 @@ export default clerkMiddleware(async (auth, req) => {
   if (isPublicApiRoute(req)) {
     return NextResponse.next();
   }
+
   // For protected routes, ensure user is authenticated
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
 
   const { userId, sessionClaims, redirectToSignIn } = await auth();
+
   if (!userId) return redirectToSignIn();
 
-  const hasDocs = sessionClaims?.metadata?.hasUploadedDocs;
-  const isCompanion = sessionClaims?.metadata?.isCompanion;
+  // Safely access metadata with optional chaining and explicit checks
+  const metadata = sessionClaims?.metadata;
+  const hasDocs = metadata?.hasUploadedDocs;
+  const isCompanion = metadata?.isCompanion;
 
-  // Only redirect to verification if user is on a protected route
   if (
     isCompanion === true &&
     hasDocs === false &&
