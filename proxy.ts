@@ -41,7 +41,9 @@ export default clerkMiddleware(async (auth, req) => {
 
   const hasDocs = sessionClaims.metadata.hasUploadedDocs;
 
+  // Only redirect to verification if user is on a protected route
   if (
+    !isPublicRoute(req) &&
     hasDocs === false &&
     !(
       req.nextUrl.pathname.startsWith("/companions/verification") ||
