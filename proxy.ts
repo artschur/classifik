@@ -41,6 +41,7 @@ export default clerkMiddleware(async (auth, req) => {
   const hasDocs = sessionClaims?.metadata?.hasUploadedDocs;
   const isCompanion = sessionClaims?.metadata?.isCompanion;
 
+  // Only redirect to verification if user is on a protected route
   if (
     isCompanion === true &&
     hasDocs === false &&
