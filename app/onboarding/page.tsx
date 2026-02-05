@@ -1,41 +1,45 @@
-import { Spotlight } from '@/components/spotlightNew';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { handleOnboard } from './actions';
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
-import { isUserACompanion } from '@/db/queries/companions';
+import { Spotlight } from "@/components/spotlightNew";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { handleOnboard } from "./actions";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { isUserACompanion } from "@/db/queries/companions";
 
 export default async function OnboardPage() {
   const { userId, sessionClaims } = await auth();
 
   if (!userId) {
-    return redirect('/sign-in');
+    return redirect("/sign-in");
   }
 
   const clerk = await clerkClient();
 
   const isCompanion = await isUserACompanion(userId);
   if (isCompanion) {
-    await auth().then(async ({ userId }) => {
-      if (userId) {
-        await clerk.users.updateUserMetadata(userId, {
-          publicMetadata: {
-            isCompanion: true,
-            onboardingComplete: true,
-          },
-        });
-      }
+    await clerk.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        isCompanion: true,
+        onboardingComplete: true,
+        hasUploadedDocs: sessionClaims?.metadata?.hasUploadedDocs ?? false,
+      },
     });
-    return redirect('/profile');
+    return redirect("/profile");
   }
 
   if (sessionClaims?.metadata.onboardingComplete) {
     // If the user has already completed onboarding, redirect them to the appropriate page
     const isCompanion = sessionClaims.metadata.isCompanion;
     if (isCompanion) {
-      return redirect('/companions/register');
+      if (sessionClaims.metadata?.hasUploadedDocs === false) {
+        return redirect("/companions/verification");
+      }
+      return redirect("/companions/register");
     } else {
-      return redirect('/location');
+      return redirect("/location");
     }
   }
 
@@ -88,7 +92,9 @@ export default async function OnboardPage() {
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Ser um cliente OneSugar.</h4>
+                <h4 className="text-sm font-semibold">
+                  Ser um cliente OneSugar.
+                </h4>
                 <ul className="text-sm list-disc pl-4 space-y-1">
                   <li>Tenha acesso a mais perfis.</li>
                   <li>Leie e deixe reviews</li>
@@ -99,7 +105,9 @@ export default async function OnboardPage() {
             </HoverCardContent>
           </HoverCard>
         </div>
-        <p className="text-neutral-300 text-sm mt-4">Crie sua conta gratuitamente</p>
+        <p className="text-neutral-300 text-sm mt-4">
+          Crie sua conta gratuitamente
+        </p>
       </div>
     </section>
   );

@@ -1,4 +1,4 @@
-import { PlanType } from '@/db/queries/kv';
+import { PlanType } from "@/db/queries/kv";
 
 export {};
 
@@ -11,6 +11,7 @@ declare global {
       plan?: PlanType;
       onboardingComplete?: boolean;
       isCompanion?: boolean;
+      hasUploadedDocs?: boolean;
     };
   }
 }
