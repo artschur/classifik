@@ -22,6 +22,7 @@ export default async function OnboardPage() {
   if (isCompanion) {
     await clerk.users.updateUserMetadata(userId, {
       publicMetadata: {
+        ...sessionClaims?.metadata,
         isCompanion: true,
         onboardingComplete: true,
         hasUploadedDocs: sessionClaims?.metadata?.hasUploadedDocs ?? false,
@@ -30,8 +31,7 @@ export default async function OnboardPage() {
     return redirect("/profile");
   }
 
-  if (sessionClaims?.metadata.onboardingComplete) {
-    // If the user has already completed onboarding, redirect them to the appropriate page
+  if (sessionClaims?.metadata?.onboardingComplete) {
     const isCompanion = sessionClaims.metadata.isCompanion;
     if (isCompanion) {
       if (sessionClaims.metadata?.hasUploadedDocs === false) {
