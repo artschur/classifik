@@ -39,8 +39,10 @@ export default clerkMiddleware(async (auth, req) => {
   if (!userId) return redirectToSignIn();
 
   const hasDocs = sessionClaims.metadata.hasUploadedDocs;
+  const isCompanion = sessionClaims.metadata.isCompanion;
 
   if (
+    isCompanion === true &&
     hasDocs === false &&
     !(
       req.nextUrl.pathname.startsWith("/companions/verification") ||
