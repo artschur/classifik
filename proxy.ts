@@ -1,4 +1,3 @@
-import { useSession } from "@clerk/nextjs";
 import {
   clerkMiddleware,
   createRouteMatcher,
