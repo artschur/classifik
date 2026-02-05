@@ -38,14 +38,12 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims, redirectToSignIn } = await auth();
   if (!userId) return redirectToSignIn();
 
-  if (!sessionClaims?.metadata) {
-    return NextResponse.next();
-  }
-  const hasDocs = sessionClaims.metadata.hasUploadedDocs;
+  const hasDocs = sessionClaims?.metadata?.hasUploadedDocs;
+  const isCompanion = sessionClaims?.metadata?.isCompanion;
 
   // Only redirect to verification if user is on a protected route
   if (
-    !isPublicRoute(req) &&
+    isCompanion === true &&
     hasDocs === false &&
     !(
       req.nextUrl.pathname.startsWith("/companions/verification") ||
