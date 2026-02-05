@@ -37,8 +37,8 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 
-  const { userId, sessionClaims } = await auth();
-  if (!userId) return (await auth()).redirectToSignIn();
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
+  if (!userId) return redirectToSignIn();
 
   const hasDocs = sessionClaims.metadata.hasUploadedDocs;
 
