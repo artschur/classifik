@@ -15,31 +15,31 @@ import { CitySelectionModal } from '@/components/city-selection-modal';
 import { Button } from '@/components/ui/button';
 
 export function TwoStepModal() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<1 | 2>(1);
   const [showCityModal, setShowCityModal] = React.useState(false);
 
+
   React.useEffect(() => {
-    // Don't show to signed-in users
-    if (isSignedIn) {
+    if (!isLoaded || isSignedIn) {
       return;
     }
 
-    // Check if user has already verified age
-    const ageVerified = localStorage.getItem('age-verified') == "true";
+    const ageVerified = localStorage.getItem('age-verified') === "true";
 
     if (ageVerified) {
-      // Skip to step 2 if age already verified
       setStep(2);
       setOpen(true);
     } else {
-      // Start from step 1 if age not verified
       setStep(1);
       setOpen(true);
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, isLoaded]); // Re-run when auth state changes
 
+  if (isSignedIn) {
+    return;
+  }
   const handleAgeConfirm = () => {
     localStorage.setItem('age-verified', 'true');
     // Move to step 2
