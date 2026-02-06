@@ -29,8 +29,6 @@ export default clerkMiddleware(async (auth, req) => {
 
   const { userId, sessionClaims } = await auth();
 
-  // 1. If not logged in and route is public, let them through
-  // 2. If not logged in and route is private, auth.protect() handles the redirect
   if (!userId) {
     if (isPublicRoute(req)) {
       return NextResponse.next();
@@ -39,45 +37,42 @@ export default clerkMiddleware(async (auth, req) => {
     return redirectToSignIn();
   }
 
+  // if logged in allow to public routes
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
   const metadata = sessionClaims?.metadata;
-  const hasDocs = metadata?.hasUploadedDocs;
   const isCompanion = metadata?.isCompanion;
-  const isFirstStepRegistrationComplete = metadata?.isRegistrationComplete;
   const onboardingComplete = metadata?.onboardingComplete;
+  const isFirstStepRegistrationComplete = metadata?.isRegistrationComplete;
+  const hasDocs = metadata?.hasUploadedDocs;
 
-  if (isCompanion && !onboardingComplete) {
-    if (!req.nextUrl.pathname.startsWith("/companions/register")) {
-      return NextResponse.redirect(new URL("/companions/register", req.url));
+  if (!onboardingComplete) {
+    if (!req.nextUrl.pathname.startsWith("/onboarding")) {
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
     return NextResponse.next();
   }
 
-  if (
-    isCompanion === true &&
-    hasDocs === false &&
-    isFirstStepRegistrationComplete === false &&
-    !req.nextUrl.pathname.startsWith("/companions/register")
-  ) {
-    return NextResponse.redirect(new URL("/companions/register", req.url));
-  }
+  if (isCompanion) {
+    if (!isFirstStepRegistrationComplete) {
+      if (!req.nextUrl.pathname.startsWith("/companions/register")) {
+        return NextResponse.redirect(new URL("/companions/register", req.url));
+      }
+      return NextResponse.next();
+    }
 
-  if (
-    isCompanion === true &&
-    hasDocs === false &&
-    isFirstStepRegistrationComplete === true &&
-    !req.nextUrl.pathname.startsWith("/companions/verification") &&
-    !req.nextUrl.pathname.startsWith("/companions/register")
-  ) {
-    return NextResponse.redirect(new URL("/companions/verification", req.url));
+    if (!hasDocs) {
+      if (!req.nextUrl.pathname.startsWith("/companions/verification")) {
+        return NextResponse.redirect(new URL("/companions/verification", req.url));
+      }
+      return NextResponse.next();
+    }
   }
 
   return NextResponse.next();
 });
-
 
 export const config = {
   matcher: [
