@@ -25,17 +25,19 @@ export function LeadSelectionModal({ open: controlledOpen, onOpenChange }: LeadS
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [showCityModal, setShowCityModal] = React.useState(false);
 
-  // Determine if modal should be open
+  if (isSignedIn) {
+    setInternalOpen(false);
+    return
+  }
+
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
 
   React.useEffect(() => {
-    // Only apply automatic opening logic if not controlled
+
     if (controlledOpen === undefined) {
-      // Check if lead=true in query params
       const isLead = searchParams.get('lead') === 'true';
 
-      // Only show popup if lead=true and user is not signed in
       if (isLead && !isSignedIn) {
         setInternalOpen(true);
       }
