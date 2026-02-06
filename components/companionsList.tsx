@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getCompanionsToFilter } from '@/db/queries/companions';
 import { useEffect, useState } from 'react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Check } from 'lucide-react';
 
 export function CompanionsList({
   location,
@@ -61,26 +62,26 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
     })
     .map((media) => (typeof media === 'object' ? media.publicUrl : media));
 
-  const getPlanBadge = (planType?: string | null) => {
-    switch (planType) {
-      case 'basico':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">BÁSICO</Badge>;
-      case 'plus':
-        return <Badge className="bg-purple-100 text-purple-800 border-purple-200">PLUS</Badge>;
-      case 'vip':
-        return (
-          <Badge className="bg-gold-100 text-gold-800 border-gold-200 bg-gradient-to-r from-yellow-200 to-yellow-300 text-yellow-900">
-            VIP
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="text-gray-600">
-            FREE
-          </Badge>
-        );
-    }
-  };
+  // const getPlanBadge = (planType?: string | null) => {
+  //   switch (planType) {
+  //     case 'basico':
+  //       return <Badge className="bg-blue-100 text-blue-800 border-blue-200">BÁSICO</Badge>;
+  //     case 'plus':
+  //       return <Badge className="bg-purple-100 text-purple-800 border-purple-200">PLUS</Badge>;
+  //     case 'vip':
+  //       return (
+  //         <Badge className="bg-gold-100 text-gold-800 border-gold-200 bg-gradient-to-r from-yellow-200 to-yellow-300 text-yellow-900">
+  //           VIP
+  //         </Badge>
+  //       );
+  //     default:
+  //       return (
+  //         <Badge variant="outline" className="text-gray-600">
+  //           FREE
+  //         </Badge>
+  //       );
+  //   }
+  // };
 
   return (
     <Link
@@ -129,7 +130,10 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold">{companion.name}</h3>
             <div className="flex items-center gap-2">
-              {getPlanBadge(companion.planType)}
+              {/*{getPlanBadge(companion.planType)}*/}
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Check className="w-3 h-3 mr-1" /> Verificado
+              </Badge>
               <Badge variant="secondary">{companion.age} years</Badge>
             </div>
           </div>
