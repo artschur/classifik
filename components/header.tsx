@@ -140,12 +140,12 @@ export default async function Header() {
               <ModeToggle />
             </SignedIn>
             <SignedOut>
-              <SignInButton>
+              <SignInButton signUpForceRedirectUrl={"/onboarding"}>
                 <Button variant="ghost" className="rounded-full" size="sm">
                   Login
                 </Button>
               </SignInButton>
-              <SignUpButton>
+              <SignUpButton signInForceRedirectUrl={"/onboarding"}>
                 <Button
                   className="hidden sm:inline-flex rounded-full"
                   size="sm"

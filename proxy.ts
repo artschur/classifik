@@ -23,18 +23,14 @@ const isPublicApiRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Skip auth for Stripe webhooks and other public API routes
   if (isPublicApiRoute(req)) {
     return NextResponse.next();
   }
 
-  // For protected routes, ensure user is authenticated
-  if (!isPublicRoute(req)) {
-    await auth.protect();
-  }
-
   const { userId, sessionClaims } = await auth();
 
+  // 1. If not logged in and route is public, let them through
+  // 2. If not logged in and route is private, auth.protect() handles the redirect
   if (!userId) {
     if (isPublicRoute(req)) {
       return NextResponse.next();
@@ -43,18 +39,27 @@ export default clerkMiddleware(async (auth, req) => {
     return redirectToSignIn();
   }
 
-  // Safely access metadata with optional chaining and explicit checks
+  if (isPublicRoute(req)) {
+    return NextResponse.next();
+  }
+
   const metadata = sessionClaims?.metadata;
   const hasDocs = metadata?.hasUploadedDocs;
   const isCompanion = metadata?.isCompanion;
+  const onboardingComplete = metadata?.onboardingComplete;
+
+  if (isCompanion && !onboardingComplete) {
+    if (!req.nextUrl.pathname.startsWith("/companions/register")) {
+      return NextResponse.redirect(new URL("/companions/register", req.url));
+    }
+    return NextResponse.next();
+  }
 
   if (
     isCompanion === true &&
     hasDocs === false &&
-    !(
-      req.nextUrl.pathname.startsWith("/companions/verification") ||
-      req.nextUrl.pathname.startsWith("/companions/register")
-    )
+    !req.nextUrl.pathname.startsWith("/companions/verification") &&
+    !req.nextUrl.pathname.startsWith("/companions/register")
   ) {
     return NextResponse.redirect(new URL("/companions/verification", req.url));
   }

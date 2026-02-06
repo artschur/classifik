@@ -42,6 +42,7 @@ export type FilterTypesCompanions = {
   weight?: string;
   smoker?: string;
   eyeColor?: string;
+  gender?: string;
 };
 
 export type CompanionById = Omit<
