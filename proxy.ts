@@ -33,9 +33,15 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 
-  const { userId, sessionClaims, redirectToSignIn } = await auth();
+  const { userId, sessionClaims } = await auth();
 
-  if (!userId) return redirectToSignIn();
+  if (!userId) {
+    if (isPublicRoute(req)) {
+      return NextResponse.next();
+    }
+    const { redirectToSignIn } = await auth();
+    return redirectToSignIn();
+  }
 
   // Safely access metadata with optional chaining and explicit checks
   const metadata = sessionClaims?.metadata;
@@ -55,6 +61,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   return NextResponse.next();
 });
+
 
 export const config = {
   matcher: [
