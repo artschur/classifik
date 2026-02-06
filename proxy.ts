@@ -59,6 +59,15 @@ export default clerkMiddleware(async (auth, req) => {
   if (
     isCompanion === true &&
     hasDocs === false &&
+    isFirstStepRegistrationComplete === false &&
+    !req.nextUrl.pathname.startsWith("/companions/register")
+  ) {
+    return NextResponse.redirect(new URL("/companions/register", req.url));
+  }
+
+  if (
+    isCompanion === true &&
+    hasDocs === false &&
     isFirstStepRegistrationComplete === true &&
     !req.nextUrl.pathname.startsWith("/companions/verification") &&
     !req.nextUrl.pathname.startsWith("/companions/register")
