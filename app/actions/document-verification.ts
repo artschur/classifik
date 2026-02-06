@@ -340,3 +340,103 @@ export async function deleteAllDocumentsFromCompanion(companionId: number) {
     };
   }
 }
+
+/**
+ * Generates a signed upload URL for direct client-to-Supabase uploads.
+ * This bypasses serverless function payload limits (e.g. Vercel's 4.5MB limit).
+ */
+export async function getSignedUploadUrl(
+  documentType: string,
+  fileExtension: string,
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false as const, error: "Authentication required" };
+    }
+
+    const fileName = `${userId}_${documentType}_${Date.now()}.${fileExtension}`;
+    const storagePath = `documents/${userId}/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from("documents")
+      .createSignedUploadUrl(storagePath);
+
+    if (error) {
+      throw new Error(`Error creating signed URL: ${error.message}`);
+    }
+
+    return {
+      success: true as const,
+      signedUrl: data.signedUrl,
+      path: data.path,
+      token: data.token,
+      storagePath,
+    };
+  } catch (error) {
+    console.error("Error generating signed upload URL:", error);
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Saves document metadata to the database after a successful client-side upload.
+ * Called after the client uploads the file directly to Supabase using the signed URL.
+ */
+export async function saveDocumentAfterUpload(
+  documentType: string,
+  storagePath: string,
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error("Authentication required");
+    }
+
+    const companionId = await getCompanionIdByClerkId(userId);
+
+    // Get the public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("documents").getPublicUrl(storagePath);
+
+    // Save document information to database
+    await db.insert(documentsTable).values({
+      authId: userId,
+      companionId,
+      document_type: documentType,
+      storage_path: storagePath,
+      public_url: publicUrl,
+    });
+
+    const status = await verifyItemsIfOnboardingComplete(userId);
+
+    // Check for both the video and at least one ID document
+    if (status.isVerificationVideoUploaded && status.isDocumentUploaded) {
+      const client = await clerkClient();
+      const user = await client.users.getUser(userId);
+      const existingPublicMetadata = user.publicMetadata || {};
+
+      await client.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          ...existingPublicMetadata,
+          hasUploadedDocs: true,
+        },
+      });
+    }
+
+    revalidatePath("/verify");
+    revalidatePath("/companions/verification");
+
+    return { success: true as const, publicUrl };
+  } catch (error) {
+    console.error("Error saving document record:", error);
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}

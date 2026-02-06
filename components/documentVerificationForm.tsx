@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  uploadDocument,
+  getSignedUploadUrl,
+  saveDocumentAfterUpload,
   getDocumentsByAuthId,
   deleteDocument,
 } from '@/app/actions/document-verification';
@@ -61,6 +62,48 @@ type Document = {
   created_at: Date | null;
 };
 
+/**
+ * Uploads a file directly to Supabase using a signed upload URL,
+ * bypassing serverless function payload limits.
+ */
+async function uploadFileDirectToSupabase(
+  file: File,
+  documentType: string,
+): Promise<{ success: true; publicUrl: string } | { success: false; error: string }> {
+  // Step 1: Get a signed upload URL from the server
+  const fileExtension = file.name.split('.').pop() || 'bin';
+  const signedUrlResult = await getSignedUploadUrl(documentType, fileExtension);
+
+  if (!signedUrlResult.success) {
+    return { success: false, error: signedUrlResult.error ?? 'Falha ao gerar URL de upload.' };
+  }
+
+  // Step 2: Upload the file directly to Supabase from the client
+  const { signedUrl, storagePath, token } = signedUrlResult;
+
+  const uploadResponse = await fetch(signedUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type,
+    },
+    body: file,
+  });
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text().catch(() => 'Unknown upload error');
+    return { success: false, error: `Erro no upload: ${errorText}` };
+  }
+
+  // Step 3: Save document metadata to the database
+  const saveResult = await saveDocumentAfterUpload(documentType, storagePath);
+
+  if (!saveResult.success) {
+    return { success: false, error: saveResult.error ?? 'Falha ao salvar registro do documento.' };
+  }
+
+  return { success: true, publicUrl: saveResult.publicUrl! };
+}
+
 export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { isVerificationVideoUploaded: boolean; isDocumentUploaded: boolean } }) {
   const { isLoaded, user } = useUser();
   const { toast } = useToast();
@@ -70,6 +113,7 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
   const [videoUploaded, setVideoUploaded] = React.useState(uploadStatus?.isVerificationVideoUploaded ?? false);
   const [documentUploaded, setDocumentUploaded] = React.useState(uploadStatus?.isDocumentUploaded ?? false);
   const [isUploadingVideo, setIsUploadingVideo] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<string>('');
 
   const form = useForm<z.infer<typeof DocumentFormSchema>>({
     resolver: zodResolver(DocumentFormSchema),
@@ -152,13 +196,11 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
     }
 
     setIsUploadingVideo(true);
+    setUploadProgress('Preparando upload...');
 
     try {
-      const formData = new FormData();
-      formData.append('file', videoFile);
-      formData.append('documentType', 'verification_video');
-
-      const result = await uploadDocument(formData);
+      setUploadProgress('Enviando vídeo diretamente...');
+      const result = await uploadFileDirectToSupabase(videoFile, 'verification_video');
 
       if (result.success) {
         toast({
@@ -199,6 +241,7 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
       }
     } finally {
       setIsUploadingVideo(false);
+      setUploadProgress('');
     }
   }
 
@@ -215,11 +258,7 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', data.file);
-      formData.append('documentType', data.documentType);
-
-      const result = await uploadDocument(formData);
+      const result = await uploadFileDirectToSupabase(data.file, data.documentType);
 
       if (result.success) {
         toast({
@@ -285,7 +324,7 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
             <div className="flex items-start gap-2">
               <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-900">
-                <p className="font-semibold mb-1">Limite de tamanho: 20MB</p>
+                <p className="font-semibold mb-1">Limite de tamanho: 50MB</p>
                 <p>Se seu vídeo for maior, use um aplicativo de compressão:</p>
                 <ul className="list-disc list-inside mt-1 space-y-1">
                   <li><strong>iPhone:</strong> Video Compress (App Store)</li>
@@ -337,7 +376,7 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
                 >
                   {isUploadingVideo ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando vídeo...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {uploadProgress || 'Enviando vídeo...'}
                     </>
                   ) : (
                     <>
@@ -347,8 +386,8 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Envie um vídeo curto (10-15 segundos, máx. 20MB) mostrando seu rosto e segurando um papel com a
-                data de hoje e "Onesugar" escrito.
+                Envie um vídeo curto (10-15 segundos, máx. 50MB) mostrando seu rosto e segurando um papel com a
+                data de hoje e &quot;Onesugar&quot; escrito.
               </p>
             </div>
           )}
