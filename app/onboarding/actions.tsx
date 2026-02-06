@@ -25,6 +25,7 @@ export async function handleOnboard(formData: FormData) {
     const metadata = {
       onboardingComplete: true,
       isCompanion: isCompanion,
+      isRegistrationComplete: false,
       // Logic: Companions start at 'false' (trap active).
       // Clients start at 'true' (trap bypassed).
       hasUploadedDocs: isCompanion ? false : true,
@@ -50,8 +51,7 @@ export async function handleOnboard(formData: FormData) {
 
     console.error("Error in handleOnboard:", error);
     throw new Error(
-      `Error Updating User Metadata: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Error Updating User Metadata: ${error instanceof Error ? error.message : "Unknown error"
       }`,
     );
   }

@@ -112,7 +112,7 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       );
 
       const client = await clerkClient();
-      await client.users.updateUser(clerkId, {
+      await client.users.updateUserMetadata(clerkId, {
         publicMetadata: {
           plan: plan,
           stripeCustomerId: customerId,

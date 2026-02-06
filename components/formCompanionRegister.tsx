@@ -39,7 +39,7 @@ import { IMaskInput } from 'react-imask';
 import { PhoneInput } from './phoneInput';
 import { useRouter } from 'next/navigation'; // Import useRouter
 import { useToast } from '@/hooks/use-toast'; // Import at the correct path
-import { useUser } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 import { MultiSelect } from './multi-select';
 import { FileUpload } from '@/components/ui/file-upload';
 import { uploadImage, getImagesByAuthId, deleteImage } from '@/db/queries/images';
@@ -59,6 +59,7 @@ import {
 import { cn } from '@/lib/utils';
 import { IconBrandInstagram, IconLanguage } from '@tabler/icons-react';
 import { registerCompanionAction } from '@/app/actions/register';
+import { completeFirstStepRegistration } from '@/app/companions/register/action';
 
 const pageOneSchema = z.object({
   // Companion Info
@@ -414,6 +415,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         });
         return;
       }
+
+      await completeFirstStepRegistration();
+      await user?.reload();
 
       // Companion already created during photo upload, just redirect
       toast({

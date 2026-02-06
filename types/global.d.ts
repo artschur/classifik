@@ -1,6 +1,6 @@
 import { PlanType } from "@/db/queries/kv";
 
-export {};
+export { };
 
 declare global {
   interface CustomJwtSessionClaims {
@@ -11,6 +11,7 @@ declare global {
       plan?: PlanType;
       onboardingComplete?: boolean;
       isCompanion?: boolean;
+      isRegistrationComplete?: boolean;
       hasUploadedDocs?: boolean;
     };
   }

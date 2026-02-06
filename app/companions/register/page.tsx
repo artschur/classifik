@@ -13,6 +13,8 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+
+
 async function CompanionFormWithData() {
   const { userId, sessionClaims } = await auth();
 

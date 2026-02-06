@@ -46,6 +46,7 @@ export default clerkMiddleware(async (auth, req) => {
   const metadata = sessionClaims?.metadata;
   const hasDocs = metadata?.hasUploadedDocs;
   const isCompanion = metadata?.isCompanion;
+  const isFirstStepRegistrationComplete = metadata?.isRegistrationComplete;
   const onboardingComplete = metadata?.onboardingComplete;
 
   if (isCompanion && !onboardingComplete) {
@@ -58,6 +59,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (
     isCompanion === true &&
     hasDocs === false &&
+    isFirstStepRegistrationComplete === true &&
     !req.nextUrl.pathname.startsWith("/companions/verification") &&
     !req.nextUrl.pathname.startsWith("/companions/register")
   ) {
