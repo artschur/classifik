@@ -10,6 +10,8 @@ const isPublicRoute = createRouteMatcher([
   "/companions/(.*)",
   "/blog",
   "/blog/(.*)",
+  "/checkout/",
+  "/checkout/(.*)",
   "/politica-de-cookies",
   "/politica-de-privacidade",
   "/termos-e-condicoes",
@@ -48,7 +50,7 @@ export default clerkMiddleware(async (auth, req) => {
   const isFirstStepRegistrationComplete = metadata?.isRegistrationComplete;
   const hasDocs = metadata?.hasUploadedDocs;
 
-  if (!onboardingComplete) {
+  if (onboardingComplete === false) {
     if (!req.nextUrl.pathname.startsWith("/onboarding")) {
       return NextResponse.redirect(new URL("/onboarding", req.url));
     }
@@ -56,14 +58,14 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   if (isCompanion) {
-    if (!isFirstStepRegistrationComplete) {
+    if (isFirstStepRegistrationComplete === false) {
       if (!req.nextUrl.pathname.startsWith("/companions/register")) {
         return NextResponse.redirect(new URL("/companions/register", req.url));
       }
       return NextResponse.next();
     }
 
-    if (!hasDocs) {
+    if (hasDocs === false) {
       if (!req.nextUrl.pathname.startsWith("/companions/verification")) {
         return NextResponse.redirect(new URL("/companions/verification", req.url));
       }
