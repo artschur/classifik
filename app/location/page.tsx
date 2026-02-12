@@ -6,18 +6,7 @@ import { Suspense } from 'react';
 async function CitiesList() {
   const cities = await getAvailableCitiesSummary();
 
-  // Map slugs for quick lookup
-  const availableSlugs = new Set(cities.map((c) => c.slug));
-
-  // Filter static regions to only include available cities
-  const filteredRegions = staticRegions
-    .map((region) => ({
-      ...region,
-      cities: region.cities.filter((city) => availableSlugs.has(city.slug)),
-    }))
-    .filter((region) => region.cities.length > 0);
-
-  return <SearchableCities regions={filteredRegions} />;
+  return <SearchableCities cities={cities} />;
 }
 
 export default function LocationsPage() {

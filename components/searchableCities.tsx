@@ -3,13 +3,17 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
-import type { Region } from '@/types/types';
 
+interface City {
+  slug: string;
+  city: string;
+
+}
 interface SearchableCitiesProps {
-  regions: Region[];
+  cities: City[];
 }
 
-export function SearchableCities({ regions }: SearchableCitiesProps) {
+export function SearchableCities({ cities }: SearchableCitiesProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,50 +40,22 @@ export function SearchableCities({ regions }: SearchableCitiesProps) {
     searchInputRef.current?.focus();
   };
 
-  // Filter regions and cities based on search query
-  const filteredRegions = useMemo(() => {
+  // Filter cities based on search query
+  const filteredCities = useMemo(() => {
     if (!searchQuery.trim()) {
-      return regions;
+
+      return cities.toSorted((c1: City, c2: City) => c1.city.localeCompare(c2.city))
     }
 
     const query = searchQuery.toLowerCase();
 
-    return regions
-      .map((region) => {
-        const matchesRegion = region.name.toLowerCase().includes(query);
+    return cities.filter((city) =>
+      city.city.toLowerCase().includes(query)
+    );
+  }, [cities, searchQuery]);
 
-        // If region name matches, show all cities in that region
-        if (matchesRegion) {
-          return region;
-        }
-
-        // Otherwise, filter cities by name
-        const filteredCities = region.cities.filter((city) =>
-          city.city.toLowerCase().includes(query)
-        );
-
-        if (filteredCities.length === 0) {
-          return null;
-        }
-
-        return {
-          ...region,
-          cities: filteredCities,
-        };
-      })
-      .filter((region): region is Region => region !== null);
-  }, [regions, searchQuery]);
-
-  // Calculate total cities count
-  const totalCities = regions.reduce(
-    (acc, region) => acc + region.cities.length,
-    0
-  );
-
-  const filteredCitiesCount = filteredRegions.reduce(
-    (acc, region) => acc + region.cities.length,
-    0
-  );
+  const totalCities = cities.length;
+  const filteredCitiesCount = filteredCities.length;
 
   return (
     <div className="w-full">
@@ -90,7 +66,7 @@ export function SearchableCities({ regions }: SearchableCitiesProps) {
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Procure distritos ou regiões... (⌘K)"
+            placeholder="Procure cidades... (⌘K)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-12 py-3 text-lg rounded-full border-2 border-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
@@ -108,10 +84,10 @@ export function SearchableCities({ regions }: SearchableCitiesProps) {
         {searchQuery && (
           <p className="mt-2 text-sm text-muted-foreground px-4">
             {filteredCitiesCount === 0 ? (
-              <>Nenhuma distrito encontrada para &quot;{searchQuery}&quot;</>
+              <>Nenhum distrito encontrada para &quot;{searchQuery}&quot;</>
             ) : (
               <>
-                {filteredCitiesCount} de {totalCities} distritos encontrados
+                {filteredCitiesCount} de {totalCities} distrito encontrados
               </>
             )}
           </p>
@@ -123,33 +99,26 @@ export function SearchableCities({ regions }: SearchableCitiesProps) {
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="text-6xl mb-4">🔍</div>
           <p className="text-xl font-semibold text-muted-foreground">
-            Nenhuma cidade encontrada
+            Nenhuma distrito encontrado
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Tente procurar por outra cidade ou região
+            Tente procurar por outro distrito
           </p>
         </div>
       ) : (
-        <div className="flex flex-col items-start gap-6">
-          {filteredRegions.map((region) => (
-            <div key={region.name} className="w-full">
-              <h2 className="text-4xl font-bold text-primary mb-2">
-                {region.name}
-              </h2>
-              <ul className="flex flex-col gap-2 pl-4">
-                {region.cities.map((city) => (
-                  <li key={city.slug}>
-                    <Link
-                      href={`/location/${city.slug}`}
-                      className="text-2xl text-neutral-600 hover:text-white hover:bg-primary transition-colors duration-400 cursor-pointer px-2 rounded-md inline-block"
-                    >
-                      {city.city}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <div className="w-full">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredCities.map((city) => (
+              <li key={city.slug}>
+                <Link
+                  href={`/location/${city.slug}`}
+                  className="block text-2xl border border-neutral-800 text-neutral-400 hover:text-white hover:bg-primary transition-colors duration-400 cursor-pointer px-4 py-2 rounded-lg"
+                >
+                  Distrito de {city.city}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
