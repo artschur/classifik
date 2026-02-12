@@ -39,12 +39,14 @@ export default clerkMiddleware(async (auth, req) => {
     return redirectToSignIn();
   }
 
+  const metadata = sessionClaims?.metadata
+  console.log(metadata)
+
   // if logged in allow to public routes
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
-  const metadata = sessionClaims?.metadata;
   const isCompanion = metadata?.isCompanion;
   const onboardingComplete = metadata?.onboardingComplete;
   const isFirstStepRegistrationComplete = metadata?.isRegistrationComplete;

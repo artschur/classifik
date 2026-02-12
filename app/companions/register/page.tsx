@@ -72,6 +72,7 @@ async function CompanionFormWithData() {
     !isVerified &&
     companion &&
     allVerificationStatus.isImageUploaded &&
+    (sessionClaims.metadata.isRegistrationComplete === true) &&
     !allVerificationStatus.isVerificationVideoUploaded
   ) {
     redirect("/companions/verification");
@@ -79,8 +80,8 @@ async function CompanionFormWithData() {
 
   return (
     <RegisterCompanionForm
-      cities={cities}
-      companionData={companion} // companion will be null if not found
+      cities={JSON.parse(JSON.stringify(cities))}
+      companionData={companion ? JSON.parse(JSON.stringify(companion)) : null}
     />
   );
 }

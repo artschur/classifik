@@ -416,10 +416,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         return;
       }
 
-      await completeFirstStepRegistration();
       await user?.reload();
 
       // Companion already created during photo upload, just redirect
+      await completeFirstStepRegistration();
       toast({
         variant: 'success',
         title: 'Perfil criado com sucesso',
@@ -434,12 +434,13 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         throw new Error('User ID not found');
       }
       await updateCompanionFromForm(clerkId, data);
+      await user?.reload();
       toast({
         variant: 'success',
         title: 'Perfil Atualizado',
         description: 'Seu perfil foi atualizado com sucesso.',
       });
-
+      await completeFirstStepRegistration();
       router.refresh();
       router.push('/');
     } catch (error) {

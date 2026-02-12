@@ -14,6 +14,7 @@ export const completeFirstStepRegistration = async () => {
   return client.users.updateUserMetadata(userId, {
     publicMetadata: {
       onboardingComplete: true, // Mark step 1 done
+      isRegistrationComplete: true,
       isCompanion: true,        // Set the role
     },
   });
