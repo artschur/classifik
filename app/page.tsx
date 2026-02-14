@@ -31,20 +31,20 @@ export const metadata: Metadata = {
   authors: [{ name: 'Onesugar' }],
   creator: 'Onesugar',
   publisher: 'Onesugar',
-  metadataBase: new URL('https://onesugar.app'),
+  metadataBase: new URL('https://onesugar.pt'),
   alternates: {
-    canonical: 'https://onesugar.app',
+    canonical: 'https://onesugar.pt',
   },
   openGraph: {
     title: 'Onesugar - Sugars Premium em Portugal',
     description: 'Serviços de Acompanhantes premium e discretas em Lisboa, Porto e todo Portugal.',
-    url: 'https://onesugar.app',
+    url: 'https://onesugar.pt',
     siteName: 'Onesugar',
     locale: 'pt_PT',
     type: 'website',
     images: [
       {
-        url: 'https://onesugar.app/images/og-image.jpg',
+        url: 'https://onesugar.pt/images/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'Onesugar - Acompanhantes Premium',
