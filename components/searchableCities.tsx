@@ -66,7 +66,7 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Procure cidades... (⌘K)"
+            placeholder="Procure distritos... (⌘K)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-12 py-3 text-lg rounded-full border-2 border-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
