@@ -1,26 +1,34 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   getSignedUploadUrl,
   saveDocumentAfterUpload,
   getDocumentsByAuthId,
   deleteDocument,
-} from '@/app/actions/document-verification';
-import { useUser } from '@clerk/nextjs';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, X, Check, Upload, AlertTriangle, VideoIcon, Info } from 'lucide-react';
+} from "@/app/actions/document-verification";
+import { useUser } from "@clerk/nextjs";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Loader2,
+  X,
+  Check,
+  Upload,
+  AlertTriangle,
+  VideoIcon,
+  Info,
+} from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -28,29 +36,28 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-
+} from "@/components/ui/select";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB - Documents bucket limit
 
 const DocumentFormSchema = z.object({
-  documentType: z.string().min(1, 'Selecione um tipo de documento'),
+  documentType: z.string().min(1, "Selecione um tipo de documento"),
   file: z
     .any()
     .refine((file) => file instanceof File, {
-      message: 'Envie um arquivo válido, menos de 50MB',
+      message: "Envie um arquivo válido, menos de 50MB",
     })
     .refine((file) => file.size <= MAX_FILE_SIZE, {
-      message: 'O arquivo deve ter no máximo 5MB',
+      message: "O arquivo deve ter no máximo 5MB",
     }),
 });
 
@@ -69,28 +76,35 @@ type Document = {
 async function uploadFileDirectToSupabase(
   file: File,
   documentType: string,
-): Promise<{ success: true; publicUrl: string } | { success: false; error: string }> {
+): Promise<
+  { success: true; publicUrl: string } | { success: false; error: string }
+> {
   // Step 1: Get a signed upload URL from the server
-  const fileExtension = file.name.split('.').pop() || 'bin';
+  const fileExtension = file.name.split(".").pop() || "bin";
   const signedUrlResult = await getSignedUploadUrl(documentType, fileExtension);
 
   if (!signedUrlResult.success) {
-    return { success: false, error: signedUrlResult.error ?? 'Falha ao gerar URL de upload.' };
+    return {
+      success: false,
+      error: signedUrlResult.error ?? "Falha ao gerar URL de upload.",
+    };
   }
 
   // Step 2: Upload the file directly to Supabase from the client
   const { signedUrl, storagePath, token } = signedUrlResult;
 
   const uploadResponse = await fetch(signedUrl, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': file.type,
+      "Content-Type": file.type,
     },
     body: file,
   });
 
   if (!uploadResponse.ok) {
-    const errorText = await uploadResponse.text().catch(() => 'Unknown upload error');
+    const errorText = await uploadResponse
+      .text()
+      .catch(() => "Unknown upload error");
     return { success: false, error: `Erro no upload: ${errorText}` };
   }
 
@@ -98,27 +112,41 @@ async function uploadFileDirectToSupabase(
   const saveResult = await saveDocumentAfterUpload(documentType, storagePath);
 
   if (!saveResult.success) {
-    return { success: false, error: saveResult.error ?? 'Falha ao salvar registro do documento.' };
+    return {
+      success: false,
+      error: saveResult.error ?? "Falha ao salvar registro do documento.",
+    };
   }
 
   return { success: true, publicUrl: saveResult.publicUrl! };
 }
 
-export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { isVerificationVideoUploaded: boolean; isDocumentUploaded: boolean } }) {
+export function DocumentVerificationForm({
+  uploadStatus,
+}: {
+  uploadStatus?: {
+    isVerificationVideoUploaded: boolean;
+    isDocumentUploaded: boolean;
+  };
+}) {
   const { isLoaded, user } = useUser();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [documents, setDocuments] = React.useState<Document[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [videoUploaded, setVideoUploaded] = React.useState(uploadStatus?.isVerificationVideoUploaded ?? false);
-  const [documentUploaded, setDocumentUploaded] = React.useState(uploadStatus?.isDocumentUploaded ?? false);
+  const [videoUploaded, setVideoUploaded] = React.useState(
+    uploadStatus?.isVerificationVideoUploaded ?? false,
+  );
+  const [documentUploaded, setDocumentUploaded] = React.useState(
+    uploadStatus?.isDocumentUploaded ?? false,
+  );
   const [isUploadingVideo, setIsUploadingVideo] = React.useState(false);
-  const [uploadProgress, setUploadProgress] = React.useState<string>('');
+  const [uploadProgress, setUploadProgress] = React.useState<string>("");
 
   const form = useForm<z.infer<typeof DocumentFormSchema>>({
     resolver: zodResolver(DocumentFormSchema),
     defaultValues: {
-      documentType: '',
+      documentType: "",
     },
   });
 
@@ -134,26 +162,28 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
           if (result.success) {
             setDocuments(result.documents as Document[]);
             const hasVerificationVideo = result.documents.some(
-              (doc: Document) => doc.document_type === 'verification_video',
+              (doc: Document) => doc.document_type === "verification_video",
             );
             setVideoUploaded(hasVerificationVideo);
             const hasIdDocument = result.documents.some((doc: Document) =>
-              ['id_card', 'passport', 'drivers_license', 'selfie'].includes(doc.document_type),
+              ["id_card", "passport", "drivers_license", "selfie"].includes(
+                doc.document_type,
+              ),
             );
             setDocumentUploaded(hasIdDocument);
           } else {
             toast({
-              title: 'Erro',
-              description: 'Não foi possível carregar os documentos.',
-              variant: 'destructive',
+              title: "Erro",
+              description: "Não foi possível carregar os documentos.",
+              variant: "destructive",
             });
           }
         } catch (error) {
-          console.error('Error fetching documents:', error);
+          console.error("Error fetching documents:", error);
           toast({
-            title: 'Erro',
-            description: 'Ocorreu um erro ao carregar os documentos.',
-            variant: 'destructive',
+            title: "Erro",
+            description: "Ocorreu um erro ao carregar os documentos.",
+            variant: "destructive",
           });
         } finally {
           setIsLoading(false);
@@ -172,45 +202,49 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
     // Validate video size
     if (videoFile.size > MAX_VIDEO_SIZE) {
       toast({
-        title: 'Vídeo muito grande',
+        title: "Vídeo muito grande",
         description: `O vídeo deve ter no máximo ${MAX_VIDEO_SIZE / 1024 / 1024}MB. Use um aplicativo para comprimir o vídeo antes de enviar.`,
-        variant: 'destructive',
+        variant: "destructive",
       });
       if (videoInputRef.current) {
-        videoInputRef.current.value = '';
+        videoInputRef.current.value = "";
       }
       return;
     }
 
     // Validate video type
-    if (!videoFile.type.startsWith('video/')) {
+    if (!videoFile.type.startsWith("video/")) {
       toast({
-        title: 'Formato inválido',
-        description: 'Por favor, envie um arquivo de vídeo válido.',
-        variant: 'destructive',
+        title: "Formato inválido",
+        description: "Por favor, envie um arquivo de vídeo válido.",
+        variant: "destructive",
       });
       if (videoInputRef.current) {
-        videoInputRef.current.value = '';
+        videoInputRef.current.value = "";
       }
       return;
     }
 
     setIsUploadingVideo(true);
-    setUploadProgress('Preparando upload...');
+    setUploadProgress("Preparando upload...");
 
     try {
-      setUploadProgress('Enviando vídeo diretamente...');
-      const result = await uploadFileDirectToSupabase(videoFile, 'verification_video');
+      setUploadProgress("Enviando vídeo diretamente...");
+      const result = await uploadFileDirectToSupabase(
+        videoFile,
+        "verification_video",
+      );
 
       if (result.success) {
         toast({
-          title: 'Vídeo enviado',
-          description: 'Seu vídeo foi enviado com sucesso e está aguardando revisão.',
-          variant: 'success',
+          title: "Vídeo enviado",
+          description:
+            "Seu vídeo foi enviado com sucesso e está aguardando revisão.",
+          variant: "success",
         });
 
         if (videoInputRef.current) {
-          videoInputRef.current.value = '';
+          videoInputRef.current.value = "";
         }
 
         const updatedDocs = await getDocumentsByAuthId(user.id);
@@ -219,38 +253,41 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
           setVideoUploaded(true);
         }
       } else {
-        console.error('Upload failed:', result.error);
+        console.error("Upload failed:", result.error);
         toast({
-          title: 'Erro',
-          description: result.error || 'Falha ao enviar o vídeo.',
-          variant: 'destructive',
+          title: "Erro",
+          description: result.error || "Falha ao enviar o vídeo.",
+          variant: "destructive",
         });
         if (videoInputRef.current) {
-          videoInputRef.current.value = '';
+          videoInputRef.current.value = "";
         }
       }
     } catch (error) {
-      console.error('Error uploading video:', error);
+      console.error("Error uploading video:", error);
       toast({
-        title: 'Erro',
-        description: error instanceof Error ? error.message : 'Ocorreu um erro ao enviar o vídeo.',
-        variant: 'destructive',
+        title: "Erro",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao enviar o vídeo.",
+        variant: "destructive",
       });
       if (videoInputRef.current) {
-        videoInputRef.current.value = '';
+        videoInputRef.current.value = "";
       }
     } finally {
       setIsUploadingVideo(false);
-      setUploadProgress('');
+      setUploadProgress("");
     }
   }
 
   async function onSubmit(data: z.infer<typeof DocumentFormSchema>) {
     if (!isLoaded || !user?.id) {
       toast({
-        title: 'Erro',
-        description: 'Usuário não autenticado.',
-        variant: 'destructive',
+        title: "Erro",
+        description: "Usuário não autenticado.",
+        variant: "destructive",
       });
       return;
     }
@@ -258,42 +295,51 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
     setIsSubmitting(true);
 
     try {
-      const result = await uploadFileDirectToSupabase(data.file, data.documentType);
+      const result = await uploadFileDirectToSupabase(
+        data.file,
+        data.documentType,
+      );
 
       if (result.success) {
         toast({
-          title: 'Documento enviado',
-          description: 'Seu documento foi enviado com sucesso e está aguardando revisão.',
-          variant: 'success',
+          title: "Documento enviado",
+          description:
+            "Seu documento foi enviado com sucesso e está aguardando revisão.",
+          variant: "success",
         });
 
         form.reset();
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
 
         const updatedDocs = await getDocumentsByAuthId(user.id);
         if (updatedDocs.success) {
           setDocuments(updatedDocs.documents as Document[]);
           const hasIdDocument = updatedDocs.documents.some((doc: Document) =>
-            ['id_card', 'passport', 'drivers_license', 'selfie'].includes(doc.document_type),
+            ["id_card", "passport", "drivers_license", "selfie"].includes(
+              doc.document_type,
+            ),
           );
           setDocumentUploaded(hasIdDocument);
         }
       } else {
-        console.error('Upload failed:', result.error);
+        console.error("Upload failed:", result.error);
         toast({
-          title: 'Erro',
-          description: result.error || 'Falha ao enviar o documento.',
-          variant: 'destructive',
+          title: "Erro",
+          description: result.error || "Falha ao enviar o documento.",
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
+      console.error("Error uploading document:", error);
       toast({
-        title: 'Erro',
-        description: error instanceof Error ? error.message : 'Ocorreu um erro ao enviar o documento.',
-        variant: 'destructive',
+        title: "Erro",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao enviar o documento.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -315,8 +361,8 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
             )}
           </CardTitle>
           <CardDescription>
-            Grave um vídeo curto para confirmar sua identidade. Este vídeo não será exibido no seu
-            perfil e é usado apenas para verificação.
+            Grave um vídeo curto para confirmar sua identidade. Este vídeo não
+            será exibido no seu perfil e é usado apenas para verificação.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -327,29 +373,26 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
                 <p className="font-semibold mb-1">Limite de tamanho: 50MB</p>
                 <p>Se seu vídeo for maior, use um aplicativo de compressão:</p>
                 <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li><strong>iPhone:</strong> Video Compress (App Store)</li>
-                  <li><strong>Android:</strong> Video Compressor (Play Store)</li>
-                  <li><strong>Online:</strong> clideo.com ou freeconvert.com</li>
+                  <li>
+                    <strong>iPhone:</strong> Video Compress (App Store)
+                  </li>
+                  <li>
+                    <strong>Android:</strong> Video Compressor (Play Store)
+                  </li>
+                  <li>
+                    <strong>Online:</strong> clideo.com ou freeconvert.com
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
-          <div className="mb-4">
-            <p className="text-sm font-medium mb-2">Exemplo de como gravar seu vídeo:</p>
-            <div className="w-full aspect-video">
-              <iframe
-                className="w-full h-full rounded-lg border shadow-sm"
-                src="https://youtube.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
-                title="ídeo de Verificação"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
+
           {videoUploaded ? (
             <div className="text-center py-4">
               <Check className="mx-auto h-8 w-8 text-green-500 mb-2" />
-              <p className="text-green-600 font-medium">Vídeo enviado com sucesso</p>
+              <p className="text-green-600 font-medium">
+                Vídeo enviado com sucesso
+              </p>
             </div>
           ) : (
             <div className="flex flex-col items-center">
@@ -376,7 +419,8 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
                 >
                   {isUploadingVideo ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {uploadProgress || 'Enviando vídeo...'}
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      {uploadProgress || "Enviando vídeo..."}
                     </>
                   ) : (
                     <>
@@ -386,8 +430,9 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Envie um vídeo curto (10-15 segundos, máx. 50MB) mostrando seu rosto e segurando um papel com a
-                data de hoje e &quot;Onesugar&quot; escrito.
+                Envie um vídeo curto (10-15 segundos, máx. 50MB) mostrando seu
+                rosto e segurando um papel com a data de hoje e
+                &quot;Onesugar&quot; escrito.
               </p>
             </div>
           )}
@@ -405,14 +450,20 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <FormField
                   control={form.control}
                   name="documentType"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo de Documento</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o tipo de documento" />
@@ -445,11 +496,11 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
                               onChange(file);
                               // Validate size immediately
                               if (file.size > MAX_FILE_SIZE) {
-                                form.setError('file', {
+                                form.setError("file", {
                                   message: `O arquivo deve ter no máximo ${MAX_FILE_SIZE / 1024 / 1024}MB`,
                                 });
                               } else {
-                                form.clearErrors('file');
+                                form.clearErrors("file");
                               }
                             }
                           }}
@@ -461,10 +512,14 @@ export function DocumentVerificationForm({ uploadStatus }: { uploadStatus?: { is
                   )}
                 />
 
-                <Button type="submit" disabled={isSubmitting || isUploadingVideo}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || isUploadingVideo}
+                >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      Enviando...
                     </>
                   ) : (
                     <>

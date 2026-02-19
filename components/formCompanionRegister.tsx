@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import * as React from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,17 +13,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -31,20 +31,27 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Cigarette, Globe, Loader2, X } from 'lucide-react';
-import { City } from '@/db/schema'; // Import Companion
-import { registerCompanion, updateCompanionFromForm } from '@/db/queries/companions'; // Import updateCompanion
-import { IMaskInput } from 'react-imask';
-import { PhoneInput } from './phoneInput';
-import { useRouter } from 'next/navigation'; // Import useRouter
-import { useToast } from '@/hooks/use-toast'; // Import at the correct path
-import { useClerk, useUser } from '@clerk/nextjs';
-import { MultiSelect } from './multi-select';
-import { FileUpload } from '@/components/ui/file-upload';
-import { uploadImage, getImagesByAuthId, deleteImage } from '@/db/queries/images';
-import Image from 'next/image';
-import { useState } from 'react';
+} from "@/components/ui/card";
+import { Cigarette, Globe, Loader2, X } from "lucide-react";
+import { City } from "@/db/schema"; // Import Companion
+import {
+  registerCompanion,
+  updateCompanionFromForm,
+} from "@/db/queries/companions"; // Import updateCompanion
+import { IMaskInput } from "react-imask";
+import { PhoneInput } from "./phoneInput";
+import { useRouter } from "next/navigation"; // Import useRouter
+import { useToast } from "@/hooks/use-toast"; // Import at the correct path
+import { useClerk, useUser } from "@clerk/nextjs";
+import { MultiSelect } from "./multi-select";
+import { FileUpload } from "@/components/ui/file-upload";
+import {
+  uploadImage,
+  getImagesByAuthId,
+  deleteImage,
+} from "@/db/queries/images";
+import Image from "next/image";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,39 +62,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
-import { IconBrandInstagram, IconLanguage } from '@tabler/icons-react';
-import { registerCompanionAction } from '@/app/actions/register';
-import { completeFirstStepRegistration } from '@/app/companions/register/action';
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { IconBrandInstagram, IconLanguage } from "@tabler/icons-react";
+import { registerCompanionAction } from "@/app/actions/register";
+import { completeFirstStepRegistration } from "@/app/companions/register/action";
 
 const pageOneSchema = z.object({
   // Companion Info
-  name: z.string().min(2, 'Nome precisa ter ao menos 2 caractéres'),
+  name: z.string().min(2, "Nome precisa ter ao menos 2 caractéres"),
   shortDescription: z
     .string()
-    .min(10, 'Descrição curta precisa ter ao menos 10 caractéres')
-    .max(60, 'Descrição curta pode ter no máximo 60 caractéres'),
-  phoneNumber: z.string().min(8, 'Numero de telefone precisa ter ao menos 8 caractéres'),
+    .min(10, "Descrição curta precisa ter ao menos 10 caractéres")
+    .max(60, "Descrição curta pode ter no máximo 60 caractéres"),
+  phoneNumber: z
+    .string()
+    .min(8, "Numero de telefone precisa ter ao menos 8 caractéres"),
   instagramHandle: z.string().optional(),
-  description: z.string().min(30, 'Descrição precisa ter ao menos 30 caractéres'),
-  price: z.number().min(1, 'Seu preço precisa ser positivo'),
-  age: z.number().min(18, 'Você precisa ter mais de 18 anos!').max(100),
-  gender: z.string().min(1, 'Gênero é obrigatório'),
+  description: z
+    .string()
+    .min(30, "Descrição precisa ter ao menos 30 caractéres"),
+  price: z.number().min(1, "Seu preço precisa ser positivo"),
+  age: z.number().min(18, "Você precisa ter mais de 18 anos!").max(100),
+  gender: z.string().min(1, "Gênero é obrigatório"),
   gender_identity: z.string().optional(),
-  languages: z.array(z.string()).min(1, 'Selecione ao menos uma Lingua'),
+  languages: z.array(z.string()).min(1, "Selecione ao menos uma Lingua"),
 });
 
 const pageTwoSchema = z.object({
   // Characteristics
-  weight: z.number().min(30, 'Peso precisa ser ao menos 30kg'),
+  weight: z.number().min(30, "Peso precisa ser ao menos 30kg"),
   height: z
     .number()
-    .min(1.3, 'Altura precisa ser ao menos 1.40m')
-    .max(3.0, 'Altura precisa ser menor que 2.5m'),
-  ethnicity: z.string().min(1, 'Etnia é obrigatória'),
+    .min(1.3, "Altura precisa ser ao menos 1.40m")
+    .max(3.0, "Altura precisa ser menor que 2.5m"),
+  ethnicity: z.string().min(1, "Etnia é obrigatória"),
   eye_color: z.string().optional(),
-  hair_color: z.string().min(1, 'Cor do seu cabelo é obrigatória'),
+  hair_color: z.string().min(1, "Cor do seu cabelo é obrigatória"),
   hair_length: z.string().optional(),
   shoe_size: z.number().optional(),
   silicone: z.boolean().default(false),
@@ -98,10 +109,10 @@ const pageTwoSchema = z.object({
 
 const pageThreeSchema = z.object({
   // Location
-  neighborhood: z.string().min(1, 'Concelho é obrigatório'),
-  city: z.number().min(1, 'Cidade é obrigatória'),
-  state: z.string().length(2, 'Estado precisa conter ao menos 2 caractéres'),
-  country: z.string().min(1, 'País é obrigatório'),
+  neighborhood: z.string().min(1, "Concelho é obrigatório"),
+  city: z.number().min(1, "Cidade é obrigatória"),
+  state: z.string().length(2, "Estado precisa conter ao menos 2 caractéres"),
+  country: z.string().min(1, "País é obrigatório"),
   meets_at_hotel: z.boolean().default(false),
   meets_at_own_place: z.boolean().default(false),
 });
@@ -113,38 +124,53 @@ const RegisterCompanionFormSchema = z.object({
 });
 
 // Updated type to include email (if you need it) and remove undefined
-export type RegisterCompanionFormValues = z.infer<typeof RegisterCompanionFormSchema> & {
+export type RegisterCompanionFormValues = z.infer<
+  typeof RegisterCompanionFormSchema
+> & {
   email?: string; // Make email optional
 };
 
-const formSections = ['Suas Informações', 'Características', 'Localização', 'Fotos'] as const;
+const formSections = [
+  "Suas Informações",
+  "Características",
+  "Localização",
+  "Fotos",
+] as const;
 
 interface RegisterCompanionFormProps {
   cities: City[];
-  companionData?: (RegisterCompanionFormValues & { companionId: number }) | null | undefined; // Optional companion data for editing
+  companionData?:
+    | (RegisterCompanionFormValues & { companionId: number })
+    | null
+    | undefined; // Optional companion data for editing
 }
 
-export function RegisterCompanionForm({ cities, companionData }: RegisterCompanionFormProps) {
+export function RegisterCompanionForm({
+  cities,
+  companionData,
+}: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
-  const [uploadStatus, setUploadStatus] = React.useState('');
+  const [uploadStatus, setUploadStatus] = React.useState("");
   const [isRegistering, setIsRegistering] = React.useState(false);
-  const [images, setImages] = React.useState<{ publicUrl: string; storagePath: string }[]>([]);
+  const [images, setImages] = React.useState<
+    { publicUrl: string; storagePath: string }[]
+  >([]);
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const linguasDisponiveis = [
-    { value: 'Português', label: 'Português' },
-    { value: 'Inglês', label: 'Inglês' },
-    { value: 'Espanhol', label: 'Espanhol' },
-    { value: 'Francês', label: 'Francês' },
-    { value: 'Alemão', label: 'Alemão' },
-    { value: 'Italiano', label: 'Italiano' },
+    { value: "Português", label: "Português" },
+    { value: "Inglês", label: "Inglês" },
+    { value: "Espanhol", label: "Espanhol" },
+    { value: "Francês", label: "Francês" },
+    { value: "Alemão", label: "Alemão" },
+    { value: "Italiano", label: "Italiano" },
   ];
   const { toast } = useToast();
   const router = useRouter();
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 100, behavior: 'smooth' });
+    window.scrollTo({ top: 100, behavior: "smooth" });
   };
 
   const validateCurrentPage = async () => {
@@ -197,46 +223,46 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         languages: companionData.languages, // Assuming languages is an array of strings
         instagramHandle: companionData.instagramHandle, // Instagram handle is a string
         city: companionData.city, // City is an id
-        phoneNumber: companionData.phoneNumber || '', // Provide default if null
-        ethnicity: companionData.ethnicity || '', // Provide default if null
-        hair_color: companionData.hair_color || '', // Provide default if null
+        phoneNumber: companionData.phoneNumber || "", // Provide default if null
+        ethnicity: companionData.ethnicity || "", // Provide default if null
+        hair_color: companionData.hair_color || "", // Provide default if null
         silicone: companionData.silicone || false, // Provide default if null
         tattoos: companionData.tattoos || false, // Provide default if null
         piercings: companionData.piercings || false, // Provide default if null
         smoker: companionData.smoker || false, // Provide default if null
-        neighborhood: companionData.neighborhood || '', // Provide default if null
-        state: companionData.state || '', // Provide default if null
-        country: companionData.country || '', // Provide default if null
+        neighborhood: companionData.neighborhood || "", // Provide default if null
+        state: companionData.state || "", // Provide default if null
+        country: companionData.country || "", // Provide default if null
         meets_at_hotel: companionData.meets_at_hotel || false,
         meets_at_own_place: companionData.meets_at_own_place || false,
       };
     } else {
       return {
-        name: '',
-        shortDescription: '',
-        phoneNumber: '',
-        description: '',
-        instagramHandle: '',
+        name: "",
+        shortDescription: "",
+        phoneNumber: "",
+        description: "",
+        instagramHandle: "",
         price: 0,
         age: 18,
-        gender: '',
-        gender_identity: '',
-        languages: ['Português'],
+        gender: "",
+        gender_identity: "",
+        languages: ["Português"],
         weight: 60,
         height: 1.6,
-        ethnicity: 'Branco',
-        eye_color: 'Castanho',
-        hair_color: 'Castanho',
-        hair_length: 'Médio',
+        ethnicity: "Branco",
+        eye_color: "Castanho",
+        hair_color: "Castanho",
+        hair_length: "Médio",
         shoe_size: 36,
         silicone: false,
         tattoos: false,
         piercings: false,
         smoker: false,
-        neighborhood: '',
+        neighborhood: "",
         city: 1,
-        state: '',
-        country: '',
+        state: "",
+        country: "",
         meets_at_hotel: false,
         meets_at_own_place: false,
       };
@@ -246,8 +272,8 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
   const form = useForm<RegisterCompanionFormValues>({
     resolver: zodResolver(RegisterCompanionFormSchema),
     defaultValues: getInitialValues(),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: "onBlur",
+    reValidateMode: "onChange",
   });
   const { isLoaded, user } = useUser();
 
@@ -261,7 +287,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
 
   const handleFileUpload = async (files: File[]) => {
     if (!files.length) return;
-    setUploadStatus('Enviando arquivos...');
+    setUploadStatus("Enviando arquivos...");
 
     try {
       let currentCompanionId = companionId;
@@ -275,17 +301,18 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
           currentCompanionId = companion.id;
           setCompanionId(companion.id);
           toast({
-            variant: 'success',
-            title: 'Perfil criado',
+            variant: "success",
+            title: "Perfil criado",
             description: `Hey ${formData.name}! Agora fazendo upload das suas fotos.`,
           });
         } catch (error) {
           toast({
-            variant: 'destructive',
-            title: 'Falha no registro',
-            description: error instanceof Error ? error.message : 'Algo deu errado',
+            variant: "destructive",
+            title: "Falha no registro",
+            description:
+              error instanceof Error ? error.message : "Algo deu errado",
           });
-          setUploadStatus('');
+          setUploadStatus("");
           setIsRegistering(false);
           return;
         } finally {
@@ -299,25 +326,27 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
       }
 
       if (!currentCompanionId) {
-        throw new Error('Companion ID not found');
+        throw new Error("Companion ID not found");
       }
 
       // NOW upload images with the companionId
-      const results = await Promise.all(files.map((file) => uploadImage(file, currentCompanionId)));
+      const results = await Promise.all(
+        files.map((file) => uploadImage(file, currentCompanionId)),
+      );
 
       const errors = results.filter((r) => r.error);
       if (errors.length > 0) {
         setUploadStatus(`Falha ao enviar ${errors.length} arquivos`);
         toast({
-          title: 'Falha no upload',
+          title: "Falha no upload",
           description: `Falha ao enviar ${errors.length} arquivos`,
-          variant: 'destructive',
+          variant: "destructive",
         });
       } else {
         toast({
-          title: 'Imagens enviadas',
+          title: "Imagens enviadas",
           description: `${files.length} imagens enviadas com sucesso`,
-          variant: 'success',
+          variant: "success",
         });
       }
 
@@ -325,14 +354,14 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         const newImages = await getImagesByAuthId(user.id);
         setImages(newImages);
       }
-      setUploadStatus('');
+      setUploadStatus("");
     } catch (error) {
       toast({
-        title: 'Falha no upload',
-        description: error instanceof Error ? error.message : 'Algo deu errado',
-        variant: 'destructive',
+        title: "Falha no upload",
+        description: error instanceof Error ? error.message : "Algo deu errado",
+        variant: "destructive",
       });
-      setUploadStatus('');
+      setUploadStatus("");
     }
   };
 
@@ -353,16 +382,20 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
 
     const imagesToDelete = Array.from(selectedImages);
     // Filter using storagePath
-    setImages((prev) => prev.filter((img) => !selectedImages.has(img.storagePath)));
+    setImages((prev) =>
+      prev.filter((img) => !selectedImages.has(img.storagePath)),
+    );
     setSelectedImages(new Set());
     setIsDeleting(true);
 
     try {
-      await Promise.all(imagesToDelete.map((storagePath) => deleteImage(storagePath)));
+      await Promise.all(
+        imagesToDelete.map((storagePath) => deleteImage(storagePath)),
+      );
       toast({
-        title: 'Images deleted',
+        title: "Images deleted",
         description: `Successfully deleted ${imagesToDelete.length} images`,
-        variant: 'success',
+        variant: "success",
       });
     } catch (error) {
       // On error, restore the images
@@ -371,9 +404,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         setImages(newImages);
       }
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
-        variant: 'destructive',
+        title: "Delete failed",
+        description:
+          error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive",
       });
     } finally {
       setIsDeleting(false);
@@ -387,9 +421,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
     try {
       await deleteImage(storagePath);
       toast({
-        title: 'Image deleted',
-        description: 'Your image has been deleted successfully',
-        variant: 'success',
+        title: "Image deleted",
+        description: "Your image has been deleted successfully",
+        variant: "success",
       });
     } catch (error) {
       if (isLoaded && user?.id) {
@@ -397,9 +431,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
         setImages(newImages);
       }
       toast({
-        title: 'Delete failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
-        variant: 'destructive',
+        title: "Delete failed",
+        description:
+          error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive",
       });
     }
   };
@@ -409,9 +444,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
       // Validate that at least one photo has been uploaded
       if (images.length === 0) {
         toast({
-          variant: 'destructive',
-          title: 'Fotos obrigatórias',
-          description: 'Por favor, adicione pelo menos uma foto antes de finalizar o cadastro.',
+          variant: "destructive",
+          title: "Fotos obrigatórias",
+          description:
+            "Por favor, adicione pelo menos uma foto antes de finalizar o cadastro.",
         });
         return;
       }
@@ -421,33 +457,34 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
       // Companion already created during photo upload, just redirect
       await completeFirstStepRegistration();
       toast({
-        variant: 'success',
-        title: 'Perfil criado com sucesso',
-        description: 'Seja bem vindo(a) à nossa plataforma. Agora vamos gravar seu audio',
+        variant: "success",
+        title: "Perfil criado com sucesso",
+        description:
+          "Seja bem vindo(a) à nossa plataforma. Agora vamos gravar seu audio",
       });
-      router.push('/companions/verification');
+      router.push("/companions/verification");
       return;
     }
     try {
       const clerkId = user?.id;
       if (!clerkId) {
-        throw new Error('User ID not found');
+        throw new Error("User ID not found");
       }
       await updateCompanionFromForm(clerkId, data);
       await user?.reload();
       toast({
-        variant: 'success',
-        title: 'Perfil Atualizado',
-        description: 'Seu perfil foi atualizado com sucesso.',
+        variant: "success",
+        title: "Perfil Atualizado",
+        description: "Seu perfil foi atualizado com sucesso.",
       });
       await completeFirstStepRegistration();
       router.refresh();
-      router.push('/');
+      router.push("/");
     } catch (error) {
       toast({
-        variant: 'destructive',
-        title: 'Falha na atualização',
-        description: error instanceof Error ? error.message : 'Algo deu errado',
+        variant: "destructive",
+        title: "Falha na atualização",
+        description: error instanceof Error ? error.message : "Algo deu errado",
       });
     }
   }
@@ -455,15 +492,34 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-3xl">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="mx-auto max-w-3xl"
+        >
           <Card>
             <CardHeader>
-              <CardTitle>{companionData ? 'Edit Profile' : 'Registre-se'}</CardTitle>
+              <CardTitle>
+                {companionData ? "Edit Profile" : "Registre-se"}
+              </CardTitle>
               <CardDescription>
                 {companionData
-                  ? 'Edite seu detalhes.'
-                  : 'Insira seus detalhes e apareça na melhor plataforma de sugars de portugal.'}
+                  ? "Edite seu detalhes."
+                  : "Insira seus detalhes e apareça na melhor plataforma de sugars de portugal."}
               </CardDescription>
+              <div className="mb-4">
+                <p className="text-sm font-medium mb-2">
+                  Exemplo de como gravar seu vídeo:
+                </p>
+                <div className="w-full aspect-video">
+                  <iframe
+                    className="w-full h-full rounded-lg border shadow-sm"
+                    src="https://youtube.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
+                    title="ídeo de Verificação"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Page One (Suas Informações) */}
@@ -491,7 +547,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                           <FormLabel>Numero de Telefone</FormLabel>
                           <FormControl>
                             <PhoneInput
-                              defaultCountry={'PT'}
+                              defaultCountry={"PT"}
                               placeholder="Insira seu numero de telefone"
                               value={field.value}
                               onChange={(value) => field.onChange(value)}
@@ -520,8 +576,16 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                               <Input
                                 className="rounded-l-none"
                                 placeholder="seu_instagram"
-                                value={field.value ? field.value.replace('@', '') : ''}
-                                onChange={(e) => field.onChange(e.target.value.replace('@', ''))}
+                                value={
+                                  field.value
+                                    ? field.value.replace("@", "")
+                                    : ""
+                                }
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value.replace("@", ""),
+                                  )
+                                }
                               />
                             </div>
                           </FormControl>
@@ -580,18 +644,22 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                                     scale: 2,
                                     min: 0,
                                     max: 10000,
-                                    radix: ',',
-                                    thousandsSeparator: '.',
+                                    radix: ",",
+                                    thousandsSeparator: ".",
                                   },
                                 }}
                                 placeholder="Insira seu preço cobrado"
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-7 py-2 text-sm ring-offset-background"
                                 value={String(field.value)}
                                 onAccept={(value) =>
-                                  field.onChange(Number(value.replace(/[^0-9]/g, '')))
+                                  field.onChange(
+                                    Number(value.replace(/[^0-9]/g, "")),
+                                  )
                                 }
                               />
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2">€</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                                €
+                              </span>
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -605,7 +673,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                         <FormItem>
                           <FormLabel>Idade</FormLabel>
                           <Select
-                            onValueChange={(value) => field.onChange(Number.parseInt(value, 10))}
+                            onValueChange={(value) =>
+                              field.onChange(Number.parseInt(value, 10))
+                            }
                             value={field.value?.toString()}
                           >
                             <FormControl>
@@ -614,11 +684,13 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {Array.from({ length: 22 }, (_, i) => i + 18).map((age) => (
-                                <SelectItem key={age} value={age.toString()}>
-                                  {age}
-                                </SelectItem>
-                              ))}
+                              {Array.from({ length: 22 }, (_, i) => i + 18).map(
+                                (age) => (
+                                  <SelectItem key={age} value={age.toString()}>
+                                    {age}
+                                  </SelectItem>
+                                ),
+                              )}
                               <SelectItem value="40">40+</SelectItem>
                             </SelectContent>
                           </Select>
@@ -635,14 +707,19 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Gênero</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione seu gênero" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Masculino">Masculino</SelectItem>
+                              <SelectItem value="Masculino">
+                                Masculino
+                              </SelectItem>
                               <SelectItem value="Feminino">Feminino</SelectItem>
                               <SelectItem value="Outro">Outro</SelectItem>
                             </SelectContent>
@@ -657,15 +734,22 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Identidade de gênero</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Cisgênero" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cisgênero">Cisgênero</SelectItem>
-                              <SelectItem value="Transgênero">Transgênero</SelectItem>
+                              <SelectItem value="Cisgênero">
+                                Cisgênero
+                              </SelectItem>
+                              <SelectItem value="Transgênero">
+                                Transgênero
+                              </SelectItem>
                               <SelectItem value="Outro">Outro</SelectItem>
                             </SelectContent>
                           </Select>
@@ -687,16 +771,20 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                         <FormControl>
                           <MultiSelect
                             options={[
-                              { value: 'Português', label: 'Português' },
-                              { value: 'Inglês', label: 'Inglês' },
-                              { value: 'Espanhol', label: 'Espanhol' },
-                              { value: 'Francês', label: 'Francês' },
-                              { value: 'Alemão', label: 'Alemão' },
-                              { value: 'Italiano', label: 'Italiano' },
+                              { value: "Português", label: "Português" },
+                              { value: "Inglês", label: "Inglês" },
+                              { value: "Espanhol", label: "Espanhol" },
+                              { value: "Francês", label: "Francês" },
+                              { value: "Alemão", label: "Alemão" },
+                              { value: "Italiano", label: "Italiano" },
                             ]}
                             onValueChange={field.onChange}
                             value={field.value}
-                            defaultValue={companionData ? companionData.languages : ['Português']}
+                            defaultValue={
+                              companionData
+                                ? companionData.languages
+                                : ["Português"]
+                            }
                             placeholder="Selecione suas Línguas"
                             variant="inverted"
                             animation={2}
@@ -714,8 +802,8 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Características</h3>
                   <p className=" text-sm text-neutral-500 ">
-                    Essa parte é muito importante para aparecer nos nossos filtros e atrair novos
-                    clientes.
+                    Essa parte é muito importante para aparecer nos nossos
+                    filtros e atrair novos clientes.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
@@ -728,10 +816,12 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             <Input
                               type="number"
                               placeholder="Insira seu peso"
-                              value={field.value?.toString() || ''}
+                              value={field.value?.toString() || ""}
                               onChange={(e) =>
                                 field.onChange(
-                                  e.target.value ? Number.parseFloat(e.target.value) : 0,
+                                  e.target.value
+                                    ? Number.parseFloat(e.target.value)
+                                    : 0,
                                 )
                               }
                               className="w-full"
@@ -751,14 +841,18 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             <IMaskInput
                               mask="0,99"
                               definitions={{
-                                '0': /[1-2]/, // First digit: only 1-2
-                                '9': /[0-9]/, // Other digits: 0-9
+                                "0": /[1-2]/, // First digit: only 1-2
+                                "9": /[0-9]/, // Other digits: 0-9
                               }}
                               placeholder="1,70"
                               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              value={field.value?.toString().replace('.', ',') || ''}
+                              value={
+                                field.value?.toString().replace(".", ",") || ""
+                              }
                               onAccept={(value: string) => {
-                                const numericValue = Number(value.replace(',', '.'));
+                                const numericValue = Number(
+                                  value.replace(",", "."),
+                                );
                                 if (
                                   !isNaN(numericValue) &&
                                   numericValue >= 1.3 &&
@@ -779,7 +873,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Etnia</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecione sua etnia" />
@@ -802,7 +899,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Cor do olho</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Selecione sua cor de olhos" />
@@ -825,7 +925,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Cor do cabelo</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Castanho" />
@@ -851,7 +954,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tamanho do Cabelo</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger className="w-full">
                                 <SelectValue
@@ -864,7 +970,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                               <SelectItem value="Curto">Curto</SelectItem>
                               <SelectItem value="Médio">Médio</SelectItem>
                               <SelectItem value="Longo">Longo</SelectItem>
-                              <SelectItem value="Muito Longo">Muito Longo</SelectItem>
+                              <SelectItem value="Muito Longo">
+                                Muito Longo
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -881,10 +989,12 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             <Input
                               type="number"
                               placeholder=""
-                              value={field.value?.toString() || ''}
+                              value={field.value?.toString() || ""}
                               onChange={(e) =>
                                 field.onChange(
-                                  e.target.value ? Number.parseFloat(e.target.value) : 0,
+                                  e.target.value
+                                    ? Number.parseFloat(e.target.value)
+                                    : 0,
                                 )
                               }
                               className="w-full"
@@ -910,7 +1020,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             </FormDescription>
                           </div>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -922,12 +1035,17 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
                             <FormLabel className="text-base flex flex-row gap-2">
-                              Tattoos{' '}
+                              Tattoos{" "}
                             </FormLabel>
-                            <FormDescription>Você tem tatuagens?</FormDescription>
+                            <FormDescription>
+                              Você tem tatuagens?
+                            </FormDescription>
                           </div>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -941,10 +1059,15 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             <FormLabel className="text-base flex flex-row gap-2">
                               Piercings
                             </FormLabel>
-                            <FormDescription>Você tem piercings?</FormDescription>
+                            <FormDescription>
+                              Você tem piercings?
+                            </FormDescription>
                           </div>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -955,11 +1078,16 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base flex flex-row gap-2">Fumante</FormLabel>
+                            <FormLabel className="text-base flex flex-row gap-2">
+                              Fumante
+                            </FormLabel>
                             <FormDescription>Você fuma? </FormDescription>
                           </div>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -975,7 +1103,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                   {isRegistering && (
                     <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg">
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <p className="text-sm text-muted-foreground">Registrando seu perfil...</p>
+                      <p className="text-sm text-muted-foreground">
+                        Registrando seu perfil...
+                      </p>
                     </div>
                   )}
                   <FormField
@@ -988,15 +1118,17 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                           onValueChange={(selected) => {
                             field.onChange(Number(selected));
 
-                            const selectedCity = cities.find((c) => c.id === Number(selected));
+                            const selectedCity = cities.find(
+                              (c) => c.id === Number(selected),
+                            );
 
                             if (selectedCity) {
-                              form.setValue('state', selectedCity.state, {
+                              form.setValue("state", selectedCity.state, {
                                 shouldValidate: false,
                                 shouldDirty: true,
                                 shouldTouch: false,
                               });
-                              form.setValue('country', selectedCity.country, {
+                              form.setValue("country", selectedCity.country, {
                                 shouldValidate: false,
                                 shouldDirty: true,
                                 shouldTouch: false,
@@ -1009,7 +1141,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             <SelectTrigger>
                               <SelectValue
                                 placeholder="Selecione seu distrito"
-                                defaultValue={cities.find((c) => c.id === field.value)?.city || ''}
+                                defaultValue={
+                                  cities.find((c) => c.id === field.value)
+                                    ?.city || ""
+                                }
                               />
                             </SelectTrigger>
                           </FormControl>
@@ -1047,11 +1182,18 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Atende em Hotel</FormLabel>
-                            <FormDescription>Você atende clientes em hotéis?</FormDescription>
+                            <FormLabel className="text-base">
+                              Atende em Hotel
+                            </FormLabel>
+                            <FormDescription>
+                              Você atende clientes em hotéis?
+                            </FormDescription>
                           </div>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1063,11 +1205,18 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Atende em Local Próprio</FormLabel>
-                            <FormDescription>Você atende clientes em seu local?</FormDescription>
+                            <FormLabel className="text-base">
+                              Atende em Local Próprio
+                            </FormLabel>
+                            <FormDescription>
+                              Você atende clientes em seu local?
+                            </FormDescription>
                           </div>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1081,24 +1230,31 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Suas Fotos</h3>
                   <p className="text-sm text-neutral-500">
-                    Adicione fotos suas para que os clientes possam te conhecer melhor.
+                    Adicione fotos suas para que os clientes possam te conhecer
+                    melhor.
                   </p>
 
                   {images.length > 0 && (
                     <>
                       <div className="flex justify-between items-center mb-4">
                         <p className="text-sm">
-                          {selectedImages.size === 0 ? null : selectedImages.size}{' '}
+                          {selectedImages.size === 0
+                            ? null
+                            : selectedImages.size}{" "}
                           {selectedImages.size === 0
                             ? null
                             : selectedImages.size === 1
-                              ? 'imagem selecionada'
-                              : 'imagens selecionadas'}
+                              ? "imagem selecionada"
+                              : "imagens selecionadas"}
                         </p>
                         {selectedImages.size > 0 && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm" disabled={isDeleting}>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={isDeleting}
+                              >
                                 {isDeleting ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1111,16 +1267,23 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Você tem certeza?
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Essa ação não pode ser desfeita. {selectedImages.size}{' '}
-                                  {selectedImages.size === 1 ? 'imagem será' : 'imagens serão'}{' '}
+                                  Essa ação não pode ser desfeita.{" "}
+                                  {selectedImages.size}{" "}
+                                  {selectedImages.size === 1
+                                    ? "imagem será"
+                                    : "imagens serão"}{" "}
                                   permanentemente removidas.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDeleteSelected}>
+                                <AlertDialogAction
+                                  onClick={handleDeleteSelected}
+                                >
                                   Deletar
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -1133,13 +1296,15 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                           <div
                             key={index}
                             className={cn(
-                              'relative aspect-square group cursor-pointer',
+                              "relative aspect-square group cursor-pointer",
                               selectedImages.has(image.storagePath) &&
-                              'ring-2 ring-primary ring-offset-2',
+                                "ring-2 ring-primary ring-offset-2",
                             )}
-                            onClick={() => toggleImageSelection(image.storagePath)}
+                            onClick={() =>
+                              toggleImageSelection(image.storagePath)
+                            }
                           >
-                            {image.publicUrl.includes('.mp4') ? (
+                            {image.publicUrl.includes(".mp4") ? (
                               <video
                                 src={image.publicUrl}
                                 className="w-full h-full object-cover rounded-md"
@@ -1158,10 +1323,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                             )}
                             <div
                               className={cn(
-                                'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                                "w-5 h-5 rounded-full border-2 flex items-center justify-center",
                                 selectedImages.has(image.storagePath)
-                                  ? 'bg-primary border-primary'
-                                  : 'border-white',
+                                  ? "bg-primary border-primary"
+                                  : "border-white",
                               )}
                             >
                               <div className="absolute top-2 right-2">
@@ -1179,14 +1344,18 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                      <AlertDialogTitle>
+                                        Você tem certeza?
+                                      </AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        Essa ação não pode ser desfeita. O arquivo será
-                                        permanentemente removido.
+                                        Essa ação não pode ser desfeita. O
+                                        arquivo será permanentemente removido.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                                      <AlertDialogCancel
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
                                         Cancelar
                                       </AlertDialogCancel>
                                       <AlertDialogAction
@@ -1207,10 +1376,10 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                               <div className="absolute top-2 left-2">
                                 <div
                                   className={cn(
-                                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
                                     selectedImages.has(image.publicUrl)
-                                      ? 'bg-primary border-primary'
-                                      : 'border-white',
+                                      ? "bg-primary border-primary"
+                                      : "border-white",
                                   )}
                                 >
                                   {selectedImages.has(image.storagePath) && (
@@ -1237,7 +1406,9 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                   )}
 
                   <FileUpload onChange={handleFileUpload} />
-                  {uploadStatus && <p className="text-sm text-red-500">{uploadStatus}</p>}
+                  {uploadStatus && (
+                    <p className="text-sm text-red-500">{uploadStatus}</p>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -1257,7 +1428,7 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                   type="button"
                   onClick={handleNextPage}
                   disabled={isRegistering || form.formState.isSubmitting}
-                  className={currentPage === 0 ? 'ml-auto' : ''}
+                  className={currentPage === 0 ? "ml-auto" : ""}
                 >
                   {currentPage === 2 && isRegistering ? (
                     <>
@@ -1265,23 +1436,26 @@ export function RegisterCompanionForm({ cities, companionData }: RegisterCompani
                       Registrando perfil...
                     </>
                   ) : currentPage === 2 ? (
-                    'Adicionar Fotos'
+                    "Adicionar Fotos"
                   ) : (
-                    'Próximo'
+                    "Próximo"
                   )}
                 </Button>
               )}
               {currentPage === formSections.length - 1 && (
-                <Button type="submit" disabled={form.formState.isSubmitting || isRegistering}>
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting || isRegistering}
+                >
                   {form.formState.isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {companionData ? 'Atualizando...' : 'Registrando...'}
+                      {companionData ? "Atualizando..." : "Registrando..."}
                     </>
                   ) : companionData ? (
-                    'Atualizar'
+                    "Atualizar"
                   ) : (
-                    'Registrar'
+                    "Registrar"
                   )}
                 </Button>
               )}
