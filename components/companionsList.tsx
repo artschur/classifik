@@ -52,6 +52,18 @@ export function CompanionsList({
   );
 }
 
+const PlanRibbon = ({ plan }: { plan?: string | null }) => {
+  if (!plan || plan === 'free') return null;
+
+  return (
+    <div className="absolute top-2 right-2 z-10 overflow-hidden w-24 h-24 pointer-events-none">
+      <div className="absolute top-[18px] -right-[28px] bg-red-500 text-black text-[10px] font-bold py-1 w-32 text-center transform rotate-45 shadow-sm uppercase tracking-wider border-b border-black/10">
+        {plan}
+      </div>
+    </div>
+  );
+};
+
 export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   const images = companion.images
     .filter((media): media is string | Media => {
@@ -95,6 +107,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
               images.map((image, index) => (
                 <CarouselItem key={index}>
                   <div className="relative aspect-[4/3]">
+                    <PlanRibbon plan={companion.planType} />
                     <Image
                       src={image || '/placeholder.svg'}
                       alt={`${companion.name} - Image ${index + 1}`}
