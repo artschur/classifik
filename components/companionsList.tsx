@@ -56,7 +56,7 @@ const PlanRibbon = ({ plan }: { plan?: string | null }) => {
   if (!plan || plan === 'free') return null;
 
   return (
-    <div className="absolute top-2 right-2 z-10 overflow-hidden w-24 h-24 pointer-events-none">
+    <div className="absolute top-0 right-0 z-10 overflow-hidden w-24 h-24 pointer-events-none">
       <div className="absolute top-[18px] -right-[28px] bg-red-500 text-black text-[10px] font-bold py-1 w-32 text-center transform rotate-45 shadow-sm uppercase tracking-wider border-b border-black/10">
         {plan}
       </div>
