@@ -147,7 +147,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
               <Badge variant="secondary" className="bg-green-100 text-green-800">
                 <Check className="w-3 h-3 mr-1" /> Verificado
               </Badge>
-              <Badge variant="secondary">{companion.age} years</Badge>
+              <Badge variant="secondary">{companion.age} anos</Badge>
             </div>
           </div>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{companion.shortDescription}</p>
