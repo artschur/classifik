@@ -44,7 +44,7 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "name": "Onesugar",
-                "url": "https://onesugar.app",
+                "url": "https://onesugar.pt",
                 "description": "A sua escolha segura para acompanhantes premium em Portugal.",
                 "address": [
                   {

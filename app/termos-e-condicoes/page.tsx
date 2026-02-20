@@ -11,7 +11,7 @@ const termosData = {
   title: "Termos e Condições de Utilização – OneSugar",
   lastUpdated: "26 de janeiro de 2026",
   intro:
-    "Bem-vindo à OneSugar. Ao aceder ou utilizar o nosso sítio web (onesugar.app), o utilizador concorda em cumprir e vincular-se aos seguintes Termos e Condições. Recomendamos a leitura atenta antes de utilizar os nossos serviços.",
+    "Bem-vindo à OneSugar. Ao aceder ou utilizar o nosso sítio web (onesugar.pt), o utilizador concorda em cumprir e vincular-se aos seguintes Termos e Condições. Recomendamos a leitura atenta antes de utilizar os nossos serviços.",
   sections: [
     {
       title: "1. Aceitação dos Termos",

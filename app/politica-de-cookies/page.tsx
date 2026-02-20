@@ -11,7 +11,7 @@ const cookiesData = {
   title: "Política de Cookies – OneSugar",
   lastUpdated: "26 de janeiro de 2026",
   intro:
-    "Para garantir que a tua navegação no sítio web OneSugar (onesugar.app) seja o mais eficiente e personalizada possível, utilizamos cookies e tecnologias semelhantes. Esta política explica o que são estas ferramentas, como as utilizamos e como podes geri-las.",
+    "Para garantir que a tua navegação no sítio web OneSugar (onesugar.pt) seja o mais eficiente e personalizada possível, utilizamos cookies e tecnologias semelhantes. Esta política explica o que são estas ferramentas, como as utilizamos e como podes geri-las.",
   sections: [
     {
       title: "1. O que são Cookies?",
