@@ -1,4 +1,4 @@
-'use server';
+"use server";
 
 import {
   companionsTable,
@@ -11,30 +11,50 @@ import {
   reviewsTable,
   blockedUsersTable,
   documentsTable,
-} from '../schema';
-import { db } from '..';
-import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { CompanionFiltered, CompanionPreview, FilterTypesCompanions } from '../../types/types';
-import { eq, and, gte, lte, desc, asc, SQL, inArray, or } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
-import { getEmail } from './userActions';
-import { getImagesByAuthId } from './images';
-import { unstable_cache } from 'next/cache';
-import { PlanType } from './kv';
+} from "../schema";
+import { db } from "..";
+import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import {
+  CompanionFiltered,
+  CompanionPreview,
+  FilterTypesCompanions,
+} from "../../types/types";
+import {
+  eq,
+  and,
+  gte,
+  lte,
+  desc,
+  asc,
+  SQL,
+  inArray,
+  or,
+  ilike,
+} from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import { getEmail } from "./userActions";
+import { getImagesByAuthId } from "./images";
+import { unstable_cache } from "next/cache";
+import { PlanType } from "./kv";
 
-function buildCompanionConditions(cityId: number, filters?: FilterTypesCompanions): SQL[] {
+function buildCompanionConditions(
+  cityId: number,
+  filters?: FilterTypesCompanions,
+): SQL[] {
   const conditions: SQL[] = [
     eq(companionsTable.city_id, cityId),
     eq(companionsTable.verified, true),
   ];
 
   if (filters?.search) {
-    conditions.push(sql`LOWER(${companionsTable.name}) LIKE LOWER(${'%' + filters.search + '%'})`);
+    conditions.push(
+      sql`LOWER(${companionsTable.name}) LIKE LOWER(${"%" + filters.search + "%"})`,
+    );
   }
 
   if (filters?.price) {
-    const [minPrice, maxPrice] = filters.price.split('-').map(Number);
+    const [minPrice, maxPrice] = filters.price.split("-").map(Number);
     if (minPrice && maxPrice) {
       conditions.push(
         sql`${gte(companionsTable.price, minPrice)} and ${lte(companionsTable.price, maxPrice)}`,
@@ -42,8 +62,15 @@ function buildCompanionConditions(cityId: number, filters?: FilterTypesCompanion
     }
   }
 
+  if (filters?.gender) {
+    const genderValue = filters.gender.toLowerCase();
+
+    if (genderValue === "feminino" || genderValue === "masculino") {
+      conditions.push(ilike(companionsTable.gender, genderValue));
+    }
+  }
   if (filters?.age) {
-    const [minAge, maxAge] = filters.age.split('-').map(Number);
+    const [minAge, maxAge] = filters.age.split("-").map(Number);
     if (minAge && maxAge) {
       conditions.push(
         sql`${gte(companionsTable.age, minAge)} and ${lte(companionsTable.age, maxAge)}`,
@@ -58,7 +85,7 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
   const conditions: SQL[] = [];
 
   if (filters?.height) {
-    const [minHeight, maxHeight] = filters.height.split('-').map(Number);
+    const [minHeight, maxHeight] = filters.height.split("-").map(Number);
     if (minHeight && maxHeight) {
       conditions.push(
         sql`${gte(characteristicsTable.height, (minHeight / 100).toString())} and ${lte(
@@ -70,7 +97,7 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
   }
 
   if (filters?.weight) {
-    const [minWeight, maxWeight] = filters.weight.split('-').map(Number);
+    const [minWeight, maxWeight] = filters.weight.split("-").map(Number);
     if (minWeight && maxWeight) {
       conditions.push(
         sql`${gte(characteristicsTable.weight, minWeight.toString())} and ${lte(
@@ -82,11 +109,16 @@ function buildCharacteristicConditions(filters?: FilterTypesCompanions): SQL[] {
   }
 
   if (filters?.hairColor) {
-    const hairColors = filters.hairColor.split(',').map((color) => color.trim().toLowerCase());
-    conditions.push(inArray(sql`LOWER(${characteristicsTable.hair_color})`, hairColors));
+    const hairColors = filters.hairColor
+      .split(",")
+      .map((color) => color.trim().toLowerCase());
+    conditions.push(
+      inArray(sql`LOWER(${characteristicsTable.hair_color})`, hairColors),
+    );
   }
 
-  if (filters?.silicone) conditions.push(eq(characteristicsTable.silicone, true));
+  if (filters?.silicone)
+    conditions.push(eq(characteristicsTable.silicone, true));
   if (filters?.tattoos) conditions.push(eq(characteristicsTable.tattoos, true));
   if (filters?.smoker) conditions.push(eq(characteristicsTable.smoker, true));
 
@@ -108,10 +140,10 @@ function buildSortConditions(filters?: FilterTypesCompanions): SQL[] {
 
   if (filters?.sort) {
     switch (filters.sort) {
-      case 'price-asc':
+      case "price-asc":
         sortConditions.push(asc(companionsTable.price));
         break;
-      case 'price-desc':
+      case "price-desc":
         sortConditions.push(desc(companionsTable.price));
         break;
     }
@@ -131,7 +163,9 @@ async function getCityIdFromSlug(citySlug: string): Promise<number | null> {
 }
 
 // Function to fetch companion images
-async function getCompanionImages(companionIds: number[]): Promise<Map<string, string[]>> {
+async function getCompanionImages(
+  companionIds: number[],
+): Promise<Map<string, string[]>> {
   if (companionIds.length === 0) return new Map();
 
   const images = await db
@@ -158,7 +192,10 @@ function buildCompanionsQuery(
   characteristicConditions: SQL[],
   sortConditions: SQL[],
 ) {
-  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
+  const allConditions = [
+    ...companionConditions,
+    ...characteristicConditions,
+  ].filter(Boolean);
 
   return db
     .select({
@@ -189,7 +226,10 @@ function buildCompanionsQuery(
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id),
+    )
     .where(and(...allConditions))
     .orderBy(
       ...(sortConditions
@@ -216,7 +256,10 @@ function buildCompanionsQuery(
     );
 }
 
-export async function getRandomCompanions(plans?: PlanType[], citySlug?: string): Promise<CompanionPreview[]> {
+export async function getRandomCompanions(
+  plans?: PlanType[],
+  citySlug?: string,
+): Promise<CompanionPreview[]> {
   const conditions: SQL[] = [eq(companionsTable.verified, true)];
   if (plans) {
     conditions.push(inArray(companionsTable.plan_type, plans!));
@@ -271,12 +314,18 @@ export async function countCompanionsPages(
 
   const companionConditions = buildCompanionConditions(cityId, filters);
   const characteristicConditions = buildCharacteristicConditions(filters);
-  const allConditions = [...companionConditions, ...characteristicConditions].filter(Boolean);
+  const allConditions = [
+    ...companionConditions,
+    ...characteristicConditions,
+  ].filter(Boolean);
 
   const [{ count }] = await db
     .select({ count: sql<number>`count(DISTINCT ${companionsTable.id})` })
     .from(companionsTable)
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id),
+    )
     .where(and(...allConditions));
 
   return Math.ceil(count / pageSize);
@@ -320,33 +369,39 @@ export const getCompanionsToFilter = unstable_cache(
     const imagesMap = await getCompanionImages(companionIds);
 
     // Map the results to the expected output format
-    const planOrder: Record<string, number> = { 'vip': 0, 'plus': 1, 'basico': 2, 'free': 3 };
-    const output = results.map(({ companion, city, characteristics }) => ({
-      ...companion,
-      city: city.name,
-      weight: characteristics.weight,
-      height: characteristics.height,
-      eyeColor: characteristics.eye_color,
-      hairColor: characteristics.hair_color,
-      silicone: characteristics.silicone,
-      tattoos: characteristics.tattoos,
-      piercings: characteristics.piercings,
-      smoker: characteristics.smoker,
-      ethinicity: characteristics.ethnicity,
-      planType: companion.planType,
-      images: imagesMap.get(String(companion.id)) || [],
-    })).sort((a, b) => {
-      const aPlan = (a.planType || '').toLowerCase();
-      const bPlan = (b.planType || '').toLowerCase();
-      return (planOrder[aPlan] ?? 999) - (planOrder[bPlan] ?? 999);
-    });
-    return output
-
+    const planOrder: Record<string, number> = {
+      vip: 0,
+      plus: 1,
+      basico: 2,
+      free: 3,
+    };
+    const output = results
+      .map(({ companion, city, characteristics }) => ({
+        ...companion,
+        city: city.name,
+        weight: characteristics.weight,
+        height: characteristics.height,
+        eyeColor: characteristics.eye_color,
+        hairColor: characteristics.hair_color,
+        silicone: characteristics.silicone,
+        tattoos: characteristics.tattoos,
+        piercings: characteristics.piercings,
+        smoker: characteristics.smoker,
+        ethinicity: characteristics.ethnicity,
+        planType: companion.planType,
+        images: imagesMap.get(String(companion.id)) || [],
+      }))
+      .sort((a, b) => {
+        const aPlan = (a.planType || "").toLowerCase();
+        const bPlan = (b.planType || "").toLowerCase();
+        return (planOrder[aPlan] ?? 999) - (planOrder[bPlan] ?? 999);
+      });
+    return output;
   },
-  ['companions-filter'],
+  ["companions-filter"],
   {
     revalidate: 1800,
-    tags: ['companions', 'companions-filter'],
+    tags: ["companions", "companions-filter"],
   },
 );
 
@@ -429,13 +484,19 @@ export async function registerCompanion(
 
     return newCompanion;
   } catch (error) {
-    console.error('Failed to register companion in DB:', error);
+    console.error("Failed to register companion in DB:", error);
     // Re-throw a more specific error
-    throw new Error(`Database operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Database operation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
-export async function getRelevantInfoAnalytics({ clerkId }: { clerkId: string }) {
+export async function getRelevantInfoAnalytics({
+  clerkId,
+}: {
+  clerkId: string;
+}) {
   const [companion] = await db
     .select({
       id: companionsTable.id,
@@ -455,7 +516,7 @@ export async function getRelevantInfoAnalytics({ clerkId }: { clerkId: string })
   if (!companion) {
     return {
       id: 0,
-      name: 'Usuário',
+      name: "Usuário",
       interactions: 0,
       averageRating: 0,
     };
@@ -484,7 +545,7 @@ export async function getCompanionNameByClerkId(
     .where(eq(companionsTable.auth_id, clerkId))
     .limit(1);
   if (!companion) {
-    throw new Error('Companion not found');
+    throw new Error("Companion not found");
   }
   return {
     name: companion.name,
@@ -502,7 +563,9 @@ export async function isUserACompanion(clerkId: string): Promise<boolean> {
   return companion.length > 0;
 }
 
-export async function getCompanionByClerkId(clerkId: string): Promise<CompanionFiltered> {
+export async function getCompanionByClerkId(
+  clerkId: string,
+): Promise<CompanionFiltered> {
   const query = db
     .select({
       id: companionsTable.id,
@@ -526,12 +589,20 @@ export async function getCompanionByClerkId(clerkId: string): Promise<CompanionF
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, clerkId))
     .limit(1)
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id),
+    )
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id));
 
-  const [response, images] = await Promise.all([query, getImagesByAuthId(clerkId)]);
+  const [response, images] = await Promise.all([
+    query,
+    getImagesByAuthId(clerkId),
+  ]);
 
-  const imageUrls = (images as { publicUrl: string }[]).map((image) => image.publicUrl);
+  const imageUrls = (images as { publicUrl: string }[]).map(
+    (image) => image.publicUrl,
+  );
 
   return {
     ...response[0],
@@ -615,25 +686,25 @@ export async function getCompanionToEdit(
   }
   return {
     companionId: row.companionId,
-    name: row.name ?? '',
-    shortDescription: row.shortDescription ?? '',
+    name: row.name ?? "",
+    shortDescription: row.shortDescription ?? "",
     phoneNumber:
-      row.phoneNumber && !row.phoneNumber.startsWith('+')
+      row.phoneNumber && !row.phoneNumber.startsWith("+")
         ? `+${row.phoneNumber}`
-        : (row.phoneNumber ?? ''),
-    instagramHandle: row.instagramHandle ?? '',
-    description: row.description ?? '',
+        : (row.phoneNumber ?? ""),
+    instagramHandle: row.instagramHandle ?? "",
+    description: row.description ?? "",
     price: row.price ?? 0,
     age: row.age ?? 0,
-    gender: row.gender ?? '',
-    gender_identity: row.gender_identity ?? '',
+    gender: row.gender ?? "",
+    gender_identity: row.gender_identity ?? "",
     languages: row.languages ?? [],
     weight: parseInt(row.weight) ?? 60,
     height: parseFloat(row.height) ?? 1.6,
-    ethnicity: row.ethnicity ?? '',
-    eye_color: row.eye_color ?? '',
-    hair_color: row.hair_color ?? '',
-    hair_length: row.hair_length ?? '',
+    ethnicity: row.ethnicity ?? "",
+    eye_color: row.eye_color ?? "",
+    hair_color: row.hair_color ?? "",
+    hair_length: row.hair_length ?? "",
     shoe_size: row.shoe_size ?? 36,
     silicone: row.silicone ?? false,
     tattoos: row.tattoos ?? false,
@@ -641,15 +712,18 @@ export async function getCompanionToEdit(
     smoker: row.smoker ?? false,
 
     city: row.city ?? 1,
-    state: row.state ?? '',
-    country: row.country ?? '',
-    neighborhood: row.neighborhood ?? '',
+    state: row.state ?? "",
+    country: row.country ?? "",
+    neighborhood: row.neighborhood ?? "",
     meets_at_hotel: row.meets_at_hotel ?? false,
     meets_at_own_place: row.meets_at_own_place ?? false,
   };
 }
 
-export async function updateCompanionFromForm(clerkId: string, data: RegisterCompanionFormValues) {
+export async function updateCompanionFromForm(
+  clerkId: string,
+  data: RegisterCompanionFormValues,
+) {
   await db.transaction(async (tx) => {
     // Update companionsTable
     await tx
@@ -734,7 +808,10 @@ export async function getUnverifiedCompanions(): Promise<
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+    .innerJoin(
+      characteristicsTable,
+      eq(characteristicsTable.companion_id, companionsTable.id),
+    )
     .where(
       and(
         eq(companionsTable.verified, false),
@@ -745,8 +822,8 @@ export async function getUnverifiedCompanions(): Promise<
         sql`EXISTS (
           SELECT 1 FROM ${documentsTable}
           WHERE ${documentsTable.companionId} = ${companionsTable.id}
-        )`
-      )
+        )`,
+      ),
     );
 
   const results = await query;
@@ -771,7 +848,7 @@ export async function getUnverifiedCompanions(): Promise<
     .where(
       and(
         inArray(documentsTable.companionId, companionIds),
-        eq(documentsTable.document_type, 'verification_video'),
+        eq(documentsTable.document_type, "verification_video"),
       ),
     );
 
@@ -810,7 +887,10 @@ export async function getUnverifiedCompanions(): Promise<
 }
 
 export async function approveCompanion(id: number) {
-  await db.update(companionsTable).set({ verified: true }).where(eq(companionsTable.id, id));
+  await db
+    .update(companionsTable)
+    .set({ verified: true })
+    .where(eq(companionsTable.id, id));
 
   return { success: true, id };
 }
@@ -834,7 +914,11 @@ export async function getCompanionIdByClerkId(id: string): Promise<number> {
 }
 
 // Blocked Users Management Functions
-export async function blockUser(companionId: number, blockedUserId: string, reason?: string) {
+export async function blockUser(
+  companionId: number,
+  blockedUserId: string,
+  reason?: string,
+) {
   try {
     await db.insert(blockedUsersTable).values({
       companion_id: companionId,
@@ -844,7 +928,7 @@ export async function blockUser(companionId: number, blockedUserId: string, reas
     return { success: true };
   } catch (error) {
     // If user is already blocked, return success
-    if (error instanceof Error && error.message.includes('duplicate key')) {
+    if (error instanceof Error && error.message.includes("duplicate key")) {
       return { success: true };
     }
     throw error;
@@ -876,7 +960,10 @@ export async function getBlockedUsers(companionId: number) {
     .orderBy(desc(blockedUsersTable.created_at));
 }
 
-export async function isUserBlocked(companionId: number, userId: string): Promise<boolean> {
+export async function isUserBlocked(
+  companionId: number,
+  userId: string,
+): Promise<boolean> {
   const blockedUser = await db
     .select({ id: blockedUsersTable.id })
     .from(blockedUsersTable)

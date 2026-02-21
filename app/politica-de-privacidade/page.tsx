@@ -11,7 +11,7 @@ const privacidadeData = {
   title: "Política de Privacidade – OneSugar",
   lastUpdated: "27 de janeiro de 2026",
   intro:
-    "Na OneSugar, a privacidade e a segurança dos teus dados pessoais são uma prioridade absoluta. Esta Política de Privacidade explica como recolhemos, utilizamos e protegemos as tuas informações ao utilizares o nosso sítio web (onesugar.app).",
+    "Na OneSugar, a privacidade e a segurança dos teus dados pessoais são uma prioridade absoluta. Esta Política de Privacidade explica como recolhemos, utilizamos e protegemos as tuas informações ao utilizares o nosso sítio web (onesugar.pt).",
   sections: [
     {
       title: "1. Responsável pelo Tratamento de Dados",

@@ -76,7 +76,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
                       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                         <h3 className="text-xl font-bold mb-1">{companion.name}</h3>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-white/90">{companion.age} years</span>
+                          <span className="text-white/90">{companion.age} {companion.age == 40 ? "+" : ""} anos</span>
                           <span className="text-white/90">{companion.city}</span>
                         </div>
                         <div className="mt-2">

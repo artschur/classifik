@@ -1,11 +1,11 @@
-import { Characteristic, City, Companion } from '../db/schema';
+import { Characteristic, City, Companion } from "../db/schema";
 
 export interface Media {
   publicUrl: string;
-  type?: 'image' | 'video';
+  type?: "image" | "video";
 }
 
-export type CompanionPreview = Pick<Companion, 'id' | 'name' | 'age'> & {
+export type CompanionPreview = Pick<Companion, "id" | "name" | "age"> & {
   price: number | string;
   city: string;
   images: (string | Media)[];
@@ -13,7 +13,7 @@ export type CompanionPreview = Pick<Companion, 'id' | 'name' | 'age'> & {
 
 export type CompanionFiltered = Pick<
   Companion,
-  'id' | 'name' | 'shortDescription' | 'price' | 'age' | 'verified'
+  "id" | "name" | "shortDescription" | "price" | "age" | "verified"
 > & {
   weight: string;
   height: string;
@@ -42,32 +42,32 @@ export type FilterTypesCompanions = {
   weight?: string;
   smoker?: string;
   eyeColor?: string;
-  gender?: string;
+  gender?: "Masculino" | "Feminino";
 };
 
 export type CompanionById = Omit<
   Companion,
-  | 'id'
-  | 'created_at'
-  | 'updated_at'
-  | 'availability'
-  | 'reviews_summary'
-  | 'city_id'
-  | 'neighborhood_id'
-  | 'stripe_customer_id'
+  | "id"
+  | "created_at"
+  | "updated_at"
+  | "availability"
+  | "reviews_summary"
+  | "city_id"
+  | "neighborhood_id"
+  | "stripe_customer_id"
 > & {
   // Add characteristics fields with exact names from select query
-  weight: Characteristic['weight'];
-  height: Characteristic['height'];
-  ethnicity: Characteristic['ethnicity'];
-  eyeColor: Characteristic['eye_color'];
-  hairColor: Characteristic['hair_color'];
-  hair_length: Characteristic['hair_length'];
-  shoe_size: Characteristic['shoe_size'];
-  silicone: Characteristic['silicone'];
-  tattoos: Characteristic['tattoos'];
-  piercings: Characteristic['piercings'];
-  smoker: Characteristic['smoker'];
+  weight: Characteristic["weight"];
+  height: Characteristic["height"];
+  ethnicity: Characteristic["ethnicity"];
+  eyeColor: Characteristic["eye_color"];
+  hairColor: Characteristic["hair_color"];
+  hair_length: Characteristic["hair_length"];
+  shoe_size: Characteristic["shoe_size"];
+  silicone: Characteristic["silicone"];
+  tattoos: Characteristic["tattoos"];
+  piercings: Characteristic["piercings"];
+  smoker: Characteristic["smoker"];
   images: string[];
 };
 
@@ -80,7 +80,7 @@ export interface Review {
   updated_at: Date;
 }
 
-export type CitySummary = Pick<City, 'slug' | 'city'>;
+export type CitySummary = Pick<City, "slug" | "city">;
 
 export type Region = {
   name: string;
@@ -89,46 +89,44 @@ export type Region = {
 
 export const regions: Region[] = [
   {
-    name: 'Lisboa',
+    name: "Lisboa",
     cities: [
-      { slug: 'lisboa', city: 'Lisboa' },
-      { slug: 'oeiras', city: 'Oeiras' },
-      { slug: 'cascais', city: 'Cascais' },
-      { slug: 'estoril', city: 'Estoril' },
-      { slug: 'sintra', city: 'Sintra' },
-      { slug: 'amadora', city: 'Amadora' },
-      { slug: 'odivelas', city: 'Odivelas' },
-      { slug: 'almada', city: 'Almada' },
-      { slug: 'montijo', city: 'Montijo' },
-      { slug: 'mafra', city: 'Mafra' },
+      { slug: "lisboa", city: "Lisboa" },
+      { slug: "oeiras", city: "Oeiras" },
+      { slug: "cascais", city: "Cascais" },
+      { slug: "estoril", city: "Estoril" },
+      { slug: "sintra", city: "Sintra" },
+      { slug: "amadora", city: "Amadora" },
+      { slug: "odivelas", city: "Odivelas" },
+      { slug: "almada", city: "Almada" },
+      { slug: "montijo", city: "Montijo" },
+      { slug: "mafra", city: "Mafra" },
     ],
   },
   {
-    name: 'Porto',
+    name: "Porto",
     cities: [
-      { slug: 'porto', city: 'Porto' },
-      { slug: 'vila-de-gaia', city: 'Vila de Gaia' },
-      { slug: 'matosinhos', city: 'Matosinhos' },
-      { slug: 'maia', city: 'Maia' },
-      { slug: 'povoa-de-varzim', city: 'Póvoa de Varzim' },
-      { slug: 'vila-do-conde', city: 'Vila do Conde' },
+      { slug: "porto", city: "Porto" },
+      { slug: "vila-de-gaia", city: "Vila de Gaia" },
+      { slug: "matosinhos", city: "Matosinhos" },
+      { slug: "maia", city: "Maia" },
+      { slug: "povoa-de-varzim", city: "Póvoa de Varzim" },
+      { slug: "vila-do-conde", city: "Vila do Conde" },
     ],
   },
   {
-    name: 'Algarve',
+    name: "Algarve",
     cities: [
-      { slug: 'faro', city: 'Faro' },
-      { slug: 'albufeira', city: 'Albufeira' },
-      { slug: 'portimao', city: 'Portimão' },
-      { slug: 'vilamoura', city: 'Vilamoura' },
-      { slug: 'tavira', city: 'Tavira' },
-      { slug: 'lagos', city: 'Lagos' },
+      { slug: "faro", city: "Faro" },
+      { slug: "albufeira", city: "Albufeira" },
+      { slug: "portimao", city: "Portimão" },
+      { slug: "vilamoura", city: "Vilamoura" },
+      { slug: "tavira", city: "Tavira" },
+      { slug: "lagos", city: "Lagos" },
     ],
   },
   {
-    name: 'Madeira',
-    cities: [
-      { slug: 'madeira', city: 'Madeira' },
-    ],
+    name: "Madeira",
+    cities: [{ slug: "madeira", city: "Madeira" }],
   },
 ];
