@@ -514,7 +514,7 @@ export function RegisterCompanionForm({
                   <iframe
                     className="w-full h-full rounded-lg border shadow-sm"
                     src="https://youtube.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
-                    title="ídeo de Verificação"
+                    title="Vídeo de verificação"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
