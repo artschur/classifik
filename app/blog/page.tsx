@@ -1,6 +1,29 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getBlogPosts } from '@/blog/contentful';
+
+export const metadata: Metadata = {
+  title: 'Blog - OneSugar Portugal',
+  description:
+    'Artigos, dicas e novidades sobre acompanhantes premium em Portugal. Fique por dentro do universo OneSugar com conteúdos exclusivos e atualizados.',
+  alternates: {
+    canonical: 'https://onesugar.pt/blog',
+  },
+  openGraph: {
+    title: 'Blog OneSugar – Dicas e Novidades sobre Acompanhantes em Portugal',
+    description:
+      'Explore o blog da OneSugar e descubra artigos exclusivos sobre acompanhantes premium, segurança e discrição em Portugal.',
+    url: 'https://onesugar.pt/blog',
+    siteName: 'Onesugar',
+    locale: 'pt_PT',
+    type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export const revalidate = 600;
 
