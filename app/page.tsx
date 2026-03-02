@@ -76,7 +76,7 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
         <section
-          className="relative w-full py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[78vh] flex items-center"
+          className="relative w-full px-8 py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[82vh] flex items-center"
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0 -z-10">
@@ -84,7 +84,7 @@ export default async function HomePage() {
               src="/banner-onesugar.jpeg"
               alt="Background Image"
               fill
-              className="opacity-50 object-cover"
+              className="opacity-50 ps-80 object-cover object-top"
               priority
             />
           </div>
