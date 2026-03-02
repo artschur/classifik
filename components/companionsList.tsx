@@ -53,7 +53,7 @@ export function CompanionsList({
   );
 }
 
-const planRibbonStyles: Record<string, { bg: string; text: string; border: string; label: string; emoji: string }> = {
+const planRibbonStyles: Record<string, { bg: string; text: string; border: string; label: string; emoji?: string }> = {
   vip: {
     bg: 'bg-gradient-to-r from-yellow-400 to-amber-500',
     text: 'text-yellow-900',
@@ -73,7 +73,6 @@ const planRibbonStyles: Record<string, { bg: string; text: string; border: strin
     text: 'text-rose-900',
     border: 'border-rose-400/30',
     label: 'Classic',
-    emoji: '✨',
   },
 };
 
