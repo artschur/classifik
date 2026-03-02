@@ -53,24 +53,27 @@ export function CompanionsList({
   );
 }
 
-const planRibbonStyles: Record<string, { bg: string; text: string; border: string; label: string }> = {
+const planRibbonStyles: Record<string, { bg: string; text: string; border: string; label: string; emoji: string }> = {
   vip: {
     bg: 'bg-gradient-to-r from-yellow-400 to-amber-500',
     text: 'text-yellow-900',
     border: 'border-yellow-600/30',
-    label: '👑 VIP',
+    label: 'VIP',
+    emoji: '👑',
   },
   plus: {
     bg: 'bg-gradient-to-r from-orange-400 to-rose-400',
     text: 'text-white',
     border: 'border-orange-600/30',
-    label: '⭐ Plus',
+    label: 'Plus',
+    emoji: '⭐',
   },
   classic: {
     bg: 'bg-gradient-to-r from-pink-300 to-rose-400',
     text: 'text-rose-900',
     border: 'border-rose-400/30',
-    label: '✨ Classic',
+    label: 'Classic',
+    emoji: '✨',
   },
 };
 
@@ -78,14 +81,22 @@ const PlanRibbon = ({ plan }: { plan?: string | null }) => {
   if (!plan || plan === 'free') return null;
 
   const style = planRibbonStyles[plan.toLowerCase()];
+  // const style = planRibbonStyles["classic"];
   if (!style) return null;
 
   return (
-    <div className="absolute top-0 right-0 z-10 overflow-hidden w-24 h-24 pointer-events-none">
-      <div
-        className={`absolute top-[18px] -right-[28px] ${style.bg} ${style.text} text-[14px] font-bold py-1 w-32 text-center transform rotate-45 shadow-md uppercase tracking-wider border-b ${style.border}`}
-      >
-        {style.label}
+    <div className="absolute top-0 right-0 z-10 w-24 h-24 pointer-events-none">
+      {/* Floating emoji — top-right, slightly rotated */}
+      <span className="absolute -top-1 right-0 text-3xl drop-shadow-md rotate-45 inline-block">
+        {style.emoji}
+      </span>
+      {/* Diagonal ribbon strip */}
+      <div className="overflow-hidden w-full h-full absolute inset-0">
+        <div
+          className={`absolute top-[18px] -right-[28px] ${style.bg} ${style.text} text-[11px] font-bold py-1 w-32 text-center transform rotate-45 shadow-md uppercase tracking-wider border-b ${style.border}`}
+        >
+          {style.label}
+        </div>
       </div>
     </div>
   );
