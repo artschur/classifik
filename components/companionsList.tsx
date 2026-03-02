@@ -67,9 +67,9 @@ const planRibbonStyles: Record<string, { bg: string; text: string; border: strin
     label: '⭐ Plus',
   },
   classic: {
-    bg: 'bg-gradient-to-r from-emerald-400 to-teal-400',
-    text: 'text-emerald-900',
-    border: 'border-emerald-600/30',
+    bg: 'bg-gradient-to-r from-pink-300 to-rose-400',
+    text: 'text-rose-900',
+    border: 'border-rose-400/30',
     label: '✨ Classic',
   },
 };
@@ -83,7 +83,7 @@ const PlanRibbon = ({ plan }: { plan?: string | null }) => {
   return (
     <div className="absolute top-0 right-0 z-10 overflow-hidden w-24 h-24 pointer-events-none">
       <div
-        className={`absolute top-[18px] -right-[28px] ${style.bg} ${style.text} text-[10px] font-bold py-1 w-32 text-center transform rotate-45 shadow-md uppercase tracking-wider border-b ${style.border}`}
+        className={`absolute top-[18px] -right-[28px] ${style.bg} ${style.text} text-[14px] font-bold py-1 w-32 text-center transform rotate-45 shadow-md uppercase tracking-wider border-b ${style.border}`}
       >
         {style.label}
       </div>
