@@ -77,7 +77,7 @@ export default async function HomePage() {
         >
           <div className="absolute inset-0 -z-10">
             <Image
-              src="/banner-onesugar.png"
+              src="/banner-onesugar.jpeg"
               alt="Background Image"
               fill
               className="opacity-50 object-cover"
