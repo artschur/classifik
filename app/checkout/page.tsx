@@ -19,14 +19,14 @@ export interface Product {
 const products: Product[] = [
   {
     id: BASIC_PRICE_ID, // Replace with your new recurring price ID
-    name: 'Básico',
+    name: 'Classico',
     description:
       'Presença estratégica com recursos essenciais para se destacar. Assinatura mensal',
     benefits: [
       'Destaque na listagem do distrito escolhida',
       'Exibição antes dos anúncios gratuitos',
       'Aparece no carrossel da página de localização do distrito',
-      'Selo "BÁSICO" no perfil',
+      'Selo "CLÁSSICO" no perfil',
       'Suporte via sistema de atendimento prioritário',
     ],
     price: '€40.00',
@@ -38,8 +38,8 @@ const products: Product[] = [
       'Mais visibilidade e prioridade para o seu perfil. Assinatura mensal.',
     benefits: [
       'Posição de maior destaque no distrito escolhida',
-      'Prioridade nas buscas (acima de anúncios Básico e Gratuito)',
-      'Listagem acima dos perfis do plano Básico',
+      'Prioridade nas buscas (acima de anúncios Clássico e Gratuito)',
+      'Listagem acima dos perfis do plano Clássico',
 
       'Selo "PLUS" visível no seu perfil',
       'Suporte com atendimento prioritário',
@@ -59,7 +59,7 @@ const products: Product[] = [
       'Posição preferencial na seção de visitas por distrito',
       'Listado antes de todos os perfis do site',
       'Aparece no carrossel da página de localização da distrito',
-      'Visibilidade superior aos planos Básico e Plus',
+      'Visibilidade superior aos planos Clássico e Plus',
       'Selo "VIP" exclusivo no seu perfil',
       'Possibilidade de gravar um áudio de apresentação',
       'Suporte premium com atendimento dedicado',

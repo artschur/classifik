@@ -77,7 +77,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   // const getPlanBadge = (planType?: string | null) => {
   //   switch (planType) {
   //     case 'basico':
-  //       return <Badge className="bg-blue-100 text-blue-800 border-blue-200">BÁSICO</Badge>;
+  //       return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Clássico</Badge>;
   //     case 'plus':
   //       return <Badge className="bg-purple-100 text-purple-800 border-purple-200">PLUS</Badge>;
   //     case 'vip':

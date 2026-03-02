@@ -25,7 +25,7 @@ const cookiesData = {
         {
           title: "Cookies Estritamente Necessários",
           content:
-            "São essenciais para o funcionamento básico do sítio web. Permitem a navegação e o acesso a áreas seguras (como o painel de anunciante). Sem estes, o serviço de classificados não pode ser prestado corretamente.",
+            "São essenciais para o funcionamento Básico do sítio web. Permitem a navegação e o acesso a áreas seguras (como o painel de anunciante). Sem estes, o serviço de classificados não pode ser prestado corretamente.",
         },
         {
           title: "Cookies de Desempenho e Analíticos",
