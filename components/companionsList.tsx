@@ -10,6 +10,7 @@ import { getCompanionsToFilter } from '@/db/queries/companions';
 import { useEffect, useState } from 'react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Check } from 'lucide-react';
+import { PlanType } from '@/db/queries/kv';
 
 export function CompanionsList({
   location,
@@ -52,13 +53,39 @@ export function CompanionsList({
   );
 }
 
+const planRibbonStyles: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  vip: {
+    bg: 'bg-gradient-to-r from-yellow-400 to-amber-500',
+    text: 'text-yellow-900',
+    border: 'border-yellow-600/30',
+    label: '👑 VIP',
+  },
+  plus: {
+    bg: 'bg-gradient-to-r from-orange-400 to-rose-400',
+    text: 'text-white',
+    border: 'border-orange-600/30',
+    label: '⭐ Plus',
+  },
+  classic: {
+    bg: 'bg-gradient-to-r from-emerald-400 to-teal-400',
+    text: 'text-emerald-900',
+    border: 'border-emerald-600/30',
+    label: '✨ Classic',
+  },
+};
+
 const PlanRibbon = ({ plan }: { plan?: string | null }) => {
   if (!plan || plan === 'free') return null;
 
+  const style = planRibbonStyles[plan.toLowerCase()];
+  if (!style) return null;
+
   return (
     <div className="absolute top-0 right-0 z-10 overflow-hidden w-24 h-24 pointer-events-none">
-      <div className="absolute top-[18px] -right-[28px] bg-red-500 text-black text-[10px] font-bold py-1 w-32 text-center transform rotate-45 shadow-sm uppercase tracking-wider border-b border-black/10">
-        {plan}
+      <div
+        className={`absolute top-[18px] -right-[28px] ${style.bg} ${style.text} text-[10px] font-bold py-1 w-32 text-center transform rotate-45 shadow-md uppercase tracking-wider border-b ${style.border}`}
+      >
+        {style.label}
       </div>
     </div>
   );
