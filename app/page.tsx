@@ -82,7 +82,7 @@ export default async function HomePage() {
           <div className="absolute inset-0 -z-10">
             <Image
               src="/banner-onesugar.jpeg"
-              alt="Background Image"
+              alt="Bem vindo image"
               fill
               className="opacity-50 ps-80 object-cover object-top"
               priority
@@ -127,6 +127,13 @@ export default async function HomePage() {
                       }
                     />
                   </Suspense>
+                  <Image
+                    src="/onesugar-badge.jpg"
+                    alt="Onesugar Badge"
+                    width={340}
+                    height={380}
+                    className="object-contain"
+                  />
                 </div>
               </div>
             </div>
