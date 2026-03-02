@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -54,6 +55,52 @@ function isRichTextDocument(value: unknown): boolean {
     (value as any).nodeType === 'document' &&
     Array.isArray((value as any).content)
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const { post } = await getBlogPostBySlug(slug, false, 0);
+
+  if (!post) {
+    return {
+      title: 'Post não encontrado | Blog OneSugar',
+    };
+  }
+
+  const fields = post.fields || {};
+  const title = typeof (fields as any).title === 'string' ? ((fields as any).title as string) : 'Blog OneSugar';
+  const description =
+    typeof (fields as any).excerpt === 'string'
+      ? ((fields as any).excerpt as string)
+      : typeof (fields as any).shortDescription === 'string'
+        ? ((fields as any).shortDescription as string)
+        : 'Leia este artigo exclusivo no blog da OneSugar sobre acompanhantes premium em Portugal.';
+
+  const imageAsset = (fields as any).image || (fields as any).featuredImage || null;
+  const imageUrl = imageAsset?.fields?.file?.url ? `https:${imageAsset.fields.file.url}` : undefined;
+
+  return {
+    title: `${title} - Blog OneSugar`,
+    description,
+    alternates: {
+      canonical: `https://onesugar.pt/blog/${slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `https://onesugar.pt/blog/${slug}`,
+      siteName: 'Onesugar',
+      locale: 'pt_PT',
+      type: 'article',
+      ...(imageUrl && {
+        images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
+      }),
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
 }
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
