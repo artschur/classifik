@@ -76,7 +76,7 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
         <section
-          className="relative w-full px-8 py-12 sm:py-16 md:py-24 lg:py-32 min-h-[60vh] sm:min-h-[60vh] md:min-h-[82vh] flex items-center"
+          className="relative w-full px-8 py-12 sm:py-16 md:py-24 lg:py-24 min-h-[60vh] sm:min-h-[60vh] md:min-h-[82vh] flex items-center"
           aria-labelledby="hero-heading"
         >
           <div className="absolute inset-0 -z-10">
@@ -88,10 +88,10 @@ export default async function HomePage() {
               priority
             />
           </div>
-          <div className="container px-4 mx-auto md:px-6">
+          <div className="container px-4 mx-auto md:px-6 pb-44">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
               <div className="flex flex-col justify-center space-y-4 sm:space-y-6">
-                <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-3 sm:space-y-">
                   <h1
                     id="hero-heading"
                     className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter"
