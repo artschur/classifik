@@ -130,7 +130,7 @@ export default async function HomePage() {
         </section>
 
         <HeroCarouselWrapper
-          plans={[PlanType.VIP, PlanType.PLUS, PlanType.BASICO]}
+          plans={[PlanType.VIP, PlanType.PLUS, PlanType.CLASSIC]}
         />
         <div className="flex justify-center w-full px-4">
           <div className="w-full max-w-4xl aspect-video">

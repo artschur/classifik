@@ -247,7 +247,7 @@ function buildCompanionsQuery(
             sql`CASE
                 WHEN ${companionsTable.plan_type} = 'vip' THEN 3
                 WHEN ${companionsTable.plan_type} = 'plus' THEN 2
-                WHEN ${companionsTable.plan_type} = 'basico' THEN 1
+                WHEN ${companionsTable.plan_type} = 'classic' THEN 1
                 ELSE 0
               END`,
           ),
@@ -271,7 +271,7 @@ export async function getRandomCompanions(
   const planTypeOrder = sql`
     CASE ${companionsTable.plan_type}
       WHEN 'free' THEN 1
-      WHEN 'basico' THEN 2
+      WHEN 'classic' THEN 2
       WHEN 'plus' THEN 3
       WHEN 'vip' THEN 4
       ELSE 5
@@ -372,7 +372,7 @@ export const getCompanionsToFilter = unstable_cache(
     const planOrder: Record<string, number> = {
       vip: 0,
       plus: 1,
-      basico: 2,
+      classic: 2,
       free: 3,
     };
     const output = results

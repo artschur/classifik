@@ -2,7 +2,7 @@ import { PlanType } from '@/db/queries/kv';
 
 const protectedRoutes: Record<PlanType, string[]> = {
   free: [],
-  basico: [],
+  classic: [],
   plus: ['/block'],
   vip: ['/', '/companions/register/audio'],
 };

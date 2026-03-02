@@ -6,7 +6,7 @@ import { auth } from '@clerk/nextjs/server';
 
 export enum PlanType {
   FREE = 'free',
-  BASICO = 'basico',
+  CLASSIC = 'classic',
   PLUS = 'plus',
   VIP = 'vip',
 }
@@ -30,7 +30,7 @@ export const VIP_PRICE_ID = process.env.STRIPE_VIP_PRICE_ID || '';
 
 export const priceIdToPlan: Record<string, { name: string; duration: number }> = {
   // Replace these with your new recurring price IDs from Stripe Dashboard
-  [BASIC_PRICE_ID]: { name: 'basico', duration: 30 },
+  [BASIC_PRICE_ID]: { name: 'classic', duration: 30 },
   [PLUS_PRICE_ID]: { name: 'plus', duration: 30 },
   [VIP_PRICE_ID]: { name: 'vip', duration: 30 },
 };
