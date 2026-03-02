@@ -10,6 +10,7 @@ import { CitySelectionModal } from '@/components/city-selection-modal';
 import { Suspense } from 'react';
 
 import { PlanType } from '@/db/queries/kv';
+import { kv } from '@/db/index';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 
 export const metadata: Metadata = {
@@ -68,6 +69,9 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
+  // Keep Upstash alive — fire-and-forget, never blocks render
+  kv.ping().catch(() => null);
+
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
