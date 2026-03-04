@@ -75,69 +75,143 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
-        <section
-          className="relative w-full px-8 py-12 sm:py-16 md:py-24 lg:py-24 min-h-[60vh] sm:min-h-[60vh] md:min-h-[82vh] flex items-center"
-          aria-labelledby="hero-heading"
-        >
-          <div className="absolute inset-0 -z-10">
-            <Image
-              src="/banner-onesugar.jpeg"
-              alt="Bem vindo image"
-              fill
-              className="opacity-50 ps-80 object-cover object-top"
-              priority
-            />
-          </div>
-          <div className="container px-4 mx-auto md:px-6 pb-44">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
-              <div className="flex flex-col justify-center space-y-4 sm:space-y-6">
-                <div className="space-y-3 sm:space-y-">
-                  <h1
-                    id="hero-heading"
-                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter"
-                  >
-                    Onesugar - Acompanhantes em Portugal: Encontre sua Sugar Premium com Discrição
-                  </h1>
-                  <h2 className="text-base sm:text-lg max-w-[600px] text-muted-foreground md:text-xl">
-                    Descubra as acompanhantes mais sofisticadas de Portugal na Onesugar com total discrição e segurança.
-                  </h2>
-                </div>
-                <div className="w-full space-y-4 mt-2 sm:mt-4">
-                  <Suspense
-                    fallback={
-                      <Button
-                        disabled
-                        variant="outline"
-                        className="gap-2 w-full sm:w-auto py-4 sm:py-6 px-4 sm:px-6 text-sm sm:text-base"
-                      >
-                        <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                        Carregando distritos...
+        {/* ── HERO ── */}
+        {/* Desktop: full-bleed background image (anchored right), text overlay on the left */}
+        {/* Mobile: image on top, text block below */}
+        <section aria-labelledby="hero-heading">
+
+          {/* ── DESKTOP (md+): gradient background, two-column layout ── */}
+          <div className="relative hidden md:flex items-center w-full min-h-[52vh] lg:min-h-[80vh] overflow-hidden">
+            {/* Background: black on the left bleeding into rose/red on the right */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_50%,_#9f1239_0%,_#4c0519_35%,_#000000_70%)]" />
+            {/* Extra vignette to deepen the edges */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/40" />
+            {/* Subtle noise/grain texture feel via a soft radial bloom */}
+            <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_70%_40%,_#f43f5e22_0%,_transparent_70%)]" />
+
+            {/* Two-column content */}
+            <div className="relative z-10 w-full max-w-screen-xl mx-auto px-8 lg:px-16 py-12 grid grid-cols-2 gap-12 items-center">
+
+              {/* LEFT: text */}
+              <div className="space-y-6">
+                <h1
+                  id="hero-heading"
+                  className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
+                >
+                  Onesugar — Acompanhantes em Portugal
+                </h1>
+                <h2 className="text-base md:text-lg text-white/70 max-w-md">
+                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                </h2>
+                <Suspense
+                  fallback={
+                    <Button disabled variant="outline" className="gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Carregando distritos...
+                    </Button>
+                  }
+                >
+                  <CitySelectionModal
+                    triggerButton={
+                      <Button variant="default" className="gap-2 py-5 px-6">
+                        <MapPin className="h-4 w-4" />
+                        Encontrar por distrito
                       </Button>
                     }
-                  >
-                    <CitySelectionModal
-                      triggerButton={
-                        <Button
-                          variant="default"
-                          className="gap-2 w-full sm:w-auto py-4 sm:py-6 px-4 sm:px-6 text-sm sm:text-base"
-                        >
-                          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                          Encontrar por distrito
-                        </Button>
-                      }
-                    />
-                  </Suspense>
-                  <Image
-                    src="/onesugar-badge.jpg"
-                    alt="Onesugar Badge"
-                    width={340}
-                    height={380}
-                    className="object-contain"
                   />
+                </Suspense>
+              </div>
+
+              {/* RIGHT: badge as squircle with glow */}
+              <div className="flex items-center justify-center">
+                {/* Outer glow ring */}
+                <div className="relative">
+                  {/* Blurred rose glow behind the card */}
+                  <div className="absolute -inset-4 rounded-[2.5rem] bg-rose-600/30 blur-2xl" />
+                  {/* Softer wider ambient glow */}
+                  <div className="absolute -inset-8 rounded-[3rem] bg-rose-900/20 blur-3xl" />
+                  {/* The badge card itself */}
+                  <div className="relative rounded-[1rem] overflow-hidden ring-1 ring-rose-500/40 shadow-[0_0_40px_-4px_rgba(244,63,94,0.5)]">
+                    {/* Subtle inner top-edge highlight */}
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent" />
+                    <Image
+                      src="/banner-square.jpeg"
+                      alt="Curadoria Cris Galera — Embaixadora de Qualidade"
+                      width={1200}
+                      height={700}
+                      className="w-full max-w-sm lg:max-w-2xl object-cover"
+                      priority
+                    />
+                    {/* Subtle inner bottom-edge shadow */}
+                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
+                  </div>
                 </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* ── MOBILE (< md): gradient background, badge on top, text below ── */}
+          <div className="flex flex-col md:hidden overflow-hidden">
+            {/* Gradient background — same palette as desktop */}
+            <div className="relative bg-[radial-gradient(ellipse_at_60%_30%,_#9f1239_0%,_#4c0519_40%,_#000000_75%)] px-6 pt-10 pb-8 flex flex-col items-center gap-6">
+              {/* Ambient bloom */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-2/3 h-2/3 bg-[radial-gradient(ellipse_at_70%_30%,_#f43f5e22_0%,_transparent_70%)] pointer-events-none" />
+
+              {/* Badge squircle */}
+              <div className="relative z-10 w-full max-w-xs">
+                {/* Blurred rose glow */}
+                <div className="absolute -inset-4 rounded-[2.5rem] bg-rose-600/30 blur-2xl" />
+                {/* Wide ambient glow */}
+                <div className="absolute -inset-8 rounded-[3rem] bg-rose-900/20 blur-3xl" />
+                {/* Card */}
+                <div className="relative rounded-[2rem] overflow-hidden ring-1 ring-rose-500/40 shadow-[0_0_40px_-4px_rgba(244,63,94,0.5)]">
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent" />
+                  <Image
+                    src="/onesugar-mobile.jpeg"
+                    alt="Bem vindo a Onesugar"
+                    width={830}
+                    height={1472}
+                    className="w-full h-auto object-cover"
+                    priority
+                  />
+                  <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
+                </div>
+              </div>
+
+              {/* Text + CTA */}
+              <div className="relative z-10 w-full space-y-4 text-center">
+                <h1
+                  id="hero-heading-mobile"
+                  className="text-2xl sm:text-3xl font-bold tracking-tighter text-white"
+                >
+                  Onesugar — Acompanhantes em Portugal
+                </h1>
+                <h2 className="text-sm sm:text-base text-white/70">
+                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                </h2>
+                <Suspense
+                  fallback={
+                    <Button disabled variant="outline" className="gap-2 w-full">
+                      <MapPin className="h-4 w-4" />
+                      Carregando distritos...
+                    </Button>
+                  }
+                >
+                  <CitySelectionModal
+                    triggerButton={
+                      <Button variant="default" className="gap-2 w-full py-5">
+                        <MapPin className="h-4 w-4" />
+                        Encontrar por distrito
+                      </Button>
+                    }
+                  />
+                </Suspense>
               </div>
             </div>
           </div>
+
         </section>
 
         <HeroCarouselWrapper
