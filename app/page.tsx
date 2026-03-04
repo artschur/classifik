@@ -90,7 +90,7 @@ export default async function HomePage() {
             <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_70%_40%,_#f43f5e22_0%,_transparent_70%)]" />
 
             {/* Two-column content */}
-            <div className="relative z-10 w-full max-w-screen-xl mx-auto px-8 lg:px-16 py-12 grid grid-cols-2 gap-12 items-center">
+            <div className="relative z-10 w-full max-w-screen-xl mx-auto py-12 grid grid-cols-2 gap-12 items-center">
 
               {/* LEFT: text */}
               <div className="space-y-6">
@@ -137,9 +137,9 @@ export default async function HomePage() {
                     <Image
                       src="/banner-square.jpeg"
                       alt="Curadoria Cris Galera — Embaixadora de Qualidade"
-                      width={1200}
-                      height={700}
-                      className="w-full max-w-sm lg:max-w-2xl object-cover"
+                      width={1400}
+                      height={900}
+                      className="w-full max-w-sm lg:max-w-3xl object-cover"
                       priority
                     />
                     {/* Subtle inner bottom-edge shadow */}
