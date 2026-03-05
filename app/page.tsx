@@ -103,6 +103,13 @@ export default async function HomePage() {
                 <h2 className="text-base md:text-lg text-white/70 max-w-md">
                   Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
                 </h2>
+                <Image
+                  src="/badge-onesugar.png"
+                  alt="Bem vindo a Onesugar"
+                  width={400}
+                  height={300}
+                  priority
+                />
                 <Suspense
                   fallback={
                     <Button disabled variant="outline" className="gap-2">
@@ -191,6 +198,14 @@ export default async function HomePage() {
                 <h2 className="text-sm sm:text-base text-white/70">
                   Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
                 </h2>
+                <Image
+                  src="/badge-onesugar.png"
+                  alt="Bem vindo a Onesugar"
+                  width={400}
+                  height={300}
+                  className="w-full h-auto object-cover mix-blend-screen"
+                  priority
+                />
                 <Suspense
                   fallback={
                     <Button disabled variant="outline" className="gap-2 w-full">

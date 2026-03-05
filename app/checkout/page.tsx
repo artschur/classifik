@@ -1,5 +1,3 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
 import { ProductCard } from './productCard';
 import {
   BASIC_PRICE_ID,
@@ -7,7 +5,7 @@ import {
   PLUS_PRICE_ID,
   VIP_PRICE_ID,
 } from '@/db/queries/kv';
-import { isVerificationPending } from '../actions/document-verification';
+
 export interface Product {
   id: string;
   name: string;

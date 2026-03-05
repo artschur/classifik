@@ -140,9 +140,9 @@ const formSections = [
 interface RegisterCompanionFormProps {
   cities: City[];
   companionData?:
-    | (RegisterCompanionFormValues & { companionId: number })
-    | null
-    | undefined; // Optional companion data for editing
+  | (RegisterCompanionFormValues & { companionId: number })
+  | null
+  | undefined; // Optional companion data for editing
 }
 
 export function RegisterCompanionForm({
@@ -460,9 +460,9 @@ export function RegisterCompanionForm({
         variant: "success",
         title: "Perfil criado com sucesso",
         description:
-          "Seja bem vindo(a) à nossa plataforma. Agora vamos gravar seu audio",
+          "Seja bem vindo(a) à nossa plataforma. Confira nossos planos",
       });
-      router.push("/companions/verification");
+      router.push("/checkout");
       return;
     }
     try {
@@ -1298,7 +1298,7 @@ export function RegisterCompanionForm({
                             className={cn(
                               "relative aspect-square group cursor-pointer",
                               selectedImages.has(image.storagePath) &&
-                                "ring-2 ring-primary ring-offset-2",
+                              "ring-2 ring-primary ring-offset-2",
                             )}
                             onClick={() =>
                               toggleImageSelection(image.storagePath)
