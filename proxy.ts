@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 // Define protected routes
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/sitemap.xml",
+  "/robots.txt",
   "/location",
   "/location/(.*)",
   "/companions",
