@@ -83,12 +83,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${title} - Blog OneSugar`,
     description,
     alternates: {
-      canonical: `https://onesugar.pt/blog/${slug}`,
+      canonical: `https://www.onesugar.pt/blog/${slug}`,
     },
     openGraph: {
       title,
       description,
-      url: `https://onesugar.pt/blog/${slug}`,
+      url: `https://www.onesugar.pt/blog/${slug}`,
       siteName: 'Onesugar',
       locale: 'pt_PT',
       type: 'article',

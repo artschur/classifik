@@ -1,7 +1,15 @@
+import type { Metadata } from 'next';
 import { SearchableCities } from '@/components/searchableCities';
 import { getAvailableCitiesSummary } from '@/db/queries';
-import { regions as staticRegions } from '@/types/types';
 import { Suspense } from 'react';
+
+export const metadata: Metadata = {
+  title: 'Localizações | Onesugar',
+  description: 'Encontre acompanhantes em todo o território de Portugal. Escolha o seu distrito e descubra perfis verificados.',
+  alternates: {
+    canonical: 'https://www.onesugar.pt/location',
+  },
+};
 
 async function CitiesList() {
   const cities = await getAvailableCitiesSummary();

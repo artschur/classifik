@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getAvailableCities } from '@/db/queries';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://onesugar.pt';
+  const baseUrl = 'https://www.onesugar.pt';
 
   const cities = await getAvailableCities();
 

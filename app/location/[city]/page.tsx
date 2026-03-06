@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import type { FilterTypesCompanions } from '@/types/types';
 import {
@@ -11,6 +12,30 @@ import Pagination from '@/components/ui/pagination';
 import { countCompanionsPages } from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { PlanType } from '@/db/queries/kv';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ city: string }>;
+}): Promise<Metadata> {
+  const { city } = await params;
+  const capitalizedCity =
+    city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
+
+  return {
+    title: `Acompanhantes em ${capitalizedCity} | Onesugar`,
+    description: `Encontre as melhores acompanhantes em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar. Descubra acompanhantes premium em ${capitalizedCity}.`,
+    alternates: {
+      canonical: `https://www.onesugar.pt/location/${city}`,
+    },
+    openGraph: {
+      title: `Acompanhantes em ${capitalizedCity} | Onesugar`,
+      description: `As melhores acompanhantes em ${capitalizedCity} estão na Onesugar.`,
+      url: `https://www.onesugar.pt/location/${city}`,
+    },
+  };
+}
+
 
 async function PaginationComponent({
   location,

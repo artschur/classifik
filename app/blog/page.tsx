@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   description:
     'Artigos, dicas e novidades sobre acompanhantes premium em Portugal. Fique por dentro do universo OneSugar com conteúdos exclusivos e atualizados.',
   alternates: {
-    canonical: 'https://onesugar.pt/blog',
+    canonical: 'https://www.onesugar.pt/blog',
   },
   openGraph: {
     title: 'Blog OneSugar – Dicas e Novidades sobre Acompanhantes em Portugal',
     description:
       'Explore o blog da OneSugar e descubra artigos exclusivos sobre acompanhantes premium, segurança e discrição em Portugal.',
-    url: 'https://onesugar.pt/blog',
+    url: 'https://www.onesugar.pt/blog',
     siteName: 'Onesugar',
     locale: 'pt_PT',
     type: 'website',
