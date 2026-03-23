@@ -31,11 +31,13 @@ export default async function BlogPage(): Promise<any> {
   const response: any = await getBlogPosts({ limit: 100 });
   const posts: any[] = (response && response.items) || [];
 
+  const h1Text = "Blog de Acompanhantes e Vida Noturna em Portugal";
+
   // Early return when there are no posts
   if (!posts || posts.length === 0) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-8">Nosso Blog</h1>
+        <h1 className="text-3xl font-bold mb-8">{h1Text}</h1>
         <p className="text-gray-600">Nenhum post encontrado.</p>
       </div>
     );
@@ -43,7 +45,7 @@ export default async function BlogPage(): Promise<any> {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8">Nosso Blog</h1>
+      <h1 className="text-3xl font-bold mb-8">{h1Text}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {posts.map((post: any, index: number) => {

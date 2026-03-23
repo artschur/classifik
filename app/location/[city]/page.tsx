@@ -15,22 +15,26 @@ import { PlanType } from '@/db/queries/kv';
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ city: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
-  const { city } = await params;
+  const [{ city }, sParams] = await Promise.all([params, searchParams]);
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
 
+  const adj = (sParams.adj as string) || 'Premium';
+
   return {
-    title: `Acompanhantes em ${capitalizedCity} | Onesugar`,
-    description: `Encontre as melhores acompanhantes em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar. Descubra acompanhantes premium em ${capitalizedCity}.`,
+    title: `Acompanhantes ${adj} em ${capitalizedCity} | Onesugar`,
+    description: `Encontre as melhores acompanhantes ${adj.toLowerCase()} em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar. Descubra acompanhantes premium em ${capitalizedCity}.`,
     alternates: {
       canonical: `https://www.onesugar.pt/location/${city}`,
     },
     openGraph: {
-      title: `Acompanhantes em ${capitalizedCity} | Onesugar`,
-      description: `As melhores acompanhantes em ${capitalizedCity} estão na Onesugar.`,
+      title: `Acompanhantes ${adj} em ${capitalizedCity} | Onesugar`,
+      description: `As melhores acompanhantes ${adj.toLowerCase()} em ${capitalizedCity} estão na Onesugar.`,
       url: `https://www.onesugar.pt/location/${city}`,
     },
   };
@@ -62,10 +66,14 @@ export default async function CompanionsPage({
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
   const page = parseInt(sParams.page ?? '1');
 
+  const adjectives = ['Premium', 'Verificadas', 'Elegantes', 'de Luxo', 'Alto Padrão'];
+  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const h1Text = `Acompanhantes ${randomAdjective} em ${capitalizedCity}`;
+
   return (
     <div className="container mx-auto px-10 py-8">
       <h1 className="text-3xl font-bold mb-6">
-        Companions in {capitalizedCity}
+        {h1Text}
       </h1>
       <div className="mb-8">
         <HeroCarouselWrapper

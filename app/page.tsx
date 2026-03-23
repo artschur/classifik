@@ -72,6 +72,10 @@ export default async function HomePage() {
   // Keep Upstash alive — fire-and-forget, never blocks render
   kv.ping().catch(() => null);
 
+  const adjectives = ['Premium', 'Verificadas', 'Elegantes', 'de Luxo', 'Alto Padrão'];
+  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const h1Text = `Acompanhantes ${randomAdjective} em Portugal`;
+
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
@@ -98,7 +102,7 @@ export default async function HomePage() {
                   id="hero-heading"
                   className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
                 >
-                  Onesugar — Acompanhantes em Portugal
+                  {h1Text}
                 </h1>
                 <h2 className="text-base md:text-lg text-white/70 max-w-md">
                   Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
@@ -193,7 +197,7 @@ export default async function HomePage() {
                   id="hero-heading-mobile"
                   className="text-2xl sm:text-3xl font-bold tracking-tighter text-white"
                 >
-                  Onesugar — Acompanhantes em Portugal
+                  {h1Text}
                 </h1>
                 <h2 className="text-sm sm:text-base text-white/70">
                   Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
