@@ -12,6 +12,12 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: 'Cadastre-se agora | One Sugar',
+  description: 'Join OneSugar Portugal and create your companion profile to connect with verified members seeking private and premium experiences.',
+};
 
 
 

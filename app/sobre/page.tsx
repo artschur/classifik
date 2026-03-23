@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { AboutPage } from "@/components/about-page"
 
 export const metadata: Metadata = {
-  title: "Sobre a OneSugar | O Teu Portal de Classificados em Portugal",
+  title: 'Sobre a Onesugar | Plataforma de acompanhantes em Portugal',
   description:
-    "Conhece a OneSugar, o portal de referência para anúncios em Portugal. Focamo-nos na discrição, segurança e na melhor experiência para anunciantes e utilizadores.",
+    'Saiba mais sobre a Onesugar, uma plataforma confiável para encontrar acompanhantes verificadas e serviços de acompanhantes premium em Portugal.',
 }
 
 const sobreData = {

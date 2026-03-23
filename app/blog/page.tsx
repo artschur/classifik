@@ -4,16 +4,16 @@ import Image from 'next/image';
 import { getBlogPosts } from '@/blog/contentful';
 
 export const metadata: Metadata = {
-  title: 'Blog - OneSugar Portugal',
+  title: 'Blog de acompanhantes em Portugal | Dicas de encontros e guia da vida noturna | Onesugar',
   description:
-    'Artigos, dicas e novidades sobre acompanhantes premium em Portugal. Fique por dentro do universo OneSugar com conteúdos exclusivos e atualizados.',
+    'Explore o nosso blog para guias da vida noturna, dicas sobre acompanhantes e conselhos sobre encontros em Portugal. Descubra os segredos de noites inesquecíveis.',
   alternates: {
     canonical: 'https://www.onesugar.pt/blog',
   },
   openGraph: {
-    title: 'Blog OneSugar – Dicas e Novidades sobre Acompanhantes em Portugal',
+    title: 'Blog de acompanhantes em Portugal | Dicas de encontros e guia da vida noturna | Onesugar',
     description:
-      'Explore o blog da OneSugar e descubra artigos exclusivos sobre acompanhantes premium, segurança e discrição em Portugal.',
+      'Explore o nosso blog para guias da vida noturna, dicas sobre acompanhantes e conselhos sobre encontros em Portugal. Descubra os segredos de noites inesquecíveis.',
     url: 'https://www.onesugar.pt/blog',
     siteName: 'Onesugar',
     locale: 'pt_PT',

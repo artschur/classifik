@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { LegalPage } from "@/components/legal-page"
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade | OneSugar Portugal",
+  title: 'Política de Privacidade | Onesugar Portugal',
   description:
-    "Sabe como a OneSugar protege os teus dados pessoais. Informações sobre RGPD, recolha de dados e cookies no nosso portal de classificados em Portugal.",
+    'Leia a política de privacidade da Onesugar e saiba como protegemos as informações do usuário e garantimos uma navegação segura.',
 }
 
 const privacidadeData = {
