@@ -47,6 +47,9 @@ export async function generateMetadata({
     return {
       title: metadata.title,
       description: metadata.description,
+      alternates: {
+        canonical: `https://www.onesugar.pt/companions/${id}`,
+      },
       openGraph: {
         title: metadata.title,
         description: metadata.description,

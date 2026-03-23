@@ -27,7 +27,16 @@ const isPublicApiRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // Allow search engine bots to crawl public routes without redirection
+  const userAgent = req.headers.get("user-agent") || "";
+  const isBot = /googlebot|bingbot|yandexbot|baiduspider|facebot|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator/i.test(userAgent);
+
   if (isPublicApiRoute(req)) {
+    return NextResponse.next();
+  }
+
+  // Bots should only access public routes, if they hit a non-public route we let them proceed to the 404 or Auth check naturally
+  if (isBot && isPublicRoute(req)) {
     return NextResponse.next();
   }
 
