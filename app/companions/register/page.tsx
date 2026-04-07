@@ -86,8 +86,8 @@ async function CompanionFormWithData() {
 
   return (
     <RegisterCompanionForm
-      cities={cities.map(city => Object.assign({}, city))}
-      companionData={companion ? Object.assign({}, companion) : null}
+      cities={JSON.parse(JSON.stringify(cities))}
+      companionData={companion ? JSON.parse(JSON.stringify(companion)) : null}
     />
   );
 }
