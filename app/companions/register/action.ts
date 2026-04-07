@@ -11,11 +11,13 @@ export const completeFirstStepRegistration = async () => {
 
   // Clerk's update is a deep merge, so we only need to
   // send the keys we want to change/add.
-  return client.users.updateUserMetadata(userId, {
+  await client.users.updateUserMetadata(userId, {
     publicMetadata: {
       onboardingComplete: true, // Mark step 1 done
       isRegistrationComplete: true,
       isCompanion: true,        // Set the role
     },
   });
+
+  return { success: true }
 }
