@@ -482,7 +482,7 @@ export async function registerCompanion(
       return companion;
     });
 
-    return newCompanion;
+    return JSON.parse(JSON.stringify(newCompanion));
   } catch (error) {
     console.error("Failed to register companion in DB:", error);
     // Re-throw a more specific error

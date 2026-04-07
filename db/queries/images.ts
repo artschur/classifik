@@ -94,7 +94,7 @@ export async function getImagesByAuthId(
     .from(imagesTable)
     .where(eq(imagesTable.authId, authId));
 
-  return images;
+  return JSON.parse(JSON.stringify(images));
 }
 
 export async function deleteImage(
