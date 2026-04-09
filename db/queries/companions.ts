@@ -742,6 +742,7 @@ export async function updateCompanionFromForm(
         city_id: data.city,
         meets_at_hotel: data.meets_at_hotel,
         meets_at_own_place: data.meets_at_own_place,
+        verified: false,
         updated_at: new Date(),
       } as NewCompanion)
       .where(eq(companionsTable.auth_id, clerkId));
