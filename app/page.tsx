@@ -14,10 +14,9 @@ import { kv } from '@/db/index';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 
 export const metadata: Metadata = {
-  title: 'Onesugar | Acompanhantes em Portugal ',
+  title: 'Onesugar | Acompanhantes em Portugal',
   description:
     'Encontre as acompanhantes premium em Portugal com privacidade garantida e perfis verificados na Onesugar.',
-  applicationName: 'Onesugar',
   keywords: [
     'Acompanhantes Portugal',
     'Acompanhantes premium',
@@ -74,8 +73,7 @@ export default async function HomePage() {
 
   const adjectives = ['Premium', 'Verificadas', 'Elegantes', 'de Luxo', 'Alto Padrão'];
   const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const h1Text = `Acompanhantes ${randomAdjective} em Portugal`;
-
+  const h1Text = 'Acompanhantes Premium em Portugal';
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
