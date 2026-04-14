@@ -6,81 +6,81 @@ import { companionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(req: Request) {
-  try {
-    const { userId } = await auth();
+    try {
+        const { userId } = await auth();
 
-    if (!userId) {
-      return new Response('Unauthorized', { status: 401 });
+        if (!userId) {
+            return new Response('Unauthorized', { status: 401 });
+        }
+
+        const url = new URL(req.url);
+        const priceId = url.searchParams.get('priceId');
+
+        if (!priceId) {
+            return new Response('Missing price ID', { status: 400 });
+        }
+
+        // ✅ Validate that the priceId exists in our plan mapping
+        const planInfo = priceIdToPlan[priceId];
+        if (!planInfo) {
+            return new Response('Invalid price ID', { status: 400 });
+        }
+
+        let stripeCustomerId = await kv.get(`stripe:user:${userId}`);
+
+        if (!stripeCustomerId) {
+            const customer = await stripe.customers.create({
+                metadata: {
+                    userId: userId,
+                },
+            });
+
+            stripeCustomerId = customer.id;
+            await db
+                .update(companionsTable)
+                .set({
+                    stripe_customer_id: stripeCustomerId as string,
+                })
+                .where(eq(companionsTable.auth_id, userId));
+
+            await kv.set(`stripe:user:${userId}`, stripeCustomerId);
+        }
+
+        console.log(
+            `🛒 Creating checkout for user ${userId}, customer ${stripeCustomerId}, plan ${planInfo.name}`
+        );
+
+        const checkout = await stripe.checkout.sessions.create({
+            customer: stripeCustomerId as string,
+            success_url: 'https://onesugar.pt/success',
+            cancel_url: 'https://onesugar.pt/cancelled',
+            mode: 'subscription',
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: 1,
+                },
+            ],
+            subscription_data: {
+                trial_period_days: 60, // 2 months = 60 days
+                trial_settings: {
+                    end_behavior: {
+                        missing_payment_method: 'cancel', // Cancel if no payment method at trial end
+                    },
+                },
+            },
+            payment_method_collection: 'if_required', // Allow trials without payment method
+            metadata: {
+                userId: userId,
+                stripeCustomerId: stripeCustomerId as string,
+                planType: planInfo.name,
+            },
+            allow_promotion_codes: true,
+        });
+
+        return Response.redirect(checkout.url as string);
+    } catch (error) {
+        console.error('❌ Error creating checkout session:', error);
+        return new Response('Internal server error', { status: 500 });
     }
-
-    const url = new URL(req.url);
-    const priceId = url.searchParams.get('priceId');
-
-    if (!priceId) {
-      return new Response('Missing price ID', { status: 400 });
-    }
-
-    // ✅ Validate that the priceId exists in our plan mapping
-    const planInfo = priceIdToPlan[priceId];
-    if (!planInfo) {
-      return new Response('Invalid price ID', { status: 400 });
-    }
-
-    let stripeCustomerId = await kv.get(`stripe:user:${userId}`);
-
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        metadata: {
-          userId: userId,
-        },
-      });
-
-      stripeCustomerId = customer.id;
-      await db
-        .update(companionsTable)
-        .set({
-          stripe_customer_id: stripeCustomerId as string,
-        })
-        .where(eq(companionsTable.auth_id, userId));
-
-      await kv.set(`stripe:user:${userId}`, stripeCustomerId);
-    }
-
-    console.log(
-      `🛒 Creating checkout for user ${userId}, customer ${stripeCustomerId}, plan ${planInfo.name}`
-    );
-
-    const checkout = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId as string,
-      success_url: 'https://onesugar.pt/success',
-      cancel_url: 'https://onesugar.pt/cancelled',
-      mode: 'subscription',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      subscription_data: {
-        trial_period_days: 60, // 2 months = 60 days
-        trial_settings: {
-          end_behavior: {
-            missing_payment_method: 'cancel', // Cancel if no payment method at trial end
-          },
-        },
-      },
-      payment_method_collection: 'if_required', // Allow trials without payment method
-      metadata: {
-        userId: userId,
-        stripeCustomerId: stripeCustomerId as string,
-        planType: planInfo.name,
-      },
-      allow_promotion_codes: true,
-    });
-
-    return Response.redirect(checkout.url as string);
-  } catch (error) {
-    console.error('❌ Error creating checkout session:', error);
-    return new Response('Internal server error', { status: 500 });
-  }
 }

@@ -26,6 +26,10 @@ export function TwoStepModal() {
       return;
     }
 
+    if (typeof window !== 'undefined' && /bot|crawler|spider|crawling/i.test(navigator.userAgent)) {
+      return;
+    }
+
     const ageVerified = localStorage.getItem('age-verified') === "true";
 
     if (ageVerified) {
