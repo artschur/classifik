@@ -42,7 +42,7 @@ export function TwoStepModal() {
   }, [isSignedIn, isLoaded]); // Re-run when auth state changes
 
   if (isSignedIn) {
-    return;
+    return null;
   }
   const handleAgeConfirm = () => {
     localStorage.setItem('age-verified', 'true');
