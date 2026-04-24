@@ -206,8 +206,8 @@ function buildCompanionsQuery(
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
-        hasActiveAd: companionsTable.has_active_ad,
-        planType: companionsTable.plan_type,
+        hasActiveAd: sql<boolean>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.has_active_ad} ELSE false END`.as('hasActiveAd'),
+        planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
       },
       city: {
         name: citiesTable.city,
@@ -269,13 +269,14 @@ export async function getRandomCompanions(
   }
 
   const planTypeOrder = sql`
-    CASE ${companionsTable.plan_type}
-      WHEN 'free' THEN 1
-      WHEN 'classic' THEN 2
-      WHEN 'plus' THEN 3
-      WHEN 'vip' THEN 4
-      ELSE 5
-    END
+    CASE
+      WHEN ${companionsTable.ad_expiration_date} <= NOW() THEN 1
+      WHEN ${companionsTable.plan_type} = 'free' THEN 1
+      WHEN ${companionsTable.plan_type} = 'classic' THEN 2
+      WHEN ${companionsTable.plan_type} = 'plus' THEN 3
+      WHEN ${companionsTable.plan_type} = 'vip' THEN 4
+      ELSE 0
+    END DESC
   `;
 
   const results = await db
@@ -584,7 +585,7 @@ export async function getCompanionByClerkId(
       piercings: characteristicsTable.piercings,
       smoker: characteristicsTable.smoker,
       verified: companionsTable.verified,
-      planType: companionsTable.plan_type,
+      planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
     })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, clerkId))
@@ -790,7 +791,7 @@ export async function getUnverifiedCompanions(): Promise<
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
-        planType: companionsTable.plan_type,
+        planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
       },
       city: {
         name: citiesTable.city,

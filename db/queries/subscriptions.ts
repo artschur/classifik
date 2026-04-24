@@ -24,10 +24,9 @@ export async function upsertSubscriptionFromStripe(params: {
       : (item?.price?.product as Stripe.Product | undefined)?.id;
   const planType = priceId ? priceIdToPlan[priceId]?.name : undefined;
 
-  // Use current date and add 30 days for subscription period
   const currentPeriodStart = new Date();
   const currentPeriodEnd = new Date();
-  currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 30);
+  currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 2);
 
   // Determine active status early
   const isActive = ACTIVE_STATUSES.includes(subscription.status as any);
