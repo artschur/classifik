@@ -14,105 +14,131 @@ import { countCompanionsPages } from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { PlanType } from '@/db/queries/kv';
 
+const cityMetadata: Record<string, { title: string; description: string; h1: string }> = {
+  lisboa: {
+    title: 'Acompanhantes em Lisboa | Perfis Verificados | Onesugar',
+    description: 'Encontre as melhores acompanhantes em Lisboa. Perfis verificados, total discrição e segurança na Onesugar. Descubra acompanhantes premium em Lisboa.',
+    h1: 'Acompanhantes em Lisboa',
+  },
+  porto: {
+    title: 'Acompanhantes no Porto | Perfis Verificados | Onesugar',
+    description: 'Procura acompanhantes no Porto? Descubra perfis verificados para encontros privados e seguros através da Onesugar.',
+    h1: 'Acompanhantes no Porto',
+  },
+  braga: {
+    title: 'Acompanhantes em Braga | Perfis Verificados | Onesugar',
+    description: 'Navegue pelos perfis de acompanhantes verificadas em Braga. Descubra companheiras e desfrute de encontros privados com perfis de confiança.',
+    h1: 'Acompanhantes em Braga',
+  },
+  coimbra: {
+    title: 'Acompanhantes em Coimbra | Perfis Verificados | Onesugar',
+    description: 'Encontre acompanhantes em Coimbra. Explore perfis premium e marque encontros discretos hoje mesmo na Onesugar.',
+    h1: 'Acompanhantes em Coimbra',
+  },
+  faro: {
+    title: 'Acompanhantes em Faro | Perfis Verificados no Algarve | Onesugar',
+    description: 'Descubra acompanhantes em Faro e na região do Algarve. Navegue por perfis verificados para experiências discretas e inesquecíveis.',
+    h1: 'Acompanhantes em Faro',
+  },
+  aveiro: {
+    title: 'Acompanhantes em Aveiro | Perfis Verificados | Onesugar',
+    description: 'Encontre acompanhantes em Aveiro. Navegue por perfis verificados e agende encontros privados com acompanhantes de alto nível na Onesugar.',
+    h1: 'Acompanhantes em Aveiro',
+  },
+  viseu: {
+    title: 'Acompanhantes em Viseu | Perfis Verificados | Onesugar',
+    description: 'Encontre acompanhantes em Viseu. Navegue pelos perfis verificados para experiências discretas e privadas na Onesugar.',
+    h1: 'Acompanhantes em Viseu',
+  },
+  leiria: {
+    title: 'Acompanhantes em Leiria | Perfis Verificados | Onesugar',
+    description: 'Procura acompanhantes em Leiria? Explore perfis verificados e desfrute de experiências privadas com acompanhantes de confiança na Onesugar.',
+    h1: 'Acompanhantes em Leiria',
+  },
+  setubal: {
+    title: 'Acompanhantes em Setúbal | Perfis Verificados | Onesugar',
+    description: 'Explore o catálogo de acompanhantes em Setúbal. Descubra companheiras e desfrute de encontros seguros e discretos na Onesugar.',
+    h1: 'Acompanhantes em Setúbal',
+  },
+  evora: {
+    title: 'Acompanhantes em Évora | Perfis Verificados | Onesugar',
+    description: 'Procura acompanhantes em Évora? Descubra perfis verificados que oferecem experiências privadas e inesquecíveis na Onesugar.',
+    h1: 'Acompanhantes em Évora',
+  },
+  guarda: {
+    title: 'Acompanhantes na Guarda | Perfis Verificados | Onesugar',
+    description: 'Descubra acompanhantes na Guarda. Encontre perfis de confiança e desfrute de encontros discretos na Onesugar.',
+    h1: 'Acompanhantes na Guarda',
+  },
+  braganca: {
+    title: 'Acompanhantes em Bragança | Perfis Verificados | Onesugar',
+    description: 'Descubra acompanhantes em Bragança. Navegue pelos perfis verificados e desfrute de encontros privados e discretos na Onesugar.',
+    h1: 'Acompanhantes em Bragança',
+  },
+  'castelo-branco': {
+    title: 'Acompanhantes em Castelo Branco | Perfis Verificados | Onesugar',
+    description: 'Encontre acompanhantes em Castelo Branco. Navegue por perfis verificados e combine encontros seguros e privados na Onesugar.',
+    h1: 'Acompanhantes em Castelo Branco',
+  },
+  santarem: {
+    title: 'Acompanhantes em Santarém | Perfis Verificados | Onesugar',
+    description: 'Descubra acompanhantes em Santarém. Navegue por perfis verificados e agende encontros privados com facilidade na Onesugar.',
+    h1: 'Acompanhantes em Santarém',
+  },
+  'vila-real': {
+    title: 'Acompanhantes em Vila Real | Perfis Verificados | Onesugar',
+    description: 'Procura acompanhantes em Vila Real? Explore perfis verificados e desfrute de encontros privados e seguros na Onesugar.',
+    h1: 'Acompanhantes em Vila Real',
+  },
+  'viana-do-castelo': {
+    title: 'Acompanhantes em Viana do Castelo | Perfis Verificados | Onesugar',
+    description: 'Descubra acompanhantes em Viana do Castelo. Navegue pelos perfis verificados e desfrute de experiências privadas na Onesugar.',
+    h1: 'Acompanhantes em Viana do Castelo',
+  },
+  portalegre: {
+    title: 'Acompanhantes em Portalegre | Perfis Verificados | Onesugar',
+    description: 'Encontre acompanhantes em Portalegre. Perfis verificados, total discrição e segurança na Onesugar.',
+    h1: 'Acompanhantes em Portalegre',
+  },
+  beja: {
+    title: 'Acompanhantes em Beja | Perfis Verificados | Onesugar',
+    description: 'Encontre acompanhantes em Beja. Perfis verificados, total discrição e segurança na Onesugar.',
+    h1: 'Acompanhantes em Beja',
+  },
+};
+
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ city: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
-  const [{ city }, sParams] = await Promise.all([params, searchParams]);
+  const { city } = await params;
+  const cityKey = city.toLowerCase();
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
 
-  const adj = (sParams.adj as string) || 'Premium';
-
-  const cityMetadata: Record<string, { title: string; description: string }> = {
-    viseu: {
-      title: 'Garotas de programa em Viseu | Acompanhantes verificadas | Onesugar',
-      description: 'Encontre acompanhantes de luxo em Viseu. Navegue pelos perfis de acompanhantes para experiências discretas e privadas.',
-    },
-    lisboa: {
-      title: 'Garotas de programa de luxo em Lisboa | Acompanhantes verificadas | Onesugar',
-      description: 'Encontre as melhores acompanhantes de luxo em Lisboa. Navegue por perfis verificados de acompanhantes e desfrute de experiências discretas e inesquecíveis.',
-    },
-    porto: {
-      title: 'Garotas de programa de luxo no Porto | Acompanhantes verificadas | Onesugar',
-      description: 'Procura acompanhantes no Porto? Descubra acompanhantes verificadas para encontros privados e seguros através do Onesugar.',
-    },
-    braga: {
-      title: 'Garotas de programa em Braga | Acompanhantes Premium | Onesugar',
-      description: 'Navegue pelos perfis de acompanhantes verificadas em Braga. Descubra belas companheiras e desfrute de encontros privados com perfis confiáveis.',
-    },
-    coimbra: {
-      title: 'Garotas de programa em Coimbra | Acompanhantes de luxo | Onesugar',
-      description: 'Encontre acompanhantes elegantes em Coimbra. Explore perfis de acompanhantes premium e marque encontros discretos hoje mesmo.',
-    },
-    faro: {
-      title: 'Garotas de programa em Faro | Acompanhantes Premium no Algarve | Onesugar',
-      description: 'Descubra acompanhantes encantadoras em Faro e na região do Algarve. Navegue por perfis verificados de acompanhantes para experiências inesquecíveis.',
-    },
-    leiria: {
-      title: 'Garotas de programa em Leiria | Acompanhantes verificadas | Onesugar',
-      description: 'Procura acompanhantes em Leiria? Explore perfis verificados de acompanhantes e desfrute de experiências privadas com acompanhantes de confiança.',
-    },
-    setubal: {
-      title: 'Garotas de programa em Setúbal | Acompanhantes de luxo | Onesugar',
-      description: 'Explore o catálogo de acompanhantes de luxo em Setúbal. Descubra belas companheiras e desfrute de encontros seguros e discretos.',
-    },
-    aveiro: {
-      title: 'Garotas de programa em Aveiro | Acompanhantes verificadas | Onesugar',
-      description: 'Encontre acompanhantes deslumbrantes em Aveiro. Navegue por perfis verificados e agende encontros privados com acompanhantes de alto nível.',
-    },
-    braganca: {
-      title: 'Garotas de programa em Bragança | Acompanhantes de luxo verificadas | Onesugar',
-      description: 'Descubra acompanhantes verificadas em Bragança. Navegue pelos perfis de acompanhantes premium e desfrute de encontros privados e discretos.',
-    },
-    'castelo-branco': {
-      title: 'Acompanhantes em Castelo Branco | Companheiros de Luxo | Um açúcar',
-      description: 'Encontre acompanhantes lindas em Castelo Branco. Navegue por perfis verificados de acompanhantes e combine encontros seguros e privados.',
-    },
-    evora: {
-      title: 'Garotas de programa em Évora | Acompanhantes Premium | Onesugar',
-      description: 'Procura acompanhantes em Évora? Descubra acompanhantes verificadas que oferecem experiências privadas e inesquecíveis.',
-    },
-    guarda: {
-      title: 'Garotas de programa em Guarda | Acompanhantes verificadas | Onesugar',
-      description: 'Descubra acompanhantes deslumbrantes em Guarda. Encontre perfis de acompanhantes confiáveis ​​e desfrute de encontros discretos.',
-    },
-    santarem: {
-      title: 'Acompanhantes em Santarém | Companheiros de Luxo | Um açúcar',
-      description: 'Descubra acompanhantes de luxo em Santarém. Navegue por perfis verificados e agende encontros privados com facilidade.',
-    },
-    'vila-real': {
-      title: 'Garotas de programa em Vila Real | Acompanhantes Premium | Onesugar',
-      description: 'Procura acompanhantes em Vila Real? Explore acompanhantes verificadas e desfrute de encontros privados e seguros.',
-    },
-    'viana-do-castelo': {
-      title: 'Acompanhantes em Viana do Castelo | Companheiros de Luxo | Um açúcar',
-      description: 'Descubra acompanhantes verificadas em Viana do Castelo. Navegue pelos perfis de belas acompanhantes e desfrute de experiências privadas.',
-    },
-  };
-
-  const currentMetadata = cityMetadata[city.toLowerCase()] || {
-    title: `Acompanhantes ${adj} em ${capitalizedCity} | Onesugar`,
-    description: `Encontre as melhores acompanhantes ${adj.toLowerCase()} em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar. Descubra acompanhantes premium em ${capitalizedCity}.`,
+  const current = cityMetadata[cityKey] || {
+    title: `Acompanhantes em ${capitalizedCity} | Onesugar`,
+    description: `Encontre as melhores acompanhantes em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar.`,
+    h1: `Acompanhantes em ${capitalizedCity}`,
   };
 
   return {
-    title: currentMetadata.title,
-    description: currentMetadata.description,
+    title: current.title,
+    description: current.description,
     alternates: {
-      canonical: `https://www.onesugar.pt/location/${city}`,
+      canonical: `https://www.onesugar.pt/location/${cityKey}`,
     },
     openGraph: {
-      title: currentMetadata.title,
-      description: currentMetadata.description,
-      url: `https://www.onesugar.pt/location/${city}`,
+      title: current.title,
+      description: current.description,
+      url: `https://www.onesugar.pt/location/${cityKey}`,
+      siteName: 'Onesugar',
+      locale: 'pt_PT',
+      type: 'website',
     },
   };
 }
-
 
 async function PaginationComponent({
   location,
@@ -127,13 +153,13 @@ async function PaginationComponent({
   return <Pagination totalPages={totalPages} />;
 }
 
-async function LocationH1({ citySlug }: { citySlug: string }) {
+function LocationH1({ citySlug }: { citySlug: string }) {
+  const cityKey = citySlug.toLowerCase();
   const capitalizedCity =
     citySlug.charAt(0).toUpperCase() + citySlug.slice(1).replaceAll('-', ' ');
 
-  const adjectives = ['Premium', 'Verificadas', 'Elegantes', 'de Luxo', 'Alto Padrão'];
-  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const h1Text = `Acompanhantes ${randomAdjective} em ${capitalizedCity}`;
+  const h1Text =
+    cityMetadata[cityKey]?.h1 || `Acompanhantes em ${capitalizedCity}`;
 
   return <h1 className="text-3xl font-bold mb-6">{h1Text}</h1>;
 }
@@ -182,3 +208,4 @@ export default async function CompanionsPage({
     </div>
   );
 }
+
