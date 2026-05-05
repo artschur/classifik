@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
+import Script from 'next/script';
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
 import Footer from '@/components/footer';
@@ -12,6 +13,8 @@ import { WhatsAppButton } from '@/components/whatsapp-button';
 import { TwoStepModal } from '@/components/two-step-modal';
 import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
 import { CustomToaster } from '@/components/custom-toaster';
+
+const GA_MEASUREMENT_ID = 'G-30XJX7BT9D'; // substituir pelo Measurement ID real do GA4
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -29,7 +32,11 @@ export const metadata: Metadata = {
     default: 'Onesugar | Acompanhantes em Portugal',
     template: '%s | Onesugar',
   },
-  description: 'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discrição que merece na Onesugar.',
+  description:
+    'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discrição que merece na Onesugar.',
+  alternates: {
+    canonical: 'https://www.onesugar.pt',
+  },
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
@@ -57,7 +64,7 @@ export const metadata: Metadata = {
         url: '/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Onesugar - Acompanhantes Premium',
+        alt: 'Onesugar - Acompanhantes Premium em Portugal',
       },
     ],
   },
@@ -82,34 +89,49 @@ export default function RootLayout({
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Organization",
-                "name": "Onesugar",
-                "url": "https://www.onesugar.pt",
-                "logo": "https://www.onesugar.pt/logo_classifik.png",
-                "description": "A sua escolha segura para acompanhantes premium em Portugal.",
-                "address": [
+                '@context': 'https://schema.org',
+                '@type': 'Organization',
+                name: 'Onesugar',
+                url: 'https://www.onesugar.pt',
+                logo: 'https://www.onesugar.pt/logo.png',
+                description:
+                  'A sua escolha segura para acompanhantes premium em Portugal.',
+                address: [
                   {
-                    "@type": "PostalAddress",
-                    "addressLocality": "Lisboa",
-                    "addressCountry": "PT"
+                    '@type': 'PostalAddress',
+                    addressLocality: 'Lisboa',
+                    addressCountry: 'PT',
                   },
                   {
-                    "@type": "PostalAddress",
-                    "addressLocality": "Porto",
-                    "addressCountry": "PT"
-                  }
+                    '@type': 'PostalAddress',
+                    addressLocality: 'Porto',
+                    addressCountry: 'PT',
+                  },
                 ],
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": "+351 934 600 827",
-                  "contactType": "customer service"
-                }
-              })
+                contactPoint: {
+                  '@type': 'ContactPoint',
+                  telephone: '+351 934 600 827',
+                  contactType: 'customer service',
+                },
+              }),
             }}
           />
         </head>
         <body className="min-h-screen flex flex-col">
+          {/* Google Analytics 4 */}
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_MEASUREMENT_ID}');
+            `}
+          </Script>
+
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -119,8 +141,6 @@ export default function RootLayout({
             <Analytics />
             <Toaster />
             <TwoStepModal />
-            {/* Global Popup - Uncomment and customize as needed */}
-
             <GlobalPopupWrapper
               isEnabled={false}
               title="Ganhe 2 meses grátis no seu Plano!"
@@ -129,9 +149,6 @@ export default function RootLayout({
               cancelText="Não quero"
               showCloseButton={true}
             />
-
-            {/* Custom Toaster - Alternative toaster positioned at bottom right */}
-
             <CustomToaster
               isEnabled={true}
               autoShow={true}
@@ -144,7 +161,6 @@ export default function RootLayout({
               persistent={true}
               cookieKey="trial-toaster-dismissed"
             />
-
             <Navbar />
             <main className="flex-grow">{children}</main>
             <WhatsAppButton />
