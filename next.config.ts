@@ -1,13 +1,29 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   trailingSlash: false,
+
+  async redirects() {
+    return [
+      {
+        source: '/blog',
+        destination: 'https://blog.onesugar.pt',
+        permanent: true,
+      },
+      {
+        source: '/blog/:path*',
+        destination: 'https://blog.onesugar.pt/:path*',
+        permanent: true,
+      },
+    ];
+  },
+
   experimental: {
     serverActions: {
       bodySizeLimit: '50mb',
     },
   },
+
   images: {
     remotePatterns: [
       {
@@ -20,7 +36,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'images.ctfassets.net', // Contentful assets domain
+        hostname: 'images.ctfassets.net',
       },
     ],
   },
