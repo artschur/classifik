@@ -44,6 +44,7 @@ interface NavItem {
   icon?: React.ReactNode;
   prefetch?: boolean;
   className?: string;
+  external?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -73,9 +74,10 @@ const navItems: NavItem[] = [
   },
   {
     label: 'Blog',
-    href: '/blog',
+    href: 'https://blog.onesugar.pt',
+    external: true,
     icon: <User className="h-4 w-4" />,
-    prefetch: true,
+    prefetch: false,
     className:
       'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
   }
@@ -111,6 +113,8 @@ export default async function Header() {
                 href={href}
                 prefetch={prefetch}
                 className={className}
+                {...(external && { target: '_blank', rel: 'noopener noreferrer' })}
+
               >
                 {label}
               </Link>
@@ -175,6 +179,7 @@ export default async function Header() {
                       href={href}
                       className="text-sm border border-neutral-200 rounded-xl p-2 font-medium transition-colors hover:text-primary flex items-center gap-4"
                       prefetch={false}
+                      {...(external && { target: '_blank', rel: 'noopener noreferrer' })}
                     >
                       {icon} {label}
                     </Link>
