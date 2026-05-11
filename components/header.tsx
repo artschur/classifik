@@ -23,6 +23,7 @@ import {
 import Image from 'next/image';
 import { auth } from '@clerk/nextjs/server';
 import { ModeToggle } from './modeToggle';
+import { isExternal } from 'util/types';
 
 export const admins = [
   `user_2wYHzDclTd4kDn7lCymwRzxsUli`,
@@ -44,7 +45,7 @@ interface NavItem {
   icon?: React.ReactNode;
   prefetch?: boolean;
   className?: string;
-  external?: boolean;
+  isExternal?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -75,11 +76,11 @@ const navItems: NavItem[] = [
   {
     label: 'Blog',
     href: 'https://blog.onesugar.pt',
-    external: true,
     icon: <User className="h-4 w-4" />,
     prefetch: false,
     className:
       'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+    isExternal: true,
   }
 ];
 
@@ -107,13 +108,13 @@ export default async function Header() {
           </Link>
           {/* Desktop Nav */}
           <nav className="hidden md:flex gap-x-16">
-            {navItems.map(({ label, href, prefetch, className }) => (
+            {navItems.map(({ label, href, prefetch, className, isExternal }) => (
               <Link
                 key={href}
                 href={href}
                 prefetch={prefetch}
                 className={className}
-                {...(external && { target: '_blank', rel: 'noopener noreferrer' })}
+                {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
 
               >
                 {label}
