@@ -174,13 +174,13 @@ export default async function Header() {
               >
                 <SheetTitle />
                 <nav className="flex flex-col space-y-2">
-                  {navItems.map(({ label, href, icon }) => (
+                  {navItems.map(({ label, href, icon, isExternal }) => (
                     <Link
                       key={href}
                       href={href}
                       className="text-sm border border-neutral-200 rounded-xl p-2 font-medium transition-colors hover:text-primary flex items-center gap-4"
                       prefetch={false}
-                      {...(external && { target: '_blank', rel: 'noopener noreferrer' })}
+                      {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
                     >
                       {icon} {label}
                     </Link>
