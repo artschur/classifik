@@ -14,94 +14,98 @@ import { countCompanionsPages } from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { PlanType } from '@/db/queries/kv';
 
+// Nota: os títulos aqui NÃO devem terminar com "| Onesugar".
+// O template definido em layout.tsx ( '%s | Onesugar' ) já adiciona o sufixo.
+// Adicionar aqui causaria "Acompanhantes em Lisboa | Onesugar | Onesugar".
+
 const cityMetadata: Record<string, { title: string; description: string; h1: string }> = {
   lisboa: {
-    title: 'Acompanhantes em Lisboa | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Lisboa | Perfis Verificados',
     description: 'Encontre as melhores acompanhantes em Lisboa. Perfis verificados, total discrição e segurança na Onesugar. Descubra acompanhantes premium em Lisboa.',
     h1: 'Acompanhantes em Lisboa',
   },
   porto: {
-    title: 'Acompanhantes no Porto | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes no Porto | Perfis Verificados',
     description: 'Procura acompanhantes no Porto? Descubra perfis verificados para encontros privados e seguros através da Onesugar.',
     h1: 'Acompanhantes no Porto',
   },
   braga: {
-    title: 'Acompanhantes em Braga | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Braga | Perfis Verificados',
     description: 'Navegue pelos perfis de acompanhantes verificadas em Braga. Descubra companheiras e desfrute de encontros privados com perfis de confiança.',
     h1: 'Acompanhantes em Braga',
   },
   coimbra: {
-    title: 'Acompanhantes em Coimbra | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Coimbra | Perfis Verificados',
     description: 'Encontre acompanhantes em Coimbra. Explore perfis premium e marque encontros discretos hoje mesmo na Onesugar.',
     h1: 'Acompanhantes em Coimbra',
   },
   faro: {
-    title: 'Acompanhantes em Faro | Perfis Verificados no Algarve | Onesugar',
+    title: 'Acompanhantes em Faro | Perfis Verificados no Algarve',
     description: 'Descubra acompanhantes em Faro e na região do Algarve. Navegue por perfis verificados para experiências discretas e inesquecíveis.',
     h1: 'Acompanhantes em Faro',
   },
   aveiro: {
-    title: 'Acompanhantes em Aveiro | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Aveiro | Perfis Verificados',
     description: 'Encontre acompanhantes em Aveiro. Navegue por perfis verificados e agende encontros privados com acompanhantes de alto nível na Onesugar.',
     h1: 'Acompanhantes em Aveiro',
   },
   viseu: {
-    title: 'Acompanhantes em Viseu | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Viseu | Perfis Verificados',
     description: 'Encontre acompanhantes em Viseu. Navegue pelos perfis verificados para experiências discretas e privadas na Onesugar.',
     h1: 'Acompanhantes em Viseu',
   },
   leiria: {
-    title: 'Acompanhantes em Leiria | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Leiria | Perfis Verificados',
     description: 'Procura acompanhantes em Leiria? Explore perfis verificados e desfrute de experiências privadas com acompanhantes de confiança na Onesugar.',
     h1: 'Acompanhantes em Leiria',
   },
   setubal: {
-    title: 'Acompanhantes em Setúbal | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Setúbal | Perfis Verificados',
     description: 'Explore o catálogo de acompanhantes em Setúbal. Descubra companheiras e desfrute de encontros seguros e discretos na Onesugar.',
     h1: 'Acompanhantes em Setúbal',
   },
   evora: {
-    title: 'Acompanhantes em Évora | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Évora | Perfis Verificados',
     description: 'Procura acompanhantes em Évora? Descubra perfis verificados que oferecem experiências privadas e inesquecíveis na Onesugar.',
     h1: 'Acompanhantes em Évora',
   },
   guarda: {
-    title: 'Acompanhantes na Guarda | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes na Guarda | Perfis Verificados',
     description: 'Descubra acompanhantes na Guarda. Encontre perfis de confiança e desfrute de encontros discretos na Onesugar.',
     h1: 'Acompanhantes na Guarda',
   },
   braganca: {
-    title: 'Acompanhantes em Bragança | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Bragança | Perfis Verificados',
     description: 'Descubra acompanhantes em Bragança. Navegue pelos perfis verificados e desfrute de encontros privados e discretos na Onesugar.',
     h1: 'Acompanhantes em Bragança',
   },
   'castelo-branco': {
-    title: 'Acompanhantes em Castelo Branco | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Castelo Branco | Perfis Verificados',
     description: 'Encontre acompanhantes em Castelo Branco. Navegue por perfis verificados e combine encontros seguros e privados na Onesugar.',
     h1: 'Acompanhantes em Castelo Branco',
   },
   santarem: {
-    title: 'Acompanhantes em Santarém | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Santarém | Perfis Verificados',
     description: 'Descubra acompanhantes em Santarém. Navegue por perfis verificados e agende encontros privados com facilidade na Onesugar.',
     h1: 'Acompanhantes em Santarém',
   },
   'vila-real': {
-    title: 'Acompanhantes em Vila Real | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Vila Real | Perfis Verificados',
     description: 'Procura acompanhantes em Vila Real? Explore perfis verificados e desfrute de encontros privados e seguros na Onesugar.',
     h1: 'Acompanhantes em Vila Real',
   },
   'viana-do-castelo': {
-    title: 'Acompanhantes em Viana do Castelo | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Viana do Castelo | Perfis Verificados',
     description: 'Descubra acompanhantes em Viana do Castelo. Navegue pelos perfis verificados e desfrute de experiências privadas na Onesugar.',
     h1: 'Acompanhantes em Viana do Castelo',
   },
   portalegre: {
-    title: 'Acompanhantes em Portalegre | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Portalegre | Perfis Verificados',
     description: 'Encontre acompanhantes em Portalegre. Perfis verificados, total discrição e segurança na Onesugar.',
     h1: 'Acompanhantes em Portalegre',
   },
   beja: {
-    title: 'Acompanhantes em Beja | Perfis Verificados | Onesugar',
+    title: 'Acompanhantes em Beja | Perfis Verificados',
     description: 'Encontre acompanhantes em Beja. Perfis verificados, total discrição e segurança na Onesugar.',
     h1: 'Acompanhantes em Beja',
   },
@@ -118,7 +122,7 @@ export async function generateMetadata({
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
 
   const current = cityMetadata[cityKey] || {
-    title: `Acompanhantes em ${capitalizedCity} | Onesugar`,
+    title: `Acompanhantes em ${capitalizedCity} | Perfis Verificados`,
     description: `Encontre as melhores acompanhantes em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar.`,
     h1: `Acompanhantes em ${capitalizedCity}`,
   };
@@ -208,4 +212,3 @@ export default async function CompanionsPage({
     </div>
   );
 }
-

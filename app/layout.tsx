@@ -14,16 +14,20 @@ import { TwoStepModal } from '@/components/two-step-modal';
 import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
 import { CustomToaster } from '@/components/custom-toaster';
 
-const GA_MEASUREMENT_ID = 'G-30XJX7BT9D'; // substituir pelo Measurement ID real do GA4
+const GA_MEASUREMENT_ID = 'G-30XJX7BT9D';
 
+// display: 'swap' elimina o FOIT (flash de texto invisível) durante o
+// carregamento da fonte, melhorando o FCP e reduzindo o CLS de fontes.
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
+  display: 'swap',
 });
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -85,6 +89,32 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="pt" className={geistSans.className} suppressHydrationWarning>
         <head>
+          {/* ── Preconnect para domínios críticos de terceiros ──────────────
+              Instrui o browser a abrir a ligação TCP/TLS antes de precisar
+              dos recursos, reduzindo a latência percebida (Network Dependency
+              Tree). Impacto direto no TTFB e no LCP em redes móveis. */}
+          <link rel="preconnect" href="https://www.googletagmanager.com" />
+          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+          <link rel="preconnect" href="https://www.google-analytics.com" />
+          <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+          <link rel="preconnect" href="https://vacjsnuttfzgcdaaqjxd.supabase.co" />
+          <link rel="dns-prefetch" href="https://vacjsnuttfzgcdaaqjxd.supabase.co" />
+          <link rel="preconnect" href="https://images.ctfassets.net" />
+          <link rel="dns-prefetch" href="https://images.ctfassets.net" />
+
+          {/* ── Preload da imagem LCP do hero ──────────────────────────────
+              Diz ao browser para buscar a imagem principal do hero com
+              alta prioridade antes de processar o HTML completo. Melhora
+              o LCP Request Discovery nas páginas com carrossel de imagens.
+              Substitui o src pelo caminho real da imagem principal do hero. */}
+          <link
+            rel="preload"
+            as="image"
+            href="/onesugar-mobile.jpeg"
+            fetchPriority="high"
+          />
+
+          {/* ── Schema.org Organization ────────────────────────────────── */}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
@@ -118,7 +148,7 @@ export default function RootLayout({
           />
         </head>
         <body className="min-h-screen flex flex-col">
-          {/* Google Analytics 4 */}
+          {/* ── Google Analytics 4 ──────────────────────────────────────── */}
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
             strategy="afterInteractive"
