@@ -630,7 +630,8 @@ export default async function CompanionsPage({
   searchParams: Promise<FilterTypesCompanions>;
 }) {
   const [{ city }, sParams] = await Promise.all([params, searchParams]);
-  const page = parseInt(sParams.page ?? '1');
+  const { page: pageStr, ...filtersOnly } = sParams;
+  const page = parseInt(pageStr ?? '1');
 
   return (
     <div className="container mx-auto px-10 py-8">
@@ -667,10 +668,10 @@ export default async function CompanionsPage({
       {/* Filters + profile list */}
       <CompanionFilters initialFilters={sParams} />
       <Suspense
-        key={JSON.stringify(sParams)}
+        key={JSON.stringify(filtersOnly) + page}
         fallback={<CompanionsListSkeleton />}
       >
-        <CompanionsList location={city} page={page} filters={sParams} />
+        <CompanionsList location={city} page={page} filters={filtersOnly} />
       </Suspense>
 
       {/* ── POSIÇÃO 2: Editorial + FAQ (below profiles) ──────────────── */}
@@ -678,12 +679,12 @@ export default async function CompanionsPage({
 
       {/* Pagination */}
       <Suspense
-        key={JSON.stringify(sParams) + '-pagination'}
+        key={JSON.stringify(filtersOnly) + page + '-pagination'}
         fallback={
           <div className="z-20 fixed bottom-4 min-h-14 min-w-36 left-1/2 transform -translate-x-1/2 bg-stone-800/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg" />
         }
       >
-        <PaginationComponent location={city} filters={sParams} limit={5} />
+        <PaginationComponent location={city} filters={filtersOnly} limit={5} />
       </Suspense>
     </div>
   );
