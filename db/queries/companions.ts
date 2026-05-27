@@ -295,14 +295,21 @@ export async function getRandomCompanions(
     .orderBy(planTypeOrder, sql`RANDOM()`, companionsTable.id)
     .limit(10);
 
-  return results.map((row) => ({
-    id: row.id,
-    name: row.name,
-    age: row.age,
-    price: row.price,
-    city: row.city,
-    images: row.mainImageUrl ? [row.mainImageUrl] : [],
-  }));
+  const seen = new Set<number>();
+  return results
+    .filter((row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    })
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      age: row.age,
+      price: row.price,
+      city: row.city,
+      images: row.mainImageUrl ? [row.mainImageUrl] : [],
+    }));
 }
 // New function to count total companions for pagination
 export async function countCompanionsPages(
