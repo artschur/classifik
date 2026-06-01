@@ -53,7 +53,7 @@ export async function upsertSubscriptionFromStripe(params: {
       .update(companionsTable)
       .set({
         has_active_ad: isActive,
-        plan_type: planType ?? 'free',
+        plan_type: isActive ? (planType ?? 'free') : 'free',
         ad_expiration_date: currentPeriodEnd,
         stripe_customer_id: stripeCustomerId,
       })
