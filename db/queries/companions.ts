@@ -287,6 +287,7 @@ export async function getRandomCompanions(
       price: companionsTable.price,
       city: citiesTable.city,
       mainImageUrl: imagesTable.public_url,
+      planType: companionsTable.plan_type,
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
@@ -309,6 +310,7 @@ export async function getRandomCompanions(
       price: row.price,
       city: row.city,
       images: row.mainImageUrl ? [row.mainImageUrl] : [],
+      planType: row.planType,
     }));
 }
 // New function to count total companions for pagination
