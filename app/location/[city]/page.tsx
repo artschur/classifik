@@ -1038,25 +1038,12 @@ const cityMetadata: Record<string, CityData> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-// Converte um slug ("viana-do-castelo") num nome legível ("Viana Do Castelo").
-function humanizeCity(slug: string): string {
-  return slug
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-// Devolve sempre um CityData: o registo mapeado ou um fallback gerado.
-function getCityData(slug: string): CityData {
-  const existing = cityMetadata[slug.toLowerCase()];
-  if (existing) return existing;
-
-  const city = humanizeCity(slug.toLowerCase());
-  return {
-    title: `Acompanhantes em ${city} | Perfis Verificados`,
-    description: `Encontre as melhores acompanhantes em ${city}. Perfis verificados, total discrição e segurança na Onesugar.`,
-    h1: `Acompanhantes em ${city}`,
-  };
+/**
+ * Formata um slug de cidade para apresentação quando não existe entrada
+ * correspondente em `cityMetadata` (fallback). Ex.: "vila-real" -> "Vila real".
+ */
+function formatCitySlug(slug: string): string {
+  return slug.charAt(0).toUpperCase() + slug.slice(1).replaceAll('-', ' ');
 }
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
@@ -1068,7 +1055,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { city } = await params;
   const cityKey = city.toLowerCase();
-  const current = getCityData(cityKey);
+  const capitalizedCity = formatCitySlug(city);
+
+  const current = cityMetadata[cityKey] ?? {
+    title: `Acompanhantes em ${capitalizedCity} | Perfis Verificados`,
+    description: `Encontre as melhores acompanhantes em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar.`,
+    h1: `Acompanhantes em ${capitalizedCity}`,
+  };
 
   return {
     title: current.title,
@@ -1090,7 +1083,10 @@ export async function generateMetadata({
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function LocationH1({ citySlug }: { citySlug: string }) {
-  const h1Text = getCityData(citySlug).h1;
+  const cityKey = citySlug.toLowerCase();
+  const capitalizedCity = formatCitySlug(citySlug);
+  const h1Text =
+    cityMetadata[cityKey]?.h1 ?? `Acompanhantes em ${capitalizedCity}`;
   return <h1 className="text-3xl font-bold mb-6">{h1Text}</h1>;
 }
 
@@ -1104,36 +1100,62 @@ function CityIntro({ citySlug }: { citySlug: string }) {
   );
 }
 
+function NearbyLinks({ links }: { links: NearbyLink[] }) {
+  if (links.length === 0) return null;
+  return (
+    <p className="text-sm text-muted-foreground leading-relaxed mt-4">
+      Se está a explorar outras opções em Portugal, encontra também perfis
+      activos em{' '}
+      {links.map((link, idx) => {
+        const separator =
+          idx < links.length - 2
+            ? ', '
+            : idx === links.length - 2
+            ? ' e '
+            : '.';
+        return (
+          <span key={link.slug}>
+            <Link
+              href={`/location/${link.slug}`}
+              className="text-rose-500 hover:underline"
+            >
+              {link.city}
+            </Link>
+            {separator}
+          </span>
+        );
+      })}
+    </p>
+  );
+}
+
 function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
-  // Apenas cidades mapeadas têm bloco editorial/FAQ; o fallback não os tem.
   const data = cityMetadata[citySlug.toLowerCase()];
-  if (!data) return null;
+  if (!data?.editorial && !data?.faq) return null;
 
-  const { editorial, faq } = data;
-  if (!editorial && !faq) return null;
-
-  const faqSchema =
-    faq && faq.length > 0
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faq.map((item) => ({
-            '@type': 'Question',
-            name: item.q,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: item.a,
-            },
-          })),
-        }
-      : null;
+  const faqSchema = data.faq
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: data.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.a,
+          },
+        })),
+      }
+    : null;
 
   return (
-    <div className="mt-10 mb-6">
-      {editorial && (
+    <section className="mt-10 mb-6">
+      {data.editorial && (
         <div className="mb-10">
-          <h2 className="text-xl font-bold mb-5">{editorial.mainHeading}</h2>
-          {editorial.sections.map((section, si) => (
+          <h2 className="text-xl font-bold mb-5">
+            {data.editorial.mainHeading}
+          </h2>
+          {data.editorial.sections.map((section, si) => (
             <div key={si} className="mb-5">
               {section.heading && (
                 <h3 className="text-base font-semibold mb-2 text-foreground">
@@ -1150,37 +1172,14 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
               ))}
             </div>
           ))}
-          {editorial.nearbyLinks.length > 0 && (
-            <p className="text-sm text-muted-foreground leading-relaxed mt-4">
-              Se está a explorar outras opções em Portugal, encontra também
-              perfis activos em{' '}
-              {editorial.nearbyLinks.map((link, idx) => {
-                const total = editorial.nearbyLinks.length;
-                let separator = ', ';
-                if (idx === total - 1) separator = '.';
-                else if (idx === total - 2) separator = ' e ';
-
-                return (
-                  <span key={link.slug}>
-                    <Link
-                      href={`/location/${link.slug}`}
-                      className="text-rose-500 hover:underline"
-                    >
-                      {link.city}
-                    </Link>
-                    {separator}
-                  </span>
-                );
-              })}
-            </p>
-          )}
+          <NearbyLinks links={data.editorial.nearbyLinks} />
         </div>
       )}
-      {faq && faq.length > 0 && (
+      {data.faq && data.faq.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-5">Perguntas frequentes</h2>
           <div className="space-y-5">
-            {faq.map((item, idx) => (
+            {data.faq.map((item, idx) => (
               <div key={idx}>
                 <h3 className="text-sm font-semibold mb-1 text-foreground">
                   {item.q}
@@ -1199,6 +1198,68 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
           )}
         </div>
       )}
+    </section>
+  );
+}
+
+// ── CTA helpers ───────────────────────────────────────────────────────────────
+
+function getCityName(citySlug: string): string {
+  const data = cityMetadata[citySlug.toLowerCase()];
+  if (data?.h1) {
+    // Remove o prefixo "Acompanhantes em/no/na/nos " do H1 para obter o nome.
+    return data.h1.replace(/^Acompanhantes\s+(?:em|no|na|nos)\s+/i, '').trim();
+  }
+  return formatCitySlug(citySlug);
+}
+
+// CTA Posicao 1 - entre os perfis e o bloco editorial
+function RegistrationCTAInline({ citySlug }: { citySlug: string }) {
+  const city = getCityName(citySlug);
+  return (
+    <div className="my-10 rounded-2xl border-2 border-dashed border-rose-300 bg-rose-50/10 dark:bg-rose-950/20 dark:border-rose-900/60 px-6 py-5">
+      <p className="font-semibold text-sm mb-1">
+        Trabalhas como acompanhante em {city}?
+      </p>
+      <p className="text-xs text-muted-foreground mb-4">
+        Regista o teu perfil e aparece para milhares de utilizadores
+        verificados.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/checkout"
+          className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-5 py-2.5 rounded-full transition-colors"
+        >
+          Registar perfil gratuito
+        </Link>
+        <Link
+          href="/plans"
+          className="border border-rose-600 text-rose-500 hover:bg-rose-600 hover:text-white text-xs font-semibold px-5 py-2.5 rounded-full transition-colors"
+        >
+          Ver planos
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// CTA Posicao 2 - apos o FAQ, antes da paginacao
+function RegistrationCTABottom({ citySlug }: { citySlug: string }) {
+  const city = getCityName(citySlug);
+  return (
+    <div className="my-10 rounded-2xl border-2 border-dashed border-rose-500 bg-rose-50/10 dark:bg-rose-950/20 px-6 py-7 text-center">
+      <p className="font-semibold mb-1">
+        Queres anunciar em {city}? Junta-te à Onesugar.
+      </p>
+      <p className="text-sm text-muted-foreground mb-5">
+        Perfil verificado, visibilidade imediata, planos a partir de €0.
+      </p>
+      <Link
+        href="/checkout"
+        className="inline-block bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+      >
+        Quero registar-me como acompanhante
+      </Link>
     </div>
   );
 }
@@ -1263,8 +1324,14 @@ export default async function CompanionsPage({
         <CompanionsList location={city} page={page} filters={sParams} />
       </Suspense>
 
+      {/* CTA 1 - entre perfis e editorial */}
+      <RegistrationCTAInline citySlug={city} />
+
       {/* Posicao 2: Editorial + FAQ - abaixo dos perfis */}
       <CityEditorialAndFAQ citySlug={city} />
+
+      {/* CTA 2 - apos FAQ, antes da paginacao */}
+      <RegistrationCTABottom citySlug={city} />
 
       <Suspense
         key={JSON.stringify(sParams) + '-pagination'}
