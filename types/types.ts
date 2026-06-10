@@ -9,6 +9,7 @@ export type CompanionPreview = Pick<Companion, "id" | "name" | "age"> & {
   price: number | string;
   city: string;
   images: (string | Media)[];
+  planType?: string | null;
 };
 
 export type CompanionFiltered = Pick<

@@ -72,9 +72,11 @@ const pageOneSchema = z.object({
   // Companion Info
   name: z.string().min(2, "Nome precisa ter ao menos 2 caractéres"),
   shortDescription: z
-    .string()
-    .min(10, "Descrição curta precisa ter ao menos 10 caractéres")
-    .max(60, "Descrição curta pode ter no máximo 60 caractéres"),
+  .string()
+  .min(10, "Descrição curta precisa ter ao menos 10 caractéres")
+  .max(60, "Descrição curta pode ter no máximo 60 caractéres")
+  .optional()
+  .or(z.literal("")),
   phoneNumber: z
     .string()
     .min(8, "Numero de telefone precisa ter ao menos 8 caractéres"),

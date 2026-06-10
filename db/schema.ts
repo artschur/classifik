@@ -107,7 +107,7 @@ export const companionsTable = pgTable(
     email: varchar('email', { length: 255 }).notNull().unique(),
     instagramHandle: varchar('instagram', { length: 40 }),
     phone: varchar('phone', { length: 20 }).notNull(),
-    shortDescription: varchar('short_description', { length: 60 }).notNull(),
+    shortDescription: varchar('short_description', { length: 60 }),
     description: text('description').notNull(),
     price: integer('price').notNull(),
     age: integer('age').notNull(),
