@@ -73,7 +73,6 @@ const pageOneSchema = z.object({
   name: z.string().min(2, "Nome precisa ter ao menos 2 caractéres"),
   shortDescription: z
   .string()
-  .min(10, "Descrição curta precisa ter ao menos 10 caractéres")
   .max(60, "Descrição curta pode ter no máximo 60 caractéres")
   .optional()
   .or(z.literal("")),
@@ -1232,8 +1231,8 @@ export function RegisterCompanionForm({
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Suas Fotos</h3>
                   <p className="text-sm text-neutral-500">
-                    Adicione fotos suas para que os clientes possam te conhecer
-                    melhor.
+                    Adicione fotos e vídeos para que os clientes possam conhecer
+                    melhor. 
                   </p>
 
                   {images.length > 0 && (
@@ -1438,7 +1437,7 @@ export function RegisterCompanionForm({
                       Registrando perfil...
                     </>
                   ) : currentPage === 2 ? (
-                    "Adicionar Fotos"
+                    "Próximo"
                   ) : (
                     "Próximo"
                   )}

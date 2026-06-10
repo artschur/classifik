@@ -95,10 +95,10 @@ export const FileUpload = ({
       >
         <div className="flex flex-col items-center justify-center">
           <p className="relative z-20 font-sans font-bold text-neutral-700 dark:text-neutral-300 text-base">
-            Faça upload de suas imagens ou vídeos.
+            Faça upload de suas imagens ou vídeos. Limite de 10MB por arquivo.
           </p>
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            Arraste e solte ou clique aqui para enviar.
+            Arraste e largue ou clique aqui para enviar. Os ficheiros serão apresentados abaixo com uma pré-visualização e barra de progresso. Aguarde que o upload complete antes de enviar o ficheiro.
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {isDragActive ? (
