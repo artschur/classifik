@@ -1059,8 +1059,15 @@ export async function generateMetadata({
   return {
     title: current.title,
     description: current.description,
-    alternates: {
-      canonical: `https://www.onesugar.pt/location/${cityKey}`,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
     openGraph: {
       title: current.title,
