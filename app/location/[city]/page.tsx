@@ -767,16 +767,6 @@ const cityMetadata: Record<string, CityData> = {
   },
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/**
- * Formata um slug de cidade para apresentação quando não existe entrada
- * correspondente em `cityMetadata` (fallback). Ex.: "vila-real" -> "Vila real".
- */
-function formatCitySlug(slug: string): string {
-  return slug.charAt(0).toUpperCase() + slug.slice(1).replaceAll('-', ' ');
-}
-
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
@@ -928,7 +918,7 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
               dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
           )}
-        </section>
+        </div>
       )}
     </section>
   );
