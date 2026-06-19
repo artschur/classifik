@@ -78,8 +78,7 @@ async function CompanionFormWithData() {
     !isVerified &&
     companion &&
     allVerificationStatus.isImageUploaded &&
-    (sessionClaims.metadata.isRegistrationComplete === true) &&
-    !allVerificationStatus.isVerificationVideoUploaded
+    !allVerificationStatus.isDocumentUploaded
   ) {
     redirect("/companions/verification");
   }

@@ -461,9 +461,9 @@ export function RegisterCompanionForm({
         variant: "success",
         title: "Perfil criado com sucesso",
         description:
-          "Seja bem vindo(a) à nossa plataforma. Confira nossos planos",
+          "Agora envie os documentos de verificação para ativar o seu perfil.",
       });
-      router.push("/checkout");
+      router.push("/companions/verification");
       return;
     }
     try {
