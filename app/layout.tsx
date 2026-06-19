@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
@@ -14,10 +14,12 @@ import { TwoStepModal } from '@/components/two-step-modal';
 import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
 import { CustomToaster } from '@/components/custom-toaster';
 
-const GA_MEASUREMENT_ID = 'G-30XJX7BT9D';
+// GA via env (com fallback). Evita hardcode e permite IDs diferentes
+// por ambiente (preview vs produção). Define NEXT_PUBLIC_GA_MEASUREMENT_ID.
+const GA_MEASUREMENT_ID =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? 'G-30XJX7BT9D';
 
-// display: 'swap' elimina o FOIT (flash de texto invisível) durante o
-// carregamento da fonte, melhorando o FCP e reduzindo o CLS de fontes.
+// display: 'swap' elimina o FOIT durante o carregamento da fonte.
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -80,6 +82,12 @@ export const metadata: Metadata = {
   },
 };
 
+// No App Router, themeColor/viewport vão no export `viewport`, não em metadata.
+export const viewport: Viewport = {
+  themeColor: '#000000',
+  colorScheme: 'dark',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -87,30 +95,63 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="pt" className={geistSans.className} suppressHydrationWarning>
+      {/*
+        FIX: o v1 definia `geistMono` com a variável --font-geist-mono mas
+        nunca a aplicava ao DOM — a variável não existia e qualquer
+        `font-mono` do Tailwind a referenciá-la ficava partida.
+        Aqui mantemos a fonte base (geistSans.className) e expomos também a
+        variável mono. Alternativa mais idiomática: usar
+        `${geistSans.variable} ${geistMono.variable}` e mapear font-sans/font-mono
+        para as variáveis no globals.css / tailwind.config.
+      */}
+      <html
+        lang="pt"
+        className={`${geistSans.className} ${geistMono.variable}`}
+        suppressHydrationWarning
+      >
         <head>
-          {/* ── Preconnect para domínios críticos de terceiros ──────────────
-              Instrui o browser a abrir a ligação TCP/TLS antes de precisar
-              dos recursos, reduzindo a latência percebida (Network Dependency
-              Tree). Impacto direto no TTFB e no LCP em redes móveis. */}
-          <link rel="preconnect" href="https://www.googletagmanager.com" />
-          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-          <link rel="preconnect" href="https://www.google-analytics.com" />
-          <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+          {/* ── Resource hints racionalizados ───────────────────────────────
+              Regra: `preconnect` (abre TCP+TLS, "caro") só para origens que
+              servem recursos cedo e de forma quase garantida. `dns-prefetch`
+              (barato) para o resto.
+
+              GA/GTM foram DESPROMOVIDOS para dns-prefetch: como o script GA
+              carrega em `lazyOnload`, um preconnect feito cedo competiria com
+              recursos do LCP e provavelmente expiraria (sockets não usados são
+              fechados em ~10s) antes de o GA precisar dele — desperdício duplo.
+
+              Não duplicamos preconnect + dns-prefetch para a mesma origem:
+              o preconnect já inclui resolução de DNS. */}
+
+          {/* Origens críticas (conteúdo/LCP): preconnect */}
           <link rel="preconnect" href="https://vacjsnuttfzgcdaaqjxd.supabase.co" />
-          <link rel="dns-prefetch" href="https://vacjsnuttfzgcdaaqjxd.supabase.co" />
           <link rel="preconnect" href="https://images.ctfassets.net" />
-          <link rel="dns-prefetch" href="https://images.ctfassets.net" />
+
+          {/* Diferidas (analytics em lazyOnload): dns-prefetch chega */}
+          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+          <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+          {/* YouTube (LiteYouTube) — só usado se/quando houver play */}
+          <link rel="dns-prefetch" href="https://i.ytimg.com" />
+          <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
 
           {/* ── Preload da imagem LCP do hero ──────────────────────────────
-              Diz ao browser para buscar a imagem principal do hero com
-              alta prioridade antes de processar o HTML completo. Melhora
-              o LCP Request Discovery nas páginas com carrossel de imagens.
-              Substitui o src pelo caminho real da imagem principal do hero. */}
+              FIX: o v1 fazia preload INCONDICIONAL desta imagem mobile em
+              TODAS as rotas e TODOS os viewports. No desktop isto pré-carrega
+              uma imagem que nunca é usada (aviso "preloaded but not used" +
+              banda desperdiçada).
+
+              Mitigação aqui: `media` limita ao viewport mobile.
+
+              RECOMENDAÇÃO FORTE: remover este preload do layout e, em vez
+              disso, marcar o <Image> real do hero com `priority` na página
+              que o contém (app/page.tsx). O Next gera o preload correto,
+              só na rota certa e com o srcset responsivo adequado. */}
           <link
             rel="preload"
             as="image"
             href="/onesugar-mobile.jpeg"
+            media="(max-width: 768px)"
             fetchPriority="high"
           />
 
@@ -148,12 +189,17 @@ export default function RootLayout({
           />
         </head>
         <body className="min-h-screen flex flex-col">
-          {/* ── Google Analytics 4 ──────────────────────────────────────── */}
+          {/* ── Google Analytics 4 ──────────────────────────────────────────
+              lazyOnload adia o GA para o idle do browser. Os eventos são
+              preservados via fila dataLayer.
+              NOTA: considera substituir este bloco manual pelo componente
+              oficial `<GoogleAnalytics gaId={...} />` de `@next/third-parties/google`,
+              que já implementa o carregamento otimizado e a fila de eventos. */}
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
-          <Script id="google-analytics" strategy="afterInteractive">
+          <Script id="google-analytics" strategy="lazyOnload">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
@@ -168,17 +214,13 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Analytics />
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+            <WhatsAppButton />
+
+            {/* Overlays / toasts / modais — agrupados no fim da árvore */}
             <Toaster />
-            <TwoStepModal />
-            <GlobalPopupWrapper
-              isEnabled={false}
-              title="Ganhe 2 meses grátis no seu Plano!"
-              description="Por tempo limitado! Aproveite!"
-              confirmText="Mostre-me!"
-              cancelText="Não quero"
-              showCloseButton={true}
-            />
             <CustomToaster
               isEnabled={true}
               autoShow={true}
@@ -191,12 +233,21 @@ export default function RootLayout({
               persistent={true}
               cookieKey="trial-toaster-dismissed"
             />
-            <Navbar />
-            <main className="flex-grow">{children}</main>
-            <WhatsAppButton />
-            <SpeedInsights />
-            <Footer />
+            <TwoStepModal />
+            {/* isEnabled={false}: considera não montar de todo enquanto desativado */}
+            <GlobalPopupWrapper
+              isEnabled={false}
+              title="Ganhe 2 meses grátis no seu Plano!"
+              description="Por tempo limitado! Aproveite!"
+              confirmText="Mostre-me!"
+              cancelText="Não quero"
+              showCloseButton={true}
+            />
           </ThemeProvider>
+
+          {/* Telemetria não visual — fora do ThemeProvider, no fim do body */}
+          <Analytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
