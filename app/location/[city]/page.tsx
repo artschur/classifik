@@ -767,17 +767,8 @@ const cityMetadata: Record<string, CityData> = {
   },
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Formata um slug de cidade para apresentação quando não existe entrada
- * correspondente em `cityMetadata` (fallback). Ex.: "vila-real" -> "Vila real".
- */
-function formatCitySlug(slug: string): string {
-  return slug.charAt(0).toUpperCase() + slug.slice(1).replaceAll('-', ' ');
-}
 
-// ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -849,8 +840,8 @@ function NearbyLinks({ links }: { links: NearbyLink[] }) {
           idx < links.length - 2
             ? ', '
             : idx === links.length - 2
-            ? ' e '
-            : '.';
+              ? ' e '
+              : '.';
         return (
           <span key={link.slug}>
             <Link
@@ -873,17 +864,17 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
 
   const faqSchema = data.faq
     ? {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: data.faq.map((item) => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: item.a,
-          },
-        })),
-      }
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: data.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.a,
+        },
+      })),
+    }
     : null;
 
   return (
@@ -935,7 +926,7 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
               dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
           )}
-        </section>
+        </div>
       )}
     </section>
   );
