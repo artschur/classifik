@@ -765,10 +765,31 @@ const cityMetadata: Record<string, CityData> = {
       'Descubra acompanhantes em Bragança. Navegue pelos perfis verificados e desfrute de encontros privados e discretos na Onesugar.',
     h1: 'Acompanhantes em Bragança',
   },
+  madeira: {
+    title: 'Acompanhantes na Madeira | Perfis Verificados',
+    description:
+      'Encontre acompanhantes verificadas na Madeira. Perfis reais, discrição total e encontros privados na ilha da Madeira na Onesugar.',
+    h1: 'Acompanhantes na Madeira',
+    intro:
+      'A Madeira é um destino turístico de referência internacional, com uma procura crescente por acompanhantes verificadas na ilha. Para quem procura companhia discreta no Funchal ou em qualquer outro ponto da ilha, a Onesugar disponibiliza perfis verificados com disponibilidade actualizada. Todos os perfis são verificados antes de qualquer publicação. Entre em contacto directamente, sem intermediários.',
+    faq: [
+      {
+        q: 'Como encontrar acompanhantes verificadas na Madeira?',
+        a: 'Na Onesugar, navegue pelos perfis disponíveis na Madeira e filtre por tipo de encontro ou preferência. O contacto é feito directamente com a acompanhante, sem intermediários.',
+      },
+      {
+        q: 'Há acompanhantes disponíveis no Funchal?',
+        a: 'Sim. A maioria dos perfis activos na Madeira tem base no Funchal, a capital da ilha. Consulte a disponibilidade de cada perfil directamente na plataforma.',
+      },
+      {
+        q: 'É seguro contactar acompanhantes na Madeira através da Onesugar?',
+        a: 'A verificação de perfis elimina os riscos mais comuns de portais sem moderação. Os dados pessoais dos utilizadores não são partilhados com terceiros.',
+      },
+    ],
+  },
 };
 
-
-
+// ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -788,15 +809,8 @@ export async function generateMetadata({
   return {
     title: current.title,
     description: current.description,
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
+    alternates: {
+      canonical: `https://www.onesugar.pt/location/${cityKey}`,
     },
     openGraph: {
       title: current.title,

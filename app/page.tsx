@@ -131,6 +131,9 @@ const districts = {
     { slug: 'faro',       label: 'Acompanhantes no Algarve' },
     { slug: 'portalegre', label: 'Acompanhantes em Portalegre' },
   ],
+  ilhas: [
+    { slug: 'madeira', label: 'Acompanhantes na Madeira' },
+  ],
 };
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
@@ -611,7 +614,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="mb-4">
+            <div className="mb-10">
               <h3 className="text-base font-semibold mb-2 text-rose-500">
                 Lisboa, Alentejo e Algarve
               </h3>
@@ -625,6 +628,28 @@ export default async function HomePage() {
               </p>
               <div className="flex flex-wrap gap-3">
                 {districts.sul.map((d) => (
+                  <Link
+                    key={d.slug}
+                    href={`/location/${d.slug}`}
+                    className="bg-card border border-border hover:border-rose-500 hover:text-rose-500 text-sm px-4 py-2 rounded-full transition-colors"
+                  >
+                    {d.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="text-base font-semibold mb-2 text-rose-500">
+                Ilhas
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                A Madeira é um destino internacional com procura crescente por
+                acompanhantes verificadas. A Onesugar tem perfis activos na ilha
+                com disponibilidade actualizada.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {districts.ilhas.map((d) => (
                   <Link
                     key={d.slug}
                     href={`/location/${d.slug}`}
