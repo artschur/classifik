@@ -854,8 +854,8 @@ function NearbyLinks({ links }: { links: NearbyLink[] }) {
           idx < links.length - 2
             ? ', '
             : idx === links.length - 2
-            ? ' e '
-            : '.';
+              ? ' e '
+              : '.';
         return (
           <span key={link.slug}>
             <Link
@@ -878,17 +878,17 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
 
   const faqSchema = data.faq
     ? {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: data.faq.map((item) => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: item.a,
-          },
-        })),
-      }
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: data.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.a,
+        },
+      })),
+    }
     : null;
 
   return (
