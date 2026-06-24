@@ -20,6 +20,7 @@ const GA_MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? 'G-30XJX7BT9D';
 
 // display: 'swap' elimina o FOIT durante o carregamento da fonte.
+// Usamos .variable em ambas para expor as CSS vars e mapear via Tailwind.
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -94,107 +95,79 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      {/*
-        FIX: o v1 definia `geistMono` com a variável --font-geist-mono mas
-        nunca a aplicava ao DOM — a variável não existia e qualquer
-        `font-mono` do Tailwind a referenciá-la ficava partida.
-        Aqui mantemos a fonte base (geistSans.className) e expomos também a
-        variável mono. Alternativa mais idiomática: usar
-        `${geistSans.variable} ${geistMono.variable}` e mapear font-sans/font-mono
-        para as variáveis no globals.css / tailwind.config.
-      */}
-      <html
-        lang="pt"
-        className={`${geistSans.className} ${geistMono.variable}`}
-        suppressHydrationWarning
-      >
-        <head>
-          {/* ── Resource hints racionalizados ───────────────────────────────
-              Regra: `preconnect` (abre TCP+TLS, "caro") só para origens que
-              servem recursos cedo e de forma quase garantida. `dns-prefetch`
-              (barato) para o resto.
+    // FIX CRÍTICO (SEO): ClerkProvider foi movido para dentro de <body>.
+    // Envolver <html> com ClerkProvider impede o Next.js App Router de injetar
+    // os metadados do generateMetadata no <head> durante o SSR, fazendo com que
+    // <title>, <meta name="description"> e <meta name="robots"> fiquem ausentes
+    // do HTML entregue pelo servidor — confirmado via View Source em produção.
+    // O ClerkProvider não precisa de envolver <html>: qualquer posição dentro
+    // de <body> garante o contexto de autenticação a todos os componentes filhos.
+    <html
+      lang="pt"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Origens críticas (conteúdo/LCP): preconnect */}
+        <link rel="preconnect" href="https://vacjsnuttfzgcdaaqjxd.supabase.co" />
+        <link rel="preconnect" href="https://images.ctfassets.net" />
 
-              GA/GTM foram DESPROMOVIDOS para dns-prefetch: como o script GA
-              carrega em `lazyOnload`, um preconnect feito cedo competiria com
-              recursos do LCP e provavelmente expiraria (sockets não usados são
-              fechados em ~10s) antes de o GA precisar dele — desperdício duplo.
+        {/* Diferidas (analytics em lazyOnload): dns-prefetch chega */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
 
-              Não duplicamos preconnect + dns-prefetch para a mesma origem:
-              o preconnect já inclui resolução de DNS. */}
+        {/* YouTube (LiteYouTube) — só usado se/quando houver play */}
+        <link rel="dns-prefetch" href="https://i.ytimg.com" />
+        <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
 
-          {/* Origens críticas (conteúdo/LCP): preconnect */}
-          <link rel="preconnect" href="https://vacjsnuttfzgcdaaqjxd.supabase.co" />
-          <link rel="preconnect" href="https://images.ctfassets.net" />
+        {/* Preload da imagem LCP do hero — limitado ao viewport mobile.
+            RECOMENDAÇÃO: mover para app/page.tsx com <Image priority> para
+            que o Next gere o preload correcto com srcset responsivo. */}
+        <link
+          rel="preload"
+          as="image"
+          href="/onesugar-mobile.jpeg"
+          media="(max-width: 768px)"
+          fetchPriority="high"
+        />
 
-          {/* Diferidas (analytics em lazyOnload): dns-prefetch chega */}
-          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-          <link rel="dns-prefetch" href="https://www.google-analytics.com" />
-
-          {/* YouTube (LiteYouTube) — só usado se/quando houver play */}
-          <link rel="dns-prefetch" href="https://i.ytimg.com" />
-          <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
-
-          {/* ── Preload da imagem LCP do hero ──────────────────────────────
-              FIX: o v1 fazia preload INCONDICIONAL desta imagem mobile em
-              TODAS as rotas e TODOS os viewports. No desktop isto pré-carrega
-              uma imagem que nunca é usada (aviso "preloaded but not used" +
-              banda desperdiçada).
-
-              Mitigação aqui: `media` limita ao viewport mobile.
-
-              RECOMENDAÇÃO FORTE: remover este preload do layout e, em vez
-              disso, marcar o <Image> real do hero com `priority` na página
-              que o contém (app/page.tsx). O Next gera o preload correto,
-              só na rota certa e com o srcset responsivo adequado. */}
-          <link
-            rel="preload"
-            as="image"
-            href="/onesugar-mobile.jpeg"
-            media="(max-width: 768px)"
-            fetchPriority="high"
-          />
-
-          {/* ── Schema.org Organization ────────────────────────────────── */}
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                '@context': 'https://schema.org',
-                '@type': 'Organization',
-                name: 'Onesugar',
-                url: 'https://www.onesugar.pt',
-                logo: 'https://www.onesugar.pt/logo.png',
-                description:
-                  'A sua escolha segura para acompanhantes premium em Portugal.',
-                address: [
-                  {
-                    '@type': 'PostalAddress',
-                    addressLocality: 'Lisboa',
-                    addressCountry: 'PT',
-                  },
-                  {
-                    '@type': 'PostalAddress',
-                    addressLocality: 'Porto',
-                    addressCountry: 'PT',
-                  },
-                ],
-                contactPoint: {
-                  '@type': 'ContactPoint',
-                  telephone: '+351 934 600 827',
-                  contactType: 'customer service',
+        {/* Schema.org Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Onesugar',
+              url: 'https://www.onesugar.pt',
+              logo: 'https://www.onesugar.pt/logo.png',
+              description:
+                'A sua escolha segura para acompanhantes premium em Portugal.',
+              address: [
+                {
+                  '@type': 'PostalAddress',
+                  addressLocality: 'Lisboa',
+                  addressCountry: 'PT',
                 },
-              }),
-            }}
-          />
-        </head>
-        <body className="min-h-screen flex flex-col">
-          {/* ── Google Analytics 4 ──────────────────────────────────────────
-              lazyOnload adia o GA para o idle do browser. Os eventos são
-              preservados via fila dataLayer.
-              NOTA: considera substituir este bloco manual pelo componente
-              oficial `<GoogleAnalytics gaId={...} />` de `@next/third-parties/google`,
-              que já implementa o carregamento otimizado e a fila de eventos. */}
+                {
+                  '@type': 'PostalAddress',
+                  addressLocality: 'Porto',
+                  addressCountry: 'PT',
+                },
+              ],
+              contactPoint: {
+                '@type': 'ContactPoint',
+                telephone: '+351 934 600 827',
+                contactType: 'customer service',
+              },
+            }),
+          }}
+        />
+      </head>
+      <body className="min-h-screen flex flex-col">
+        <ClerkProvider>
+          {/* GA em lazyOnload: adia para o idle do browser.
+              Os eventos são preservados via fila dataLayer. */}
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
             strategy="lazyOnload"
@@ -219,7 +192,7 @@ export default function RootLayout({
             <Footer />
             <WhatsAppButton />
 
-            {/* Overlays / toasts / modais — agrupados no fim da árvore */}
+            {/* Overlays / toasts / modais */}
             <Toaster />
             <CustomToaster
               isEnabled={true}
@@ -234,7 +207,7 @@ export default function RootLayout({
               cookieKey="trial-toaster-dismissed"
             />
             <TwoStepModal />
-            {/* isEnabled={false}: considera não montar de todo enquanto desativado */}
+            {/* isEnabled={false}: considera não montar de todo enquanto desactivado */}
             <GlobalPopupWrapper
               isEnabled={false}
               title="Ganhe 2 meses grátis no seu Plano!"
@@ -248,8 +221,8 @@ export default function RootLayout({
           {/* Telemetria não visual — fora do ThemeProvider, no fim do body */}
           <Analytics />
           <SpeedInsights />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
