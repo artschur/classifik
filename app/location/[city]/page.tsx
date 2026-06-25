@@ -7,8 +7,6 @@ import {
   CompanionsListSkeleton,
 } from '@/components/companionsList';
 import { CompanionFilters } from '@/components/companionFilters';
-import CompanionsLayout from '@/app/companions/layout';
-import { stringify } from 'querystring';
 import Pagination from '@/components/ui/pagination';
 import { countCompanionsPages } from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
@@ -45,10 +43,12 @@ interface CityData {
 }
 
 // ── Content ───────────────────────────────────────────────────────────────────
-// Nota: os titulos NAO terminam com "| Onesugar".
+// Nota: os títulos NÃO terminam com "| Onesugar".
 // O template definido em layout.tsx ('%s | Onesugar') adiciona o sufixo.
 
 const cityMetadata: Record<string, CityData> = {
+
+  // ── Distritos com conteúdo editorial completo ─────────────────────────────
 
   porto: {
     title: 'Acompanhantes no Porto | Perfis Verificados',
@@ -1036,7 +1036,84 @@ const cityMetadata: Record<string, CityData> = {
       },
     ],
   },
+
+  // ── Região Autónoma ────────────────────────────────────────────────────────
+
+  madeira: {
+    title: 'Acompanhantes na Madeira | Perfis Verificados',
+    description:
+      'Encontre acompanhantes verificadas na Madeira. Perfis reais, discrição total e escorts de luxo na ilha mais visitada do Atlântico na Onesugar.',
+    h1: 'Acompanhantes na Madeira',
+    intro:
+      'A Madeira é um dos destinos turísticos mais procurados do mundo, conhecida pelo seu clima ameno durante todo o ano, pelas levadas, pelos picos e pela hospitalidade particular da sua gente. Para quem procura acompanhantes na Madeira com perfis verificados e encontros discretos, a Onesugar disponibiliza uma selecção de companheiras com presença activa na ilha. O Funchal, como capital e maior centro urbano, concentra a maioria dos perfis activos, com disponibilidade para encontros na cidade e em toda a ilha. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis, filtre por preferência e entre em contacto directamente, sem intermediários.',
+    editorial: {
+      mainHeading: 'Acompanhantes na Madeira: perfis verificados na pérola do Atlântico',
+      sections: [
+        {
+          paragraphs: [
+            'A Madeira recebe anualmente mais de um milhão de visitantes, um número expressivo para uma ilha com cerca de 250 mil habitantes. Esse fluxo constante de turistas nacionais e internacionais, combinado com uma comunidade residente activa e uma vida nocturna centrada no Funchal, cria uma procura real e diversificada por acompanhantes na Madeira ao longo de todo o ano.',
+            'Na Onesugar, os perfis disponíveis para a Madeira foram verificados individualmente antes de serem publicados. Fotografia actual, disponibilidade confirmada e dados que correspondem ao que encontra na prática. Numa ilha onde a oferta verificada é ainda mais escassa do que no continente, esta diferença tem um impacto directo na qualidade da experiência.',
+          ],
+        },
+        {
+          heading: 'O Funchal e a procura por escorts verificadas',
+          paragraphs: [
+            'O Funchal concentra a maior parte da actividade turística e urbana da ilha. Os hotéis de cinco estrelas da zona hoteleira, os restaurantes da Zona Velha e o ambiente cosmopolita do centro da cidade criam um contexto adequado para encontros discretos de qualidade. Para quem procura acompanhantes de luxo no Funchal para um jantar, evento social ou encontro privado, os perfis verificados da Onesugar indicam claramente o tipo de companhia disponível e os contactos preferidos.',
+            'A ilha tem também zonas mais tranquilas fora do Funchal, como Câmara de Lobos, Machico e a costa norte, onde a privacidade é naturalmente mais elevada. Muitos perfis activos na plataforma têm disponibilidade para se deslocar a diferentes pontos da ilha.',
+          ],
+        },
+        {
+          heading: 'A Madeira e os visitantes internacionais',
+          paragraphs: [
+            'A ilha recebe um número significativo de visitantes britânicos, alemães, escandinavos e do mercado português continental, muitos dos quais procuram escorts na Madeira com disponibilidade para comunicar em inglês. Os perfis da Onesugar para a Madeira incluem acompanhantes com diferentes competências linguísticas, tornando a plataforma adequada tanto para clientes locais como para quem chega de fora.',
+            'A Onesugar não guarda histórico de contactos entre utilizadores e acompanhantes, nem partilha qualquer dado com terceiros. A discrição é garantida de ambos os lados.',
+          ],
+        },
+      ],
+      nearbyLinks: [
+        { city: 'Lisboa', slug: 'lisboa' },
+        { city: 'Porto', slug: 'porto' },
+        { city: 'Faro', slug: 'faro' },
+      ],
+    },
+    faq: [
+      {
+        q: 'Como encontrar acompanhantes verificadas na Madeira?',
+        a: 'Na Onesugar, navegue pelos perfis disponíveis para a Madeira e filtre por tipo de encontro, disponibilidade ou preferência. O contacto é feito directamente com a acompanhante, sem intermediários.',
+      },
+      {
+        q: 'Há acompanhantes disponíveis no Funchal?',
+        a: 'Sim. A maioria dos perfis activos na Madeira tem base no Funchal, a capital da ilha. Consulte a disponibilidade de cada perfil directamente na página para confirmar a zona de actuação.',
+      },
+      {
+        q: 'A Onesugar tem acompanhantes de luxo na Madeira?',
+        a: 'Sim. Os perfis verificados para a Madeira incluem acompanhantes de luxo com experiência em encontros sociais, jantares e eventos privados. A descrição de cada perfil especifica o tipo de companhia disponível.',
+      },
+      {
+        q: 'Há escorts na Madeira que falam inglês?',
+        a: 'Sim. Dada a natureza internacional do turismo na ilha, vários perfis têm disponibilidade para comunicar em inglês e outras línguas. Confirme as línguas disponíveis na descrição de cada perfil.',
+      },
+      {
+        q: 'É seguro contactar acompanhantes na Madeira através da Onesugar?',
+        a: 'A verificação de perfis elimina os riscos mais comuns de portais sem moderação. Os dados pessoais dos utilizadores não são partilhados com terceiros e a navegação pode ser feita sem registo.',
+      },
+      {
+        q: 'Os perfis de acompanhantes na Madeira são reais?',
+        a: 'Sim. Todos os perfis publicados na Onesugar passam por verificação de identidade e disponibilidade antes de serem publicados. O selo verificado confirma que os dados foram validados pela plataforma.',
+      },
+    ],
+  },
 };
+
+// ── Static params ─────────────────────────────────────────────────────────────
+// Pré-renderiza estaticamente todas as páginas de cidade conhecidas em build
+// time. O HTML entregue pelo servidor já contém title, description, robots e
+// canonical no <head> desde o primeiro byte, sem depender do RSC streaming.
+// Páginas com slugs fora desta lista são renderizadas on-demand (fallback SSR).
+
+export function generateStaticParams() {
+  return Object.keys(cityMetadata).map((city) => ({ city }));
+}
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -1196,14 +1273,13 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
 
 // ── CTA helpers ───────────────────────────────────────────────────────────────
 
-function getCityName(citySlug: string): string {
+// Retorna a preposição + nome da cidade exactamente como aparece no H1,
+// sem o prefixo "Acompanhantes". Ex.: "na Madeira", "no Porto", "em Lisboa".
+// Usado nos CTAs para evitar "em Madeira" ou "em Guarda" gramaticalmente errados.
+function getCityLabel(citySlug: string): string {
   const data = cityMetadata[citySlug.toLowerCase()];
   if (data?.h1) {
-    return data.h1
-      .replace('Acompanhantes em ', '')
-      .replace('Acompanhantes no ', '')
-      .replace('Acompanhantes na ', '')
-      .replace('Acompanhantes nos ', '');
+    return data.h1.replace(/^Acompanhantes\s+/i, '').trim();
   }
   return (
     citySlug.charAt(0).toUpperCase() + citySlug.slice(1).replaceAll('-', ' ')
@@ -1212,11 +1288,11 @@ function getCityName(citySlug: string): string {
 
 // CTA Posicao 1 - entre os perfis e o bloco editorial
 function RegistrationCTAInline({ citySlug }: { citySlug: string }) {
-  const city = getCityName(citySlug);
+  const cityLabel = getCityLabel(citySlug);
   return (
     <div className="my-10 rounded-2xl border-2 border-dashed border-rose-300 bg-rose-50/10 dark:bg-rose-950/20 dark:border-rose-900/60 px-6 py-5">
       <p className="font-semibold text-sm mb-1">
-        Trabalhas como acompanhante em {city}?
+        Trabalhas como acompanhante {cityLabel}?
       </p>
       <p className="text-xs text-muted-foreground mb-4">
         Regista o teu perfil e aparece para milhares de utilizadores
@@ -1242,11 +1318,11 @@ function RegistrationCTAInline({ citySlug }: { citySlug: string }) {
 
 // CTA Posicao 2 - apos o FAQ, antes da paginacao
 function RegistrationCTABottom({ citySlug }: { citySlug: string }) {
-  const city = getCityName(citySlug);
+  const cityLabel = getCityLabel(citySlug);
   return (
     <div className="my-10 rounded-2xl border-2 border-dashed border-rose-500 bg-rose-50/10 dark:bg-rose-950/20 px-6 py-7 text-center">
       <p className="font-semibold mb-1">
-        Queres anunciar em {city}? Junta-te à Onesugar.
+        Queres anunciar {cityLabel}? Junta-te à Onesugar.
       </p>
       <p className="text-sm text-muted-foreground mb-5">
         Perfil verificado, visibilidade imediata, planos a partir de €0.
@@ -1284,7 +1360,7 @@ export default async function CompanionsPage({
   searchParams: Promise<FilterTypesCompanions>;
 }) {
   const [{ city }, sParams] = await Promise.all([params, searchParams]);
-  const page = parseInt(sParams.page ?? '1');
+  const page = parseInt(sParams.page ?? '1', 10);
 
   return (
     <div className="container mx-auto px-10 py-8">
