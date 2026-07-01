@@ -19,6 +19,7 @@ import { SectionHeading } from '@/components/v0/section-heading';
 import { CitySelectionModal } from '@/components/city-selection-modal';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { LiteYouTube } from '@/components/lite-youtube';
+import { getDoDiaCompanion } from '@/db/queries/companions';
 import { PlanType } from '@/db/queries/kv';
 import { kv } from '@/db/index';
 
@@ -194,7 +195,7 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   kv.ping().catch(() => null);
 
-  const h1Text = 'Acompanhantes Premium em Portugal';
+  const doDia = await getDoDiaCompanion();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -223,30 +224,45 @@ export default async function HomePage() {
                   id="hero-heading"
                   className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
                 >
-                  {h1Text}
+                  Sugar do dia
                 </h1>
-                <h2 className="text-base md:text-lg text-white/70 max-w-md">
-                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                </h2>
-                <Image
-                  src="/badge-onesugar.png"
-                  alt="Bem vindo a Onesugar"
-                  width={400}
-                  height={300}
-                  priority
-                />
+                {doDia ? (
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white">{doDia.name}</span>
+                      {doDia.verified && <ShieldCheck className="h-8 w-8 text-rose-400 shrink-0" />}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-white/80 text-xl lg:text-2xl font-medium">
+                      <span>{doDia.age} anos</span>
+                      <span className="text-white/30">·</span>
+                      <span className="flex items-center gap-2"><MapPin className="h-5 w-5" />{doDia.city}</span>
+                      <span className="text-white/30">·</span>
+                      <span className="text-rose-300 font-semibold">€{doDia.price}/hora</span>
+                    </div>
+                    {doDia.shortDescription && (
+                      <p className="text-white/60 text-lg lg:text-xl max-w-sm leading-relaxed">{doDia.shortDescription}</p>
+                    )}
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-base lg:text-lg font-semibold px-7 py-3.5 rounded-md transition-colors">
+                      Ver perfil
+                    </Link>
+                  </div>
+                ) : (
+                  <h2 className="text-base md:text-lg text-white/70 max-w-md">
+                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                  </h2>
+                )}
                 <Suspense
                   fallback={
-                    <Button disabled variant="outline" className="gap-2">
-                      <MapPin className="h-4 w-4" />
+                    <Button disabled variant="outline" className="gap-2 text-base py-6 px-7">
+                      <MapPin className="h-5 w-5" />
                       Carregando distritos...
                     </Button>
                   }
                 >
                   <CitySelectionModal
                     triggerButton={
-                      <Button variant="default" className="gap-2 py-5 px-6">
-                        <MapPin className="h-4 w-4" />
+                      <Button variant="default" className="gap-2 py-6 px-7 text-base">
+                        <MapPin className="h-5 w-5" />
                         Encontrar por distrito
                       </Button>
                     }
@@ -254,29 +270,25 @@ export default async function HomePage() {
                 </Suspense>
               </div>
 
-              {/* RIGHT: badge as squircle with glow */}
-              <div className="flex items-center justify-center">
-                {/* Outer glow ring */}
-                <div className="relative">
-                  {/* Blurred rose glow behind the card */}
+              {/* RIGHT: companion photo as square card with glow */}
+              <div className="flex items-center justify-center w-full">
+                <div className="relative w-full max-w-sm lg:max-w-xl xl:max-w-2xl">
                   <div className="absolute -inset-4 rounded-[2.5rem] bg-rose-600/30 blur-2xl" />
-                  {/* Softer wider ambient glow */}
                   <div className="absolute -inset-8 rounded-[3rem] bg-rose-900/20 blur-3xl" />
-                  {/* The badge card itself */}
-                  <div className="relative rounded-[1rem] overflow-hidden ring-1 ring-rose-500/40 shadow-[0_0_40px_-4px_rgba(244,63,94,0.5)]">
-                    {/* Subtle inner top-edge highlight */}
-                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent" />
+                  <Link
+                    href={doDia ? `/companions/${doDia.id}` : '#'}
+                    className="block relative rounded-[1rem] overflow-hidden ring-1 ring-rose-500/40 shadow-[0_0_40px_-4px_rgba(244,63,94,0.5)] aspect-square w-full group"
+                  >
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent z-10" />
                     <Image
-                      src="/banner-square.jpeg"
-                      alt="Curadoria Cris Galera — Embaixadora de Qualidade"
-                      width={1400}
-                      height={900}
-                      className="w-full max-w-sm lg:max-w-3xl object-cover"
+                      src={doDia?.imageUrl ?? '/banner-square.jpeg'}
+                      alt={doDia ? `${doDia.name} — Sugar do dia` : 'Curadoria Cris Galera — Embaixadora de Qualidade'}
+                      fill
+                      className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
                       priority
                     />
-                    {/* Subtle inner bottom-edge shadow */}
-                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
-                  </div>
+                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent z-10" />
+                  </Link>
                 </div>
               </div>
 
@@ -291,25 +303,24 @@ export default async function HomePage() {
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 pointer-events-none" />
               <div className="absolute top-0 right-0 w-2/3 h-2/3 bg-[radial-gradient(ellipse_at_70%_30%,_#f43f5e22_0%,_transparent_70%)] pointer-events-none" />
 
-              {/* Badge squircle */}
+              {/* Companion photo — square, clickable */}
               <div className="relative z-10 w-full max-w-xs">
-                {/* Blurred rose glow */}
                 <div className="absolute -inset-4 rounded-[2.5rem] bg-rose-600/30 blur-2xl" />
-                {/* Wide ambient glow */}
                 <div className="absolute -inset-8 rounded-[3rem] bg-rose-900/20 blur-3xl" />
-                {/* Card */}
-                <div className="relative rounded-[2rem] overflow-hidden ring-1 ring-rose-500/40 shadow-[0_0_40px_-4px_rgba(244,63,94,0.5)]">
-                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent" />
+                <Link
+                  href={doDia ? `/companions/${doDia.id}` : '#'}
+                  className="block relative rounded-[2rem] overflow-hidden ring-1 ring-rose-500/40 shadow-[0_0_40px_-4px_rgba(244,63,94,0.5)] aspect-square group"
+                >
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent z-10" />
                   <Image
-                    src="/onesugar-mobile.jpeg"
-                    alt="Bem vindo a Onesugar"
-                    width={830}
-                    height={1472}
-                    className="w-full h-auto object-cover"
+                    src={doDia?.imageUrl ?? '/onesugar-mobile.jpeg'}
+                    alt={doDia ? `${doDia.name} — Sugar do dia` : 'Bem vindo a Onesugar'}
+                    fill
+                    className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
                     priority
                   />
-                  <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
-                </div>
+                  <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent z-10" />
+                </Link>
               </div>
 
               {/* Text + CTA */}
@@ -318,19 +329,33 @@ export default async function HomePage() {
                   id="hero-heading-mobile"
                   className="text-2xl sm:text-3xl font-bold tracking-tighter text-white"
                 >
-                  {h1Text}
+                  Sugar do dia
                 </h1>
-                <h2 className="text-sm sm:text-base text-white/70">
-                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                </h2>
-                <Image
-                  src="/badge-onesugar.png"
-                  alt="Bem vindo a Onesugar"
-                  width={400}
-                  height={300}
-                  className="w-full h-auto object-cover mix-blend-screen"
-                  priority
-                />
+                {doDia ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xl font-bold text-white">{doDia.name}</span>
+                      {doDia.verified && <ShieldCheck className="h-5 w-5 text-rose-400 shrink-0" />}
+                    </div>
+                    <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-white/80 text-sm font-medium">
+                      <span>{doDia.age} anos</span>
+                      <span className="text-white/30">·</span>
+                      <span>{doDia.city}</span>
+                      <span className="text-white/30">·</span>
+                      <span className="text-rose-300 font-semibold">€{doDia.price}/hora</span>
+                    </div>
+                    {doDia.shortDescription && (
+                      <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
+                    )}
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold px-4 py-2 rounded-md transition-colors mx-auto">
+                      Ver perfil
+                    </Link>
+                  </div>
+                ) : (
+                  <h2 className="text-sm sm:text-base text-white/70">
+                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                  </h2>
+                )}
                 <Suspense
                   fallback={
                     <Button disabled variant="outline" className="gap-2 w-full">
