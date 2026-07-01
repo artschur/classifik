@@ -23,7 +23,7 @@ export const WhatsAppButton = ({
       className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out z-50 flex items-center justify-center"
     >
       <IconBrandWhatsapp />
-      <span className="ml-2">Contato</span>
+      <span className="ml-2">Contacto</span>
     </Link>
   );
 };
