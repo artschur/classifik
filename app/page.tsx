@@ -220,10 +220,10 @@ export default async function HomePage() {
 
               {/* LEFT: text */}
               <div className="space-y-6">
-                {/* "Sugar do dia" badge — visual label only, not a heading */}
+                {/* "Exclusiva Onesugar" badge — visual label only, not a heading */}
                 <span className="inline-flex items-center gap-1.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-medium px-3 py-1 rounded-full">
                   <Star className="h-3.5 w-3.5 fill-rose-400 text-rose-400" />
-                  Sugar do dia
+                  Exclusiva Onesugar
                 </span>
                 <h1
                   id="hero-heading"
@@ -286,7 +286,7 @@ export default async function HomePage() {
                     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent z-10" />
                     <Image
                       src={doDia?.imageUrl ?? '/banner-square.jpeg'}
-                      alt={doDia ? `${doDia.name} — Sugar do dia` : 'Curadoria Cris Galera — Embaixadora de Qualidade'}
+                      alt={doDia ? `${doDia.name} — Exclusiva Onesugar` : 'Curadoria Cris Galera — Embaixadora de Qualidade'}
                       fill
                       className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
                       priority
@@ -318,7 +318,7 @@ export default async function HomePage() {
                   <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent z-10" />
                   <Image
                     src={doDia?.imageUrl ?? '/onesugar-mobile.jpeg'}
-                    alt={doDia ? `${doDia.name} — Sugar do dia` : 'Bem vindo a Onesugar'}
+                    alt={doDia ? `${doDia.name} — Exclusiva Onesugar` : 'Bem vindo a Onesugar'}
                     fill
                     className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
                     priority
@@ -329,10 +329,10 @@ export default async function HomePage() {
 
               {/* Text + CTA */}
               <div className="relative z-10 w-full space-y-4 text-center">
-                {/* "Sugar do dia" badge */}
+                {/* "Exclusiva Onesugar" badge */}
                 <span className="inline-flex items-center gap-1.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-medium px-3 py-1 rounded-full mx-auto">
                   <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
-                  Sugar do dia
+                  Exclusiva Onesugar
                 </span>
                 <h1
                   id="hero-heading-mobile"
