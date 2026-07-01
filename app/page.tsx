@@ -220,13 +220,21 @@ export default async function HomePage() {
 
               {/* LEFT: text */}
               <div className="space-y-6">
+                {/* "Sugar do dia" badge — visual label only, not a heading */}
+                <span className="inline-flex items-center gap-1.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-medium px-3 py-1 rounded-full">
+                  <Star className="h-3.5 w-3.5 fill-rose-400 text-rose-400" />
+                  Sugar do dia
+                </span>
                 <h1
                   id="hero-heading"
                   className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
                 >
-                  Sugar do dia
+                  Acompanhantes Premium em Portugal
                 </h1>
-                {doDia ? (
+                <h2 className="text-base md:text-lg text-white/70 max-w-md">
+                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                </h2>
+                {doDia && (
                   <div className="space-y-5">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white">{doDia.name}</span>
@@ -246,10 +254,6 @@ export default async function HomePage() {
                       Ver perfil
                     </Link>
                   </div>
-                ) : (
-                  <h2 className="text-base md:text-lg text-white/70 max-w-md">
-                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                  </h2>
                 )}
                 <Suspense
                   fallback={
@@ -325,13 +329,21 @@ export default async function HomePage() {
 
               {/* Text + CTA */}
               <div className="relative z-10 w-full space-y-4 text-center">
+                {/* "Sugar do dia" badge */}
+                <span className="inline-flex items-center gap-1.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-medium px-3 py-1 rounded-full mx-auto">
+                  <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
+                  Sugar do dia
+                </span>
                 <h1
                   id="hero-heading-mobile"
                   className="text-2xl sm:text-3xl font-bold tracking-tighter text-white"
                 >
-                  Sugar do dia
+                  Acompanhantes Premium em Portugal
                 </h1>
-                {doDia ? (
+                <h2 className="text-sm sm:text-base text-white/70">
+                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
+                </h2>
+                {doDia && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-xl font-bold text-white">{doDia.name}</span>
@@ -351,10 +363,6 @@ export default async function HomePage() {
                       Ver perfil
                     </Link>
                   </div>
-                ) : (
-                  <h2 className="text-sm sm:text-base text-white/70">
-                    Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                  </h2>
                 )}
                 <Suspense
                   fallback={
