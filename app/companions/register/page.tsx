@@ -74,18 +74,14 @@ async function CompanionFormWithData() {
     redirect("/companions/verification/pending");
   }
 
-  // Only redirect to verification page if:
-  // 1. User is NOT already verified
-  // 2. Companion profile exists (registration completed)
-  // 3. Images are uploaded (completed registration form)
-  // 4. Verification video NOT uploaded yet
-  if (
-    !isVerified &&
-    companion &&
-    allVerificationStatus.isImageUploaded &&
-    !allVerificationStatus.isDocumentUploaded
-  ) {
-    redirect("/companions/verification");
+  // Route to the correct verification step based on what's already uploaded
+  if (!isVerified && companion && allVerificationStatus.isImageUploaded) {
+    if (!allVerificationStatus.isVerificationVideoUploaded) {
+      redirect("/companions/verification");
+    }
+    if (!allVerificationStatus.isDocumentUploaded) {
+      redirect("/companions/verification/document");
+    }
   }
 
   return (
