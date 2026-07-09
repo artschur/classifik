@@ -256,6 +256,38 @@ function buildCompanionsQuery(
     );
 }
 
+export async function getDoDiaCompanion() {
+  const results = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      age: companionsTable.age,
+      price: companionsTable.price,
+      shortDescription: companionsTable.shortDescription,
+      verified: companionsTable.verified,
+      city: citiesTable.city,
+      imageUrl: imagesTable.public_url,
+    })
+    .from(companionsTable)
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .leftJoin(imagesTable, eq(imagesTable.companionId, companionsTable.id))
+    .where(eq(companionsTable.plan_type, 'do_dia'))
+    .limit(1);
+
+  if (!results.length) return null;
+  const row = results[0];
+  return {
+    id: row.id,
+    name: row.name,
+    age: row.age,
+    price: row.price,
+    shortDescription: row.shortDescription,
+    verified: row.verified,
+    city: row.city,
+    imageUrl: row.imageUrl,
+  };
+}
+
 export async function getRandomCompanions(
   plans?: PlanType[],
   citySlug?: string,
