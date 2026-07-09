@@ -270,8 +270,19 @@ export async function getDoDiaCompanion() {
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .leftJoin(imagesTable, eq(imagesTable.companionId, companionsTable.id))
-    .where(eq(companionsTable.plan_type, 'do_dia'))
+    .leftJoin(
+      imagesTable,
+      and(
+        eq(imagesTable.companionId, companionsTable.id),
+        eq(imagesTable.is_verification_video, false),
+      ),
+    )
+    .where(
+      and(
+        eq(companionsTable.plan_type, 'do_dia'),
+        eq(companionsTable.verified, true),
+      ),
+    )
     .limit(1);
 
   if (!results.length) return null;
