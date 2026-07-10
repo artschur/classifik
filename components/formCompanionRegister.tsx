@@ -301,11 +301,6 @@ export function RegisterCompanionForm({
           const companion = await registerCompanionAction(formData);
           currentCompanionId = companion.id;
           setCompanionId(companion.id);
-          toast({
-            variant: "success",
-            title: "Perfil criado",
-            description: `Hey ${formData.name}! Agora fazendo upload das suas fotos.`,
-          });
         } catch (error) {
           toast({
             variant: "destructive",
@@ -457,12 +452,6 @@ export function RegisterCompanionForm({
 
       // Companion already created during photo upload, just redirect
       await completeFirstStepRegistration();
-      toast({
-        variant: "success",
-        title: "Perfil criado com sucesso",
-        description:
-          "Agora envie os documentos de verificação para ativar o seu perfil.",
-      });
       router.push("/companions/verification");
       return;
     }
