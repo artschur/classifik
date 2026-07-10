@@ -365,3 +365,36 @@ export type NewDocument = typeof documentsTable.$inferInsert;
 
 export type BlockedUser = typeof blockedUsersTable.$inferSelect;
 export type NewBlockedUser = typeof blockedUsersTable.$inferInsert;
+
+export const storiesTable = pgTable(
+  'stories',
+  {
+    id: serial('id').primaryKey(),
+    slug: varchar('slug', { length: 200 }).notNull().unique(),
+    title: varchar('title', { length: 300 }).notNull(),
+    collection: varchar('collection', { length: 100 }).notNull(),
+    collection_slug: varchar('collection_slug', { length: 100 }).notNull(),
+    cover_image_url: text('cover_image_url'),
+    cover_storage_path: text('cover_storage_path'),
+    excerpt: text('excerpt').notNull(),
+    author: varchar('author', { length: 100 }).notNull().default('Onesugar'),
+    read_time: integer('read_time').notNull().default(5),
+    featured: boolean('featured').default(false).notNull(),
+    paragraphs: jsonb('paragraphs').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    inline_images: jsonb('inline_images')
+      .$type<{ afterIndex: number; src: string; storagePath: string; alt: string }[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    published_at: timestamp('published_at').defaultNow().notNull(),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    stories_slug_idx: index('stories_slug_idx').on(table.slug),
+    stories_featured_idx: index('stories_featured_idx').on(table.featured),
+    stories_published_idx: index('stories_published_idx').on(table.published_at),
+    stories_collection_idx: index('stories_collection_idx').on(table.collection_slug),
+  })
+);
+
+export type DbStory = typeof storiesTable.$inferSelect;
+export type NewDbStory = typeof storiesTable.$inferInsert;
