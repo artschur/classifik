@@ -97,9 +97,10 @@ export default async function ContosPage({
               </div>
             </div>
 
-            {/* Right — decorative */}
+            {/* Right — featured story image */}
             <div className="hidden md:flex justify-center">
-              <div className="relative w-80 h-80 rounded-2xl overflow-hidden border border-rose-500/20 shadow-2xl shadow-rose-900/30">
+              <Link href={`/contos/${featured.slug}`} className="block group">
+              <div className="relative w-80 h-80 rounded-2xl overflow-hidden border border-rose-500/20 shadow-2xl shadow-rose-900/30 group-hover:border-rose-500/50 transition-colors">
                 <div className="absolute inset-0 bg-gradient-to-br from-rose-900/40 to-zinc-900/80 z-10" />
                 {featured.coverImage ? (
                   <Image
@@ -121,6 +122,7 @@ export default async function ContosPage({
                   <p className="text-white text-sm font-bold line-clamp-1">{featured.title}</p>
                 </div>
               </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -257,7 +259,7 @@ export default async function ContosPage({
             Envie o seu conto e faça parte do universo Stories OneSugar.
           </p>
           <a
-            href="mailto:stories@onesugar.pt?subject=Submissão de conto"
+            href="mailto:onesugar.pt@gmail.com?subject=Submissão de conto"
             className="inline-block bg-rose-600 hover:bg-rose-700 text-white font-semibold px-8 py-3 rounded-full text-sm transition-colors mt-2"
           >
             Enviar minha história
