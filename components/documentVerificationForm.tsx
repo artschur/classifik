@@ -238,7 +238,8 @@ export function DocumentVerificationForm({
       if (result.success) {
         toast({
           title: "Vídeo enviado",
-          description: "Seu vídeo foi enviado com sucesso e está aguardando revisão.",
+          description:
+            "Seu vídeo foi enviado com sucesso e está aguardando revisão.",
           variant: "success",
         });
 
@@ -301,9 +302,9 @@ export function DocumentVerificationForm({
 
       if (result.success) {
         toast({
-          title: "Perfil criado com sucesso!",
+          title: "Documento enviado",
           description:
-            "Os seus documentos foram enviados e o perfil está a ser verificado pela nossa equipa.",
+            "Seu documento foi enviado com sucesso e está aguardando revisão.",
           variant: "success",
         });
 
