@@ -25,7 +25,7 @@ async function CompanionFormWithData() {
   const { userId, sessionClaims } = await auth();
 
   if (!userId) {
-    redirect("/");
+    redirect("/sign-up?redirect_url=/companions/register");
   }
 
   const [
@@ -48,17 +48,21 @@ async function CompanionFormWithData() {
 
   const isVerified = companionVerificationStatus[0]?.verified ?? false;
 
-  // Update metadata to track document upload status
+  // Update metadata to track document upload status and ensure companion flags are set.
+  // This also handles users who arrive directly (e.g. from the "Registar como Sugar" CTA)
+  // without going through /onboarding — we auto-mark them as companions.
   const currentHasDocs = sessionClaims?.metadata?.hasUploadedDocs;
   const hasDocsNow = allVerificationStatus.isVerificationVideoUploaded;
+  const needsOnboarding = !sessionClaims?.metadata?.onboardingComplete;
 
-  // Only update if the status has changed to avoid unnecessary writes
-  if (currentHasDocs !== hasDocsNow) {
+  if (currentHasDocs !== hasDocsNow || needsOnboarding) {
     const client = await clerkClient();
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
-        ...sessionClaims?.metadata, // Preserve all existing metadata
+        ...sessionClaims?.metadata,
+        onboardingComplete: true,
         isCompanion: true,
+        isRegistrationComplete: sessionClaims?.metadata?.isRegistrationComplete ?? false,
         hasUploadedDocs: hasDocsNow,
       },
     });

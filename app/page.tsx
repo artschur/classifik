@@ -388,6 +388,30 @@ export default async function HomePage() {
           plans={[PlanType.VIP, PlanType.PLUS, PlanType.CLASSIC]}
         />
 
+        {/* ── REGISTER CTA (above video) ── */}
+        <section className="py-10 px-6">
+          <div className="container mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-rose-950/60 to-zinc-900 border border-rose-900/30 px-8 py-10 text-center space-y-6">
+            <h2 className="text-2xl font-bold">Junte-se à Onesugar</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Seja uma Sugar verificada ou encontre a companhia ideal — registe-se agora.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link
+                href="/companions/register"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Sugar
+              </Link>
+              <Link
+                href="/sign-up"
+                className="border border-rose-500/60 text-rose-300 hover:bg-rose-600/10 font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Cliente
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* ── VIDEO ── */}
         <div className="flex justify-center w-full px-4 py-8">
           <div className="w-full max-w-4xl">
@@ -580,6 +604,30 @@ export default async function HomePage() {
                 className="mx-auto aspect-square overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full max-w-[400px] lg:max-w-none"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
               />
+            </div>
+          </div>
+        </section>
+
+        {/* ── REGISTER CTA (below why choose) ── */}
+        <section className="py-10 px-6">
+          <div className="container mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-rose-950/60 to-zinc-900 border border-rose-900/30 px-8 py-10 text-center space-y-6">
+            <h2 className="text-2xl font-bold">Junte-se à Onesugar</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Seja uma Sugar verificada ou encontre a companhia ideal — registe-se agora.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link
+                href="/companions/register"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Sugar
+              </Link>
+              <Link
+                href="/sign-up"
+                className="border border-rose-500/60 text-rose-300 hover:bg-rose-600/10 font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Cliente
+              </Link>
             </div>
           </div>
         </section>
