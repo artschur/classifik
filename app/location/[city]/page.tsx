@@ -1105,6 +1105,38 @@ const cityMetadata: Record<string, CityData> = {
   },
 };
 
+// ── Rendering mode ────────────────────────────────────────────────────────────
+// FIX CRÍTICO SEO: força geração estática de todas as páginas de localidade.
+//
+// PROBLEMA: sem esta directiva, o Next.js detecta componentes dinâmicos
+// (CompanionsList com queries à DB, countCompanionsPages) e força SSR dinâmico,
+// mesmo com generateStaticParams definido. Em SSR com streaming, os metadados
+// são injectados via RSC payload no fim do documento — FORA do <head>.
+// Confirmado via View Page Source: <title> e <meta> apareciam depois do </body>.
+//
+// SOLUÇÃO: 'force-static' faz o Next.js gerar HTML completo em build time,
+// com todos os metadados no <head> desde o primeiro byte entregue pelo servidor.
+//
+// TRADEOFF DOCUMENTADO: com force-static, CompanionsList e countCompanionsPages
+// são chamados em build time — os dados de perfis ficam congelados até ao
+// próximo deploy. Novos perfis adicionados após o build não aparecem até
+// o Vercel fazer redeploy. Para as páginas de localidade, onde os metadados
+// SEO são o elemento crítico, este tradeoff é aceitável: os dados dinâmicos
+// (lista de perfis) hidratam via client-side após o carregamento inicial.
+// Se a disponibilidade em tempo real dos perfis se tornar prioritária,
+// considerar ISR (revalidate: 3600) como alternativa futura.
+//
+// Resolve (em conjunto com alternates.canonical no generateMetadata):
+//   - Page Titles: Outside <head> (HIGH, 48 URLs)
+//   - Page Titles: Multiple (HIGH, 48 URLs)
+//   - Directives: Outside <head> (HIGH, 49 URLs)
+//   - Canonicals: Outside <head> (HIGH, 49 URLs)
+//   - Meta Description: Outside <head> (MEDIUM, 48 URLs)
+//   - Page Titles: Duplicate (MEDIUM, 47 URLs)
+//   - Meta Description: Duplicate (LOW, 38 URLs)
+//   - H1: Duplicate (LOW, 39 URLs)
+export const dynamic = 'force-static';
+
 // ── Static params ─────────────────────────────────────────────────────────────
 // Pré-renderiza estaticamente todas as páginas de cidade conhecidas em build
 // time. O HTML entregue pelo servidor já contém title, description, robots e
@@ -1136,6 +1168,15 @@ export async function generateMetadata({
   return {
     title: current.title,
     description: current.description,
+    // FIX CANONICAL: define o canonical correcto por página.
+    // Sem isto, o Next.js herda o alternates.canonical do layout.tsx raiz
+    // (que apontava para https://www.onesugar.pt), fazendo todas as páginas
+    // de localidade reportarem canonical da homepage.
+    // Resolve: Canonicals: Missing (MEDIUM, 48 URLs)
+    //          Canonicals: Outside <head> (HIGH, 49 URLs)
+    alternates: {
+      canonical: `https://www.onesugar.pt/location/${cityKey}`,
+    },
     robots: {
       index: true,
       follow: true,
@@ -1184,17 +1225,17 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
 
   const faqSchema = data.faq
     ? {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: data.faq.map((item) => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: item.a,
-          },
-        })),
-      }
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: data.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.a,
+        },
+      })),
+    }
     : null;
 
   return (
