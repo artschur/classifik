@@ -13,6 +13,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { EarningsCalculator } from "@/components/earnings-calculator";
 
 export const metadata: Metadata = {
   title: 'Cadastre-se agora | One Sugar',
@@ -97,10 +98,17 @@ async function CompanionFormWithData() {
 
 export default async function RegisterCompanionPage() {
   return (
-    <div className="container mx-auto py-8 md:px-0">
-      <Suspense fallback={<SkeletonForm />}>
-        <CompanionFormWithData />
-      </Suspense>
+    <div className="container mx-auto py-8 md:px-0 space-y-10">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold">Torne-se uma Sugar na Onesugar</h1>
+        <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
+      </div>
+      <EarningsCalculator />
+      <div id="register-form">
+        <Suspense fallback={<SkeletonForm />}>
+          <CompanionFormWithData />
+        </Suspense>
+      </div>
     </div>
   );
 }
