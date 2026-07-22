@@ -8,6 +8,7 @@ import { handleOnboard } from "./actions";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { isUserACompanion } from "@/db/queries/companions";
+import { EarningsCalculator } from "@/components/earnings-calculator";
 
 export default async function OnboardPage() {
   const { userId, sessionClaims } = await auth();
@@ -44,70 +45,41 @@ export default async function OnboardPage() {
   }
 
   return (
-    <section className="w-full min-h-screen flex items-center justify-center p-12">
+    <section className="w-full min-h-screen flex items-center justify-center p-6 md:p-12">
       <Spotlight />
-      <div className="max-w-7xl flex items-center justify-center h-full flex-col w-full pt-20 md:pt-0">
-        <h1 className="text-4xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50">
-          Bem vindo ao <br /> OneSugar
-        </h1>
-        <p className="mt-4 font-normal text-base text-neutral-300 max-w-lg text-center mx-auto">
-          as mais doces sugars de portugal, em um só lugar.
-        </p>
-        <div className="flex gap-4 mt-4">
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <form action={handleOnboard}>
-                <input type="hidden" name="isCompanion" value="true" />
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-primary/80 rounded-lg hover:bg-white/20 transition-all"
-                >
-                  Sou Sugar
-                </button>
-              </form>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80">
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Divulgar na OneSugar.</h4>
-                <ul className="text-sm list-disc pl-4 space-y-1">
-                  <li>Aumente sua visibilidade</li>
-                  <li>Gerencie seu perfil facilmente</li>
-                  <li>Adquira novos clientes em uma plataforma crescente.</li>
-                </ul>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <form action={handleOnboard}>
-                <input type="hidden" name="isCompanion" value="false" />
-                <button
-                  type="submit"
-                  className="px-6 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
-                >
-                  Sou Cliente
-                </button>
-              </form>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80">
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">
-                  Ser um cliente OneSugar.
-                </h4>
-                <ul className="text-sm list-disc pl-4 space-y-1">
-                  <li>Tenha acesso a mais perfis.</li>
-                  <li>Leie e deixe reviews</li>
-                  <li>Anonimidade em primeiro lugar</li>
-                  <li>Segurança em primeiro lugar</li>
-                </ul>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
+      <div className="w-full max-w-lg flex flex-col items-center gap-8 pt-16 md:pt-0">
+        <div className="text-center">
+          <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
+            Bem vindo ao <br /> OneSugar
+          </h1>
+          <p className="mt-3 text-base text-neutral-300">
+            as mais doces sugars de portugal, em um só lugar.
+          </p>
         </div>
-        <p className="text-neutral-300 text-sm mt-4">
-          Crie sua conta gratuitamente
-        </p>
+
+        <EarningsCalculator
+          cta={
+            <form action={handleOnboard} className="w-full">
+              <input type="hidden" name="isCompanion" value="true" />
+              <button
+                type="submit"
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+              >
+                Criar o meu perfil de Sugar gratuitamente
+              </button>
+            </form>
+          }
+        />
+
+        <form action={handleOnboard} className="w-full max-w-sm">
+          <input type="hidden" name="isCompanion" value="false" />
+          <button
+            type="submit"
+            className="w-full border border-white/20 hover:border-white/50 text-white font-semibold py-3 rounded-xl transition-colors text-sm bg-white/5 hover:bg-white/10"
+          >
+            Registar como Cliente gratuitamente
+          </button>
+        </form>
       </div>
     </section>
   );

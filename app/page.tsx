@@ -221,8 +221,8 @@ export default async function HomePage() {
               {/* LEFT: text */}
               <div className="space-y-6">
                 {/* "Exclusiva Onesugar" badge — visual label only, not a heading */}
-                <span className="inline-flex items-center gap-1.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-medium px-3 py-1 rounded-full">
-                  <Star className="h-3.5 w-3.5 fill-rose-400 text-rose-400" />
+                <span className="inline-flex items-center gap-2.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-2xl font-bold px-6 py-2.5 rounded-full">
+                  <Star className="h-6 w-6 fill-rose-400 text-rose-400" />
                   Exclusiva Onesugar
                 </span>
                 <h1
@@ -244,14 +244,12 @@ export default async function HomePage() {
                       <span>{doDia.age} anos</span>
                       <span className="text-white/30">·</span>
                       <span className="flex items-center gap-2"><MapPin className="h-5 w-5" />{doDia.city}</span>
-                      <span className="text-white/30">·</span>
-                      <span className="text-rose-300 font-semibold">€{doDia.price}/hora</span>
                     </div>
                     {doDia.shortDescription && (
                       <p className="text-white/60 text-lg lg:text-xl max-w-sm leading-relaxed">{doDia.shortDescription}</p>
                     )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-base lg:text-lg font-semibold px-7 py-3.5 rounded-md transition-colors">
-                      Ver perfil
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-xl lg:text-2xl font-bold px-10 py-5 rounded-xl shadow-lg shadow-rose-900/40 transition-colors">
+                      Ver perfil →
                     </Link>
                   </div>
                 )}
@@ -265,8 +263,8 @@ export default async function HomePage() {
                 >
                   <CitySelectionModal
                     triggerButton={
-                      <Button variant="default" className="gap-2 py-6 px-7 text-base">
-                        <MapPin className="h-5 w-5" />
+                      <Button variant="ghost" className="gap-1.5 py-2 px-4 text-sm text-white/50 hover:text-white/80 hover:bg-transparent">
+                        <MapPin className="h-3.5 w-3.5" />
                         Encontrar por distrito
                       </Button>
                     }
@@ -330,8 +328,8 @@ export default async function HomePage() {
               {/* Text + CTA */}
               <div className="relative z-10 w-full space-y-4 text-center">
                 {/* "Exclusiva Onesugar" badge */}
-                <span className="inline-flex items-center gap-1.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-medium px-3 py-1 rounded-full mx-auto">
-                  <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
+                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-lg font-bold px-5 py-2 rounded-full mx-auto">
+                  <Star className="h-5 w-5 fill-rose-400 text-rose-400" />
                   Exclusiva Onesugar
                 </span>
                 <h1
@@ -353,14 +351,12 @@ export default async function HomePage() {
                       <span>{doDia.age} anos</span>
                       <span className="text-white/30">·</span>
                       <span>{doDia.city}</span>
-                      <span className="text-white/30">·</span>
-                      <span className="text-rose-300 font-semibold">€{doDia.price}/hora</span>
                     </div>
                     {doDia.shortDescription && (
                       <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
                     )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold px-4 py-2 rounded-md transition-colors mx-auto">
-                      Ver perfil
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-base font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-rose-900/40 transition-colors mx-auto">
+                      Ver perfil →
                     </Link>
                   </div>
                 )}
@@ -374,8 +370,8 @@ export default async function HomePage() {
                 >
                   <CitySelectionModal
                     triggerButton={
-                      <Button variant="default" className="gap-2 w-full py-5">
-                        <MapPin className="h-4 w-4" />
+                      <Button variant="ghost" className="gap-1.5 py-2 px-4 text-xs text-white/50 hover:text-white/80 hover:bg-transparent mx-auto">
+                        <MapPin className="h-3 w-3" />
                         Encontrar por distrito
                       </Button>
                     }
@@ -391,6 +387,30 @@ export default async function HomePage() {
         <HeroCarouselWrapper
           plans={[PlanType.VIP, PlanType.PLUS, PlanType.CLASSIC]}
         />
+
+        {/* ── REGISTER CTA (above video) ── */}
+        <section className="py-10 px-6">
+          <div className="container mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-rose-950/60 to-zinc-900 border border-rose-900/30 px-8 py-10 text-center space-y-6">
+            <h2 className="text-2xl font-bold">Junte-se à Onesugar</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Seja uma Sugar verificada ou encontre a companhia ideal — registe-se agora.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link
+                href="/companions/register"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Sugar
+              </Link>
+              <Link
+                href="/sign-up"
+                className="border border-rose-500/60 text-rose-300 hover:bg-rose-600/10 font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Cliente
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {/* ── VIDEO ── */}
         <div className="flex justify-center w-full px-4 py-8">
@@ -584,6 +604,30 @@ export default async function HomePage() {
                 className="mx-auto aspect-square overflow-hidden rounded-xl object-cover mt-6 lg:mt-0 w-full max-w-[400px] lg:max-w-none"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
               />
+            </div>
+          </div>
+        </section>
+
+        {/* ── REGISTER CTA (below why choose) ── */}
+        <section className="py-10 px-6">
+          <div className="container mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-rose-950/60 to-zinc-900 border border-rose-900/30 px-8 py-10 text-center space-y-6">
+            <h2 className="text-2xl font-bold">Junte-se à Onesugar</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Seja uma Sugar verificada ou encontre a companhia ideal — registe-se agora.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link
+                href="/companions/register"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Sugar
+              </Link>
+              <Link
+                href="/sign-up"
+                className="border border-rose-500/60 text-rose-300 hover:bg-rose-600/10 font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+              >
+                Registar como Cliente
+              </Link>
             </div>
           </div>
         </section>

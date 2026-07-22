@@ -13,6 +13,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { EarningsCalculator } from "@/components/earnings-calculator";
 
 export const metadata: Metadata = {
   title: 'Cadastre-se agora | One Sugar',
@@ -25,7 +26,7 @@ async function CompanionFormWithData() {
   const { userId, sessionClaims } = await auth();
 
   if (!userId) {
-    redirect("/");
+    redirect("/sign-up?redirect_url=/companions/register");
   }
 
   const [
@@ -48,17 +49,21 @@ async function CompanionFormWithData() {
 
   const isVerified = companionVerificationStatus[0]?.verified ?? false;
 
-  // Update metadata to track document upload status
+  // Update metadata to track document upload status and ensure companion flags are set.
+  // This also handles users who arrive directly (e.g. from the "Registar como Sugar" CTA)
+  // without going through /onboarding — we auto-mark them as companions.
   const currentHasDocs = sessionClaims?.metadata?.hasUploadedDocs;
   const hasDocsNow = allVerificationStatus.isVerificationVideoUploaded;
+  const needsOnboarding = !sessionClaims?.metadata?.onboardingComplete;
 
-  // Only update if the status has changed to avoid unnecessary writes
-  if (currentHasDocs !== hasDocsNow) {
+  if (currentHasDocs !== hasDocsNow || needsOnboarding) {
     const client = await clerkClient();
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
-        ...sessionClaims?.metadata, // Preserve all existing metadata
+        ...sessionClaims?.metadata,
+        onboardingComplete: true,
         isCompanion: true,
+        isRegistrationComplete: sessionClaims?.metadata?.isRegistrationComplete ?? false,
         hasUploadedDocs: hasDocsNow,
       },
     });
@@ -93,10 +98,17 @@ async function CompanionFormWithData() {
 
 export default async function RegisterCompanionPage() {
   return (
-    <div className="container mx-auto py-8 md:px-0">
-      <Suspense fallback={<SkeletonForm />}>
-        <CompanionFormWithData />
-      </Suspense>
+    <div className="container mx-auto py-8 md:px-0 space-y-10">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold">Torne-se uma Sugar na Onesugar</h1>
+        <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
+      </div>
+      <EarningsCalculator />
+      <div id="register-form">
+        <Suspense fallback={<SkeletonForm />}>
+          <CompanionFormWithData />
+        </Suspense>
+      </div>
     </div>
   );
 }
