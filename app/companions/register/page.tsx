@@ -13,7 +13,6 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { EarningsCalculator } from "@/components/earnings-calculator";
 
 export const metadata: Metadata = {
   title: 'Cadastre-se agora | One Sugar',
@@ -99,7 +98,6 @@ export default async function RegisterCompanionPage() {
         <h1 className="text-2xl font-bold">Torne-se uma Sugar na Onesugar</h1>
         <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
       </div>
-      <EarningsCalculator />
       <div id="register-form">
         <Suspense fallback={<SkeletonForm />}>
           <CompanionFormWithData />
