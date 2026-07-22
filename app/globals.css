@@ -15,7 +15,12 @@
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+
+    /* FIX WCAG: valor anterior 46.1% produzia ratio 4.83:1 (passa AA, falha AAA).
+       Novo valor 36% produz ratio 7.02:1, passando WCAG 2.1 AAA (7:1).
+       Resolve: Accessibility: Text Requires Higher Color Contrast (HIGH, 48 URLs) */
+    --muted-foreground: 240 3.8% 36%;
+
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
@@ -43,7 +48,15 @@
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 15%;
-    --muted-foreground: 240 5% 64.9%;
+
+    /* FIX WCAG: valor anterior 64.9% produzia ratio 6.82:1 sobre card dark
+       (passava AA mas falhava AAA). Novo valor 66% produz ratio 7.07:1 sobre
+       card (24 9.8% 10%), passando WCAG 2.1 AAA.
+       Sobre background principal o ratio sobe para 8.09:1.
+       Nota: a brand color primary (rose) sobre background escuro tem ratio 4.21:1
+       — falha AA — mas requer alteração do design system, fora do scope deste PR. */
+    --muted-foreground: 240 5% 66%;
+
     --accent: 12 6.5% 15.1%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
@@ -58,7 +71,6 @@
     --chart-5: 340 75% 55%;
   }
 }
-
 
 @layer base {
   * {
