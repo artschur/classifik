@@ -1,7 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Flame, Send, Sparkles } from 'lucide-react';
+import { Clock, Flame, Send, Sparkles, CalendarDays } from 'lucide-react';
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('pt-PT', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 import { stories as staticStories, isNew, dbToStory } from '@/lib/stories';
 import { getAllStoryViews } from '@/app/actions/story-views';
 import { getAllDbStories } from '@/db/queries/stories';
@@ -313,6 +321,10 @@ function LatestStoryCard({
             <Clock className="h-3 w-3" />
             <span className="text-xs">{story.readTime} min</span>
           </div>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <CalendarDays className="h-3 w-3" />
+            <span className="text-xs">{formatDate(story.publishedAt)}</span>
+          </div>
         </div>
       </article>
     </Link>
@@ -364,6 +376,10 @@ function MostReadCard({
             {views > 0 && (
               <span className="text-xs text-muted-foreground">{views} leituras</span>
             )}
+          </div>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <CalendarDays className="h-3 w-3" />
+            <span className="text-xs">{formatDate(story.publishedAt)}</span>
           </div>
         </div>
       </article>

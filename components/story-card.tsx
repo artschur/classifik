@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { CalendarDays } from 'lucide-react';
 import type { Story } from '@/lib/stories';
 
 export function StoryCard({ story }: { story: Story }) {
@@ -40,6 +41,16 @@ export function StoryCard({ story }: { story: Story }) {
           <div className="flex items-center justify-between pt-1">
             <span className="text-xs text-muted-foreground">{story.author}</span>
             <span className="text-xs text-muted-foreground">{story.readTime} min</span>
+          </div>
+          <div className="flex items-center gap-1 text-muted-foreground pt-0.5">
+            <CalendarDays className="h-3 w-3" />
+            <span className="text-xs">
+              {new Date(story.publishedAt).toLocaleDateString('pt-PT', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </span>
           </div>
         </div>
       </article>
