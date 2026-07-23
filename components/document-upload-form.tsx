@@ -220,6 +220,18 @@ export function DocumentUploadForm() {
             )}
           />
 
+          {/* Security notice */}
+          <div className="rounded-xl border border-border bg-muted/40 px-5 py-4 space-y-2">
+            <p className="text-sm font-bold">
+              A sua segurança é importante
+            </p>
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
+              <li>Todos os dados enviados são encriptados e utilizados exclusivamente para o processo de verificação da sua conta.</li>
+              <li>Nunca partilhamos as suas informações com terceiros.</li>
+              <li>O nosso compromisso é garantir a sua privacidade, segurança e confidencialidade em todas as etapas da verificação.</li>
+            </ul>
+          </div>
+
           <Button
             type="submit"
             size="lg"
