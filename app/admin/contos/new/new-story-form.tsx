@@ -36,6 +36,7 @@ export function NewStoryForm({
   const [author, setAuthor] = useState('Onesugar');
   const [readTime, setReadTime] = useState(5);
   const [featured, setFeatured] = useState(false);
+  const [publishedAt, setPublishedAt] = useState(() => new Date().toISOString().split('T')[0]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState('');
   const [paragraphs, setParagraphs] = useState<string[]>(['']);
@@ -108,6 +109,7 @@ export function NewStoryForm({
     fd.append('author', author);
     fd.append('readTime', String(readTime));
     fd.append('featured', String(featured));
+    fd.append('publishedAt', publishedAt);
     fd.append('paragraphCount', String(paragraphs.length));
     paragraphs.forEach((p, i) => fd.append(`paragraph_${i}`, p));
     if (coverFile) fd.append('coverImage', coverFile);
@@ -210,6 +212,16 @@ export function NewStoryForm({
               max={60}
               value={readTime}
               onChange={(e) => setReadTime(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="publishedAt">Data de publicação</Label>
+            <Input
+              id="publishedAt"
+              type="date"
+              value={publishedAt}
+              onChange={(e) => setPublishedAt(e.target.value)}
             />
           </div>
 

@@ -4,11 +4,11 @@ import { db } from '@/db';
 import { companionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { isVerificationPending, verifyItemsIfOnboardingComplete } from '@/app/actions/document-verification';
-import { VideoVerificationForm } from '@/components/video-verification-form';
+import { DocumentUploadForm } from '@/components/document-upload-form';
 
 export const dynamic = 'force-dynamic';
 
-export default async function VideoVerificationPage() {
+export default async function DocumentVerificationPage() {
   const { userId } = await auth();
 
   if (!userId) redirect('/');
@@ -29,23 +29,23 @@ export default async function VideoVerificationPage() {
 
   if (isPending) redirect('/companions/verification/pending');
 
-  // If video already uploaded, go straight to document step
-  if (uploadStatus.isVerificationVideoUploaded && !uploadStatus.isDocumentUploaded) {
-    redirect('/companions/verification/document');
+  // Must upload video first
+  if (!uploadStatus.isVerificationVideoUploaded) {
+    redirect('/companions/verification');
   }
 
   return (
     <div className="container mx-auto py-12 px-4">
       {/* Step indicator */}
       <div className="flex items-center gap-2 mb-10 text-sm font-semibold text-muted-foreground">
-        <span className="bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
-        <span className="text-foreground">Vídeo de Verificação</span>
+        <span className="bg-muted text-muted-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
+        <span className="line-through">Vídeo de Verificação</span>
         <span className="mx-2">→</span>
-        <span className="bg-muted rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
-        <span>Documento de Identificação</span>
+        <span className="bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
+        <span className="text-foreground">Documento de Identificação</span>
       </div>
 
-      <VideoVerificationForm initialVideoUploaded={uploadStatus.isVerificationVideoUploaded} />
+      <DocumentUploadForm />
     </div>
   );
 }

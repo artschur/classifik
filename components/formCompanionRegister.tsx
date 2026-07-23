@@ -67,6 +67,7 @@ import { cn } from "@/lib/utils";
 import { IconBrandInstagram, IconLanguage } from "@tabler/icons-react";
 import { registerCompanionAction } from "@/app/actions/register";
 import { completeFirstStepRegistration } from "@/app/companions/register/action";
+import { EarningsCalculator } from "@/components/earnings-calculator";
 
 const pageOneSchema = z.object({
   // Companion Info
@@ -261,7 +262,7 @@ export function RegisterCompanionForm({
         piercings: false,
         smoker: false,
         neighborhood: "",
-        city: 1,
+        city: 0,
         state: "",
         country: "",
         meets_at_hotel: false,
@@ -481,12 +482,29 @@ export function RegisterCompanionForm({
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      {!companionData && currentPage === 0 && (
+        <div className="mx-auto max-w-3xl mb-8">
+          <EarningsCalculator
+            cta={
+              <button
+                type="button"
+                onClick={() =>
+                  document.getElementById("form-fields")?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+              >
+                Criar o meu perfil de Sugar gratuitamente
+              </button>
+            }
+          />
+        </div>
+      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="mx-auto max-w-3xl"
         >
-          <Card>
+          <Card id="form-fields">
             <CardHeader>
               <CardTitle>
                 {companionData ? "Edit Profile" : "Registre-se"}
@@ -503,7 +521,7 @@ export function RegisterCompanionForm({
                 <div className="w-full aspect-video">
                   <iframe
                     className="w-full h-full rounded-lg border shadow-sm"
-                    src="https://youtube.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
+                    src="https://www.youtube-nocookie.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
                     title="Vídeo de verificação"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen

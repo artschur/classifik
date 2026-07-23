@@ -26,6 +26,8 @@ export async function createStoryAction(
     const author = (formData.get('author') as string) || 'Onesugar';
     const readTime = parseInt(formData.get('readTime') as string) || 5;
     const featured = formData.get('featured') === 'true';
+    const publishedAtRaw = formData.get('publishedAt') as string | null;
+    const publishedAt = publishedAtRaw ? new Date(publishedAtRaw) : new Date();
     const paragraphCount = parseInt(formData.get('paragraphCount') as string) || 0;
 
     const paragraphs: string[] = [];
@@ -78,6 +80,7 @@ export async function createStoryAction(
       author,
       read_time: readTime,
       featured,
+      published_at: publishedAt,
       paragraphs,
       inline_images: inlineImages,
     });

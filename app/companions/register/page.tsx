@@ -13,7 +13,6 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { EarningsCalculator } from "@/components/earnings-calculator";
 
 export const metadata: Metadata = {
   title: 'Cadastre-se agora | One Sugar',
@@ -74,18 +73,14 @@ async function CompanionFormWithData() {
     redirect("/companions/verification/pending");
   }
 
-  // Only redirect to verification page if:
-  // 1. User is NOT already verified
-  // 2. Companion profile exists (registration completed)
-  // 3. Images are uploaded (completed registration form)
-  // 4. Verification video NOT uploaded yet
-  if (
-    !isVerified &&
-    companion &&
-    allVerificationStatus.isImageUploaded &&
-    !allVerificationStatus.isDocumentUploaded
-  ) {
-    redirect("/companions/verification");
+  // Route to the correct verification step based on what's already uploaded
+  if (!isVerified && companion && allVerificationStatus.isImageUploaded) {
+    if (!allVerificationStatus.isVerificationVideoUploaded) {
+      redirect("/companions/verification");
+    }
+    if (!allVerificationStatus.isDocumentUploaded) {
+      redirect("/companions/verification/document");
+    }
   }
 
   return (
@@ -103,7 +98,6 @@ export default async function RegisterCompanionPage() {
         <h1 className="text-2xl font-bold">Torne-se uma Sugar na Onesugar</h1>
         <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
       </div>
-      <EarningsCalculator />
       <div id="register-form">
         <Suspense fallback={<SkeletonForm />}>
           <CompanionFormWithData />

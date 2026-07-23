@@ -95,10 +95,18 @@ export default async function StoryPage({
           {story.collection}
         </span>
         <h1 className="text-4xl font-extrabold tracking-tight">{story.title}</h1>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
           <span>{story.author}</span>
           <span>·</span>
           <span>{story.readTime} min de leitura</span>
+          <span>·</span>
+          <span>
+            {new Date(story.publishedAt).toLocaleDateString('pt-PT', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </span>
         </div>
       </div>
 

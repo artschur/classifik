@@ -1,10 +1,12 @@
 import { MetadataRoute } from 'next';
 import { getAvailableCities } from '@/db/queries';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.onesugar.pt';
 
-  const cities = await getAvailableCities();
+  const cities = await getAvailableCities().catch(() => []);
 
   const cityUrls = cities.map(city => ({
     url: `${baseUrl}/location/${city.slug}`,
