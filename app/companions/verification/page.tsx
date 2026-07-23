@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { getCompanionByClerkId } from '@/db/queries/companions';
+import { db } from '@/db';
+import { companionsTable } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { isVerificationPending, verifyItemsIfOnboardingComplete } from '@/app/actions/document-verification';
 import { VideoVerificationForm } from '@/components/video-verification-form';
 
@@ -11,7 +13,13 @@ export default async function VideoVerificationPage() {
 
   if (!userId) redirect('/');
 
-  const companion = await getCompanionByClerkId(userId).catch(() => null);
+  const [companion] = await db
+    .select({ id: companionsTable.id })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, userId))
+    .limit(1)
+    .catch(() => [null]);
+
   if (!companion) redirect('/companions/register');
 
   const [isPending, uploadStatus] = await Promise.all([
