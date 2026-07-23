@@ -140,7 +140,7 @@ export default function RootLayout({
               ],
               contactPoint: {
                 '@type': 'ContactPoint',
-                telephone: '+351 934 600 827',
+                telephone: '+351 913 895 353',
                 contactType: 'customer service',
               },
             }),

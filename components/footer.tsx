@@ -38,7 +38,7 @@ export default function Footer() {
                 <strong>Endereço:</strong> Lisboa, Portugal
               </p>
               <p>
-                <strong>Telefone:</strong> +351 934 600 827
+                <strong>Telefone:</strong> +351 913 895 353
 
               </p>
             </div>
