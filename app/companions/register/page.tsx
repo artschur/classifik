@@ -7,6 +7,7 @@ import { SkeletonForm } from "@/components/skeletons/skeletonForm";
 import { db } from "@/db";
 import { getAvailableCities } from "@/db/queries";
 import { getCompanionToEdit } from "@/db/queries/companions";
+import { getUserPlan } from "@/db/queries/plan";
 import { companionsTable } from "@/db/schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
@@ -34,6 +35,7 @@ async function CompanionFormWithData() {
     stillVerifying,
     allVerificationStatus,
     companionVerificationStatus,
+    userPlan,
   ] = await Promise.all([
     getAvailableCities(),
     getCompanionToEdit(userId),
@@ -44,7 +46,10 @@ async function CompanionFormWithData() {
       .from(companionsTable)
       .where(eq(companionsTable.auth_id, userId))
       .limit(1),
+    getUserPlan(userId),
   ]);
+
+  const maxPhotos = ['classic', 'plus', 'vip'].includes(userPlan) ? 30 : 10;
 
   const isVerified = companionVerificationStatus[0]?.verified ?? false;
 
@@ -87,6 +92,7 @@ async function CompanionFormWithData() {
     <RegisterCompanionForm
       cities={JSON.parse(JSON.stringify(cities))}
       companionData={companion ? JSON.parse(JSON.stringify(companion)) : null}
+      maxPhotos={maxPhotos}
     />
   );
 }
