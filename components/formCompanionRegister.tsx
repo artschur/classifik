@@ -83,7 +83,8 @@ const pageOneSchema = z.object({
   instagramHandle: z.string().optional(),
   description: z
     .string()
-    .min(30, "Descrição precisa ter ao menos 30 caractéres"),
+    .min(30, "Descrição precisa ter ao menos 30 caractéres")
+    .max(350, "Descrição não pode ter mais de 350 caractéres"),
   price: z.number().min(1, "Seu preço precisa ser positivo"),
   age: z.number().min(18, "Você precisa ter mais de 18 anos!").max(100),
   gender: z.string().min(1, "Gênero é obrigatório"),
@@ -144,12 +145,14 @@ interface RegisterCompanionFormProps {
   companionData?:
   | (RegisterCompanionFormValues & { companionId: number })
   | null
-  | undefined; // Optional companion data for editing
+  | undefined;
+  maxPhotos?: number;
 }
 
 export function RegisterCompanionForm({
   cities,
   companionData,
+  maxPhotos = 10,
 }: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState("");
@@ -289,6 +292,26 @@ export function RegisterCompanionForm({
 
   const handleFileUpload = async (files: File[]) => {
     if (!files.length) return;
+
+    if (images.length >= maxPhotos) {
+      toast({
+        variant: "destructive",
+        title: "Limite de ficheiros atingido",
+        description: `O teu plano permite no máximo ${maxPhotos} fotos e vídeos.`,
+      });
+      return;
+    }
+
+    const allowedCount = maxPhotos - images.length;
+    const filesToUpload = files.slice(0, allowedCount);
+    if (filesToUpload.length < files.length) {
+      toast({
+        title: "Alguns ficheiros não foram enviados",
+        description: `Só podias adicionar mais ${allowedCount} ficheiro${allowedCount !== 1 ? "s" : ""} (limite de ${maxPhotos}).`,
+        variant: "destructive",
+      });
+    }
+
     setUploadStatus("Enviando arquivos...");
 
     try {
@@ -328,7 +351,7 @@ export function RegisterCompanionForm({
 
       // NOW upload images with the companionId
       const results = await Promise.all(
-        files.map((file) => uploadImage(file, currentCompanionId)),
+        filesToUpload.map((file) => uploadImage(file, currentCompanionId)),
       );
 
       const errors = results.filter((r) => r.error);
@@ -1237,10 +1260,15 @@ export function RegisterCompanionForm({
               {currentPage === 3 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Suas Fotos</h3>
-                  <p className="text-sm text-neutral-500">
-                    Adicione fotos e vídeos para que os clientes possam conhecer
-                    melhor. 
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-neutral-500">
+                      Adicione fotos e vídeos para que os clientes possam conhecer
+                      melhor.
+                    </p>
+                    <span className={`text-sm font-medium ${images.length >= maxPhotos ? "text-destructive" : "text-neutral-500"}`}>
+                      {images.length}/{maxPhotos}
+                    </span>
+                  </div>
 
                   {images.length > 0 && (
                     <>
@@ -1413,7 +1441,14 @@ export function RegisterCompanionForm({
                     </>
                   )}
 
-                  <FileUpload onChange={handleFileUpload} />
+                  {images.length < maxPhotos ? (
+                    <FileUpload onChange={handleFileUpload} />
+                  ) : (
+                    <p className="text-sm text-center text-muted-foreground border border-dashed border-border rounded-lg py-6">
+                      Limite de {maxPhotos} ficheiros atingido.
+                      {maxPhotos === 10 && " Faz upgrade para o plano Classic para adicionar até 30 fotos."}
+                    </p>
+                  )}
                   {uploadStatus && (
                     <p className="text-sm text-red-500">{uploadStatus}</p>
                   )}
