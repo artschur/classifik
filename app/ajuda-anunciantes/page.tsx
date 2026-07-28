@@ -61,18 +61,18 @@ const faqSchema = {
   '@type': 'FAQPage',
   mainEntity: [
     { '@type': 'Question', name: 'Quanto tempo demora até o meu perfil aparecer?', acceptedAnswer: { '@type': 'Answer', text: 'De alguns minutos a algumas horas, dependendo do volume de pedidos. Em horário de suporte (08h00–18h00) o tempo é tipicamente mais curto.' } },
-    { '@type': 'Question', name: 'O meu vídeo de verificação foi rejeitado. O que faço?', acceptedAnswer: { '@type': 'Answer', text: 'Regrava o vídeo seguindo as instruções enviadas por e-mail ou WhatsApp. Certifica-te de que a data está legível, que seguras o papel com "OneSugar" e que o rosto e o corpo estão claramente visíveis com boa iluminação.' } },
+    { '@type': 'Question', name: 'O meu vídeo de verificação foi rejeitado. O que faço?', acceptedAnswer: { '@type': 'Answer', text: 'Regrava o vídeo seguindo as instruções enviadas por e-mail ou WhatsApp. Certifica-te de que a data está legível, que seguras o papel com "OneSugar" e que o rosto e o corpo estão claramente visíveis.' } },
     { '@type': 'Question', name: 'Posso editar o meu anúncio depois de publicado?', acceptedAnswer: { '@type': 'Answer', text: 'Sim. Podes editar toda e qualquer informação — texto, fotos, vídeos e preço — a qualquer momento, sem precisares de criar um novo perfil.' } },
     { '@type': 'Question', name: 'Quantas fotos posso ter no perfil?', acceptedAnswer: { '@type': 'Answer', text: 'No plano gratuito podes ter até 10 fotos e vídeos. Nos planos pagos (Classic, Plus, VIP) o limite sobe para 30 fotos e vídeos.' } },
-    { '@type': 'Question', name: 'O meu documento não está a ser aceite. O que faço?', acceptedAnswer: { '@type': 'Answer', text: 'Documentos aceites: Passaporte, Cartão de Cidadão / RG, Carta de Condução / CNH. O ficheiro deve estar em formato JPG, PNG ou PDF e ter no máximo 5 MB.' } },
+    { '@type': 'Question', name: 'O meu documento não está a ser aceite. O que faço?', acceptedAnswer: { '@type': 'Answer', text: 'Documentos aceites: Passaporte, Cartão de Cidadão / RG, Carta de Condução / CNH. O ficheiro deve estar em formato JPG, PNG ou PDF e ter no máximo 5 MB. Deve estar legível, sem reflexos ou partes cortadas.' } },
     { '@type': 'Question', name: 'O registo é gratuito?', acceptedAnswer: { '@type': 'Answer', text: 'Sim, criar um perfil na Onesugar é completamente gratuito. Para teres mais visibilidade e fechar mais clientes, existem planos pagos.' } },
-    { '@type': 'Question', name: 'A Onesugar partilha os meus dados com terceiros?', acceptedAnswer: { '@type': 'Answer', text: 'Não. Os dados enviados (vídeo e documento) são utilizados exclusivamente para verificação de identidade e não são partilhados com terceiros.' } },
+    { '@type': 'Question', name: 'A Onesugar partilha os meus dados com terceiros?', acceptedAnswer: { '@type': 'Answer', text: 'Não. Os dados enviados (vídeo e documento) são utilizados exclusivamente para verificação de identidade e não são partilhados com terceiros. Consulta a nossa Política de Privacidade para mais detalhes.' } },
     { '@type': 'Question', name: 'Posso ter mais do que um perfil com o mesmo e-mail?', acceptedAnswer: { '@type': 'Answer', text: 'Não. Cada conta está vinculada a um e-mail — 1 e-mail = 1 conta. Criar múltiplas contas pode resultar em suspensão permanente.' } },
   ],
 };
 
 
-function SectionTitle({ eyebrow, title, icon }: { eyebrow: string; title: string; icon?: React.ReactNode }) {
+function SectionTitle({ id, eyebrow, title, icon }: { id: string; eyebrow: string; title: string; icon?: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3 mb-6">
       {icon && (
@@ -82,7 +82,7 @@ function SectionTitle({ eyebrow, title, icon }: { eyebrow: string; title: string
       )}
       <div>
         <p className="text-[10px] font-bold tracking-widest uppercase text-primary mb-0.5">{eyebrow}</p>
-        <h2 className="text-xl font-bold text-foreground">{title}</h2>
+        <h2 id={id} className="text-xl font-bold text-foreground scroll-mt-24">{title}</h2>
       </div>
     </div>
   );
@@ -191,8 +191,8 @@ export default function AjudaAnunciantesPage() {
             </div>
 
             {/* 1. REGISTO */}
-            <section id="registo" className="scroll-mt-24">
-              <SectionTitle eyebrow="01" title="Como fazer o registo" icon={<ShieldCheck className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="registo" eyebrow="01" title="Como fazer o registo" icon={<ShieldCheck className="h-4 w-4" />} />
               <Steps steps={[
                 { title: 'Acede à página de registo', desc: <span>Vai a <strong className="text-foreground font-medium">onesugar.pt/companions/register</strong></span> },
                 { title: 'Cria uma conta', desc: 'Se ainda não tens conta, clica em "Criar conta". O registo é feito com e-mail e palavra-passe.' },
@@ -205,8 +205,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 2. CRIAR ANÚNCIO */}
-            <section id="criar-anuncio" className="scroll-mt-24">
-              <SectionTitle eyebrow="02" title="Como criar o anúncio" />
+            <section>
+              <SectionTitle id="criar-anuncio" eyebrow="02" title="Como criar o anúncio" />
               <p className="text-sm text-muted-foreground mb-6">O formulário tem 4 passos que devem ser completados por ordem. Podes editar o anúncio a qualquer momento depois de submetido.</p>
 
               <p className="text-sm font-semibold text-foreground mb-3">Passo 1 — Informações</p>
@@ -252,8 +252,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 3. FOTOGRAFIAS */}
-            <section id="fotografias" className="scroll-mt-24">
-              <SectionTitle eyebrow="03" title="Como enviar as fotografias" icon={<Camera className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="fotografias" eyebrow="03" title="Como enviar as fotografias" icon={<Camera className="h-4 w-4" />} />
               <p className="text-sm text-muted-foreground mb-6">As fotos são enviadas no Passo 4 do formulário, ou na área de edição do perfil a qualquer momento.</p>
 
               <div className="grid sm:grid-cols-3 gap-3 mb-6">
@@ -300,8 +300,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 4. VÍDEO */}
-            <section id="video-verificacao" className="scroll-mt-24">
-              <SectionTitle eyebrow="04" title="Vídeo de verificação 360°" icon={<FileVideo className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="video-verificacao" eyebrow="04" title="Vídeo de verificação 360°" icon={<FileVideo className="h-4 w-4" />} />
               <p className="text-sm text-muted-foreground mb-6">
                 Pedido depois de adicionares a primeira foto. Serás redirecionada para{' '}
                 <strong className="text-foreground font-medium">onesugar.pt/companions/verification</strong>.
@@ -329,8 +329,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 5. VERIFICAÇÃO */}
-            <section id="verificacao" className="scroll-mt-24">
-              <SectionTitle eyebrow="05" title="Como funciona a verificação de perfil" icon={<ShieldCheck className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="verificacao" eyebrow="05" title="Como funciona a verificação de perfil" icon={<ShieldCheck className="h-4 w-4" />} />
               <p className="text-sm text-muted-foreground mb-5">A verificação tem dois passos obrigatórios, feitos por ordem:</p>
 
               <Steps steps={[
@@ -375,8 +375,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 6. APROVAÇÃO */}
-            <section id="aprovacao" className="scroll-mt-24">
-              <SectionTitle eyebrow="06" title="Como funciona a aprovação do perfil" icon={<ThumbsUp className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="aprovacao" eyebrow="06" title="Como funciona a aprovação do perfil" icon={<ThumbsUp className="h-4 w-4" />} />
 
               <div className="grid sm:grid-cols-2 gap-4 mb-6">
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
@@ -409,8 +409,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 7. EDIÇÕES AO PERFIL */}
-            <section id="edicoes-perfil" className="scroll-mt-24">
-              <SectionTitle eyebrow="07" title="Edições ao perfil e re-verificação" icon={<RefreshCw className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="edicoes-perfil" eyebrow="07" title="Edições ao perfil e re-verificação" icon={<RefreshCw className="h-4 w-4" />} />
               <p className="text-sm text-muted-foreground mb-6">
                 Sempre que editares informação do teu perfil, o anúncio volta automaticamente para verificação antes de ser publicado novamente.
               </p>
@@ -433,8 +433,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 8. DICAS */}
-            <section id="dicas" className="scroll-mt-24">
-              <SectionTitle eyebrow="08" title="Dicas para um anúncio de maior qualidade" icon={<Lightbulb className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="dicas" eyebrow="08" title="Dicas para um anúncio de maior qualidade" icon={<Lightbulb className="h-4 w-4" />} />
               <div className="space-y-3">
                 {[
                   { title: 'Perfil completo = mais visibilidade', desc: 'Perfis com todas as características preenchidas aparecem com mais destaque nos resultados e filtros.' },
@@ -457,8 +457,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 9. FAQ */}
-            <section id="faq" className="scroll-mt-24">
-              <SectionTitle eyebrow="09" title="Perguntas frequentes" icon={<HelpCircle className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="faq" eyebrow="09" title="Perguntas frequentes" icon={<HelpCircle className="h-4 w-4" />} />
               <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
                 {[
                   { q: 'Quanto tempo demora até o meu perfil aparecer?', a: 'De alguns minutos a algumas horas, dependendo do volume de pedidos. Em horário de suporte (08h00–18h00) o tempo é tipicamente mais curto.' },
@@ -491,8 +491,8 @@ export default function AjudaAnunciantesPage() {
             <Divider />
 
             {/* 9. SUPORTE */}
-            <section id="suporte" className="scroll-mt-24">
-              <SectionTitle eyebrow="10" title="Precisa de mais ajuda?" icon={<Headphones className="h-4 w-4" />} />
+            <section>
+              <SectionTitle id="suporte" eyebrow="10" title="Precisa de mais ajuda?" icon={<Headphones className="h-4 w-4" />} />
               <p className="text-sm text-muted-foreground mb-5">A nossa equipa está disponível para te apoiar.</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <a

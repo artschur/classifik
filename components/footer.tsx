@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 
 export default function Footer() {
   const navigationLinks = [
+    { label: "Ajuda para Anunciantes", href: "/ajuda-anunciantes" },
     { label: "Termos e Condições", href: "/termos-e-condicoes" },
     { label: "Política de Privacidade", href: "/politica-de-privacidade" },
     { label: "Política de Cookies", href: "/politica-de-cookies" },
