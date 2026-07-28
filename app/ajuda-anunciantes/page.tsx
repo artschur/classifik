@@ -13,6 +13,7 @@ import {
   Lightbulb,
   HelpCircle,
   Headphones,
+  RefreshCw,
 } from 'lucide-react';
 import { IconBrandWhatsapp } from '@tabler/icons-react';
 import { TocMobile, TocDesktop } from './toc';
@@ -407,9 +408,33 @@ export default function AjudaAnunciantesPage() {
 
             <Divider />
 
-            {/* 7. DICAS */}
+            {/* 7. EDIÇÕES AO PERFIL */}
+            <section id="edicoes-perfil" className="scroll-mt-24">
+              <SectionTitle eyebrow="07" title="Edições ao perfil e re-verificação" icon={<RefreshCw className="h-4 w-4" />} />
+              <p className="text-sm text-muted-foreground mb-6">
+                Sempre que editares informação do teu perfil, o anúncio volta automaticamente para verificação antes de ser publicado novamente.
+              </p>
+              <Callout>
+                <strong className="font-medium">O anúncio fica temporariamente inativo durante a revisão.</strong> Enquanto a equipa verifica as alterações, o teu perfil não aparece nas pesquisas. Assim que aprovado, volta a estar visível automaticamente.
+              </Callout>
+              <p className="text-sm text-muted-foreground mb-4">Esta regra aplica-se a qualquer alteração em:</p>
+              <CheckList ok={true} items={[
+                'Fotografias (adicionar, remover ou substituir)',
+                'Vídeo de verificação',
+                'Nome, idade ou localização',
+                'Descrição do perfil',
+                'Contactos ou redes sociais',
+              ]} />
+              <p className="text-sm text-muted-foreground mt-5">
+                Esta medida garante a <strong className="text-foreground font-medium">autenticidade dos perfis</strong> e protege a comunidade Onesugar de alterações indevidas ou perfis falsos.
+              </p>
+            </section>
+
+            <Divider />
+
+            {/* 8. DICAS */}
             <section id="dicas" className="scroll-mt-24">
-              <SectionTitle eyebrow="07" title="Dicas para um anúncio de maior qualidade" icon={<Lightbulb className="h-4 w-4" />} />
+              <SectionTitle eyebrow="08" title="Dicas para um anúncio de maior qualidade" icon={<Lightbulb className="h-4 w-4" />} />
               <div className="space-y-3">
                 {[
                   { title: 'Perfil completo = mais visibilidade', desc: 'Perfis com todas as características preenchidas aparecem com mais destaque nos resultados e filtros.' },
@@ -431,9 +456,9 @@ export default function AjudaAnunciantesPage() {
 
             <Divider />
 
-            {/* 8. FAQ */}
+            {/* 9. FAQ */}
             <section id="faq" className="scroll-mt-24">
-              <SectionTitle eyebrow="08" title="Perguntas frequentes" icon={<HelpCircle className="h-4 w-4" />} />
+              <SectionTitle eyebrow="09" title="Perguntas frequentes" icon={<HelpCircle className="h-4 w-4" />} />
               <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
                 {[
                   { q: 'Quanto tempo demora até o meu perfil aparecer?', a: 'De alguns minutos a algumas horas, dependendo do volume de pedidos. Em horário de suporte (08h00–18h00) o tempo é tipicamente mais curto.' },
@@ -467,7 +492,7 @@ export default function AjudaAnunciantesPage() {
 
             {/* 9. SUPORTE */}
             <section id="suporte" className="scroll-mt-24">
-              <SectionTitle eyebrow="09" title="Precisa de mais ajuda?" icon={<Headphones className="h-4 w-4" />} />
+              <SectionTitle eyebrow="10" title="Precisa de mais ajuda?" icon={<Headphones className="h-4 w-4" />} />
               <p className="text-sm text-muted-foreground mb-5">A nossa equipa está disponível para te apoiar.</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <a

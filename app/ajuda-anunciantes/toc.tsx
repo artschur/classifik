@@ -9,6 +9,7 @@ export const tocItems = [
   { href: '#video-verificacao', label: 'Vídeo de verificação' },
   { href: '#verificacao', label: 'Verificação' },
   { href: '#aprovacao', label: 'Aprovação' },
+  { href: '#edicoes-perfil', label: 'Edições ao perfil' },
   { href: '#dicas', label: 'Dicas' },
   { href: '#faq', label: 'Perguntas frequentes' },
   { href: '#suporte', label: 'Suporte' },
