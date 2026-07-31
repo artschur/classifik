@@ -285,6 +285,12 @@ export default function SingleCompanionVerify({
           <CardTitle className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">
             {companion.name}
           </CardTitle>
+          {companion.phone && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Phone className="w-4 h-4" />
+              <span>{companion.phone}</span>
+            </div>
+          )}
         </div>
       </CardHeader>
       <Tabs defaultValue="profile" className="">
@@ -298,12 +304,12 @@ export default function SingleCompanionVerify({
         {/* Profile Tab */}
         <TabsContent value="profile">
           <CardContent className="grid gap-4">
-            <div className="relative aspect-auto h-64">
+            <div className="relative w-full h-[32rem] bg-black/20 rounded-lg overflow-hidden">
               <Image
                 src={images[currentImageIndex] ?? '/image.png'}
                 alt={companion.name}
                 fill={true}
-                className="object-cover rounded-lg"
+                className="object-contain rounded-lg"
               />
               {images.length > 1 && (
                 <>
