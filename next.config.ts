@@ -112,8 +112,8 @@ const nextConfig: NextConfig = {
               // podem abrir iframes de clerk.onesugar.pt)
               "frame-src https://www.youtube-nocookie.com https://clerk.onesugar.pt",
 
-              // Media: apenas self (sem vídeo/áudio externo por enquanto)
-              "media-src 'self'",
+              // Media: self + Supabase storage (vídeos de verificação das companions)
+              "media-src 'self' https://vacjsnuttfzgcdaaqjxd.supabase.co",
 
               // Service workers: self para SW do próprio domínio, blob para
               // workers criados via URL.createObjectURL()
