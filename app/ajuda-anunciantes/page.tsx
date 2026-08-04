@@ -213,8 +213,8 @@ export default function AjudaAnunciantesPage() {
               <FieldList fields={[
                 { name: 'Nome artístico', rule: 'mín. 2 caracteres', req: true },
                 { name: 'Número de telefone', rule: 'mín. 8 caracteres', req: true },
-                { name: 'Descrição curta', rule: 'máx. 60 caracteres', req: true },
-                { name: 'Descrição completa', rule: 'mín. 30 e máx. 350 caracteres', req: true },
+                { name: 'Descrição curta', rule: 'máx. 150 caracteres', req: true },
+                { name: 'Descrição completa', rule: 'mín. 30 e máx. 500 caracteres', req: true },
                 { name: 'Preço por hora', rule: 'valor numérico em €', req: true },
                 { name: 'Idade', rule: 'de 18 a 40+ anos', req: true },
                 { name: 'Género', rule: 'Masculino / Feminino / Outro', req: true },
@@ -439,8 +439,8 @@ export default function AjudaAnunciantesPage() {
                 {[
                   { title: 'Perfil completo = mais visibilidade', desc: 'Perfis com todas as características preenchidas aparecem com mais destaque nos resultados e filtros.' },
                   { title: 'Fotos que convertem', desc: 'Fundo limpo e neutro, boa iluminação (de preferência luz natural), expressão natural, variedade de poses.' },
-                  { title: 'Descrição curta eficaz', desc: 'Usa os 60 caracteres para comunicar o que te diferencia — é o primeiro texto que os clientes leem na listagem.' },
-                  { title: 'Descrição completa honesta', desc: 'Texto claro e profissional sobre ti, o que gostas e o que ofereces (mín. 30, máx. 350 caracteres).' },
+                  { title: 'Descrição curta eficaz', desc: 'Usa os 150 caracteres para comunicar o que te diferencia — é o primeiro texto que os clientes leem na listagem.' },
+                  { title: 'Descrição completa honesta', desc: 'Texto claro e profissional sobre ti, o que gostas e o que ofereces (mín. 30, máx. 500 caracteres).' },
                   { title: 'Preço', desc: 'O intervalo típico na plataforma é entre 150€ e 1 500€ por hora — ajusta consoante o teu posicionamento.' },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-3 rounded-xl border border-border bg-card px-4 py-3">

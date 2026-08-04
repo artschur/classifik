@@ -74,7 +74,7 @@ const pageOneSchema = z.object({
   name: z.string().min(2, "Nome precisa ter ao menos 2 caractéres"),
   shortDescription: z
   .string()
-  .max(60, "Descrição curta pode ter no máximo 60 caractéres")
+  .max(150, "Descrição curta pode ter no máximo 150 caractéres")
   .optional()
   .or(z.literal("")),
   phoneNumber: z
@@ -84,7 +84,7 @@ const pageOneSchema = z.object({
   description: z
     .string()
     .min(30, "Descrição precisa ter ao menos 30 caractéres")
-    .max(350, "Descrição não pode ter mais de 350 caractéres"),
+    .max(500, "Descrição não pode ter mais de 500 caractéres"),
   price: z.number().min(1, "Seu preço precisa ser positivo"),
   age: z.number().min(18, "Você precisa ter mais de 18 anos!").max(100),
   gender: z.string().min(1, "Gênero é obrigatório"),
