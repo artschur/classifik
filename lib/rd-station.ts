@@ -42,7 +42,10 @@ export async function upsertContactInRD(contact: {
   name?: string;
   phone?: string;
 }): Promise<void> {
-  if (!process.env.RD_STATION_CLIENT_ID) return;
+  if (!process.env.RD_STATION_CLIENT_ID) {
+    console.log('RD Station: RD_STATION_CLIENT_ID ausente, integração desativada');
+    return;
+  }
 
   try {
     const accessToken = await getAccessToken();
@@ -66,6 +69,8 @@ export async function upsertContactInRD(contact: {
       console.error(
         `RD Station: falha ao sincronizar lead ${contact.email} (${response.status})`,
       );
+    } else {
+      console.log(`RD Station: lead sincronizado com sucesso (${contact.email})`);
     }
   } catch (error) {
     console.error('RD Station: erro ao sincronizar lead', error);
@@ -88,7 +93,10 @@ export async function tagCompanionInRD(
   tag: 'aprovado' | 'recusado',
   name?: string,
 ): Promise<void> {
-  if (!process.env.RD_STATION_CLIENT_ID) return;
+  if (!process.env.RD_STATION_CLIENT_ID) {
+    console.log('RD Station: RD_STATION_CLIENT_ID ausente, integração desativada');
+    return;
+  }
 
   try {
     const accessToken = await getAccessToken();
@@ -119,6 +127,8 @@ export async function tagCompanionInRD(
         console.error(
           `RD Station: falha ao criar lead com tag "${tag}" para ${email} (${createResponse.status})`,
         );
+      } else {
+        console.log(`RD Station: lead criado com tag "${tag}" (${email})`);
       }
       return;
     }
@@ -127,6 +137,8 @@ export async function tagCompanionInRD(
       console.error(
         `RD Station: falha ao marcar tag "${tag}" para ${email} (${response.status})`,
       );
+    } else {
+      console.log(`RD Station: tag "${tag}" marcada com sucesso (${email})`);
     }
   } catch (error) {
     console.error('RD Station: erro ao sincronizar tag', error);
