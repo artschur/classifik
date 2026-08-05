@@ -77,10 +77,16 @@ export async function upsertContactInRD(contact: {
  * As tags são cumulativas na API do RD Station (não substituem as
  * existentes), e as automações de e-mail (boas-vindas / perfil recusado)
  * já estão configuradas para disparar quando a tag é adicionada.
+ *
+ * O endpoint de tag só aceita contactos já existentes na Base de Leads
+ * (erro RESOURCE_NOT_FOUND / 404 caso contrário) — companions cadastradas
+ * antes desta integração entrar no ar nunca viraram lead no RD Station.
+ * Se a tag falhar por esse motivo, cria o lead com a tag incluída.
  */
 export async function tagCompanionInRD(
   email: string,
   tag: 'aprovado' | 'recusado',
+  name?: string,
 ): Promise<void> {
   if (!process.env.RD_STATION_CLIENT_ID) return;
 
@@ -96,6 +102,26 @@ export async function tagCompanionInRD(
       },
       body: JSON.stringify({ tags: [tag] }),
     });
+
+    if (response.status === 404) {
+      // Lead ainda não existe no RD Station — cria já com a tag.
+      const contactUrl = `${RD_CONTACTS_URL}/email:${encodeURIComponent(email)}`;
+      const createResponse = await fetch(contactUrl, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...(name ? { name } : {}), tags: [tag] }),
+      });
+
+      if (!createResponse.ok) {
+        console.error(
+          `RD Station: falha ao criar lead com tag "${tag}" para ${email} (${createResponse.status})`,
+        );
+      }
+      return;
+    }
 
     if (!response.ok) {
       console.error(

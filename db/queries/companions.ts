@@ -947,10 +947,10 @@ export async function approveCompanion(id: number) {
     .update(companionsTable)
     .set({ verified: true })
     .where(eq(companionsTable.id, id))
-    .returning({ email: companionsTable.email });
+    .returning({ email: companionsTable.email, name: companionsTable.name });
 
   if (companion?.email) {
-    await tagCompanionInRD(companion.email, "aprovado");
+    await tagCompanionInRD(companion.email, "aprovado", companion.name);
   }
 
   return { success: true, id };
@@ -958,17 +958,19 @@ export async function approveCompanion(id: number) {
 
 export async function rejectCompanion(id: number) {
   let email: string | undefined;
+  let name: string | undefined;
 
   await db.transaction(async (tx) => {
     const [companion] = await tx
       .delete(companionsTable)
       .where(eq(companionsTable.id, id))
-      .returning({ email: companionsTable.email });
+      .returning({ email: companionsTable.email, name: companionsTable.name });
     email = companion?.email;
+    name = companion?.name;
   });
 
   if (email) {
-    await tagCompanionInRD(email, "recusado");
+    await tagCompanionInRD(email, "recusado", name);
   }
 
   return { success: true, id };
