@@ -15,6 +15,7 @@ import {
 import { db } from "..";
 import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { upsertContactInRD, tagCompanionInRD } from "@/lib/rd-station";
 import {
   CompanionFiltered,
   CompanionPreview,
@@ -535,6 +536,8 @@ export async function registerCompanion(
       return companion;
     });
 
+    await upsertContactInRD({ email, name, phone: phoneNumber });
+
     return JSON.parse(JSON.stringify(newCompanion));
   } catch (error) {
     console.error("Failed to register companion in DB:", error);
@@ -777,9 +780,11 @@ export async function updateCompanionFromForm(
   clerkId: string,
   data: RegisterCompanionFormValues,
 ) {
+  let email: string | undefined;
+
   await db.transaction(async (tx) => {
     // Update companionsTable
-    await tx
+    const [companion] = await tx
       .update(companionsTable)
       .set({
         name: data.name,
@@ -798,7 +803,10 @@ export async function updateCompanionFromForm(
         verified: false,
         updated_at: new Date(),
       } as NewCompanion)
-      .where(eq(companionsTable.auth_id, clerkId));
+      .where(eq(companionsTable.auth_id, clerkId))
+      .returning({ id: companionsTable.id, email: companionsTable.email });
+
+    email = companion?.email;
 
     await tx
       .update(characteristicsTable)
@@ -815,19 +823,12 @@ export async function updateCompanionFromForm(
         piercings: data.piercings,
         smoker: data.smoker,
       } as NewCharacteristic)
-      .where(
-        eq(
-          characteristicsTable.companion_id,
-          (
-            await tx
-              .select({ id: companionsTable.id })
-              .from(companionsTable)
-              .where(eq(companionsTable.auth_id, clerkId))
-              .limit(1)
-          )[0].id,
-        ),
-      );
+      .where(eq(characteristicsTable.companion_id, companion.id));
   });
+
+  if (email) {
+    await upsertContactInRD({ email, name: data.name, phone: data.phoneNumber });
+  }
 }
 
 export async function getUnverifiedCompanions(): Promise<
@@ -942,18 +943,33 @@ export async function getUnverifiedCompanions(): Promise<
 }
 
 export async function approveCompanion(id: number) {
-  await db
+  const [companion] = await db
     .update(companionsTable)
     .set({ verified: true })
-    .where(eq(companionsTable.id, id));
+    .where(eq(companionsTable.id, id))
+    .returning({ email: companionsTable.email });
+
+  if (companion?.email) {
+    await tagCompanionInRD(companion.email, "aprovado");
+  }
 
   return { success: true, id };
 }
 
 export async function rejectCompanion(id: number) {
+  let email: string | undefined;
+
   await db.transaction(async (tx) => {
-    await tx.delete(companionsTable).where(eq(companionsTable.id, id));
+    const [companion] = await tx
+      .delete(companionsTable)
+      .where(eq(companionsTable.id, id))
+      .returning({ email: companionsTable.email });
+    email = companion?.email;
   });
+
+  if (email) {
+    await tagCompanionInRD(email, "recusado");
+  }
 
   return { success: true, id };
 }
