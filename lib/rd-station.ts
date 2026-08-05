@@ -1,5 +1,15 @@
 const RD_TOKEN_URL = 'https://api.rd.services/auth/token';
 const RD_CONTACTS_URL = 'https://api.rd.services/platform/contacts';
+const RD_EVENTS_URL = 'https://api.rd.services/platform/events?event_type=conversion';
+
+/**
+ * Identificadores de conversão usados como gatilho dos fluxos de automação
+ * no RD Station. O gatilho por tag ("Campo do Lead") exige plano PRO, por
+ * isso as automações são disparadas por evento de conversão, que está
+ * disponível em todos os planos.
+ */
+export const RD_CONVERSION_APROVADA = 'sugar-aprovada';
+export const RD_CONVERSION_RECUSADA = 'sugar-recusada';
 
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 
@@ -80,8 +90,9 @@ export async function upsertContactInRD(contact: {
 /**
  * Marca um contacto no RD Station com a tag "aprovado" ou "recusado".
  * As tags são cumulativas na API do RD Station (não substituem as
- * existentes), e as automações de e-mail (boas-vindas / perfil recusado)
- * já estão configuradas para disparar quando a tag é adicionada.
+ * existentes) e servem para segmentação e leitura rápida do estado do
+ * perfil na base. O disparo das automações de e-mail não depende delas —
+ * é feito pelo evento de conversão (ver sendConversionEventToRD).
  *
  * O endpoint de tag só aceita contactos já existentes na Base de Leads
  * (erro RESOURCE_NOT_FOUND / 404 caso contrário) — companions cadastradas
@@ -142,5 +153,58 @@ export async function tagCompanionInRD(
     }
   } catch (error) {
     console.error('RD Station: erro ao sincronizar tag', error);
+  }
+}
+
+/**
+ * Regista um evento de conversão no RD Station. É este evento — e não a
+ * tag — que dispara os fluxos de automação de e-mail, porque o gatilho
+ * "Converteram no evento" está disponível em todos os planos, enquanto o
+ * gatilho por tag ("Campo do Lead") exige plano PRO.
+ *
+ * O evento também cria ou actualiza o contacto na Base de Leads, portanto
+ * funciona mesmo para companions que ainda não existiam no RD Station.
+ */
+export async function sendConversionEventToRD(
+  email: string,
+  conversionIdentifier: string,
+  name?: string,
+): Promise<void> {
+  if (!process.env.RD_STATION_CLIENT_ID) {
+    console.log('RD Station: RD_STATION_CLIENT_ID ausente, integração desativada');
+    return;
+  }
+
+  try {
+    const accessToken = await getAccessToken();
+
+    const response = await fetch(RD_EVENTS_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        event_type: 'CONVERSION',
+        event_family: 'CDP',
+        payload: {
+          conversion_identifier: conversionIdentifier,
+          email,
+          ...(name ? { name } : {}),
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(
+        `RD Station: falha no evento "${conversionIdentifier}" para ${email} (${response.status})`,
+      );
+    } else {
+      console.log(
+        `RD Station: evento "${conversionIdentifier}" registado com sucesso (${email})`,
+      );
+    }
+  } catch (error) {
+    console.error('RD Station: erro ao registar evento de conversão', error);
   }
 }

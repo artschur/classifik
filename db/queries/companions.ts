@@ -15,7 +15,13 @@ import {
 import { db } from "..";
 import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { upsertContactInRD, tagCompanionInRD } from "@/lib/rd-station";
+import {
+  upsertContactInRD,
+  tagCompanionInRD,
+  sendConversionEventToRD,
+  RD_CONVERSION_APROVADA,
+  RD_CONVERSION_RECUSADA,
+} from "@/lib/rd-station";
 import {
   CompanionFiltered,
   CompanionPreview,
@@ -951,6 +957,11 @@ export async function approveCompanion(id: number) {
 
   if (companion?.email) {
     await tagCompanionInRD(companion.email, "aprovado", companion.name);
+    await sendConversionEventToRD(
+      companion.email,
+      RD_CONVERSION_APROVADA,
+      companion.name,
+    );
   }
 
   return { success: true, id };
@@ -971,6 +982,7 @@ export async function rejectCompanion(id: number) {
 
   if (email) {
     await tagCompanionInRD(email, "recusado", name);
+    await sendConversionEventToRD(email, RD_CONVERSION_RECUSADA, name);
   }
 
   return { success: true, id };
