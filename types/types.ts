@@ -28,6 +28,7 @@ export type CompanionFiltered = Pick<
   images: (string | Media)[];
   planType?: string | null;
   verificationVideoUrl?: string | null;
+  phone?: string;
 };
 
 export type FilterTypesCompanions = {

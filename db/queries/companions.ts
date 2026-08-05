@@ -843,6 +843,7 @@ export async function getUnverifiedCompanions(): Promise<
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
+        phone: companionsTable.phone,
         planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
       },
       city: {
