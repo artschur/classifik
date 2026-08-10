@@ -1146,6 +1146,9 @@ export async function generateMetadata({
         'max-snippet': -1,
       },
     },
+    alternates: {
+      canonical: `https://www.onesugar.pt/location/${cityKey}`,
+    },
     openGraph: {
       title: current.title,
       description: current.description,
