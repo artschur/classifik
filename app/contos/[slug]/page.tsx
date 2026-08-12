@@ -127,7 +127,20 @@ export default async function StoryPage({
       <div className="prose prose-neutral dark:prose-invert max-w-none space-y-0">
         {story.paragraphs.map((paragraph, idx) => (
           <div key={idx}>
-            <p className="text-base leading-relaxed mb-5 text-foreground/90">{paragraph}</p>
+            {/* Quebras de linha dentro de um bloco viram parágrafos próprios:
+                o HTML colapsa \n em espaço, o que juntava tudo num só bloco. */}
+            {paragraph
+              .split(/\n+/)
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, lineIdx) => (
+                <p
+                  key={lineIdx}
+                  className="text-base leading-relaxed mb-5 text-foreground/90"
+                >
+                  {line}
+                </p>
+              ))}
             {imageAfter.has(idx) && imageAfter.get(idx)!.src && (
               <div className="my-8 rounded-xl overflow-hidden">
                 <Image
