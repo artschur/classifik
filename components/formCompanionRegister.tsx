@@ -147,12 +147,19 @@ interface RegisterCompanionFormProps {
   | null
   | undefined;
   maxPhotos?: number;
+  /**
+   * Valores que a utilizadora já introduziu antes de chegar aqui (ex.: na
+   * calculadora pública). Só se aplicam a um registo novo — nunca sobrepõem
+   * dados de um perfil existente em edição.
+   */
+  prefill?: { phoneNumber?: string; price?: number };
 }
 
 export function RegisterCompanionForm({
   cities,
   companionData,
   maxPhotos = 10,
+  prefill,
 }: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState("");
@@ -245,10 +252,10 @@ export function RegisterCompanionForm({
       return {
         name: "",
         shortDescription: "",
-        phoneNumber: "",
+        phoneNumber: prefill?.phoneNumber ?? "",
         description: "",
         instagramHandle: "",
-        price: 0,
+        price: prefill?.price ?? 0,
         age: 18,
         gender: "",
         gender_identity: "",

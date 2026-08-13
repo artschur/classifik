@@ -8,6 +8,7 @@ import {
   Clock,
   Star,
   Mic,
+  Search,
   ShieldCheck,
   Video,
   UserCheck,
@@ -220,24 +221,78 @@ export default async function HomePage() {
 
               {/* LEFT: text */}
               <div className="space-y-6">
-                {/* "Exclusiva Onesugar" badge — visual label only, not a heading */}
-                <span className="inline-flex items-center gap-2.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-2xl font-bold px-6 py-2.5 rounded-full">
-                  <Star className="h-6 w-6 fill-rose-400 text-rose-400" />
-                  Exclusiva Onesugar
+                {/* Selo de confiança — rótulo visual, não é cabeçalho */}
+                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-bold px-4 py-1.5 rounded-full">
+                  <ShieldCheck className="h-4 w-4 text-rose-400" />
+                  Perfis verificados um a um
                 </span>
                 <h1
                   id="hero-heading"
                   className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
                 >
-                  Acompanhantes Premium em Portugal
+                  A plataforma de <span className="text-rose-400">acompanhantes</span> verificadas de Portugal
                 </h1>
-                <h2 className="text-base md:text-lg text-white/70 max-w-md">
-                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                </h2>
+
+                {/* Provas objectivas — nada de números de volume que não possamos sustentar */}
+                <ul className="flex flex-wrap gap-x-8 gap-y-3 text-white/80">
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">18</span>
+                    <span className="text-sm text-white/60">distritos cobertos</span>
+                  </li>
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">100%</span>
+                    <span className="text-sm text-white/60">verificação de identidade</span>
+                  </li>
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">0 €</span>
+                    <span className="text-sm text-white/60">para anunciar</span>
+                  </li>
+                </ul>
+
+                {/* CTAs primários: os dois públicos, separados por ponto de entrada */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/companions/register"
+                    className="inline-flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white text-base font-bold px-7 py-3.5 rounded-full shadow-lg shadow-rose-900/40 transition-colors"
+                  >
+                    Anunciar como acompanhante
+                  </Link>
+                  <Link
+                    href="/location"
+                    className="inline-flex items-center justify-center border border-white/30 hover:border-white/60 hover:bg-white/5 text-white text-base font-semibold px-7 py-3.5 rounded-full transition-colors"
+                  >
+                    Procurar acompanhantes
+                  </Link>
+                </div>
+
+                {/* Barra de pesquisa por distrito */}
+                <Suspense
+                  fallback={
+                    <div className="h-14 w-full max-w-md rounded-full bg-white/10 animate-pulse" />
+                  }
+                >
+                  <CitySelectionModal
+                    triggerButton={
+                      <button className="group flex items-center gap-3 w-full max-w-md bg-white dark:bg-zinc-900 rounded-full pl-5 pr-2 py-2 shadow-xl text-left transition-transform hover:scale-[1.01]">
+                        <span className="flex-1 text-sm text-muted-foreground">
+                          Procurar acompanhantes por distrito
+                        </span>
+                        <span className="h-10 w-10 rounded-full bg-rose-600 group-hover:bg-rose-500 flex items-center justify-center shrink-0 transition-colors">
+                          <Search className="h-4 w-4 text-white" />
+                        </span>
+                      </button>
+                    }
+                  />
+                </Suspense>
+
                 {doDia && (
-                  <div className="space-y-5">
+                  <div className="space-y-5 pt-2 border-t border-white/10">
+                    <span className="inline-flex items-center gap-2 text-rose-300 text-sm font-bold uppercase tracking-widest pt-4">
+                      <Star className="h-4 w-4 fill-rose-400 text-rose-400" />
+                      Exclusiva de hoje
+                    </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white">{doDia.name}</span>
+                      <span className="text-3xl lg:text-4xl font-bold text-white">{doDia.name}</span>
                       {doDia.verified && <ShieldCheck className="h-8 w-8 text-rose-400 shrink-0" />}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-white/80 text-xl lg:text-2xl font-medium">
@@ -248,28 +303,27 @@ export default async function HomePage() {
                     {doDia.shortDescription && (
                       <p className="text-white/60 text-lg lg:text-xl max-w-sm leading-relaxed">{doDia.shortDescription}</p>
                     )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-xl lg:text-2xl font-bold px-10 py-5 rounded-xl shadow-lg shadow-rose-900/40 transition-colors">
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-lg font-bold transition-colors">
                       Ver perfil →
                     </Link>
                   </div>
                 )}
-                <Suspense
-                  fallback={
-                    <Button disabled variant="outline" className="gap-2 text-base py-6 px-7">
-                      <MapPin className="h-5 w-5" />
-                      Carregando distritos...
-                    </Button>
-                  }
-                >
-                  <CitySelectionModal
-                    triggerButton={
-                      <Button variant="ghost" className="gap-1.5 py-2 px-4 text-sm text-white/50 hover:text-white/80 hover:bg-transparent">
-                        <MapPin className="h-3.5 w-3.5" />
-                        Encontrar por distrito
-                      </Button>
-                    }
-                  />
-                </Suspense>
+
+                {/* Links populares — atalhos para as páginas de topo de funil */}
+                <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm">
+                  <Link href="/quanto-ganha-acompanhante" className="text-white/50 hover:text-white transition-colors">
+                    Calculadora de ganhos
+                  </Link>
+                  <Link href="/ajuda-anunciantes" className="text-white/50 hover:text-white transition-colors">
+                    Como ser acompanhante
+                  </Link>
+                  <Link href="/contos" className="text-white/50 hover:text-white transition-colors">
+                    Contos
+                  </Link>
+                  <Link href="/checkout" className="text-white/50 hover:text-white transition-colors">
+                    Planos
+                  </Link>
+                </div>
               </div>
 
               {/* RIGHT: companion photo as square card with glow */}
@@ -327,22 +381,74 @@ export default async function HomePage() {
 
               {/* Text + CTA */}
               <div className="relative z-10 w-full space-y-4 text-center">
-                {/* "Exclusiva Onesugar" badge */}
-                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-lg font-bold px-5 py-2 rounded-full mx-auto">
-                  <Star className="h-5 w-5 fill-rose-400 text-rose-400" />
-                  Exclusiva Onesugar
+                {/* Selo de confiança */}
+                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold px-4 py-1.5 rounded-full mx-auto">
+                  <ShieldCheck className="h-3.5 w-3.5 text-rose-400" />
+                  Perfis verificados um a um
                 </span>
                 <h1
                   id="hero-heading-mobile"
                   className="text-2xl sm:text-3xl font-bold tracking-tighter text-white"
                 >
-                  Acompanhantes Premium em Portugal
+                  A plataforma de <span className="text-rose-400">acompanhantes</span> verificadas de Portugal
                 </h1>
-                <h2 className="text-sm sm:text-base text-white/70">
-                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                </h2>
+
+                {/* Provas objectivas */}
+                <ul className="flex justify-center gap-6 text-white/80">
+                  <li>
+                    <span className="block text-xl font-bold text-white">18</span>
+                    <span className="text-[11px] text-white/60">distritos</span>
+                  </li>
+                  <li>
+                    <span className="block text-xl font-bold text-white">100%</span>
+                    <span className="text-[11px] text-white/60">verificados</span>
+                  </li>
+                  <li>
+                    <span className="block text-xl font-bold text-white">0 €</span>
+                    <span className="text-[11px] text-white/60">para anunciar</span>
+                  </li>
+                </ul>
+
+                {/* CTAs primários */}
+                <div className="flex flex-col gap-2.5">
+                  <Link
+                    href="/companions/register"
+                    className="w-full inline-flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold px-6 py-3.5 rounded-full shadow-lg shadow-rose-900/40 transition-colors"
+                  >
+                    Anunciar como acompanhante
+                  </Link>
+                  <Link
+                    href="/location"
+                    className="w-full inline-flex items-center justify-center border border-white/30 hover:border-white/60 text-white text-sm font-semibold px-6 py-3.5 rounded-full transition-colors"
+                  >
+                    Procurar acompanhantes
+                  </Link>
+                </div>
+
+                {/* Barra de pesquisa por distrito */}
+                <Suspense
+                  fallback={<div className="h-12 w-full rounded-full bg-white/10 animate-pulse" />}
+                >
+                  <CitySelectionModal
+                    triggerButton={
+                      <button className="group flex items-center gap-2 w-full bg-white dark:bg-zinc-900 rounded-full pl-4 pr-1.5 py-1.5 shadow-xl text-left">
+                        <span className="flex-1 text-xs text-muted-foreground">
+                          Procurar por distrito
+                        </span>
+                        <span className="h-9 w-9 rounded-full bg-rose-600 flex items-center justify-center shrink-0">
+                          <Search className="h-3.5 w-3.5 text-white" />
+                        </span>
+                      </button>
+                    }
+                  />
+                </Suspense>
+
                 {doDia && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 pt-4 border-t border-white/10">
+                    <span className="inline-flex items-center justify-center gap-1.5 text-rose-300 text-[11px] font-bold uppercase tracking-widest">
+                      <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
+                      Exclusiva de hoje
+                    </span>
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-xl font-bold text-white">{doDia.name}</span>
                       {doDia.verified && <ShieldCheck className="h-5 w-5 text-rose-400 shrink-0" />}
@@ -355,28 +461,11 @@ export default async function HomePage() {
                     {doDia.shortDescription && (
                       <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
                     )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-base font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-rose-900/40 transition-colors mx-auto">
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
                       Ver perfil →
                     </Link>
                   </div>
                 )}
-                <Suspense
-                  fallback={
-                    <Button disabled variant="outline" className="gap-2 w-full">
-                      <MapPin className="h-4 w-4" />
-                      Carregando distritos...
-                    </Button>
-                  }
-                >
-                  <CitySelectionModal
-                    triggerButton={
-                      <Button variant="ghost" className="gap-1.5 py-2 px-4 text-xs text-white/50 hover:text-white/80 hover:bg-transparent mx-auto">
-                        <MapPin className="h-3 w-3" />
-                        Encontrar por distrito
-                      </Button>
-                    }
-                  />
-                </Suspense>
               </div>
             </div>
           </div>

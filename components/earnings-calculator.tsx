@@ -1,13 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export function EarningsCalculator({ cta }: { cta?: React.ReactNode }) {
+export function EarningsCalculator({
+  cta,
+  onChange,
+}: {
+  cta?: React.ReactNode;
+  /** Notifica o pai a cada ajuste, para reaproveitar os valores simulados. */
+  onChange?: (values: {
+    pricePerHour: number;
+    encountersPerDay: number;
+    daysPerWeek: number;
+    monthly: number;
+  }) => void;
+}) {
   const [pricePerHour, setPricePerHour] = useState(150);
-  const [encountersPerDay, setEncountersPerDay] = useState(4);
-  const [daysPerWeek, setDaysPerWeek] = useState(5);
+  const [encountersPerDay, setEncountersPerDay] = useState(3);
+  const [daysPerWeek, setDaysPerWeek] = useState(4);
 
   const monthly = pricePerHour * encountersPerDay * daysPerWeek * 4;
+
+  useEffect(() => {
+    onChange?.({ pricePerHour, encountersPerDay, daysPerWeek, monthly });
+    // `onChange` é omitido de propósito: o pai costuma passar uma função
+    // inline, que mudaria de identidade a cada render e criaria um ciclo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pricePerHour, encountersPerDay, daysPerWeek, monthly]);
 
   const fmt = (n: number) =>
     n.toLocaleString("pt-PT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -83,6 +102,12 @@ export function EarningsCalculator({ cta }: { cta?: React.ReactNode }) {
             className="w-full accent-rose-500 cursor-pointer"
           />
         </div>
+
+        <p className="text-[11px] leading-snug text-muted-foreground text-center">
+          Valor estimado com base nos dados que introduziu. Não é uma garantia
+          de rendimento — os ganhos reais dependem da procura, do distrito e da
+          sua disponibilidade.
+        </p>
 
         {/* CTA */}
         {cta ?? (
