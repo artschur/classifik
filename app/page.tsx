@@ -9,6 +9,11 @@ import {
   Star,
   Mic,
   Search,
+  Calculator,
+  ScrollText,
+  ShoppingBag,
+  ChevronRight,
+  Heart,
   ShieldCheck,
   Video,
   UserCheck,
@@ -25,6 +30,15 @@ import { PlanType } from '@/db/queries/kv';
 import { kv } from '@/db/index';
 
 // ── Schema JSON-LD ────────────────────────────────────────────────────────────
+
+/** Atalhos do menu do hero — cobrem os dois públicos e as landings de topo de funil. */
+const popularLinks = [
+  { href: '/location', label: 'Ver acompanhantes', icon: <Heart className="h-4 w-4" /> },
+  { href: '/quanto-ganha-acompanhante', label: 'Calculadora de ganhos', icon: <Calculator className="h-4 w-4" /> },
+  { href: '/ajuda-anunciantes', label: 'Como ser acompanhante', icon: <UserCheck className="h-4 w-4" /> },
+  { href: '/contos', label: 'Contos', icon: <ScrollText className="h-4 w-4" /> },
+  { href: '/checkout', label: 'Planos de destaque', icon: <ShoppingBag className="h-4 w-4" /> },
+];
 
 function HomeSchemas() {
   const websiteSchema = {
@@ -285,50 +299,28 @@ export default async function HomePage() {
                   />
                 </Suspense>
 
-                {doDia && (
-                  <div className="space-y-5 pt-2 border-t border-white/10">
-                    <span className="inline-flex items-center gap-2 text-rose-300 text-sm font-bold uppercase tracking-widest pt-4">
-                      <Star className="h-4 w-4 fill-rose-400 text-rose-400" />
-                      Exclusiva de hoje
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl lg:text-4xl font-bold text-white">{doDia.name}</span>
-                      {doDia.verified && <ShieldCheck className="h-8 w-8 text-rose-400 shrink-0" />}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-white/80 text-xl lg:text-2xl font-medium">
-                      <span>{doDia.age} anos</span>
-                      <span className="text-white/30">·</span>
-                      <span className="flex items-center gap-2"><MapPin className="h-5 w-5" />{doDia.city}</span>
-                    </div>
-                    {doDia.shortDescription && (
-                      <p className="text-white/60 text-lg lg:text-xl max-w-sm leading-relaxed">{doDia.shortDescription}</p>
-                    )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-lg font-bold transition-colors">
-                      Ver perfil →
-                    </Link>
+                {/* Links populares — menu de atalhos para as páginas de topo de funil */}
+                <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
+                  <p className="px-5 pt-4 pb-2 text-sm font-bold text-white">Links populares</p>
+                  <div className="divide-y divide-white/10">
+                    {popularLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors group"
+                      >
+                        <span className="text-rose-400 shrink-0">{item.icon}</span>
+                        <span className="flex-1">{item.label}</span>
+                        <ChevronRight className="h-4 w-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
+                      </Link>
+                    ))}
                   </div>
-                )}
-
-                {/* Links populares — atalhos para as páginas de topo de funil */}
-                <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm">
-                  <Link href="/quanto-ganha-acompanhante" className="text-white/50 hover:text-white transition-colors">
-                    Calculadora de ganhos
-                  </Link>
-                  <Link href="/ajuda-anunciantes" className="text-white/50 hover:text-white transition-colors">
-                    Como ser acompanhante
-                  </Link>
-                  <Link href="/contos" className="text-white/50 hover:text-white transition-colors">
-                    Contos
-                  </Link>
-                  <Link href="/checkout" className="text-white/50 hover:text-white transition-colors">
-                    Planos
-                  </Link>
                 </div>
               </div>
 
-              {/* RIGHT: companion photo as square card with glow */}
-              <div className="flex items-center justify-center w-full">
-                <div className="relative w-full max-w-sm lg:max-w-xl xl:max-w-2xl">
+              {/* RIGHT: foto da exclusiva do dia, com os dados por baixo */}
+              <div className="flex flex-col items-center w-full">
+                <div className="relative w-full max-w-xs lg:max-w-sm">
                   <div className="absolute -inset-4 rounded-[2.5rem] bg-rose-600/30 blur-2xl" />
                   <div className="absolute -inset-8 rounded-[3rem] bg-rose-900/20 blur-3xl" />
                   <Link
@@ -346,6 +338,30 @@ export default async function HomePage() {
                     <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent z-10" />
                   </Link>
                 </div>
+
+                {doDia && (
+                  <div className="relative z-10 w-full max-w-xs lg:max-w-sm mt-6 space-y-2.5">
+                    <span className="inline-flex items-center gap-2 text-rose-300 text-xs font-bold uppercase tracking-widest">
+                      <Star className="h-3.5 w-3.5 fill-rose-400 text-rose-400" />
+                      Exclusiva de hoje
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl lg:text-3xl font-bold text-white">{doDia.name}</span>
+                      {doDia.verified && <ShieldCheck className="h-6 w-6 text-rose-400 shrink-0" />}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-white/80 text-base font-medium">
+                      <span>{doDia.age} anos</span>
+                      <span className="text-white/30">·</span>
+                      <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{doDia.city}</span>
+                    </div>
+                    {doDia.shortDescription && (
+                      <p className="text-white/60 text-sm leading-relaxed">{doDia.shortDescription}</p>
+                    )}
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
+                      Ver perfil →
+                    </Link>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -378,6 +394,31 @@ export default async function HomePage() {
                   <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent z-10" />
                 </Link>
               </div>
+
+              {/* Dados da exclusiva, logo por baixo da foto */}
+              {doDia && (
+                <div className="relative z-10 w-full max-w-xs space-y-2 text-center">
+                  <span className="inline-flex items-center justify-center gap-1.5 text-rose-300 text-[11px] font-bold uppercase tracking-widest">
+                    <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
+                    Exclusiva de hoje
+                  </span>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-xl font-bold text-white">{doDia.name}</span>
+                    {doDia.verified && <ShieldCheck className="h-5 w-5 text-rose-400 shrink-0" />}
+                  </div>
+                  <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-white/80 text-sm font-medium">
+                    <span>{doDia.age} anos</span>
+                    <span className="text-white/30">·</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{doDia.city}</span>
+                  </div>
+                  {doDia.shortDescription && (
+                    <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
+                  )}
+                  <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
+                    Ver perfil →
+                  </Link>
+                </div>
+              )}
 
               {/* Text + CTA */}
               <div className="relative z-10 w-full space-y-4 text-center">
@@ -443,29 +484,23 @@ export default async function HomePage() {
                   />
                 </Suspense>
 
-                {doDia && (
-                  <div className="space-y-3 pt-4 border-t border-white/10">
-                    <span className="inline-flex items-center justify-center gap-1.5 text-rose-300 text-[11px] font-bold uppercase tracking-widest">
-                      <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
-                      Exclusiva de hoje
-                    </span>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-xl font-bold text-white">{doDia.name}</span>
-                      {doDia.verified && <ShieldCheck className="h-5 w-5 text-rose-400 shrink-0" />}
-                    </div>
-                    <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-white/80 text-sm font-medium">
-                      <span>{doDia.age} anos</span>
-                      <span className="text-white/30">·</span>
-                      <span>{doDia.city}</span>
-                    </div>
-                    {doDia.shortDescription && (
-                      <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
-                    )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
-                      Ver perfil →
-                    </Link>
+                {/* Links populares — menu de atalhos */}
+                <div className="w-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden text-left">
+                  <p className="px-4 pt-3.5 pb-2 text-sm font-bold text-white">Links populares</p>
+                  <div className="divide-y divide-white/10">
+                    {popularLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-white/70 active:bg-white/10 transition-colors"
+                      >
+                        <span className="text-rose-400 shrink-0">{item.icon}</span>
+                        <span className="flex-1">{item.label}</span>
+                        <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
+                      </Link>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
