@@ -33,11 +33,11 @@ import { kv } from '@/db/index';
 
 /** Atalhos do menu do hero — cobrem os dois públicos e as landings de topo de funil. */
 const popularLinks = [
-  { href: '/location', label: 'Ver acompanhantes', icon: <Heart className="h-4 w-4" /> },
-  { href: '/quanto-ganha-acompanhante', label: 'Calculadora de ganhos', icon: <Calculator className="h-4 w-4" /> },
-  { href: '/ajuda-anunciantes', label: 'Como ser acompanhante', icon: <UserCheck className="h-4 w-4" /> },
-  { href: '/contos', label: 'Contos', icon: <ScrollText className="h-4 w-4" /> },
-  { href: '/checkout', label: 'Planos de destaque', icon: <ShoppingBag className="h-4 w-4" /> },
+  { href: '/location', label: 'Ver acompanhantes', icon: <Heart className="h-5 w-5" /> },
+  { href: '/quanto-ganha-acompanhante', label: 'Calculadora de ganhos', icon: <Calculator className="h-5 w-5" /> },
+  { href: '/ajuda-anunciantes', label: 'Como ser acompanhante', icon: <UserCheck className="h-5 w-5" /> },
+  { href: '/contos', label: 'Contos', icon: <ScrollText className="h-5 w-5" /> },
+  { href: '/checkout', label: 'Planos de destaque', icon: <ShoppingBag className="h-5 w-5" /> },
 ];
 
 function HomeSchemas() {
@@ -300,18 +300,22 @@ export default async function HomePage() {
                 </Suspense>
 
                 {/* Links populares — menu de atalhos para as páginas de topo de funil */}
-                <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
-                  <p className="px-5 pt-4 pb-2 text-sm font-bold text-white">Links populares</p>
+                <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-sm overflow-hidden shadow-lg">
+                  <p className="px-5 pt-4 pb-3 text-xs font-bold uppercase tracking-widest text-white/50">
+                    Links populares
+                  </p>
                   <div className="divide-y divide-white/10">
                     {popularLinks.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors group"
+                        className="flex items-center gap-4 px-5 py-4 text-base font-medium text-white/90 hover:text-white hover:bg-white/10 transition-colors group"
                       >
-                        <span className="text-rose-400 shrink-0">{item.icon}</span>
+                        <span className="h-10 w-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0 group-hover:bg-rose-500/25 transition-colors">
+                          {item.icon}
+                        </span>
                         <span className="flex-1">{item.label}</span>
-                        <ChevronRight className="h-4 w-4 text-white/30 group-hover:text-white/60 transition-colors shrink-0" />
+                        <ChevronRight className="h-5 w-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
                       </Link>
                     ))}
                   </div>
@@ -485,18 +489,22 @@ export default async function HomePage() {
                 </Suspense>
 
                 {/* Links populares — menu de atalhos */}
-                <div className="w-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden text-left">
-                  <p className="px-4 pt-3.5 pb-2 text-sm font-bold text-white">Links populares</p>
+                <div className="w-full rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-sm overflow-hidden text-left shadow-lg">
+                  <p className="px-4 pt-4 pb-3 text-xs font-bold uppercase tracking-widest text-white/50">
+                    Links populares
+                  </p>
                   <div className="divide-y divide-white/10">
                     {popularLinks.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="flex items-center gap-3 px-4 py-3 text-sm text-white/70 active:bg-white/10 transition-colors"
+                        className="flex items-center gap-4 px-4 py-4 text-base font-medium text-white/90 active:bg-white/10 transition-colors"
                       >
-                        <span className="text-rose-400 shrink-0">{item.icon}</span>
+                        <span className="h-10 w-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+                          {item.icon}
+                        </span>
                         <span className="flex-1">{item.label}</span>
-                        <ChevronRight className="h-4 w-4 text-white/30 shrink-0" />
+                        <ChevronRight className="h-5 w-5 text-white/40 shrink-0" />
                       </Link>
                     ))}
                   </div>
