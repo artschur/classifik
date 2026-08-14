@@ -53,7 +53,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     label: 'Registo',
-    href: '/companions/register',
+    // Passa pela calculadora: vende o valor e capta o contacto antes do formulário.
+    href: '/quanto-ganha-acompanhante',
     icon: <ChartNoAxesColumnIncreasing />,
     prefetch: false,
     className:
