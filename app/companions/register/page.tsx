@@ -22,7 +22,10 @@ export const metadata: Metadata = {
 
 
 
-async function CompanionFormWithData() {
+/** Valores trazidos da calculadora pública, para não pedir duas vezes o mesmo. */
+type Prefill = { phoneNumber?: string; price?: number };
+
+async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
   const { userId, sessionClaims } = await auth();
 
   if (!userId) {
@@ -93,11 +96,24 @@ async function CompanionFormWithData() {
       cities={JSON.parse(JSON.stringify(cities))}
       companionData={companion ? JSON.parse(JSON.stringify(companion)) : null}
       maxPhotos={maxPhotos}
+      prefill={prefill}
     />
   );
 }
 
-export default async function RegisterCompanionPage() {
+export default async function RegisterCompanionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ phone?: string; price?: number | string }>;
+}) {
+  const { phone, price } = await searchParams;
+  const parsedPrice = Number(price);
+
+  const prefill: Prefill = {
+    phoneNumber: phone?.trim() || undefined,
+    price: Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : undefined,
+  };
+
   return (
     <div className="container mx-auto py-8 md:px-0 space-y-10">
       <div className="text-center space-y-2">
@@ -106,7 +122,7 @@ export default async function RegisterCompanionPage() {
       </div>
       <div id="register-form">
         <Suspense fallback={<SkeletonForm />}>
-          <CompanionFormWithData />
+          <CompanionFormWithData prefill={prefill} />
         </Suspense>
       </div>
     </div>

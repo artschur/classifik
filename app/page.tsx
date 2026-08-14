@@ -8,6 +8,12 @@ import {
   Clock,
   Star,
   Mic,
+  Search,
+  Calculator,
+  ScrollText,
+  ShoppingBag,
+  ChevronRight,
+  Heart,
   ShieldCheck,
   Video,
   UserCheck,
@@ -24,6 +30,15 @@ import { PlanType } from '@/db/queries/kv';
 import { kv } from '@/db/index';
 
 // ── Schema JSON-LD ────────────────────────────────────────────────────────────
+
+/** Atalhos do menu do hero — cobrem os dois públicos e as landings de topo de funil. */
+const popularLinks = [
+  { href: '/location', label: 'Ver acompanhantes', icon: <Heart className="h-5 w-5" /> },
+  { href: '/quanto-ganha-acompanhante', label: 'Calculadora de ganhos', icon: <Calculator className="h-5 w-5" /> },
+  { href: '/ajuda-anunciantes', label: 'Como ser acompanhante', icon: <UserCheck className="h-5 w-5" /> },
+  { href: '/contos', label: 'Contos', icon: <ScrollText className="h-5 w-5" /> },
+  { href: '/checkout', label: 'Planos de destaque', icon: <ShoppingBag className="h-5 w-5" /> },
+];
 
 function HomeSchemas() {
   const websiteSchema = {
@@ -220,61 +235,96 @@ export default async function HomePage() {
 
               {/* LEFT: text */}
               <div className="space-y-6">
-                {/* "Exclusiva Onesugar" badge — visual label only, not a heading */}
-                <span className="inline-flex items-center gap-2.5 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-2xl font-bold px-6 py-2.5 rounded-full">
-                  <Star className="h-6 w-6 fill-rose-400 text-rose-400" />
-                  Exclusiva Onesugar
+                {/* Selo de confiança — rótulo visual, não é cabeçalho */}
+                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-bold px-4 py-1.5 rounded-full">
+                  <ShieldCheck className="h-4 w-4 text-rose-400" />
+                  Perfis verificados um a um
                 </span>
                 <h1
                   id="hero-heading"
                   className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
                 >
-                  Acompanhantes Premium em Portugal
+                  A plataforma de <span className="text-rose-400">acompanhantes</span> verificadas de Portugal
                 </h1>
-                <h2 className="text-base md:text-lg text-white/70 max-w-md">
-                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                </h2>
-                {doDia && (
-                  <div className="space-y-5">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white">{doDia.name}</span>
-                      {doDia.verified && <ShieldCheck className="h-8 w-8 text-rose-400 shrink-0" />}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-white/80 text-xl lg:text-2xl font-medium">
-                      <span>{doDia.age} anos</span>
-                      <span className="text-white/30">·</span>
-                      <span className="flex items-center gap-2"><MapPin className="h-5 w-5" />{doDia.city}</span>
-                    </div>
-                    {doDia.shortDescription && (
-                      <p className="text-white/60 text-lg lg:text-xl max-w-sm leading-relaxed">{doDia.shortDescription}</p>
-                    )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-xl lg:text-2xl font-bold px-10 py-5 rounded-xl shadow-lg shadow-rose-900/40 transition-colors">
-                      Ver perfil →
-                    </Link>
-                  </div>
-                )}
+
+                {/* Provas objectivas — nada de números de volume que não possamos sustentar */}
+                <ul className="flex flex-wrap gap-x-8 gap-y-3 text-white/80">
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">18</span>
+                    <span className="text-sm text-white/60">distritos cobertos</span>
+                  </li>
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">100%</span>
+                    <span className="text-sm text-white/60">verificação de identidade</span>
+                  </li>
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">0 €</span>
+                    <span className="text-sm text-white/60">para anunciar</span>
+                  </li>
+                </ul>
+
+                {/* CTAs primários: os dois públicos, separados por ponto de entrada */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/companions/register"
+                    className="inline-flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white text-base font-bold px-7 py-3.5 rounded-full shadow-lg shadow-rose-900/40 transition-colors"
+                  >
+                    Anunciar como acompanhante
+                  </Link>
+                  <Link
+                    href="/location"
+                    className="inline-flex items-center justify-center border border-white/30 hover:border-white/60 hover:bg-white/5 text-white text-base font-semibold px-7 py-3.5 rounded-full transition-colors"
+                  >
+                    Procurar acompanhantes
+                  </Link>
+                </div>
+
+                {/* Barra de pesquisa por distrito */}
                 <Suspense
                   fallback={
-                    <Button disabled variant="outline" className="gap-2 text-base py-6 px-7">
-                      <MapPin className="h-5 w-5" />
-                      Carregando distritos...
-                    </Button>
+                    <div className="h-14 w-full max-w-md rounded-full bg-white/10 animate-pulse" />
                   }
                 >
                   <CitySelectionModal
                     triggerButton={
-                      <Button variant="ghost" className="gap-1.5 py-2 px-4 text-sm text-white/50 hover:text-white/80 hover:bg-transparent">
-                        <MapPin className="h-3.5 w-3.5" />
-                        Encontrar por distrito
-                      </Button>
+                      <button className="group flex items-center gap-3 w-full max-w-md bg-white dark:bg-zinc-900 rounded-full pl-5 pr-2 py-2 shadow-xl text-left transition-transform hover:scale-[1.01]">
+                        <span className="flex-1 text-sm text-muted-foreground">
+                          Procurar acompanhantes por distrito
+                        </span>
+                        <span className="h-10 w-10 rounded-full bg-rose-600 group-hover:bg-rose-500 flex items-center justify-center shrink-0 transition-colors">
+                          <Search className="h-4 w-4 text-white" />
+                        </span>
+                      </button>
                     }
                   />
                 </Suspense>
+
+                {/* Links populares — menu de atalhos para as páginas de topo de funil */}
+                <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-sm overflow-hidden shadow-lg">
+                  <p className="px-5 pt-4 pb-3 text-xs font-bold uppercase tracking-widest text-white/50">
+                    Links populares
+                  </p>
+                  <div className="divide-y divide-white/10">
+                    {popularLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-4 px-5 py-4 text-base font-medium text-white/90 hover:text-white hover:bg-white/10 transition-colors group"
+                      >
+                        <span className="h-10 w-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0 group-hover:bg-rose-500/25 transition-colors">
+                          {item.icon}
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        <ChevronRight className="h-5 w-5 text-white/40 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* RIGHT: companion photo as square card with glow */}
-              <div className="flex items-center justify-center w-full">
-                <div className="relative w-full max-w-sm lg:max-w-xl xl:max-w-2xl">
+              {/* RIGHT: foto da exclusiva do dia, com os dados por baixo */}
+              <div className="flex flex-col items-center w-full">
+                <div className="relative w-full max-w-xs lg:max-w-sm">
                   <div className="absolute -inset-4 rounded-[2.5rem] bg-rose-600/30 blur-2xl" />
                   <div className="absolute -inset-8 rounded-[3rem] bg-rose-900/20 blur-3xl" />
                   <Link
@@ -292,6 +342,30 @@ export default async function HomePage() {
                     <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent z-10" />
                   </Link>
                 </div>
+
+                {doDia && (
+                  <div className="relative z-10 w-full max-w-xs lg:max-w-sm mt-6 space-y-2.5">
+                    <span className="inline-flex items-center gap-2 text-rose-300 text-xs font-bold uppercase tracking-widest">
+                      <Star className="h-3.5 w-3.5 fill-rose-400 text-rose-400" />
+                      Exclusiva de hoje
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl lg:text-3xl font-bold text-white">{doDia.name}</span>
+                      {doDia.verified && <ShieldCheck className="h-6 w-6 text-rose-400 shrink-0" />}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-white/80 text-base font-medium">
+                      <span>{doDia.age} anos</span>
+                      <span className="text-white/30">·</span>
+                      <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{doDia.city}</span>
+                    </div>
+                    {doDia.shortDescription && (
+                      <p className="text-white/60 text-sm leading-relaxed">{doDia.shortDescription}</p>
+                    )}
+                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
+                      Ver perfil →
+                    </Link>
+                  </div>
+                )}
               </div>
 
             </div>
@@ -325,58 +399,116 @@ export default async function HomePage() {
                 </Link>
               </div>
 
+              {/* Dados da exclusiva, logo por baixo da foto */}
+              {doDia && (
+                <div className="relative z-10 w-full max-w-xs space-y-2 text-center">
+                  <span className="inline-flex items-center justify-center gap-1.5 text-rose-300 text-[11px] font-bold uppercase tracking-widest">
+                    <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
+                    Exclusiva de hoje
+                  </span>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-xl font-bold text-white">{doDia.name}</span>
+                    {doDia.verified && <ShieldCheck className="h-5 w-5 text-rose-400 shrink-0" />}
+                  </div>
+                  <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-white/80 text-sm font-medium">
+                    <span>{doDia.age} anos</span>
+                    <span className="text-white/30">·</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{doDia.city}</span>
+                  </div>
+                  {doDia.shortDescription && (
+                    <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
+                  )}
+                  <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
+                    Ver perfil →
+                  </Link>
+                </div>
+              )}
+
               {/* Text + CTA */}
               <div className="relative z-10 w-full space-y-4 text-center">
-                {/* "Exclusiva Onesugar" badge */}
-                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-lg font-bold px-5 py-2 rounded-full mx-auto">
-                  <Star className="h-5 w-5 fill-rose-400 text-rose-400" />
-                  Exclusiva Onesugar
+                {/* Selo de confiança */}
+                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold px-4 py-1.5 rounded-full mx-auto">
+                  <ShieldCheck className="h-3.5 w-3.5 text-rose-400" />
+                  Perfis verificados um a um
                 </span>
                 <h1
                   id="hero-heading-mobile"
                   className="text-2xl sm:text-3xl font-bold tracking-tighter text-white"
                 >
-                  Acompanhantes Premium em Portugal
+                  A plataforma de <span className="text-rose-400">acompanhantes</span> verificadas de Portugal
                 </h1>
-                <h2 className="text-sm sm:text-base text-white/70">
-                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                </h2>
-                {doDia && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-xl font-bold text-white">{doDia.name}</span>
-                      {doDia.verified && <ShieldCheck className="h-5 w-5 text-rose-400 shrink-0" />}
-                    </div>
-                    <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-white/80 text-sm font-medium">
-                      <span>{doDia.age} anos</span>
-                      <span className="text-white/30">·</span>
-                      <span>{doDia.city}</span>
-                    </div>
-                    {doDia.shortDescription && (
-                      <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
-                    )}
-                    <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-base font-bold px-8 py-3.5 rounded-xl shadow-lg shadow-rose-900/40 transition-colors mx-auto">
-                      Ver perfil →
-                    </Link>
-                  </div>
-                )}
+
+                {/* Provas objectivas */}
+                <ul className="flex justify-center gap-6 text-white/80">
+                  <li>
+                    <span className="block text-xl font-bold text-white">18</span>
+                    <span className="text-[11px] text-white/60">distritos</span>
+                  </li>
+                  <li>
+                    <span className="block text-xl font-bold text-white">100%</span>
+                    <span className="text-[11px] text-white/60">verificados</span>
+                  </li>
+                  <li>
+                    <span className="block text-xl font-bold text-white">0 €</span>
+                    <span className="text-[11px] text-white/60">para anunciar</span>
+                  </li>
+                </ul>
+
+                {/* CTAs primários */}
+                <div className="flex flex-col gap-2.5">
+                  <Link
+                    href="/companions/register"
+                    className="w-full inline-flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold px-6 py-3.5 rounded-full shadow-lg shadow-rose-900/40 transition-colors"
+                  >
+                    Anunciar como acompanhante
+                  </Link>
+                  <Link
+                    href="/location"
+                    className="w-full inline-flex items-center justify-center border border-white/30 hover:border-white/60 text-white text-sm font-semibold px-6 py-3.5 rounded-full transition-colors"
+                  >
+                    Procurar acompanhantes
+                  </Link>
+                </div>
+
+                {/* Barra de pesquisa por distrito */}
                 <Suspense
-                  fallback={
-                    <Button disabled variant="outline" className="gap-2 w-full">
-                      <MapPin className="h-4 w-4" />
-                      Carregando distritos...
-                    </Button>
-                  }
+                  fallback={<div className="h-12 w-full rounded-full bg-white/10 animate-pulse" />}
                 >
                   <CitySelectionModal
                     triggerButton={
-                      <Button variant="ghost" className="gap-1.5 py-2 px-4 text-xs text-white/50 hover:text-white/80 hover:bg-transparent mx-auto">
-                        <MapPin className="h-3 w-3" />
-                        Encontrar por distrito
-                      </Button>
+                      <button className="group flex items-center gap-2 w-full bg-white dark:bg-zinc-900 rounded-full pl-4 pr-1.5 py-1.5 shadow-xl text-left">
+                        <span className="flex-1 text-xs text-muted-foreground">
+                          Procurar por distrito
+                        </span>
+                        <span className="h-9 w-9 rounded-full bg-rose-600 flex items-center justify-center shrink-0">
+                          <Search className="h-3.5 w-3.5 text-white" />
+                        </span>
+                      </button>
                     }
                   />
                 </Suspense>
+
+                {/* Links populares — menu de atalhos */}
+                <div className="w-full rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-sm overflow-hidden text-left shadow-lg">
+                  <p className="px-4 pt-4 pb-3 text-xs font-bold uppercase tracking-widest text-white/50">
+                    Links populares
+                  </p>
+                  <div className="divide-y divide-white/10">
+                    {popularLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-4 px-4 py-4 text-base font-medium text-white/90 active:bg-white/10 transition-colors"
+                      >
+                        <span className="h-10 w-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+                          {item.icon}
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        <ChevronRight className="h-5 w-5 text-white/40 shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -10,6 +10,8 @@ const RD_EVENTS_URL = 'https://api.rd.services/platform/events?event_type=conver
  */
 export const RD_CONVERSION_APROVADA = 'sugar-aprovada';
 export const RD_CONVERSION_RECUSADA = 'sugar-recusada';
+/** Lead captado na calculadora pública, antes de existir conta. */
+export const RD_CONVERSION_CALCULADORA = 'calculadora-ganhos';
 
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 
@@ -166,12 +168,24 @@ export async function tagCompanionInRD(
  * funciona mesmo para companions que ainda não existiam no RD Station.
  */
 export async function sendConversionEventToRD(
-  email: string,
+  identity: string | { email?: string; phone?: string },
   conversionIdentifier: string,
   name?: string,
+  customFields?: Record<string, string>,
 ): Promise<void> {
   if (!process.env.RD_STATION_CLIENT_ID) {
     console.log('RD Station: RD_STATION_CLIENT_ID ausente, integração desativada');
+    return;
+  }
+
+  // A API aceita e-mail ou telefone como identificador do contacto. Leads
+  // captados antes do registo só têm telefone.
+  const contact =
+    typeof identity === 'string' ? { email: identity } : identity;
+  const label = contact.email ?? contact.phone ?? 'desconhecido';
+
+  if (!contact.email && !contact.phone) {
+    console.error('RD Station: evento sem e-mail nem telefone, ignorado');
     return;
   }
 
@@ -189,19 +203,21 @@ export async function sendConversionEventToRD(
         event_family: 'CDP',
         payload: {
           conversion_identifier: conversionIdentifier,
-          email,
+          ...(contact.email ? { email: contact.email } : {}),
+          ...(contact.phone ? { phone: contact.phone } : {}),
           ...(name ? { name } : {}),
+          ...(customFields ?? {}),
         },
       }),
     });
 
     if (!response.ok) {
       console.error(
-        `RD Station: falha no evento "${conversionIdentifier}" para ${email} (${response.status})`,
+        `RD Station: falha no evento "${conversionIdentifier}" para ${label} (${response.status})`,
       );
     } else {
       console.log(
-        `RD Station: evento "${conversionIdentifier}" registado com sucesso (${email})`,
+        `RD Station: evento "${conversionIdentifier}" registado com sucesso (${label})`,
       );
     }
   } catch (error) {
