@@ -266,7 +266,7 @@ export default async function HomePage() {
                 {/* CTAs primários: os dois públicos, separados por ponto de entrada */}
                 <div className="flex flex-wrap items-center gap-3">
                   <Link
-                    href="/companions/register"
+                    href="/quanto-ganha-acompanhante"
                     className="inline-flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white text-base font-bold px-7 py-3.5 rounded-full shadow-lg shadow-rose-900/40 transition-colors"
                   >
                     Anunciar como acompanhante
@@ -457,7 +457,7 @@ export default async function HomePage() {
                 {/* CTAs primários */}
                 <div className="flex flex-col gap-2.5">
                   <Link
-                    href="/companions/register"
+                    href="/quanto-ganha-acompanhante"
                     className="w-full inline-flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold px-6 py-3.5 rounded-full shadow-lg shadow-rose-900/40 transition-colors"
                   >
                     Anunciar como acompanhante
@@ -529,7 +529,7 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
-                href="/companions/register"
+                href="/quanto-ganha-acompanhante"
                 className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
               >
                 Registar como Sugar
@@ -687,7 +687,7 @@ export default async function HomePage() {
               verificadas em Portugal.
             </p>
             <Link
-              href="/companions/register"
+              href="/quanto-ganha-acompanhante"
               className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-8 py-3 rounded-full transition-colors"
             >
               Registar como Sugar
@@ -749,7 +749,7 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
-                href="/companions/register"
+                href="/quanto-ganha-acompanhante"
                 className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
               >
                 Registar como Sugar
