@@ -78,7 +78,7 @@ export default async function HomePage() {
         {/* ── HERO ── */}
         {/* Desktop: full-bleed background image (anchored right), text overlay on the left */}
         {/* Mobile: image on top, text block below */}
-        <section aria-labelledby="hero-heading">
+        <section aria-labelledby="hero-heading-mobile">
 
           {/* ── DESKTOP (md+): gradient background, two-column layout ── */}
           <div className="relative hidden md:flex items-center w-full min-h-[52vh] lg:min-h-[80vh] overflow-hidden">
@@ -94,12 +94,11 @@ export default async function HomePage() {
 
               {/* LEFT: text */}
               <div className="space-y-6">
-                <h1
-                  id="hero-heading"
+                <p
                   className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
                 >
                   {h1Text}
-                </h1>
+                </p>
                 <h2 className="text-base md:text-lg text-white/70 max-w-md">
                   Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
                 </h2>
