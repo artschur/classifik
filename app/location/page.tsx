@@ -4,10 +4,30 @@ import { getAvailableCitiesSummary } from '@/db/queries';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Localizações | Onesugar',
-  description: 'Encontre acompanhantes em todo o território de Portugal. Escolha o seu distrito e descubra perfis verificados.',
+  title: 'Acompanhantes em Portugal por Distrito',
+  description:
+    'Encontre acompanhantes verificadas nos 18 distritos de Portugal — Lisboa, '
+    + 'Porto, Braga, Faro e mais. Perfis reais e disponibilidade actualizada.',
   alternates: {
     canonical: 'https://www.onesugar.pt/location',
+  },
+  openGraph: {
+    title: 'Acompanhantes em Portugal por Distrito | Onesugar',
+    description:
+      'Encontre acompanhantes verificadas em todos os distritos de Portugal. '
+      + 'Perfis reais e disponibilidade actualizada.',
+    url: '/location',
+    siteName: 'Onesugar',
+    locale: 'pt_PT',
+    type: 'website',
+    images: [
+      {
+        url: '/images/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Onesugar - Acompanhantes Premium em Portugal',
+      },
+    ],
   },
 };
 

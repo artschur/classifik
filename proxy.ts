@@ -18,6 +18,10 @@ const isPublicRoute = createRouteMatcher([
   "/politica-de-privacidade",
   "/termos-e-condicoes",
   "/sobre",
+  "/contos",
+  "/contos/(.*)",
+  "/ajuda-anunciantes",
+  "/quanto-ganha-acompanhante",
 ]);
 
 // Define public API routes that should bypass auth

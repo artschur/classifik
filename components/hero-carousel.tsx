@@ -7,6 +7,39 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import Link from "next/link"
 
+const planRibbonStyles: Record<string, { bg: string; color: string; label: string; emoji: string }> = {
+  vip:     { bg: 'linear-gradient(to right, #facc15, #f59e0b)', color: '#713f12', label: 'VIP',     emoji: '👑' },
+  plus:    { bg: 'linear-gradient(to right, #fb923c, #fb7185)', color: '#ffffff',  label: 'Plus',    emoji: '⭐' },
+  classic: { bg: 'linear-gradient(to right, #f9a8d4, #fb7185)', color: '#881337', label: 'Classic', emoji: '✨' },
+}
+
+function PlanBadge({ plan }: { plan?: string | null }) {
+  if (!plan || plan === 'free') return null
+  const style = planRibbonStyles[plan.toLowerCase()]
+  if (!style) return null
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: '8px',
+        left: '8px',
+        background: style.bg,
+        color: style.color,
+        fontSize: '12px',
+        fontWeight: 'bold',
+        padding: '4px 12px',
+        borderRadius: '999px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+        pointerEvents: 'none',
+      }}
+    >
+      {style.emoji} {style.label}
+    </div>
+  )
+}
+
 export function HeroCarousel({ companions }: { companions: CompanionPreview[] }) {
   const carouselRef = useRef<HTMLDivElement>(null)
 
@@ -51,6 +84,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {companions.map((companion) => {
+              console.log('[HeroCarousel] companion:', companion.name, 'planType:', companion.planType)
               const firstImage = companion.images[0]
               const imageUrl = firstImage ? getImageUrl(firstImage) : "/placeholder.svg?height=400&width=300"
 
@@ -71,6 +105,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
                       />
                       {/* Gradient Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <PlanBadge plan={companion.planType} />
 
                       {/* Card Info */}
                       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">

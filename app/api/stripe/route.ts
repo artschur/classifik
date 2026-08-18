@@ -165,6 +165,13 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
         stripeCustomerId: customerId,
       });
 
+      if (event.type === 'customer.subscription.deleted') {
+        const client = await clerkClient();
+        await client.users.updateUserMetadata(clerkId, {
+          publicMetadata: { plan: 'free' },
+        });
+      }
+
       // Handle trial-specific events
       if (event.type === 'customer.subscription.trial_will_end') {
         console.log(

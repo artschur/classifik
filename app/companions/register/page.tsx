@@ -7,6 +7,7 @@ import { SkeletonForm } from "@/components/skeletons/skeletonForm";
 import { db } from "@/db";
 import { getAvailableCities } from "@/db/queries";
 import { getCompanionToEdit } from "@/db/queries/companions";
+import { getUserPlan } from "@/db/queries/plan";
 import { companionsTable } from "@/db/schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
@@ -21,11 +22,14 @@ export const metadata: Metadata = {
 
 
 
-async function CompanionFormWithData() {
+/** Valores trazidos da calculadora pública, para não pedir duas vezes o mesmo. */
+type Prefill = { phoneNumber?: string; price?: number };
+
+async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
   const { userId, sessionClaims } = await auth();
 
   if (!userId) {
-    redirect("/");
+    redirect("/sign-up?redirect_url=/companions/register");
   }
 
   const [
@@ -34,6 +38,7 @@ async function CompanionFormWithData() {
     stillVerifying,
     allVerificationStatus,
     companionVerificationStatus,
+    userPlan,
   ] = await Promise.all([
     getAvailableCities(),
     getCompanionToEdit(userId),
@@ -44,21 +49,28 @@ async function CompanionFormWithData() {
       .from(companionsTable)
       .where(eq(companionsTable.auth_id, userId))
       .limit(1),
+    getUserPlan(userId),
   ]);
+
+  const maxPhotos = ['classic', 'plus', 'vip'].includes(userPlan) ? 30 : 10;
 
   const isVerified = companionVerificationStatus[0]?.verified ?? false;
 
-  // Update metadata to track document upload status
+  // Update metadata to track document upload status and ensure companion flags are set.
+  // This also handles users who arrive directly (e.g. from the "Registar como Sugar" CTA)
+  // without going through /onboarding — we auto-mark them as companions.
   const currentHasDocs = sessionClaims?.metadata?.hasUploadedDocs;
   const hasDocsNow = allVerificationStatus.isVerificationVideoUploaded;
+  const needsOnboarding = !sessionClaims?.metadata?.onboardingComplete;
 
-  // Only update if the status has changed to avoid unnecessary writes
-  if (currentHasDocs !== hasDocsNow) {
+  if (currentHasDocs !== hasDocsNow || needsOnboarding) {
     const client = await clerkClient();
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
-        ...sessionClaims?.metadata, // Preserve all existing metadata
+        ...sessionClaims?.metadata,
+        onboardingComplete: true,
         isCompanion: true,
+        isRegistrationComplete: sessionClaims?.metadata?.isRegistrationComplete ?? false,
         hasUploadedDocs: hasDocsNow,
       },
     });
@@ -69,35 +81,50 @@ async function CompanionFormWithData() {
     redirect("/companions/verification/pending");
   }
 
-  // Only redirect to verification page if:
-  // 1. User is NOT already verified
-  // 2. Companion profile exists (registration completed)
-  // 3. Images are uploaded (completed registration form)
-  // 4. Verification video NOT uploaded yet
-  if (
-    !isVerified &&
-    companion &&
-    allVerificationStatus.isImageUploaded &&
-    (sessionClaims.metadata.isRegistrationComplete === true) &&
-    !allVerificationStatus.isVerificationVideoUploaded
-  ) {
-    redirect("/companions/verification");
+  // Route to the correct verification step based on what's already uploaded
+  if (!isVerified && companion && allVerificationStatus.isImageUploaded) {
+    if (!allVerificationStatus.isVerificationVideoUploaded) {
+      redirect("/companions/verification");
+    }
+    if (!allVerificationStatus.isDocumentUploaded) {
+      redirect("/companions/verification/document");
+    }
   }
 
   return (
     <RegisterCompanionForm
       cities={JSON.parse(JSON.stringify(cities))}
       companionData={companion ? JSON.parse(JSON.stringify(companion)) : null}
+      maxPhotos={maxPhotos}
+      prefill={prefill}
     />
   );
 }
 
-export default async function RegisterCompanionPage() {
+export default async function RegisterCompanionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ phone?: string; price?: number | string }>;
+}) {
+  const { phone, price } = await searchParams;
+  const parsedPrice = Number(price);
+
+  const prefill: Prefill = {
+    phoneNumber: phone?.trim() || undefined,
+    price: Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : undefined,
+  };
+
   return (
-    <div className="container mx-auto py-8 md:px-0">
-      <Suspense fallback={<SkeletonForm />}>
-        <CompanionFormWithData />
-      </Suspense>
+    <div className="container mx-auto py-8 md:px-0 space-y-10">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold">Torne-se uma Sugar na Onesugar</h1>
+        <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
+      </div>
+      <div id="register-form">
+        <Suspense fallback={<SkeletonForm />}>
+          <CompanionFormWithData prefill={prefill} />
+        </Suspense>
+      </div>
     </div>
   );
 }

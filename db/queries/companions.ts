@@ -16,6 +16,13 @@ import { db } from "..";
 import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import {
+  upsertContactInRD,
+  tagCompanionInRD,
+  sendConversionEventToRD,
+  RD_CONVERSION_APROVADA,
+  RD_CONVERSION_RECUSADA,
+} from "@/lib/rd-station";
+import {
   CompanionFiltered,
   CompanionPreview,
   FilterTypesCompanions,
@@ -256,6 +263,49 @@ function buildCompanionsQuery(
     );
 }
 
+export async function getDoDiaCompanion() {
+  const results = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      age: companionsTable.age,
+      price: companionsTable.price,
+      shortDescription: companionsTable.shortDescription,
+      verified: companionsTable.verified,
+      city: citiesTable.city,
+      imageUrl: imagesTable.public_url,
+    })
+    .from(companionsTable)
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .leftJoin(
+      imagesTable,
+      and(
+        eq(imagesTable.companionId, companionsTable.id),
+        eq(imagesTable.is_verification_video, false),
+      ),
+    )
+    .where(
+      and(
+        eq(companionsTable.plan_type, 'do_dia'),
+        eq(companionsTable.verified, true),
+      ),
+    )
+    .limit(1);
+
+  if (!results.length) return null;
+  const row = results[0];
+  return {
+    id: row.id,
+    name: row.name,
+    age: row.age,
+    price: row.price,
+    shortDescription: row.shortDescription,
+    verified: row.verified,
+    city: row.city,
+    imageUrl: row.imageUrl,
+  };
+}
+
 export async function getRandomCompanions(
   plans?: PlanType[],
   citySlug?: string,
@@ -287,6 +337,7 @@ export async function getRandomCompanions(
       price: companionsTable.price,
       city: citiesTable.city,
       mainImageUrl: imagesTable.public_url,
+      planType: companionsTable.plan_type,
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
@@ -295,14 +346,22 @@ export async function getRandomCompanions(
     .orderBy(planTypeOrder, sql`RANDOM()`, companionsTable.id)
     .limit(10);
 
-  return results.map((row) => ({
-    id: row.id,
-    name: row.name,
-    age: row.age,
-    price: row.price,
-    city: row.city,
-    images: row.mainImageUrl ? [row.mainImageUrl] : [],
-  }));
+  const seen = new Set<number>();
+  return results
+    .filter((row) => {
+      if (seen.has(row.id)) return false;
+      seen.add(row.id);
+      return true;
+    })
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      age: row.age,
+      price: row.price,
+      city: row.city,
+      images: row.mainImageUrl ? [row.mainImageUrl] : [],
+      planType: row.planType,
+    }));
 }
 // New function to count total companions for pagination
 export async function countCompanionsPages(
@@ -482,6 +541,8 @@ export async function registerCompanion(
 
       return companion;
     });
+
+    await upsertContactInRD({ email, name, phone: phoneNumber });
 
     return JSON.parse(JSON.stringify(newCompanion));
   } catch (error) {
@@ -725,9 +786,11 @@ export async function updateCompanionFromForm(
   clerkId: string,
   data: RegisterCompanionFormValues,
 ) {
+  let email: string | undefined;
+
   await db.transaction(async (tx) => {
     // Update companionsTable
-    await tx
+    const [companion] = await tx
       .update(companionsTable)
       .set({
         name: data.name,
@@ -746,7 +809,10 @@ export async function updateCompanionFromForm(
         verified: false,
         updated_at: new Date(),
       } as NewCompanion)
-      .where(eq(companionsTable.auth_id, clerkId));
+      .where(eq(companionsTable.auth_id, clerkId))
+      .returning({ id: companionsTable.id, email: companionsTable.email });
+
+    email = companion?.email;
 
     await tx
       .update(characteristicsTable)
@@ -763,19 +829,12 @@ export async function updateCompanionFromForm(
         piercings: data.piercings,
         smoker: data.smoker,
       } as NewCharacteristic)
-      .where(
-        eq(
-          characteristicsTable.companion_id,
-          (
-            await tx
-              .select({ id: companionsTable.id })
-              .from(companionsTable)
-              .where(eq(companionsTable.auth_id, clerkId))
-              .limit(1)
-          )[0].id,
-        ),
-      );
+      .where(eq(characteristicsTable.companion_id, companion.id));
   });
+
+  if (email) {
+    await upsertContactInRD({ email, name: data.name, phone: data.phoneNumber });
+  }
 }
 
 export async function getUnverifiedCompanions(): Promise<
@@ -791,6 +850,7 @@ export async function getUnverifiedCompanions(): Promise<
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
+        phone: companionsTable.phone,
         planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
       },
       city: {
@@ -889,18 +949,41 @@ export async function getUnverifiedCompanions(): Promise<
 }
 
 export async function approveCompanion(id: number) {
-  await db
+  const [companion] = await db
     .update(companionsTable)
     .set({ verified: true })
-    .where(eq(companionsTable.id, id));
+    .where(eq(companionsTable.id, id))
+    .returning({ email: companionsTable.email, name: companionsTable.name });
+
+  if (companion?.email) {
+    await tagCompanionInRD(companion.email, "aprovado", companion.name);
+    await sendConversionEventToRD(
+      companion.email,
+      RD_CONVERSION_APROVADA,
+      companion.name,
+    );
+  }
 
   return { success: true, id };
 }
 
 export async function rejectCompanion(id: number) {
+  let email: string | undefined;
+  let name: string | undefined;
+
   await db.transaction(async (tx) => {
-    await tx.delete(companionsTable).where(eq(companionsTable.id, id));
+    const [companion] = await tx
+      .delete(companionsTable)
+      .where(eq(companionsTable.id, id))
+      .returning({ email: companionsTable.email, name: companionsTable.name });
+    email = companion?.email;
+    name = companion?.name;
   });
+
+  if (email) {
+    await tagCompanionInRD(email, "recusado", name);
+    await sendConversionEventToRD(email, RD_CONVERSION_RECUSADA, name);
+  }
 
   return { success: true, id };
 }

@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import {
   ChartNoAxesColumnIncreasing,
   Heart,
+  HelpCircle,
   Menu,
+  ScrollText,
   ShoppingBag,
   User,
 } from 'lucide-react';
@@ -23,6 +25,7 @@ import {
 import Image from 'next/image';
 import { auth } from '@clerk/nextjs/server';
 import { ModeToggle } from './modeToggle';
+import { isExternal } from 'util/types';
 
 export const admins = [
   `user_2wYHzDclTd4kDn7lCymwRzxsUli`,
@@ -44,12 +47,14 @@ interface NavItem {
   icon?: React.ReactNode;
   prefetch?: boolean;
   className?: string;
+  isExternal?: boolean;
 }
 
 const navItems: NavItem[] = [
   {
     label: 'Registo',
-    href: '/companions/register',
+    // Passa pela calculadora: vende o valor e capta o contacto antes do formulário.
+    href: '/quanto-ganha-acompanhante',
     icon: <ChartNoAxesColumnIncreasing />,
     prefetch: false,
     className:
@@ -72,12 +77,29 @@ const navItems: NavItem[] = [
       'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
   },
   {
-    label: 'Blog',
-    href: '/blog',
-    icon: <User className="h-4 w-4" />,
-    prefetch: true,
+    label: 'Contos',
+    href: '/contos',
+    icon: <ScrollText className="h-4 w-4" />,
+    prefetch: false,
     className:
       'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+  },
+  {
+    label: 'Ajuda no registo',
+    href: '/ajuda-anunciantes',
+    icon: <HelpCircle className="h-4 w-4" />,
+    prefetch: false,
+    className:
+      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+  },
+  {
+    label: 'Blog',
+    href: 'https://blog.onesugar.pt',
+    icon: <User className="h-4 w-4" />,
+    prefetch: false,
+    className:
+      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+    isExternal: true,
   }
 ];
 
@@ -105,12 +127,14 @@ export default async function Header() {
           </Link>
           {/* Desktop Nav */}
           <nav className="hidden md:flex gap-x-16">
-            {navItems.map(({ label, href, prefetch, className }) => (
+            {navItems.map(({ label, href, prefetch, className, isExternal }) => (
               <Link
                 key={href}
                 href={href}
                 prefetch={prefetch}
                 className={className}
+                {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
+
               >
                 {label}
               </Link>
@@ -169,12 +193,13 @@ export default async function Header() {
               >
                 <SheetTitle />
                 <nav className="flex flex-col space-y-2">
-                  {navItems.map(({ label, href, icon }) => (
+                  {navItems.map(({ label, href, icon, isExternal }) => (
                     <Link
                       key={href}
                       href={href}
                       className="text-sm border border-neutral-200 rounded-xl p-2 font-medium transition-colors hover:text-primary flex items-center gap-4"
                       prefetch={false}
+                      {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
                     >
                       {icon} {label}
                     </Link>

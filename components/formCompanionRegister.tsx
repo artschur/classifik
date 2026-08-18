@@ -67,21 +67,24 @@ import { cn } from "@/lib/utils";
 import { IconBrandInstagram, IconLanguage } from "@tabler/icons-react";
 import { registerCompanionAction } from "@/app/actions/register";
 import { completeFirstStepRegistration } from "@/app/companions/register/action";
+import { EarningsCalculator } from "@/components/earnings-calculator";
 
 const pageOneSchema = z.object({
   // Companion Info
   name: z.string().min(2, "Nome precisa ter ao menos 2 caractéres"),
   shortDescription: z
-    .string()
-    .min(10, "Descrição curta precisa ter ao menos 10 caractéres")
-    .max(60, "Descrição curta pode ter no máximo 60 caractéres"),
+  .string()
+  .max(150, "Descrição curta pode ter no máximo 150 caractéres")
+  .optional()
+  .or(z.literal("")),
   phoneNumber: z
     .string()
     .min(8, "Numero de telefone precisa ter ao menos 8 caractéres"),
   instagramHandle: z.string().optional(),
   description: z
     .string()
-    .min(30, "Descrição precisa ter ao menos 30 caractéres"),
+    .min(30, "Descrição precisa ter ao menos 30 caractéres")
+    .max(500, "Descrição não pode ter mais de 500 caractéres"),
   price: z.number().min(1, "Seu preço precisa ser positivo"),
   age: z.number().min(18, "Você precisa ter mais de 18 anos!").max(100),
   gender: z.string().min(1, "Gênero é obrigatório"),
@@ -142,12 +145,21 @@ interface RegisterCompanionFormProps {
   companionData?:
   | (RegisterCompanionFormValues & { companionId: number })
   | null
-  | undefined; // Optional companion data for editing
+  | undefined;
+  maxPhotos?: number;
+  /**
+   * Valores que a utilizadora já introduziu antes de chegar aqui (ex.: na
+   * calculadora pública). Só se aplicam a um registo novo — nunca sobrepõem
+   * dados de um perfil existente em edição.
+   */
+  prefill?: { phoneNumber?: string; price?: number };
 }
 
 export function RegisterCompanionForm({
   cities,
   companionData,
+  maxPhotos = 10,
+  prefill,
 }: RegisterCompanionFormProps) {
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState("");
@@ -240,10 +252,10 @@ export function RegisterCompanionForm({
       return {
         name: "",
         shortDescription: "",
-        phoneNumber: "",
+        phoneNumber: prefill?.phoneNumber ?? "",
         description: "",
         instagramHandle: "",
-        price: 0,
+        price: prefill?.price ?? 0,
         age: 18,
         gender: "",
         gender_identity: "",
@@ -260,7 +272,7 @@ export function RegisterCompanionForm({
         piercings: false,
         smoker: false,
         neighborhood: "",
-        city: 1,
+        city: 0,
         state: "",
         country: "",
         meets_at_hotel: false,
@@ -287,6 +299,26 @@ export function RegisterCompanionForm({
 
   const handleFileUpload = async (files: File[]) => {
     if (!files.length) return;
+
+    if (images.length >= maxPhotos) {
+      toast({
+        variant: "destructive",
+        title: "Limite de ficheiros atingido",
+        description: `O teu plano permite no máximo ${maxPhotos} fotos e vídeos.`,
+      });
+      return;
+    }
+
+    const allowedCount = maxPhotos - images.length;
+    const filesToUpload = files.slice(0, allowedCount);
+    if (filesToUpload.length < files.length) {
+      toast({
+        title: "Alguns ficheiros não foram enviados",
+        description: `Só podias adicionar mais ${allowedCount} ficheiro${allowedCount !== 1 ? "s" : ""} (limite de ${maxPhotos}).`,
+        variant: "destructive",
+      });
+    }
+
     setUploadStatus("Enviando arquivos...");
 
     try {
@@ -300,11 +332,6 @@ export function RegisterCompanionForm({
           const companion = await registerCompanionAction(formData);
           currentCompanionId = companion.id;
           setCompanionId(companion.id);
-          toast({
-            variant: "success",
-            title: "Perfil criado",
-            description: `Hey ${formData.name}! Agora fazendo upload das suas fotos.`,
-          });
         } catch (error) {
           toast({
             variant: "destructive",
@@ -331,7 +358,7 @@ export function RegisterCompanionForm({
 
       // NOW upload images with the companionId
       const results = await Promise.all(
-        files.map((file) => uploadImage(file, currentCompanionId)),
+        filesToUpload.map((file) => uploadImage(file, currentCompanionId)),
       );
 
       const errors = results.filter((r) => r.error);
@@ -456,13 +483,7 @@ export function RegisterCompanionForm({
 
       // Companion already created during photo upload, just redirect
       await completeFirstStepRegistration();
-      toast({
-        variant: "success",
-        title: "Perfil criado com sucesso",
-        description:
-          "Seja bem vindo(a) à nossa plataforma. Confira nossos planos",
-      });
-      router.push("/checkout");
+      router.push("/companions/verification");
       return;
     }
     try {
@@ -491,12 +512,29 @@ export function RegisterCompanionForm({
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      {!companionData && currentPage === 0 && (
+        <div className="mx-auto max-w-3xl mb-8">
+          <EarningsCalculator
+            cta={
+              <button
+                type="button"
+                onClick={() =>
+                  document.getElementById("form-fields")?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+              >
+                Criar o meu perfil de Sugar gratuitamente
+              </button>
+            }
+          />
+        </div>
+      )}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="mx-auto max-w-3xl"
         >
-          <Card>
+          <Card id="form-fields">
             <CardHeader>
               <CardTitle>
                 {companionData ? "Edit Profile" : "Registre-se"}
@@ -513,7 +551,7 @@ export function RegisterCompanionForm({
                 <div className="w-full aspect-video">
                   <iframe
                     className="w-full h-full rounded-lg border shadow-sm"
-                    src="https://youtube.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
+                    src="https://www.youtube-nocookie.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
                     title="Vídeo de verificação"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -1229,10 +1267,15 @@ export function RegisterCompanionForm({
               {currentPage === 3 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Suas Fotos</h3>
-                  <p className="text-sm text-neutral-500">
-                    Adicione fotos suas para que os clientes possam te conhecer
-                    melhor.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-neutral-500">
+                      Adicione fotos e vídeos para que os clientes possam conhecer
+                      melhor.
+                    </p>
+                    <span className={`text-sm font-medium ${images.length >= maxPhotos ? "text-destructive" : "text-neutral-500"}`}>
+                      {images.length}/{maxPhotos}
+                    </span>
+                  </div>
 
                   {images.length > 0 && (
                     <>
@@ -1405,7 +1448,14 @@ export function RegisterCompanionForm({
                     </>
                   )}
 
-                  <FileUpload onChange={handleFileUpload} />
+                  {images.length < maxPhotos ? (
+                    <FileUpload onChange={handleFileUpload} />
+                  ) : (
+                    <p className="text-sm text-center text-muted-foreground border border-dashed border-border rounded-lg py-6">
+                      Limite de {maxPhotos} ficheiros atingido.
+                      {maxPhotos === 10 && " Faz upgrade para o plano Classic para adicionar até 30 fotos."}
+                    </p>
+                  )}
                   {uploadStatus && (
                     <p className="text-sm text-red-500">{uploadStatus}</p>
                   )}
@@ -1436,7 +1486,7 @@ export function RegisterCompanionForm({
                       Registrando perfil...
                     </>
                   ) : currentPage === 2 ? (
-                    "Adicionar Fotos"
+                    "Próximo"
                   ) : (
                     "Próximo"
                   )}

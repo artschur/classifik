@@ -69,7 +69,7 @@ export async function GET(req: Request) {
                     },
                 },
             },
-            payment_method_collection: 'if_required', // Allow trials without payment method
+            payment_method_collection: 'always',
             metadata: {
                 userId: userId,
                 stripeCustomerId: stripeCustomerId as string,

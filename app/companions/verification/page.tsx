@@ -1,88 +1,51 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { DocumentVerificationForm } from '@/components/documentVerificationForm';
-import { getCompanionByClerkId } from '@/db/queries/companions';
+import { db } from '@/db';
+import { companionsTable } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { isVerificationPending, verifyItemsIfOnboardingComplete } from '@/app/actions/document-verification';
-import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { VideoVerificationForm } from '@/components/video-verification-form';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DocumentVerificationPage() {
+export default async function VideoVerificationPage() {
   const { userId } = await auth();
 
-  if (!userId) {
-    redirect('/');
-  }
+  if (!userId) redirect('/');
 
-  try {
-    const companion = await getCompanionByClerkId(userId);
-    if (!companion) {
-      redirect('/companions/register');
-    }
-  } catch (error) {
-    // If there's an error or companion not found, redirect to register
-    redirect('/companions/register');
-  }
+  const [companion] = await db
+    .select({ id: companionsTable.id })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, userId))
+    .limit(1)
+    .catch(() => [null]);
 
-  // Get verification status and uploaded items
-  const [isPendingVerification, uploadStatus] = await Promise.all([
+  if (!companion) redirect('/companions/register');
+
+  const [isPending, uploadStatus] = await Promise.all([
     isVerificationPending(userId),
     verifyItemsIfOnboardingComplete(userId),
   ]);
 
-  if (isPendingVerification) {
-    redirect('/companions/verification/pending');
+  if (isPending) redirect('/companions/verification/pending');
+
+  // If video already uploaded, go straight to document step
+  if (uploadStatus.isVerificationVideoUploaded && !uploadStatus.isDocumentUploaded) {
+    redirect('/companions/verification/document');
   }
 
-  const allDocsUploaded = uploadStatus.isVerificationVideoUploaded && uploadStatus.isDocumentUploaded;
-
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-4">Verificação de Documentos</h1>
-      <p className="text-muted-foreground mb-6">
-        Envie os documentos necessários para verificar sua conta. A verificação será concluída após a análise.
-      </p>
-
-      {/* Status Card */}
-      <div className="bg-card border rounded-lg p-6 mb-8 shadow-sm">
-        <div className="flex items-start gap-3 mb-4">
-          <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg mb-3">Status da Verificação</h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                {uploadStatus.isVerificationVideoUploaded ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Clock className="h-5 w-5 text-orange-500 flex-shrink-0" />
-                )}
-                <span className={uploadStatus.isVerificationVideoUploaded ? 'text-green-700 font-medium' : 'text-muted-foreground'}>
-                  Vídeo de Verificação {uploadStatus.isVerificationVideoUploaded ? '✓' : '(Pendente)'}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                {uploadStatus.isDocumentUploaded ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Clock className="h-5 w-5 text-orange-500 flex-shrink-0" />
-                )}
-                <span className={uploadStatus.isDocumentUploaded ? 'text-green-700 font-medium' : 'text-muted-foreground'}>
-                  Documento de Identidade {uploadStatus.isDocumentUploaded ? '✓' : '(Pendente)'}
-                </span>
-              </div>
-            </div>
-            <div className={`mt-4 pt-4 border-t ${allDocsUploaded ? 'bg-green-50 -m-6 p-6 rounded-b-lg' : ''}`}>
-              <p className={`text-sm font-medium ${allDocsUploaded ? 'text-green-800' : 'text-orange-600'}`}>
-                {allDocsUploaded
-                  ? '✓ Todos os documentos enviados! Nossa equipe está verificando suas informações. Você será notificado assim que a verificação for concluída.'
-                  : '⚠️ Importante: Você precisa enviar AMBOS os itens acima para prosseguir com a verificação.'}
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="container mx-auto py-12 px-4">
+      {/* Step indicator */}
+      <div className="flex items-center gap-2 mb-10 text-sm font-semibold text-muted-foreground">
+        <span className="bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
+        <span className="text-foreground">Vídeo de Verificação</span>
+        <span className="mx-2">→</span>
+        <span className="bg-muted rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
+        <span>Documento de Identificação</span>
       </div>
 
-      <DocumentVerificationForm uploadStatus={uploadStatus} />
+      <VideoVerificationForm initialVideoUploaded={uploadStatus.isVerificationVideoUploaded} />
     </div>
   );
 }
