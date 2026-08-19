@@ -31,6 +31,19 @@ import { kv } from '@/db/index';
 
 // ── Schema JSON-LD ────────────────────────────────────────────────────────────
 
+/**
+ * Título do hero, numa única fonte de verdade.
+ *
+ * Os blocos desktop e mobile renderizam ambos no DOM (só um está visível de
+ * cada vez), por isso apenas o bloco mobile o usa como <h1> — o desktop
+ * repete-o como <p> com o mesmo aspecto. Assim a página tem um só H1.
+ */
+const heroHeadline = (
+  <>
+    A plataforma de <span className="text-rose-400">acompanhantes</span> verificadas de Portugal
+  </>
+);
+
 /** Atalhos do menu do hero — cobrem os dois públicos e as landings de topo de funil. */
 const popularLinks = [
   { href: '/location', label: 'Ver acompanhantes', icon: <Heart className="h-5 w-5" /> },
@@ -235,21 +248,49 @@ export default async function HomePage() {
 
               {/* LEFT: text */}
               <div className="space-y-6">
-                <p
-                  className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white"
-                >
-                  {h1Text}
+                {/* Selo de confiança — rótulo visual, não é cabeçalho */}
+                <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-bold px-4 py-1.5 rounded-full">
+                  <ShieldCheck className="h-4 w-4 text-rose-400" />
+                  Perfis verificados um a um
+                </span>
+
+                {/* Mesmo texto do H1 do bloco mobile, aqui como <p> para não duplicar o H1 */}
+                <p className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tighter text-white">
+                  {heroHeadline}
                 </p>
-                <h2 className="text-base md:text-lg text-white/70 max-w-md">
-                  Descubra as acompanhantes mais sofisticadas de Portugal com total discrição e segurança.
-                </h2>
-                <Image
-                  src="/badge-onesugar.png"
-                  alt="Bem vindo a Onesugar"
-                  width={400}
-                  height={300}
-                  priority
-                />
+
+                {/* Provas objectivas — nada de números de volume que não possamos sustentar */}
+                <ul className="flex flex-wrap gap-x-8 gap-y-3 text-white/80">
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">18</span>
+                    <span className="text-sm text-white/60">distritos cobertos</span>
+                  </li>
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">100%</span>
+                    <span className="text-sm text-white/60">verificação de identidade</span>
+                  </li>
+                  <li>
+                    <span className="block text-2xl lg:text-3xl font-bold text-white">0 €</span>
+                    <span className="text-sm text-white/60">para anunciar</span>
+                  </li>
+                </ul>
+
+                {/* CTAs primários: os dois públicos, separados por ponto de entrada */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/quanto-ganha-acompanhante"
+                    className="inline-flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white text-base font-bold px-7 py-3.5 rounded-full shadow-lg shadow-rose-900/40 transition-colors"
+                  >
+                    Anunciar como acompanhante
+                  </Link>
+                  <Link
+                    href="/location"
+                    className="inline-flex items-center justify-center border border-white/30 hover:border-white/60 hover:bg-white/5 text-white text-base font-semibold px-7 py-3.5 rounded-full transition-colors"
+                  >
+                    Procurar acompanhantes
+                  </Link>
+                </div>
+
                 <Suspense
                   fallback={
                     <div className="h-14 w-full max-w-md rounded-full bg-white/10 animate-pulse" />
@@ -405,7 +446,7 @@ export default async function HomePage() {
                   id="hero-heading-mobile"
                   className="text-2xl sm:text-3xl font-bold tracking-tighter text-white"
                 >
-                  A plataforma de <span className="text-rose-400">acompanhantes</span> verificadas de Portugal
+                  {heroHeadline}
                 </h1>
 
                 {/* Provas objectivas */}
