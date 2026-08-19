@@ -67,3 +67,8 @@ jspm_packages
 # TypeScript
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+# Ficheiros locais de teste — nunca vão para produção.
+# O middleware.ts sobrepõe-se ao proxy.ts (Next.js 16 renomeou-o), por isso
+# commitá-lo por engano quebraria o encaminhamento de rotas em produção.
+/middleware.ts
+/app/preview-verification/
