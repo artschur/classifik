@@ -127,6 +127,10 @@ export const companionsTable = pgTable(
     meets_at_hotel: boolean('meets_at_hotel').default(false).notNull(),
     meets_at_own_place: boolean('meets_at_own_place').default(false).notNull(),
     verified: boolean('verified').default(false).notNull(),
+    // A companion pausa o próprio anúncio (fica invisível no site, mas os
+    // dados continuam intactos) — diferente de `verified`, que é a aprovação
+    // do admin, e não deve ser reutilizado para isto.
+    paused: boolean('paused').default(false).notNull(),
 
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),

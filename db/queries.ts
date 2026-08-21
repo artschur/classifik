@@ -26,6 +26,7 @@ export async function getCompanionDetails(id: number) {
       phone: companionsTable.phone,
       price: companionsTable.price,
       verified: companionsTable.verified,
+      paused: companionsTable.paused,
       shortDescription: companionsTable.shortDescription,
       description: companionsTable.description,
       age: companionsTable.age,

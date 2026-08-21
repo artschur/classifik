@@ -42,7 +42,7 @@ import {
 import { sql } from "drizzle-orm";
 import { getEmail } from "./userActions";
 import { getImagesByAuthId } from "./images";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { PlanType } from "./kv";
 
 function buildCompanionConditions(
@@ -52,6 +52,7 @@ function buildCompanionConditions(
   const conditions: SQL[] = [
     eq(companionsTable.city_id, cityId),
     eq(companionsTable.verified, true),
+    eq(companionsTable.paused, false),
   ];
 
   if (filters?.search) {
@@ -292,6 +293,7 @@ export async function getDoDiaCompanion() {
       and(
         eq(companionsTable.plan_type, 'do_dia'),
         eq(companionsTable.verified, true),
+        eq(companionsTable.paused, false),
       ),
     )
     .limit(1);
@@ -314,7 +316,10 @@ export async function getRandomCompanions(
   plans?: PlanType[],
   citySlug?: string,
 ): Promise<CompanionPreview[]> {
-  const conditions: SQL[] = [eq(companionsTable.verified, true)];
+  const conditions: SQL[] = [
+    eq(companionsTable.verified, true),
+    eq(companionsTable.paused, false),
+  ];
   if (plans) {
     conditions.push(inArray(companionsTable.plan_type, plans!));
   }
@@ -570,6 +575,7 @@ export async function getRelevantInfoAnalytics({
       plan: companionsTable.plan_type,
       stripeCustomerId: companionsTable.stripe_customer_id,
       isPaying: companionsTable.has_active_ad,
+      paused: companionsTable.paused,
       interactions: sql<number>`COALESCE(CAST(COUNT(CASE WHEN ${reviewsTable.liked_by} IS NOT NULL THEN 1 END) AS INTEGER), 0)`,
       averageRating: sql<number>`COALESCE(avg(${reviewsTable.rating}), 0)`,
     })
@@ -583,6 +589,7 @@ export async function getRelevantInfoAnalytics({
     return {
       id: 0,
       name: "Usuário",
+      paused: false,
       interactions: 0,
       averageRating: 0,
     };
@@ -594,6 +601,7 @@ export async function getRelevantInfoAnalytics({
     plan: companion.plan,
     stripeCustomerId: companion.stripeCustomerId,
     isPaying: companion.isPaying,
+    paused: companion.paused,
     interactions: companion.interactions,
     averageRating: Number(companion.averageRating).toFixed(1),
   };
@@ -990,6 +998,29 @@ export async function rejectCompanion(id: number) {
   }
 
   return { success: true, id };
+}
+
+/**
+ * Pausa ou reactiva o anúncio da própria companion. Diferente de `verified`
+ * (aprovação do admin) — o anúncio fica invisível no site sem perder o
+ * estado de verificação, e volta a aparecer sozinho ao reactivar.
+ */
+export async function setCompanionPaused(clerkId: string, paused: boolean) {
+  const [companion] = await db
+    .update(companionsTable)
+    .set({ paused, updated_at: new Date() })
+    .where(eq(companionsTable.auth_id, clerkId))
+    .returning({ id: companionsTable.id });
+
+  if (!companion) {
+    return { success: false, error: "Perfil não encontrado." };
+  }
+
+  revalidateTag("companion");
+  revalidateTag("companions");
+  revalidateTag("companions-filter");
+
+  return { success: true, paused };
 }
 
 export async function getCompanionIdByClerkId(id: string): Promise<number> {

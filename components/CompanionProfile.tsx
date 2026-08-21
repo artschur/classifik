@@ -1,6 +1,7 @@
 import { getCompanionById } from '@/db/queries';
 import type React from 'react';
 import { Suspense } from 'react';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,9 @@ export async function CompanionProfile({
       // getVerificationVideosByCompanionId(id),
       getAudioUrlByCompanionId(id),
     ]);
+
+  // Anúncio pausado pela própria companion — invisível a todos, sem excepção.
+  if (companion.paused) notFound();
 
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 

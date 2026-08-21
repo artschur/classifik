@@ -10,6 +10,7 @@ import { getActiveSubscriptionByClerkId } from '@/db/queries/subscriptions';
 import { db } from '@/db';
 import { paymentsTable } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { ManageAdActions } from '@/components/manage-ad-actions';
 
 interface AdPurchase {
   id: string;
@@ -79,12 +80,12 @@ export default async function AnalyticsDashboard({
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex space-x-4 mb-6">
+      <div className="flex flex-wrap gap-4 mb-6">
         <Link href={'/companions/register'}>
           <Button variant="default">Editar Perfil</Button>
         </Link>
         {sessionClaims.metadata.plan === 'vip' ? (
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             <Link href={'/companions/register/audio/'}>
               <Button variant="default">Audios</Button>
             </Link>
@@ -93,6 +94,9 @@ export default async function AnalyticsDashboard({
             </Link>
           </div>
         ) : null}
+        {companion.id !== 0 && (
+          <ManageAdActions initialPaused={companion.paused} />
+        )}
       </div>
       <h1 className="text-3xl font-bold">Olá {companion.name}!</h1>
       <p className="text-xl font-sans text-gray-300 pt-4">
