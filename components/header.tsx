@@ -50,16 +50,35 @@ interface NavItem {
   isExternal?: boolean;
 }
 
-const navItems: NavItem[] = [
-  {
-    label: 'Registo',
-    // Passa pela calculadora: vende o valor e capta o contacto antes do formulário.
-    href: '/quanto-ganha-acompanhante',
-    icon: <ChartNoAxesColumnIncreasing />,
-    prefetch: false,
-    className:
-      'text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
-  },
+const registerTabClassName =
+  'text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary';
+
+/**
+ * A aba "Registo" muda de destino consoante quem clica: quem ainda não é
+ * companion passa pela calculadora (vende a proposta, capta o contacto);
+ * quem já tem conta de companion vai direto para o formulário, que serve
+ * também de edição — reenviar alguém já registado para a calculadora
+ * seria mandá-lo para trás.
+ */
+function buildRegisterNavItem(isRegisteredCompanion: boolean): NavItem {
+  return isRegisteredCompanion
+    ? {
+      label: 'Editar perfil',
+      href: '/companions/register',
+      icon: <ChartNoAxesColumnIncreasing />,
+      prefetch: false,
+      className: registerTabClassName,
+    }
+    : {
+      label: 'Registo',
+      href: '/quanto-ganha-acompanhante',
+      icon: <ChartNoAxesColumnIncreasing />,
+      prefetch: false,
+      className: registerTabClassName,
+    };
+}
+
+const restNavItems: NavItem[] = [
   {
     label: 'Acompanhantes',
     href: '/location',
@@ -104,8 +123,13 @@ const navItems: NavItem[] = [
 ];
 
 export default async function Header() {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
   const isUserAdmin = userId && isAdmin(userId);
+  const isRegisteredCompanion = sessionClaims?.metadata?.isCompanion === true;
+  const navItems: NavItem[] = [
+    buildRegisterNavItem(isRegisteredCompanion),
+    ...restNavItems,
+  ];
 
   return (
     <header className="sticky top-0 z-50 transition-all duration-200 bg-white/70 backdrop-blur-md dark:bg-gray-950/70">
