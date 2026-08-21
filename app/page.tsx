@@ -298,8 +298,8 @@ export default async function HomePage() {
                 >
                   <CitySelectionModal
                     triggerButton={
-                      <button className="group flex items-center gap-3 w-full max-w-md bg-white dark:bg-zinc-900 rounded-full pl-5 pr-2 py-2 shadow-xl text-left transition-transform hover:scale-[1.01]">
-                        <span className="flex-1 text-sm text-muted-foreground">
+                      <button className="group flex items-center gap-3 w-full max-w-md bg-white rounded-full pl-5 pr-2 py-2 shadow-xl ring-1 ring-black/5 text-left transition-transform hover:scale-[1.01]">
+                        <span className="flex-1 text-sm text-neutral-500 font-medium">
                           Procurar acompanhantes por distrito
                         </span>
                         <span className="h-10 w-10 rounded-full bg-rose-600 group-hover:bg-rose-500 flex items-center justify-center shrink-0 transition-colors">
@@ -487,8 +487,8 @@ export default async function HomePage() {
                 >
                   <CitySelectionModal
                     triggerButton={
-                      <button className="group flex items-center gap-2 w-full bg-white dark:bg-zinc-900 rounded-full pl-4 pr-1.5 py-1.5 shadow-xl text-left">
-                        <span className="flex-1 text-xs text-muted-foreground">
+                      <button className="group flex items-center gap-2 w-full bg-white rounded-full pl-4 pr-1.5 py-1.5 shadow-xl ring-1 ring-black/5 text-left">
+                        <span className="flex-1 text-xs text-neutral-500 font-medium">
                           Procurar por distrito
                         </span>
                         <span className="h-9 w-9 rounded-full bg-rose-600 flex items-center justify-center shrink-0">

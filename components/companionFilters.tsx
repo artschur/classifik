@@ -242,6 +242,7 @@ export function CompanionFilters({
                       <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="feminino">Feminino</SelectItem>
                       <SelectItem value="masculino">Masculino</SelectItem>
+                      <SelectItem value="trans">Trans</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

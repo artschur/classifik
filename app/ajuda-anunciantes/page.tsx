@@ -217,7 +217,7 @@ export default function AjudaAnunciantesPage() {
                 { name: 'Descrição completa', rule: 'mín. 30 e máx. 500 caracteres', req: true },
                 { name: 'Preço por hora', rule: 'valor numérico em €', req: true },
                 { name: 'Idade', rule: 'de 18 a 40+ anos', req: true },
-                { name: 'Género', rule: 'Masculino / Feminino / Outro', req: true },
+                { name: 'Género', rule: 'Masculino / Feminino / Trans / Outro', req: true },
                 { name: 'Línguas faladas', rule: 'mín. 1 opção', req: true },
                 { name: 'Instagram', rule: '—', req: false },
                 { name: 'Identidade de género', rule: 'Cisgénero / Transgénero / Outro', req: false },

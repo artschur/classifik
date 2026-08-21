@@ -72,7 +72,11 @@ function buildCompanionConditions(
   if (filters?.gender) {
     const genderValue = filters.gender.toLowerCase();
 
-    if (genderValue === "feminino" || genderValue === "masculino") {
+    if (
+      genderValue === "feminino" ||
+      genderValue === "masculino" ||
+      genderValue === "trans"
+    ) {
       conditions.push(ilike(companionsTable.gender, genderValue));
     }
   }

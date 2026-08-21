@@ -759,6 +759,7 @@ export function RegisterCompanionForm({
                                 Masculino
                               </SelectItem>
                               <SelectItem value="Feminino">Feminino</SelectItem>
+                              <SelectItem value="Trans">Trans</SelectItem>
                               <SelectItem value="Outro">Outro</SelectItem>
                             </SelectContent>
                           </Select>
