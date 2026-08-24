@@ -831,30 +831,49 @@ const cityMetadata: Record<string, CityData> = {
   leiria: {
     title: 'Acompanhantes em Leiria | Perfis Verificados',
     description:
-      'Encontre acompanhantes verificadas em Leiria. Perfis reais, acompanhantes de luxo e escorts verificadas no centro de Portugal na Onesugar.',
+      'Encontre acompanhantes verificadas em Leiria e nos concelhos do distrito. Perfis reais, acompanhantes de luxo e escorts verificadas no centro de Portugal na Onesugar.',
     h1: 'Acompanhantes em Leiria',
     intro:
-      'Leiria é a capital do distrito homónimo e um dos centros urbanos com crescimento mais consistente do centro de Portugal nos últimos anos. Bem posicionada entre Lisboa e Coimbra, com boa ligação rodoviária e ferroviária, a cidade atrai profissionais, estudantes universitários e visitantes que passam pelo litoral centro. Para quem procura acompanhantes em Leiria com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis e contacte directamente.',
+      'Leiria é a capital do distrito homónimo e um dos centros urbanos com crescimento mais consistente do centro de Portugal nos últimos anos. Bem posicionada entre Lisboa e Coimbra, com boa ligação rodoviária e ferroviária, a cidade atrai profissionais, estudantes do Politécnico de Leiria e visitantes que passam pelo litoral centro. Para quem procura acompanhantes em Leiria com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e em todo o distrito, de Pombal à Nazaré, da Marinha Grande às Caldas da Rainha. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Leiria: oferta verificada no centro do país',
       sections: [
         {
           paragraphs: [
-            'A posição geográfica de Leiria torna-a num ponto de passagem natural entre o norte e o sul, entre o litoral e o interior. A cidade é sede de distrito, tem uma universidade activa e recebe um fluxo constante de profissionais e visitantes que se deslocam na região Centro. Esse perfil alimenta uma procura real por acompanhantes em Leiria com disponibilidade para diferentes tipos de encontro.',
-            'Na Onesugar, os perfis disponíveis em Leiria passaram por verificação antes de qualquer publicação. Numa cidade de dimensão intermédia, a ausência de verificação noutros portais é especialmente problemática, com muitos perfis abandonados ou falsos. A Onesugar resolve esse problema à entrada.',
+            'A posição geográfica de Leiria torna-a num ponto de passagem natural entre o norte e o sul, entre o litoral e o interior. A cidade é sede de distrito, tem uma comunidade académica activa em torno do Politécnico de Leiria e recebe um fluxo constante de profissionais e visitantes que se deslocam na região Centro. Esse perfil sustenta uma procura real por acompanhantes em Leiria com disponibilidade para diferentes tipos de encontro.',
+            'Na Onesugar, os perfis disponíveis em Leiria passaram por verificação antes de qualquer publicação. Numa cidade de dimensão intermédia, a ausência de verificação noutros portais é especialmente problemática, com muitos perfis abandonados ou falsos. A Onesugar resolve esse problema à entrada, com identidade confirmada, fotografia actual e disponibilidade real em cada perfil.',
+          ],
+        },
+        {
+          heading: 'Acompanhantes em Leiria e nos concelhos do distrito',
+          paragraphs: [
+            'O distrito de Leiria vai muito além da cidade. A Onesugar tem perfis com disponibilidade na Marinha Grande e em Pombal, dois dos concelhos mais populosos, e alarga a cobertura a Batalha, Porto de Mós, Alcobaça, Nazaré, Óbidos, Caldas da Rainha e Peniche. Quem procura companhia numa destas localidades encontra perfis activos sem ter de se deslocar até à capital de distrito.',
+            'A proximidade entre estes concelhos e a boa rede de acessos faz com que muitas acompanhantes tenham disponibilidade para encontros em mais do que uma zona. A descrição de cada perfil indica a área de actuação, o que permite escolher com clareza antes de qualquer contacto.',
           ],
         },
         {
           heading: 'Acompanhantes de luxo em Leiria',
           paragraphs: [
-            'Leiria tem uma das procuras mais expressivas por acompanhantes de luxo entre as cidades de dimensão intermédia em Portugal, o que reflecte um perfil de utilizador com exigências claras em termos de qualidade e discrição. Os perfis verificados da Onesugar em Leiria incluem acompanhantes com experiência em encontros sociais, jantares e momentos privados de alto padrão.',
+            'Entre os perfis verificados da Onesugar em Leiria há acompanhantes de luxo com experiência em encontros sociais, jantares e momentos privados de alto padrão. São perfis pensados para quem valoriza discrição, apresentação cuidada e uma conversa à altura, seja para acompanhar um evento na cidade ou para um encontro reservado.',
           ],
         },
         {
-          heading: 'Leiria e a região: diversidade de oferta',
+          heading: 'Massagens e experiências sensoriais em Leiria',
           paragraphs: [
-            'A plataforma tem em Leiria perfis para diferentes preferências, incluindo acompanhantes trans com disponibilidade activa na cidade e arredores. Os filtros disponíveis permitem encontrar rapidamente o perfil mais adequado.',
-            'A Onesugar não guarda histórico de contactos nem partilha dados pessoais com terceiros. A discrição é garantida de ambos os lados.',
+            'Para além da companhia tradicional, a plataforma reúne perfis especializados em massagem sensorial e experiências de relaxamento em Leiria. Cada perfil descreve o tipo de serviço que oferece, pelo que vale a pena consultar a apresentação antes de decidir. A verificação aplica-se a todos os perfis, independentemente do tipo de encontro.',
+          ],
+        },
+        {
+          heading: 'Leiria e a região: diversidade de perfis',
+          paragraphs: [
+            'A plataforma tem em Leiria perfis para diferentes preferências, incluindo acompanhantes trans com disponibilidade activa na cidade e nos arredores. Os filtros permitem encontrar rapidamente o perfil mais adequado, por zona ou por tipo de companhia.',
+            'A Onesugar não guarda histórico de contactos nem partilha dados pessoais com terceiros. A discrição é garantida dos dois lados, e a navegação pode ser feita sem registo.',
+          ],
+        },
+        {
+          heading: 'Encontros discretos entre Lisboa e Coimbra',
+          paragraphs: [
+            'A meio caminho entre Lisboa e Coimbra, Leiria é uma escolha natural para quem viaja pela A1 ou pela linha do Oeste e procura um encontro discreto fora dos grandes centros. Essa posição intermédia ajuda a explicar por que a procura na cidade se mantém estável ao longo do ano, e não apenas em época alta.',
           ],
         },
       ],
@@ -874,6 +893,18 @@ const cityMetadata: Record<string, CityData> = {
         a: 'Sim. A Onesugar tem perfis de acompanhantes de luxo em Leiria verificados e com disponibilidade actualizada para jantares, eventos e encontros privados.',
       },
       {
+        q: 'A Onesugar cobre concelhos como Marinha Grande, Pombal e Caldas da Rainha?',
+        a: 'Sim. Para além da cidade de Leiria, a plataforma tem perfis com disponibilidade na Marinha Grande, Pombal, Caldas da Rainha e noutros concelhos do distrito, como Batalha, Alcobaça, Nazaré e Peniche. A área de actuação está indicada na descrição de cada perfil.',
+      },
+      {
+        q: 'Há acompanhantes disponíveis perto do Politécnico de Leiria?',
+        a: 'Sim. A zona da cidade, incluindo a área próxima do Politécnico de Leiria, tem perfis activos na plataforma. Utilize os filtros para encontrar o perfil mais adequado à sua preferência.',
+      },
+      {
+        q: 'As acompanhantes em Leiria deslocam-se ou recebem?',
+        a: 'A disponibilidade para deslocação ou para receber varia de perfil para perfil. Cada acompanhante indica na sua apresentação o tipo de encontro que oferece, pelo que recomendamos consultar a descrição antes do contacto.',
+      },
+      {
         q: 'A Onesugar tem perfis trans em Leiria?',
         a: 'Sim. A plataforma tem perfis trans verificados em Leiria com disponibilidade activa. Utilize os filtros disponíveis para encontrar o perfil mais adequado.',
       },
@@ -882,33 +913,73 @@ const cityMetadata: Record<string, CityData> = {
         a: 'A Onesugar lista diferentes tipos de perfis, incluindo profissionais de massagem sensorial em Leiria. Consulte a descrição de cada perfil para ver o tipo de serviço disponível.',
       },
       {
+        q: 'Os perfis de Leiria têm fotografias reais e verificadas?',
+        a: 'Sim. A verificação da Onesugar inclui a confirmação de fotografia actual antes da publicação, o que reduz os riscos de fotografias antigas ou que não correspondem à realidade.',
+      },
+      {
+        q: 'É preciso registo para contactar acompanhantes em Leiria?',
+        a: 'Não. A navegação pelos perfis de Leiria pode ser feita sem registo, e o contacto é estabelecido directamente com a acompanhante escolhida.',
+      },
+      {
+        q: 'Com que frequência os perfis de Leiria são actualizados?',
+        a: 'Os perfis reflectem a disponibilidade comunicada pelas acompanhantes. A verificação e a actualização de disponibilidade fazem parte do funcionamento da plataforma para manter a informação fiável.',
+      },
+      {
+        q: 'Há acompanhantes disponíveis à noite ou ao fim de semana em Leiria?',
+        a: 'A disponibilidade nocturna e de fim de semana varia por perfil. A apresentação de cada acompanhante indica os períodos em que está disponível, o que permite planear o encontro com antecedência.',
+      },
+      {
         q: 'É seguro contactar acompanhantes em Leiria através da Onesugar?',
         a: 'A verificação de perfis elimina os riscos mais comuns de portais sem moderação. Os dados pessoais dos utilizadores não são partilhados com terceiros e a navegação pode ser feita sem registo.',
       },
     ],
   },
-
   setubal: {
     title: 'Acompanhantes em Setúbal | Perfis Verificados',
     description:
-      'Encontre acompanhantes verificadas em Setúbal. Perfis reais, discrição total e escorts verificadas na Margem Sul e Península de Setúbal na Onesugar.',
+      'Encontre acompanhantes verificadas em Setúbal, na Margem Sul e na Península de Setúbal. Perfis reais, discrição total e escorts verificadas na Onesugar.',
     h1: 'Acompanhantes em Setúbal',
     intro:
-      'O distrito de Setúbal é um dos mais populosos do país e engloba a Margem Sul de Lisboa, a Península de Setúbal e a região da Arrábida. Cidades como Almada, Barreiro, Seixal, Palmela e a própria Setúbal fazem parte de um território com uma identidade própria, a poucos minutos da capital por ponte ou ferry. Para quem procura acompanhantes em Setúbal com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas em toda a região. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis e contacte directamente.',
+      'O distrito de Setúbal é um dos mais populosos do país e engloba a Margem Sul de Lisboa, a Península de Setúbal e a região da Arrábida. Cidades como Almada, Barreiro, Seixal, Palmela, Sesimbra e a própria Setúbal fazem parte de um território com identidade própria, a poucos minutos da capital por ponte ou ferry. Para quem procura acompanhantes em Setúbal com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas em toda a região. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Setúbal: perfis verificados na Margem Sul e Península de Setúbal',
       sections: [
         {
           paragraphs: [
-            'O distrito de Setúbal é muitas vezes subvalorizado como destino para encontros discretos, mas a sua realidade é diferente. Com uma população de mais de 800 mil habitantes, uma localização privilegiada junto ao estuário do Sado e a presença de zonas residenciais de alta qualidade em toda a Península de Setúbal, a região tem uma procura por acompanhantes verificadas que é consistente ao longo do ano.',
+            'O distrito de Setúbal é muitas vezes subvalorizado como destino para encontros discretos, mas a sua realidade é diferente. Com uma população que ultrapassa os 800 mil habitantes, uma localização privilegiada junto ao estuário do Sado e a presença de zonas residenciais de qualidade em toda a Península de Setúbal, a região tem uma procura por acompanhantes verificadas que se mantém consistente ao longo do ano.',
             'Na Onesugar, os perfis disponíveis em Setúbal cobrem toda a região, desde Almada e Seixal na Margem Sul até Palmela, Sesimbra e Setúbal cidade. Todos os perfis foram verificados antes de serem publicados, com fotografia actual e disponibilidade confirmada.',
+          ],
+        },
+        {
+          heading: 'Acompanhantes na Margem Sul: Almada, Seixal e Barreiro',
+          paragraphs: [
+            'A Margem Sul concentra o maior volume populacional do distrito, com Almada, Seixal e Barreiro à cabeça. É uma zona densamente habitada, ligada a Lisboa por ponte, comboio e ferry, e com uma procura própria por acompanhantes verificadas que não depende da capital. A Onesugar tem perfis activos nestes concelhos, com disponibilidade indicada em cada apresentação.',
+            'Para quem vive ou trabalha na Margem Sul, a vantagem é clara: encontrar companhia verificada perto de casa, sem a deslocação até Lisboa e sem abdicar da discrição. A área de actuação de cada perfil está descrita para que a escolha seja feita com clareza.',
           ],
         },
         {
           heading: 'Setúbal e a proximidade com Lisboa',
           paragraphs: [
             'A ligação rápida entre Setúbal e Lisboa, seja pela Ponte 25 de Abril, pela Ponte Vasco da Gama ou pelo ferry do Seixal, torna o distrito especialmente conveniente para quem trabalha ou visita a capital mas prefere a privacidade de um contexto diferente. Muitos utilizadores que procuram escorts na região de Setúbal valorizam exactamente esse distanciamento discreto da capital.',
-            'A Arrábida e as zonas de turismo de natureza nos arredores de Setúbal oferecem também um contexto diferente para encontros que combinam privacidade e ambiente natural. A Onesugar não guarda histórico de contactos nem partilha dados pessoais com terceiros.',
+            'A Onesugar não guarda histórico de contactos nem partilha dados pessoais com terceiros. Essa privacidade é uma das razões pelas quais a plataforma se distingue de portais sem moderação na região.',
+          ],
+        },
+        {
+          heading: 'Sesimbra, Palmela e a Arrábida',
+          paragraphs: [
+            'A sul e a nascente do distrito, Sesimbra, Palmela e a Serra da Arrábida oferecem um contexto diferente, entre o mar e a natureza. A Arrábida e as zonas de turismo de natureza nos arredores de Setúbal são procuradas por quem quer combinar privacidade e ambiente natural. A plataforma tem perfis com disponibilidade nesta parte do distrito, indicada perfil a perfil.',
+          ],
+        },
+        {
+          heading: 'Costa da Caparica e turismo balnear',
+          paragraphs: [
+            'A Costa da Caparica, no concelho de Almada, é um dos destinos balneares mais próximos de Lisboa e recebe um fluxo significativo de visitantes na época alta. Esse movimento sazonal reflecte-se numa procura acrescida por acompanhantes na zona durante os meses de verão. Os perfis verificados da Onesugar acompanham essa procura com disponibilidade actualizada.',
+          ],
+        },
+        {
+          heading: 'Acompanhantes trans e diversidade de perfis em Setúbal',
+          paragraphs: [
+            'A Onesugar reúne em Setúbal perfis para diferentes preferências, incluindo acompanhantes trans com disponibilidade activa na região. Os filtros da plataforma permitem encontrar rapidamente o perfil mais adequado, por zona do distrito ou por tipo de companhia. Todos os perfis, sem excepção, passam pela mesma verificação antes de serem publicados.',
           ],
         },
       ],
@@ -924,6 +995,10 @@ const cityMetadata: Record<string, CityData> = {
         a: 'Na Onesugar, navegue pelos perfis disponíveis em Setúbal, que cobre toda a região incluindo Almada, Seixal, Palmela e Setúbal cidade. Filtre por disponibilidade e contacte directamente.',
       },
       {
+        q: 'A Onesugar tem acompanhantes na Margem Sul (Almada, Seixal e Barreiro)?',
+        a: 'Sim. A Margem Sul é uma das zonas com mais perfis activos do distrito. A plataforma tem acompanhantes verificadas em Almada, Seixal e Barreiro, com a área de actuação indicada em cada perfil.',
+      },
+      {
         q: 'A Onesugar tem acompanhantes de luxo em Setúbal?',
         a: 'Sim. Os perfis verificados de Setúbal incluem acompanhantes de luxo para jantares, eventos e encontros privados. Consulte a descrição de cada perfil para ver o tipo de companhia disponível.',
       },
@@ -932,12 +1007,39 @@ const cityMetadata: Record<string, CityData> = {
         a: 'Sim. O distrito de Setúbal inclui Almada e toda a Margem Sul, a poucos minutos de Lisboa por ponte ou ferry. Muitos perfis têm disponibilidade para encontros em toda a área metropolitana.',
       },
       {
+        q: 'Há acompanhantes em Sesimbra e na Arrábida?',
+        a: 'Sim. A plataforma tem perfis com disponibilidade na zona de Sesimbra, Palmela e Arrábida, uma parte do distrito procurada por quem quer combinar privacidade e ambiente de natureza. A disponibilidade está indicada em cada perfil.',
+      },
+      {
+        q: 'Há acompanhantes perto da Costa da Caparica?',
+        a: 'Sim. A Costa da Caparica, no concelho de Almada, tem procura acrescida na época balnear, e a plataforma acompanha esse movimento com perfis verificados e disponibilidade actualizada na zona.',
+      },
+      {
+        q: 'A plataforma tem perfis trans em Setúbal?',
+        a: 'Sim. A Onesugar tem perfis trans verificados em Setúbal com disponibilidade activa. Utilize os filtros para encontrar o perfil mais adequado à sua preferência.',
+      },
+      {
+        q: 'Há massagens sensoriais disponíveis em Setúbal na plataforma?',
+        a: 'A Onesugar reúne diferentes tipos de perfis, incluindo profissionais de massagem sensorial na região de Setúbal. Consulte a descrição de cada perfil para ver o tipo de serviço disponível.',
+      },
+      {
+        q: 'Os perfis de Setúbal têm fotografias verificadas?',
+        a: 'Sim. A verificação inclui a confirmação de fotografia actual antes da publicação, o que reduz o risco de fotografias antigas ou que não correspondem à realidade.',
+      },
+      {
+        q: 'É preciso registo para ver perfis em Setúbal?',
+        a: 'Não. A navegação pelos perfis de Setúbal pode ser feita sem registo, e o contacto é estabelecido directamente com a acompanhante escolhida.',
+      },
+      {
+        q: 'As acompanhantes em Setúbal deslocam-se ou recebem?',
+        a: 'A disponibilidade para deslocação ou para receber varia de perfil para perfil. Cada acompanhante indica na sua apresentação o tipo de encontro que oferece, pelo que recomendamos consultar a descrição antes do contacto.',
+      },
+      {
         q: 'É seguro contactar escorts em Setúbal através da Onesugar?',
         a: 'A verificação de perfis elimina os principais riscos de portais sem moderação. Os dados dos utilizadores não são partilhados com terceiros e a navegação pode ser feita sem registo.',
       },
     ],
   },
-
   santarem: {
     title: 'Acompanhantes em Santarém | Perfis Verificados',
     description:
