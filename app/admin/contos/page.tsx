@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { isAdmin } from '@/components/header';
 import { getAllDbStories } from '@/db/queries/stories';
 import { DeleteStoryButton } from './delete-button';
+import { FeatureStoryButton } from './feature-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,7 @@ export default async function AdminContosPage() {
                   >
                     Ver →
                   </Link>
+                  <FeatureStoryButton id={story.id} featured={story.featured} />
                   <DeleteStoryButton id={story.id} storagePaths={storagePaths} />
                 </div>
               </div>

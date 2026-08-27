@@ -3,7 +3,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
-import { createDbStory, deleteDbStory } from '@/db/queries/stories';
+import { createDbStory, deleteDbStory, setDbStoryFeatured } from '@/db/queries/stories';
 import { isAdmin } from '@/components/header';
 
 const supabase = createClient(
@@ -91,6 +91,27 @@ export async function createStoryAction(
   } catch (err) {
     console.error(err);
     return { success: false, error: err instanceof Error ? err.message : 'Erro ao criar conto' };
+  }
+}
+
+/**
+ * Marca um conto já publicado como o destaque de /contos. Só um conto pode
+ * estar em destaque de cada vez — setDbStoryFeatured já trata de retirar o
+ * destaque de qualquer outro antes de o atribuir a este.
+ */
+export async function setFeaturedStoryAction(
+  id: number,
+): Promise<{ success: boolean; error?: string }> {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) return { success: false, error: 'Não autorizado' };
+
+  try {
+    await setDbStoryFeatured(id);
+    revalidatePath('/contos');
+    revalidatePath('/admin/contos');
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Erro ao marcar destaque' };
   }
 }
 
