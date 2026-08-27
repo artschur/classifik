@@ -232,6 +232,7 @@ export default async function ContosPage({
                   key={story.slug}
                   story={story}
                   isNewStory={isNew(story.publishedAt)}
+                  views={viewCounts[story.slug] ?? 0}
                 />
               ))}
             </div>
@@ -284,9 +285,11 @@ export default async function ContosPage({
 function LatestStoryCard({
   story,
   isNewStory,
+  views,
 }: {
   story: import('@/lib/stories').Story;
   isNewStory: boolean;
+  views: number;
 }) {
   return (
     <Link href={`/contos/${story.slug}`} className="group block">
@@ -317,9 +320,14 @@ function LatestStoryCard({
           <h3 className="font-bold text-sm leading-snug group-hover:text-rose-400 transition-colors line-clamp-2">
             {story.title}
           </h3>
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span className="text-xs">{story.readTime} min</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span className="text-xs">{story.readTime} min</span>
+            </div>
+            {views > 0 && (
+              <span className="text-xs text-muted-foreground">{views} leituras</span>
+            )}
           </div>
           <div className="flex items-center gap-1 text-muted-foreground">
             <CalendarDays className="h-3 w-3" />

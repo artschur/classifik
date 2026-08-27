@@ -6,6 +6,7 @@ import { getStoryBySlug, getAllSlugs, stories as staticStories, dbToStory } from
 import { StoryCard } from '@/components/story-card';
 import { StoryViewTracker } from '@/components/story-view-tracker';
 import { getAllDbStories, getDbStoryBySlug } from '@/db/queries/stories';
+import { getAllStoryViews } from '@/app/actions/story-views';
 
 export const dynamicParams = true;
 
@@ -68,6 +69,9 @@ export default async function StoryPage({
   const related = allStories
     .filter((s) => s.collectionSlug === story.collectionSlug && s.slug !== story.slug)
     .slice(0, 4);
+  const relatedViews = await getAllStoryViews(related.map((s) => s.slug)).catch(
+    () => ({}) as Record<string, number>,
+  );
 
   // Build image map: paragraphIndex → image src
   const imageAfter = new Map(story.inlineImages.map((img) => [img.afterIndex, img]));
@@ -167,7 +171,7 @@ export default async function StoryPage({
           <h2 className="text-xl font-bold mb-6">Mais da coleção</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {related.map((s) => (
-              <StoryCard key={s.slug} story={s} />
+              <StoryCard key={s.slug} story={s} views={relatedViews[s.slug]} />
             ))}
           </div>
         </div>

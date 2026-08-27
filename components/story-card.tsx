@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { CalendarDays } from 'lucide-react';
 import type { Story } from '@/lib/stories';
 
-export function StoryCard({ story }: { story: Story }) {
+export function StoryCard({ story, views }: { story: Story; views?: number }) {
   return (
     <Link href={`/contos/${story.slug}`} className="group block">
       <article className="overflow-hidden rounded-xl border border-border bg-card hover:border-rose-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-rose-900/10">
@@ -42,6 +42,9 @@ export function StoryCard({ story }: { story: Story }) {
             <span className="text-xs text-muted-foreground">{story.author}</span>
             <span className="text-xs text-muted-foreground">{story.readTime} min</span>
           </div>
+          {Boolean(views) && (
+            <p className="text-xs text-muted-foreground">{views} leituras</p>
+          )}
           <div className="flex items-center gap-1 text-muted-foreground pt-0.5">
             <CalendarDays className="h-3 w-3" />
             <span className="text-xs">
