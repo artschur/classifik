@@ -1016,9 +1016,9 @@ export async function setCompanionPaused(clerkId: string, paused: boolean) {
     return { success: false, error: "Perfil não encontrado." };
   }
 
-  revalidateTag("companion");
-  revalidateTag("companions");
-  revalidateTag("companions-filter");
+  revalidateTag("companion", "max");
+  revalidateTag("companions", "max");
+  revalidateTag("companions-filter", "max");
 
   return { success: true, paused };
 }

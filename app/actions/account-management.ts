@@ -120,9 +120,9 @@ export async function deleteCompanionAccount(confirmationPhrase: string) {
     console.error("Falha ao apagar utilizador no Clerk:", error);
   }
 
-  revalidateTag("companion");
-  revalidateTag("companions");
-  revalidateTag("companions-filter");
+  revalidateTag("companion", "max");
+  revalidateTag("companions", "max");
+  revalidateTag("companions-filter", "max");
 
   redirect("/");
 }
