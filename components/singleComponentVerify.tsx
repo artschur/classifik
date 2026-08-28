@@ -20,9 +20,11 @@ import {
   VideoIcon,
   AlertTriangle,
   Sparkle,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
@@ -32,7 +34,11 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useTransition } from 'react';
-import { approveCompanion, rejectCompanion } from '@/db/queries/companions';
+import {
+  approveCompanion,
+  rejectCompanion,
+  updateCompanionAge,
+} from '@/db/queries/companions';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CompanionFiltered, Media } from '@/types/types';
@@ -78,6 +84,8 @@ export default function SingleCompanionVerify({
     null
   );
   const [verificationNotes, setVerificationNotes] = useState<string>('');
+  const [age, setAge] = useState(companion.age);
+  const [isEditingAge, setIsEditingAge] = useState(false);
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
@@ -147,6 +155,30 @@ export default function SingleCompanionVerify({
         toast({
           title: 'Erro',
           description: 'Falha ao rejeitar a companheira. Por favor, tente novamente.',
+          variant: 'destructive',
+        });
+      }
+    });
+  };
+
+  const handleSaveAge = () => {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await updateCompanionAge(companion.id, age);
+        toast({
+          title: 'Idade Atualizada',
+          description: `A idade de ${companion.name} foi atualizada para ${age} anos.`,
+          variant: 'success',
+        });
+        setIsEditingAge(false);
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : 'Falha ao atualizar a idade.';
+        setError(message);
+        toast({
+          title: 'Erro',
+          description: message,
           variant: 'destructive',
         });
       }
@@ -351,7 +383,51 @@ export default function SingleCompanionVerify({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center space-x-2">
                 <User className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{companion.age} anos</span>
+                {isEditingAge ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={18}
+                      max={99}
+                      value={age}
+                      onChange={(e) => setAge(Number(e.target.value))}
+                      className="h-8 w-20 text-sm"
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-green-600"
+                      onClick={handleSaveAge}
+                      disabled={isPending}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setAge(companion.age);
+                        setIsEditingAge(false);
+                      }}
+                      disabled={isPending}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{age} anos</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => setIsEditingAge(true)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <Scissors className="w-4 h-4 text-muted-foreground" />

@@ -15,6 +15,7 @@ import {
 import { db } from "..";
 import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { isAdmin } from "@/components/header";
 import {
   upsertContactInRD,
   tagCompanionInRD,
@@ -958,6 +959,24 @@ export async function getUnverifiedCompanions(): Promise<
     images: imagesMap.get(String(companion.id)) || [],
     verificationVideoUrl: videosMap.get(String(companion.id)) || null,
   }));
+}
+
+export async function updateCompanionAge(id: number, age: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error("Não autorizado");
+  }
+
+  if (!Number.isInteger(age) || age < 18 || age > 99) {
+    throw new Error("Idade inválida");
+  }
+
+  await db
+    .update(companionsTable)
+    .set({ age })
+    .where(eq(companionsTable.id, id));
+
+  return { success: true, id, age };
 }
 
 export async function approveCompanion(id: number) {
