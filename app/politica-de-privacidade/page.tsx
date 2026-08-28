@@ -30,7 +30,7 @@ const privacidadeData = {
         {
           title: "Verificação e Segurança",
           content:
-            "Para garantir a integridade da plataforma, poderemos solicitar documentos de identificação e vídeos de verificação. Estes dados são utilizados exclusivamente para fins de segurança e anti-fraude, permanecendo totalmente ocultos do público e de outros utilizadores.",
+            "Para garantir a integridade da plataforma, poderemos solicitar documentos de identificação e vídeos de verificação. Estes dados são utilizados exclusivamente para fins de segurança e anti-fraude, incluindo a confirmação de que a idade indicada no anúncio corresponde à idade real do anunciante, permanecendo totalmente ocultos do público e de outros utilizadores.",
         },
         {
           title: "Dados de Navegação",

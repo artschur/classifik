@@ -45,6 +45,11 @@ const termosData = {
             "Garantir que todo o conteúdo e pessoas retratadas são maiores de 18 anos e que existe consentimento explícito para a captação e publicação de imagens/vídeos.",
         },
         {
+          title: "Idade do Perfil",
+          content:
+            "A idade indicada no anúncio deve ser compatível com a idade real e com os dados apresentados durante o processo de verificação. Discrepâncias entre a idade declarada e a idade verificada podem resultar na rejeição ou remoção do anúncio.",
+        },
+        {
           title: "Originalidade",
           content:
             "Não publicar conteúdo que envolva terceiros sem autorização, incluindo material obtido de outras plataformas sem permissão (proibição de roubo de identidade).",

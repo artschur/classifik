@@ -358,6 +358,7 @@ export default function AjudaAnunciantesPage() {
                     'Data visível e legível no papel',
                     'Legibilidade do documento de identificação',
                     'Maioridade (tens de ter 18 anos ou mais)',
+                    'Idade indicada no anúncio compatível com a idade real e com o documento',
                     'Que és uma pessoa real',
                   ]} />
                 </div>
@@ -401,6 +402,7 @@ export default function AjudaAnunciantesPage() {
                 'Fotos de má qualidade, pouco nítidas ou sem identificação clara',
                 'Fotos com marcas de água, texto sobreposto ou contactos visíveis',
                 'Informação pessoal incorreta ou impossível de confirmar',
+                'Idade indicada no anúncio não compatível com a idade real ou com a verificação',
                 'Conteúdo explícito ou que não respeita as regras da comunidade',
                 'Apresentação do perfil pouco cuidada ou sem informação suficiente',
               ]} />
