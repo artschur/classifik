@@ -28,13 +28,8 @@ import { ModeToggle } from './modeToggle';
 import { isExternal } from 'util/types';
 
 export const admins = [
-  `user_2wYHzDclTd4kDn7lCymwRzxsUli`,
-  'user_2wbWQFZpqPydugGRwP4XKRpifIV',
-  'user_2wUrNhvJel2On5NiLkgOswjKndD',
-  'user_2s07vybL9GSrjPbhjljghGwzl1X',
-  'user_36tf6wTk2mENoOHulwWyJfF48qy',
-  'user_31n1xQBKnF2DWIj5UR4zZUJP3ZG',
-  'user_374UytGFbBSmWcNPw6sS4Ihb99U'
+  'user_31n1xQBKnF2DWIj5UR4zZUJP3ZG', // Agência Classifik
+  'user_3IXZlEwPFLdsmc4izgFYopSHsjF', // Duarte
 ];
 
 export const isAdmin = (userId: string): boolean => {
