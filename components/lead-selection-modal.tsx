@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { X, Heart, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CitySelectionModal } from '@/components/city-selection-modal';
 
 interface LeadSelectionModalProps {
   open?: boolean;
@@ -24,7 +23,6 @@ export function LeadSelectionModal({ open: controlledOpen, onOpenChange }: LeadS
   const searchParams = useSearchParams();
   const { isSignedIn } = useAuth();
   const [internalOpen, setInternalOpen] = React.useState(false);
-  const [showCityModal, setShowCityModal] = React.useState(false);
 
   if (isSignedIn) {
     setInternalOpen(false);
@@ -54,12 +52,6 @@ export function LeadSelectionModal({ open: controlledOpen, onOpenChange }: LeadS
       const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
-  };
-
-  const handleClientClick = () => {
-    // Close lead selection modal and open city selection modal
-    setOpen(false);
-    setShowCityModal(true);
   };
 
   return (
@@ -118,9 +110,10 @@ export function LeadSelectionModal({ open: controlledOpen, onOpenChange }: LeadS
               </div>
             </Link>
 
-            {/* Client Option - Opens City Selection Modal */}
-            <button
-              onClick={handleClientClick}
+            {/* Client Option */}
+            <Link
+              href="/location"
+              onClick={() => setOpen(false)}
               className={cn(
                 "w-full group relative overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 dark:border-blue-800 p-6 text-left transition-all duration-300",
                 "hover:border-blue-400 hover:shadow-lg hover:scale-[1.02] dark:hover:border-blue-600"
@@ -144,7 +137,7 @@ export function LeadSelectionModal({ open: controlledOpen, onOpenChange }: LeadS
                   </ul>
                 </div>
               </div>
-            </button>
+            </Link>
 
             <p className="text-xs text-center text-muted-foreground pt-2">
               Escolha seu perfil para continuar navegando no OneSugar
@@ -152,12 +145,6 @@ export function LeadSelectionModal({ open: controlledOpen, onOpenChange }: LeadS
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* City Selection Modal - Opens after client selection */}
-      <CitySelectionModal
-        open={showCityModal}
-        onOpenChange={setShowCityModal}
-      />
     </>
   );
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Suspense } from 'react';
 import {
   Shield,
   MapPin,
@@ -22,7 +21,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { FeatureItem } from '@/components/v0/feature-tem';
 import { SectionHeading } from '@/components/v0/section-heading';
-import { CitySelectionModal } from '@/components/city-selection-modal';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { LiteYouTube } from '@/components/lite-youtube';
 import { getDoDiaCompanion } from '@/db/queries/companions';
@@ -291,24 +289,17 @@ export default async function HomePage() {
                   </Link>
                 </div>
 
-                <Suspense
-                  fallback={
-                    <div className="h-14 w-full max-w-md rounded-full bg-white/10 animate-pulse" />
-                  }
+                <Link
+                  href="/location"
+                  className="group flex items-center gap-3 w-full max-w-md bg-white rounded-full pl-5 pr-2 py-2 shadow-xl ring-1 ring-black/5 text-left transition-transform hover:scale-[1.01]"
                 >
-                  <CitySelectionModal
-                    triggerButton={
-                      <button className="group flex items-center gap-3 w-full max-w-md bg-white rounded-full pl-5 pr-2 py-2 shadow-xl ring-1 ring-black/5 text-left transition-transform hover:scale-[1.01]">
-                        <span className="flex-1 text-sm text-neutral-500 font-medium">
-                          Procurar acompanhantes por distrito
-                        </span>
-                        <span className="h-10 w-10 rounded-full bg-rose-600 group-hover:bg-rose-500 flex items-center justify-center shrink-0 transition-colors">
-                          <Search className="h-4 w-4 text-white" />
-                        </span>
-                      </button>
-                    }
-                  />
-                </Suspense>
+                  <span className="flex-1 text-sm text-neutral-500 font-medium">
+                    Procurar acompanhantes por distrito
+                  </span>
+                  <span className="h-10 w-10 rounded-full bg-rose-600 group-hover:bg-rose-500 flex items-center justify-center shrink-0 transition-colors">
+                    <Search className="h-4 w-4 text-white" />
+                  </span>
+                </Link>
 
                 {/* Links populares — menu de atalhos para as páginas de topo de funil */}
                 <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-sm overflow-hidden shadow-lg">
@@ -482,22 +473,17 @@ export default async function HomePage() {
                 </div>
 
                 {/* Barra de pesquisa por distrito */}
-                <Suspense
-                  fallback={<div className="h-12 w-full rounded-full bg-white/10 animate-pulse" />}
+                <Link
+                  href="/location"
+                  className="group flex items-center gap-2 w-full bg-white rounded-full pl-4 pr-1.5 py-1.5 shadow-xl ring-1 ring-black/5 text-left"
                 >
-                  <CitySelectionModal
-                    triggerButton={
-                      <button className="group flex items-center gap-2 w-full bg-white rounded-full pl-4 pr-1.5 py-1.5 shadow-xl ring-1 ring-black/5 text-left">
-                        <span className="flex-1 text-xs text-neutral-500 font-medium">
-                          Procurar por distrito
-                        </span>
-                        <span className="h-9 w-9 rounded-full bg-rose-600 flex items-center justify-center shrink-0">
-                          <Search className="h-3.5 w-3.5 text-white" />
-                        </span>
-                      </button>
-                    }
-                  />
-                </Suspense>
+                  <span className="flex-1 text-xs text-neutral-500 font-medium">
+                    Procurar por distrito
+                  </span>
+                  <span className="h-9 w-9 rounded-full bg-rose-600 flex items-center justify-center shrink-0">
+                    <Search className="h-3.5 w-3.5 text-white" />
+                  </span>
+                </Link>
 
                 {/* Links populares — menu de atalhos */}
                 <div className="w-full rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-sm overflow-hidden text-left shadow-lg">

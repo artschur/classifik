@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { SearchableCities } from '@/components/searchableCities';
+import PortugalMap from '@/components/PortugalMap';
 import { getAvailableCitiesSummary } from '@/db/queries';
 import { Suspense } from 'react';
 
@@ -40,24 +41,27 @@ async function CitiesList() {
 export default function LocationsPage() {
   return (
     <div className="flex flex-col justify-center items-center px-4 py-8 w-full h-full">
-      <div className="flex flex-col items-left justify-center gap-x-4 min-h-[80vh]">
+      <div className="flex flex-col items-left justify-center gap-x-4 min-h-[80vh] w-full max-w-5xl">
         <h1 className="text-3xl flex font-bold mb-6 px-2">
           Nossas localizações
         </h1>
-        <Suspense
-          fallback={
-            <div className="flex flex-col gap-y-2">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-8 w-full flex flex-row bg-neutral-200 animate-pulse rounded-md"
-                ></div>
-              ))}
-            </div>
-          }
-        >
-          <CitiesList />
-        </Suspense>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start w-full">
+          <PortugalMap />
+          <Suspense
+            fallback={
+              <div className="flex flex-col gap-y-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-8 w-full flex flex-row bg-neutral-200 animate-pulse rounded-md"
+                  ></div>
+                ))}
+              </div>
+            }
+          >
+            <CitiesList />
+          </Suspense>
+        </div>
       </div>
     </div>
   );

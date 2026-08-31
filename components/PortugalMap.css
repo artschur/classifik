@@ -1,0 +1,124 @@
+.portugal-map {
+  width: 100%;
+  max-width: 364px;
+  min-width: 220px;
+  margin: 0 auto;
+}
+
+.portugal-map__stage {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.portugal-map__mainland-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.portugal-map__local-stage {
+  position: relative;
+  width: 100%;
+}
+
+.portugal-map__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.portugal-map__district {
+  fill: hsl(var(--primary) / 0.14);
+  stroke: hsl(var(--background));
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+  cursor: pointer;
+  touch-action: manipulation;
+  outline: none;
+  transition: fill 0.15s ease;
+}
+
+.portugal-map__district:hover,
+.portugal-map__district.is-active {
+  fill: hsl(var(--primary) / 0.55);
+}
+
+.portugal-map__district.is-armed {
+  fill: hsl(var(--primary));
+}
+
+.portugal-map__district:focus-visible {
+  fill: hsl(var(--primary) / 0.55);
+  stroke: hsl(var(--primary));
+  stroke-width: 1.6;
+}
+
+.portugal-map__tooltip {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.portugal-map__tooltip-label {
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+}
+
+.portugal-map__confirm-btn {
+  pointer-events: auto;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 9999px;
+  background: hsl(var(--background));
+  color: hsl(var(--primary));
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.portugal-map__confirm-btn:hover {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.portugal-map__inset {
+  flex: 0 0 auto;
+  width: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background) / 0.7);
+}
+
+.portugal-map__inset-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 340px) {
+  .portugal-map {
+    max-width: 100%;
+  }
+}

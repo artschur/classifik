@@ -12,14 +12,12 @@ import {
 } from '@/components/ui/dialog';
 import { X, Heart, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CitySelectionModal } from '@/components/city-selection-modal';
 import { Button } from '@/components/ui/button';
 
 export function TwoStepModal() {
   const { isSignedIn, isLoaded } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<1 | 2>(1);
-  const [showCityModal, setShowCityModal] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -54,12 +52,6 @@ export function TwoStepModal() {
   const handleAgeDecline = () => {
     // Redirect away
     window.location.href = 'https://www.google.com';
-  };
-
-  const handleClientClick = () => {
-    // Close main modal and open city selection
-    setOpen(false);
-    setShowCityModal(true);
   };
 
   const handleClose = () => {
@@ -156,9 +148,10 @@ export function TwoStepModal() {
                   </div>
                 </Link>
 
-                {/* Client Option - Opens City Selection Modal */}
-                <button
-                  onClick={handleClientClick}
+                {/* Client Option */}
+                <Link
+                  href="/location"
+                  onClick={() => setOpen(false)}
                   className={cn(
                     "w-full group relative overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 dark:border-blue-800 p-6 text-left transition-all duration-300",
                     "hover:border-blue-400 hover:shadow-lg hover:scale-[1.02] dark:hover:border-blue-600"
@@ -182,7 +175,7 @@ export function TwoStepModal() {
                       </ul>
                     </div>
                   </div>
-                </button>
+                </Link>
 
                 <p className="text-xs text-center text-muted-foreground pt-2">
                   Escolha seu perfil para continuar navegando no OneSugar
@@ -192,12 +185,6 @@ export function TwoStepModal() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* City Selection Modal - Opens after client selection */}
-      <CitySelectionModal
-        open={showCityModal}
-        onOpenChange={setShowCityModal}
-      />
     </>
   );
 }

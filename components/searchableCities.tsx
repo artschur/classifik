@@ -107,12 +107,12 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
         </div>
       ) : (
         <div className="w-full">
-          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filteredCities.map((city) => (
               <li key={city.slug}>
                 <Link
                   href={`/location/${city.slug}?gender=feminino`}
-                  className="block text-2xl border border-neutral-800 text-neutral-400 hover:text-white hover:bg-primary transition-colors duration-400 cursor-pointer px-4 py-2 rounded-lg"
+                  className="flex items-center h-full text-2xl border border-neutral-800 text-neutral-400 hover:text-white hover:bg-primary transition-colors duration-400 cursor-pointer px-4 py-2 rounded-lg"
                 >
                   Distrito de {city.city}
                 </Link>
