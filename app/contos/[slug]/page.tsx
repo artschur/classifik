@@ -122,7 +122,7 @@ export default async function StoryPage({
             alt={story.title}
             fill
             priority
-            className="object-cover object-center"
+            className="object-contain object-center"
           />
         </div>
       )}
