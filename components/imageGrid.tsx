@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { getImagesByCompanionId } from '@/db/queries/images';
 import { useSwipeable } from 'react-swipeable';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { framingStyle, mediaFraming } from '@/lib/image-framing';
 
 interface ImageGridProps {
   initialImages: (Media | string)[];
@@ -64,13 +65,13 @@ export function ImageGrid({ initialImages, companionId, totalImages }: ImageGrid
       } else {
         const newMedia = result.images.map((img) => {
           const isVideoUrl = img.publicUrl.match(/\.(mp4|webm|ogg|mov)$/i);
-          if (isVideoUrl) {
-            return {
-              type: 'video',
-              publicUrl: img.publicUrl,
-            } as Media;
-          }
-          return img.publicUrl;
+          return {
+            type: isVideoUrl ? 'video' : 'image',
+            publicUrl: img.publicUrl,
+            focalX: img.focalX,
+            focalY: img.focalY,
+            zoom: img.zoom,
+          } as Media;
         });
 
         // Reset video refs for new videos
@@ -239,6 +240,7 @@ export function ImageGrid({ initialImages, companionId, totalImages }: ImageGrid
                       alt={`Media ${index + 1}`}
                       fill
                       className="object-cover"
+                      style={framingStyle(mediaFraming(media))}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                     <Image

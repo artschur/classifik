@@ -3,6 +3,15 @@ import { Characteristic, City, Companion } from "../db/schema";
 export interface Media {
   publicUrl: string;
   type?: "image" | "video";
+  /**
+   * Enquadramento não destrutivo, guardado por foto. O ponto focal é em
+   * percentagem (50/50 é o centro, que era o comportamento fixo do
+   * object-cover) e o zoom também (100 é sem ampliação). Ficam opcionais para
+   * o código que ainda passa apenas o URL continuar a funcionar.
+   */
+  focalX?: number;
+  focalY?: number;
+  zoom?: number;
 }
 
 export type CompanionPreview = Pick<Companion, "id" | "name" | "age"> & {

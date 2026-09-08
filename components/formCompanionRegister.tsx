@@ -49,7 +49,12 @@ import {
   uploadImage,
   getImagesByAuthId,
   deleteImage,
+  updateImagesOrder,
+  updateImageFraming,
 } from "@/db/queries/images";
+import { PhotoSortableGrid, type ManagedImage } from "@/components/photoSortableGrid";
+import { ImageFramingDialog } from "@/components/imageFramingDialog";
+import { mediaFraming } from "@/lib/image-framing";
 import Image from "next/image";
 import { useState } from "react";
 import {
@@ -164,12 +169,12 @@ export function RegisterCompanionForm({
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState("");
   const [isRegistering, setIsRegistering] = React.useState(false);
-  const [images, setImages] = React.useState<
-    { publicUrl: string; storagePath: string }[]
-  >([]);
+  const [images, setImages] = React.useState<ManagedImage[]>([]);
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [imageToFrame, setImageToFrame] = useState<ManagedImage | null>(null);
+  const [isSavingFraming, setIsSavingFraming] = useState(false);
   const linguasDisponiveis = [
     { value: "Português", label: "Português" },
     { value: "Inglês", label: "Inglês" },
@@ -464,6 +469,71 @@ export function RegisterCompanionForm({
         variant: "destructive",
       });
     }
+  };
+
+  const handleReorder = async (nextImages: ManagedImage[]) => {
+    const previousOrder = images;
+    // Mostra já a nova ordem e só depois confirma com o servidor, para o
+    // arrasto não parecer preso à espera da resposta.
+    setImages(nextImages);
+
+    const result = await updateImagesOrder(
+      nextImages.map((image) => image.storagePath),
+    );
+
+    if (!result.success) {
+      setImages(previousOrder);
+      toast({
+        title: "Não foi possível guardar a ordem",
+        description: result.error ?? "Tenta novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Ordem guardada",
+      description: "A primeira foto é a capa do teu perfil.",
+      variant: "success",
+    });
+  };
+
+  const handleSaveFraming = async (framing: {
+    focalX: number;
+    focalY: number;
+    zoom: number;
+  }) => {
+    if (!imageToFrame) return;
+
+    const target = imageToFrame;
+    setIsSavingFraming(true);
+
+    const result = await updateImageFraming(target.storagePath, framing);
+
+    setIsSavingFraming(false);
+
+    if (!result.success) {
+      toast({
+        title: "Não foi possível guardar o enquadramento",
+        description: result.error ?? "Tenta novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setImages((prev) =>
+      prev.map((image) =>
+        image.storagePath === target.storagePath
+          ? { ...image, ...framing }
+          : image,
+      ),
+    );
+    setImageToFrame(null);
+    toast({
+      title: "Enquadramento guardado",
+      description: "A foto original não foi alterada.",
+      variant: "success",
+    });
   };
 
   async function onSubmit(data: RegisterCompanionFormValues & { id?: number }) {
@@ -1335,117 +1405,66 @@ export function RegisterCompanionForm({
                           </AlertDialog>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {images.map((image, index) => (
-                          <div
-                            key={index}
-                            className={cn(
-                              "relative aspect-square group cursor-pointer",
-                              selectedImages.has(image.storagePath) &&
-                              "ring-2 ring-primary ring-offset-2",
-                            )}
-                            onClick={() =>
-                              toggleImageSelection(image.storagePath)
-                            }
-                          >
-                            {image.publicUrl.includes(".mp4") ? (
-                              <video
-                                src={image.publicUrl}
-                                className="w-full h-full object-cover rounded-md"
-                                controls
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Your browser does not support the video tag.
-                              </video>
-                            ) : (
-                              <Image
-                                src={image.publicUrl}
-                                alt={`Media ${index + 1}`}
-                                fill
-                                className="object-cover rounded-md"
-                              />
-                            )}
-                            <div
-                              className={cn(
-                                "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                                selectedImages.has(image.storagePath)
-                                  ? "bg-primary border-primary"
-                                  : "border-white",
-                              )}
+                      <p className="text-xs text-muted-foreground">
+                        Arrasta as fotos para mudar a ordem. A primeira é a capa
+                        do teu perfil. No ícone de recorte podes escolher que
+                        parte da foto fica visível.
+                      </p>
+                      <PhotoSortableGrid
+                        images={images}
+                        selected={selectedImages}
+                        onToggleSelect={toggleImageSelection}
+                        onReorder={handleReorder}
+                        onRequestDelete={setImageToDelete}
+                        onEditFraming={setImageToFrame}
+                      />
+
+                      <AlertDialog
+                        open={imageToDelete !== null}
+                        onOpenChange={(open) => {
+                          if (!open) setImageToDelete(null);
+                        }}
+                      >
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Você tem certeza?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Essa ação não pode ser desfeita. O arquivo será
+                              permanentemente removido.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                if (imageToDelete) {
+                                  handleDeleteImage(imageToDelete);
+                                  setImageToDelete(null);
+                                }
+                              }}
                             >
-                              <div className="absolute top-2 right-2">
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setImageToDelete(image.storagePath);
-                                      }}
-                                      className="p-1 bg-red-500 rounded-full"
-                                    >
-                                      <X className="h-4 w-4 text-white" />
-                                    </button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Você tem certeza?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Essa ação não pode ser desfeita. O
-                                        arquivo será permanentemente removido.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        Cancelar
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (imageToDelete) {
-                                            handleDeleteImage(imageToDelete);
-                                            setImageToDelete(null);
-                                          }
-                                        }}
-                                      >
-                                        Deletar
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                              <div className="absolute top-2 left-2">
-                                <div
-                                  className={cn(
-                                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                                    selectedImages.has(image.publicUrl)
-                                      ? "bg-primary border-primary"
-                                      : "border-white",
-                                  )}
-                                >
-                                  {selectedImages.has(image.storagePath) && (
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      className="h-3 w-3 text-white"
-                                    >
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                              Deletar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      <ImageFramingDialog
+                        open={imageToFrame !== null}
+                        onOpenChange={(open) => {
+                          if (!open) setImageToFrame(null);
+                        }}
+                        imageUrl={imageToFrame?.publicUrl ?? null}
+                        initialFraming={
+                          imageToFrame
+                            ? mediaFraming(imageToFrame)
+                            : { focalX: 50, focalY: 50, zoom: 100 }
+                        }
+                        isSaving={isSavingFraming}
+                        onSave={handleSaveFraming}
+                      />
                     </>
                   )}
 

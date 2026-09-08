@@ -73,18 +73,16 @@ export async function CompanionProfile({
 
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
-  const initialMedia = images.map((img) => {
-    if (
-      img.publicUrl.match(/\.(mp4|webm|ogg|mov)$/i) &&
-      !img.isVerificationVideo
-    ) {
-      return {
-        type: 'video' as const,
-        publicUrl: img.publicUrl,
-      };
-    }
-    return img.publicUrl;
-  });
+  const initialMedia = images.map((img) => ({
+    type:
+      img.publicUrl.match(/\.(mp4|webm|ogg|mov)$/i) && !img.isVerificationVideo
+        ? ('video' as const)
+        : ('image' as const),
+    publicUrl: img.publicUrl,
+    focalX: img.focalX,
+    focalY: img.focalY,
+    zoom: img.zoom,
+  }));
   return (
     <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">

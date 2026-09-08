@@ -27,6 +27,7 @@ import {
   CompanionFiltered,
   CompanionPreview,
   FilterTypesCompanions,
+  Media,
 } from "../../types/types";
 import {
   eq,
@@ -178,24 +179,33 @@ async function getCityIdFromSlug(citySlug: string): Promise<number | null> {
 // Function to fetch companion images
 async function getCompanionImages(
   companionIds: number[],
-): Promise<Map<string, string[]>> {
+): Promise<Map<string, Media[]>> {
   if (companionIds.length === 0) return new Map();
 
   const images = await db
     .select({
       companionId: imagesTable.companionId,
       public_url: imagesTable.public_url,
+      focal_x: imagesTable.focal_x,
+      focal_y: imagesTable.focal_y,
+      zoom: imagesTable.zoom,
     })
     .from(imagesTable)
-    .where(inArray(imagesTable.companionId, companionIds));
+    .where(inArray(imagesTable.companionId, companionIds))
+    .orderBy(asc(imagesTable.position), asc(imagesTable.id));
 
   return images.reduce((acc, img) => {
     if (!acc.has(img.companionId.toString())) {
       acc.set(img.companionId.toString(), []);
     }
-    acc.get(img.companionId.toString())!.push(img.public_url);
+    acc.get(img.companionId.toString())!.push({
+      publicUrl: img.public_url,
+      focalX: img.focal_x,
+      focalY: img.focal_y,
+      zoom: img.zoom,
+    });
     return acc;
-  }, new Map<string, string[]>());
+  }, new Map<string, Media[]>());
 }
 
 // Function to build the base companions query
@@ -280,6 +290,9 @@ export async function getDoDiaCompanion() {
       verified: companionsTable.verified,
       city: citiesTable.city,
       imageUrl: imagesTable.public_url,
+      focalX: imagesTable.focal_x,
+      focalY: imagesTable.focal_y,
+      zoom: imagesTable.zoom,
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
@@ -297,6 +310,9 @@ export async function getDoDiaCompanion() {
         eq(companionsTable.paused, false),
       ),
     )
+    // Com o limit(1) sobre o join, sem ordenar saía uma foto qualquer do
+    // perfil em vez da capa escolhida.
+    .orderBy(asc(imagesTable.position), asc(imagesTable.id))
     .limit(1);
 
   if (!results.length) return null;
@@ -310,6 +326,9 @@ export async function getDoDiaCompanion() {
     verified: row.verified,
     city: row.city,
     imageUrl: row.imageUrl,
+    focalX: row.focalX,
+    focalY: row.focalY,
+    zoom: row.zoom,
   };
 }
 
@@ -347,31 +366,51 @@ export async function getRandomCompanions(
       price: companionsTable.price,
       city: citiesTable.city,
       mainImageUrl: imagesTable.public_url,
+      mainImageFocalX: imagesTable.focal_x,
+      mainImageFocalY: imagesTable.focal_y,
+      mainImageZoom: imagesTable.zoom,
       planType: companionsTable.plan_type,
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .leftJoin(imagesTable, and(eq(imagesTable.companionId, companionsTable.id)))
+    // O join fica limitado à capa de cada perfil. Antes trazia todas as fotos,
+    // o que multiplicava as linhas: o limit(10) contava linhas e não perfis, e
+    // a foto que sobrava do de-duplicar era aleatória.
+    .leftJoin(
+      imagesTable,
+      and(
+        eq(imagesTable.companionId, companionsTable.id),
+        sql`${imagesTable.id} = (
+          SELECT capa."id" FROM "images" capa
+          WHERE capa."companion_id" = ${companionsTable.id}
+            AND capa."is_verification_video" = false
+          ORDER BY capa."position" ASC, capa."id" ASC
+          LIMIT 1
+        )`,
+      ),
+    )
     .where(and(...conditions))
     .orderBy(planTypeOrder, sql`RANDOM()`, companionsTable.id)
     .limit(10);
 
-  const seen = new Set<number>();
-  return results
-    .filter((row) => {
-      if (seen.has(row.id)) return false;
-      seen.add(row.id);
-      return true;
-    })
-    .map((row) => ({
-      id: row.id,
-      name: row.name,
-      age: row.age,
-      price: row.price,
-      city: row.city,
-      images: row.mainImageUrl ? [row.mainImageUrl] : [],
-      planType: row.planType,
-    }));
+  return results.map((row) => ({
+    id: row.id,
+    name: row.name,
+    age: row.age,
+    price: row.price,
+    city: row.city,
+    images: row.mainImageUrl
+      ? [
+        {
+          publicUrl: row.mainImageUrl,
+          focalX: row.mainImageFocalX ?? 50,
+          focalY: row.mainImageFocalY ?? 50,
+          zoom: row.mainImageZoom ?? 100,
+        },
+      ]
+      : [],
+    planType: row.planType,
+  }));
 }
 // New function to count total companions for pagination
 export async function countCompanionsPages(
@@ -675,13 +714,14 @@ export async function getCompanionByClerkId(
     getImagesByAuthId(clerkId),
   ]);
 
-  const imageUrls = (images as { publicUrl: string }[]).map(
-    (image) => image.publicUrl,
-  );
-
   return {
     ...response[0],
-    images: imageUrls,
+    images: images.map((image) => ({
+      publicUrl: image.publicUrl,
+      focalX: image.focalX,
+      focalY: image.focalY,
+      zoom: image.zoom,
+    })),
   };
 }
 

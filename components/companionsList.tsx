@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CompanionFiltered, FilterTypesCompanions, Media } from '@/types/types';
+import { framingStyle, mediaFraming, mediaUrl } from '@/lib/image-framing';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -102,14 +103,14 @@ const PlanRibbon = ({ plan }: { plan?: string | null }) => {
 };
 
 export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
-  const images = companion.images
-    .filter((media): media is string | Media => {
-      if (typeof media === 'string') {
-        return !media.match(/\.(mp4|webm|ogg)$/i);
-      }
-      return media.type !== 'video';
-    })
-    .map((media) => (typeof media === 'object' ? media.publicUrl : media));
+  // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o
+  // enquadramento que a anunciante escolheu para a capa.
+  const images = companion.images.filter((media): media is string | Media => {
+    if (typeof media === 'string') {
+      return !media.match(/\.(mp4|webm|ogg)$/i);
+    }
+    return media.type !== 'video';
+  });
 
   // const getPlanBadge = (planType?: string | null) => {
   //   switch (planType) {
@@ -146,10 +147,11 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
                   <div className="relative aspect-[4/3]">
                     <PlanRibbon plan={companion.planType} />
                     <Image
-                      src={image || '/placeholder.svg'}
+                      src={mediaUrl(image) || '/placeholder.svg'}
                       alt={`${companion.name} - Image ${index + 1}`}
                       fill={true}
                       className="object-cover"
+                      style={framingStyle(mediaFraming(image))}
                     />
                     <Image
                       src={'/watermark.png'}

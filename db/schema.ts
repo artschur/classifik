@@ -251,11 +251,24 @@ export const imagesTable = pgTable(
     is_verification_video: boolean('is_verification_video')
       .default(false)
       .notNull(), // Add this field
+    // Ordem escolhida pela anunciante. Sem isto a ordem era a de inserção, e
+    // reorganizar o perfil obrigava a apagar tudo e voltar a carregar.
+    position: integer('position').default(0).notNull(),
+    // Enquadramento não destrutivo: ponto focal em percentagem (50/50 é o
+    // centro, que era o comportamento fixo do object-cover) e zoom em
+    // percentagem (100 é a imagem sem ampliação).
+    focal_x: integer('focal_x').default(50).notNull(),
+    focal_y: integer('focal_y').default(50).notNull(),
+    zoom: integer('zoom').default(100).notNull(),
   },
   (table) => ({
     images_owner_idx: index('images_ownimages_auth_idx').on(table.authId),
     images_companion_idx: index('images_companion_idx').on(table.companionId),
     images_created_idx: index('images_created_idx').on(table.created_at),
+    images_companion_position_idx: index('images_companion_position_idx').on(
+      table.companionId,
+      table.position
+    ),
   })
 );
 
