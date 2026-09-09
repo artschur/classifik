@@ -342,6 +342,11 @@ export async function getRandomCompanions(
   ];
   if (plans) {
     conditions.push(inArray(companionsTable.plan_type, plans!));
+    // Sem isto, uma sugar cujo plano VIP/Plus já expirou continuava a
+    // aparecer no carrossel "VIP" para sempre, porque o plan_type gravado só
+    // é actualizado quando um webhook de assinatura chega — compras avulsas
+    // nunca disparam esse evento.
+    conditions.push(sql`${companionsTable.ad_expiration_date} > NOW()`);
   }
   if (citySlug) {
     conditions.push(eq(citiesTable.slug, citySlug));
@@ -369,7 +374,7 @@ export async function getRandomCompanions(
       mainImageFocalX: imagesTable.focal_x,
       mainImageFocalY: imagesTable.focal_y,
       mainImageZoom: imagesTable.zoom,
-      planType: companionsTable.plan_type,
+      planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
@@ -612,7 +617,7 @@ export async function getRelevantInfoAnalytics({
     .select({
       id: companionsTable.id,
       name: companionsTable.name,
-      plan: companionsTable.plan_type,
+      plan: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('plan'),
       stripeCustomerId: companionsTable.stripe_customer_id,
       isPaying: companionsTable.has_active_ad,
       paused: companionsTable.paused,

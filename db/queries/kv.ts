@@ -1,4 +1,4 @@
-import { and, eq, gt, inArray } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray } from 'drizzle-orm';
 import { db, kv } from '..';
 import { companionsTable, paymentsTable, subscriptionsTable } from '../schema';
 import { stripe } from '../stripe';
@@ -208,12 +208,15 @@ export async function hasActiveAd(clerkId: string) {
 
     if (activeSub?.end && activeSub.end > now) return true;
 
-    // 2) Fallback to legacy one-off payment window
+    // 2) Fallback to legacy one-off payment window. Sem o desc() aqui a
+    // ordenação ascendente pegava o pagamento mais ANTIGO, o oposto do que o
+    // comentário dizia — com mais de um pagamento, isso podia devolver uma
+    // data já expirada mesmo havendo uma compra mais recente ainda válida.
     const [lastDayAllowed] = await db
-      .select({ date: paymentsTable.max_allowed_date }) // ✅ Fixed: use max_allowed_date
+      .select({ date: paymentsTable.max_allowed_date })
       .from(paymentsTable)
       .where(eq(paymentsTable.clerk_id, clerkId))
-      .orderBy(paymentsTable.date) // Get the latest payment
+      .orderBy(desc(paymentsTable.date))
       .limit(1);
 
     if (!lastDayAllowed) {
