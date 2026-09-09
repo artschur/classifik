@@ -24,9 +24,17 @@ export async function upsertSubscriptionFromStripe(params: {
       : (item?.price?.product as Stripe.Product | undefined)?.id;
   const planType = priceId ? priceIdToPlan[priceId]?.name : undefined;
 
-  const currentPeriodStart = new Date();
-  const currentPeriodEnd = new Date();
-  currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 2);
+  // current_period_start/end vivem no item da assinatura nesta versão da API
+  // da Stripe (deixaram de existir no objecto subscription). O código antigo
+  // não lia daqui e gravava sempre "agora + 2 meses", fixo, independente do
+  // período real de cada plano, o que tanto podia cortar o acesso antes da
+  // hora como prolongá-lo além do previsto.
+  const currentPeriodStart = item?.current_period_start
+    ? new Date(item.current_period_start * 1000)
+    : new Date();
+  const currentPeriodEnd = item?.current_period_end
+    ? new Date(item.current_period_end * 1000)
+    : new Date();
 
   // Determine active status early
   const isActive = ACTIVE_STATUSES.includes(subscription.status as any);
