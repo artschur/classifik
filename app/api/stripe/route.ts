@@ -27,6 +27,29 @@ const allowedEvents: Stripe.Event.Type[] = [
 // Track processed events to prevent duplicates
 const processedEvents = new Set<string>();
 
+async function resolveClerkIdFromCustomer(customerId: string): Promise<string | undefined> {
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!('deleted' in customer) && customer.metadata?.userId) {
+      return customer.metadata.userId;
+    }
+  } catch (e) {
+    console.warn('Unable to retrieve customer', customerId, e);
+  }
+  return undefined;
+}
+
+/**
+ * O id da assinatura de uma fatura deixou de viver em invoice.subscription
+ * nesta versão da API da Stripe e passou para
+ * invoice.parent.subscription_details.subscription.
+ */
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | undefined {
+  const sub = invoice.parent?.subscription_details?.subscription;
+  if (!sub) return undefined;
+  return typeof sub === 'string' ? sub : sub.id;
+}
+
 export async function GET(req: Request) {
   return Response.json({ message: 'Hello from Stripe webhook!' });
 }
@@ -144,15 +167,7 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
 
-      let clerkId: string | undefined;
-      try {
-        const customer = await stripe.customers.retrieve(customerId);
-        if (!('deleted' in customer) && customer.metadata?.userId) {
-          clerkId = customer.metadata.userId;
-        }
-      } catch (e) {
-        console.warn('Unable to retrieve customer for subscription', e);
-      }
+      const clerkId = await resolveClerkIdFromCustomer(customerId);
 
       if (!clerkId) {
         console.warn('⚠️ Missing Clerk ID for subscription event');
@@ -200,24 +215,46 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
     if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object as Stripe.Invoice;
       const customerId = invoice.customer as string;
-      const subscriptionId = (invoice as any).subscription as string;
+      const subscriptionId = getInvoiceSubscriptionId(invoice);
 
-      let clerkId: string | undefined;
-      try {
-        const customer = await stripe.customers.retrieve(customerId);
-        if (!('deleted' in customer) && customer.metadata?.userId) {
-          clerkId = customer.metadata.userId;
-        }
-      } catch (e) {
-        console.warn('Unable to retrieve customer for failed payment', e);
-      }
+      const clerkId = await resolveClerkIdFromCustomer(customerId);
 
       if (clerkId && subscriptionId) {
         console.log(
           `💳 Payment failed for user ${clerkId}, subscription ${subscriptionId}`
         );
-        // You could send an email notification here
-        // The subscription will be marked as 'past_due' in the database
+        // Nada a fazer aqui além do log: quando a Stripe esgotar as
+        // tentativas de cobrança, ela move o status da assinatura (para
+        // 'past_due' e depois 'canceled'/'unpaid'), e isso chega como
+        // customer.subscription.updated/deleted, tratado acima.
+      }
+    }
+
+    // Cobrança com sucesso: é aqui que o acesso é de fato prolongado, tanto
+    // na primeira cobrança pós-trial como em cada renovação mensal. Sem este
+    // bloco, o evento chegava e não fazia nada: o gatilho estava na lista de
+    // eventos permitidos, mas não existia nenhum tratamento para ele.
+    if (event.type === 'invoice.payment_succeeded') {
+      const invoice = event.data.object as Stripe.Invoice;
+      const customerId = invoice.customer as string;
+      const subscriptionId = getInvoiceSubscriptionId(invoice);
+
+      if (subscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const clerkId = await resolveClerkIdFromCustomer(customerId);
+
+        if (clerkId) {
+          await upsertSubscriptionFromStripe({
+            subscription,
+            clerkId,
+            stripeCustomerId: customerId,
+          });
+          console.log(
+            `💰 Cobrança confirmada para user ${clerkId}, assinatura ${subscriptionId}`
+          );
+        } else {
+          console.warn('⚠️ Missing Clerk ID for invoice.payment_succeeded');
+        }
       }
     }
 
