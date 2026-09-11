@@ -1121,6 +1121,12 @@ export async function approveCompanion(id: number) {
     );
   }
 
+  // Sem isto a aprovação só ficava visível quando o cache da listagem
+  // expirasse sozinho, o que podia demorar até meia hora.
+  revalidateTag("companion", "max");
+  revalidateTag("companions", "max");
+  revalidateTag("companions-filter", "max");
+
   return { success: true, id };
 }
 
@@ -1141,6 +1147,12 @@ export async function rejectCompanion(id: number) {
     await tagCompanionInRD(email, "recusado", name);
     await sendConversionEventToRD(email, RD_CONVERSION_RECUSADA, name);
   }
+
+  // O perfil foi apagado, mas sem isto continuava listado em cache, e quem
+  // clicasse nele ia parar a uma página que já não existe.
+  revalidateTag("companion", "max");
+  revalidateTag("companions", "max");
+  revalidateTag("companions-filter", "max");
 
   return { success: true, id };
 }
