@@ -680,20 +680,24 @@ export function RegisterCompanionForm({
                   ? "Edite seu detalhes."
                   : "Insira seus detalhes e apareça na melhor plataforma de sugars de portugal."}
               </CardDescription>
-              <div className="mb-4">
-                <p className="text-sm font-medium mb-2">
-                  Exemplo de como gravar seu vídeo:
-                </p>
-                <div className="w-full aspect-video">
-                  <iframe
-                    className="w-full h-full rounded-lg border shadow-sm"
-                    src="https://www.youtube-nocookie.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
-                    title="Vídeo de verificação"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
+              {/* Só faz sentido no cadastro inicial: quem já tem perfil e vem
+                  editar já passou pela verificação e não precisa do tutorial. */}
+              {!companionData && (
+                <div className="mb-4">
+                  <p className="text-sm font-medium mb-2">
+                    Exemplo de como gravar seu vídeo:
+                  </p>
+                  <div className="w-full aspect-video">
+                    <iframe
+                      className="w-full h-full rounded-lg border shadow-sm"
+                      src="https://www.youtube-nocookie.com/embed/m5Tja4hJMXQ?autoplay=1&controls=0&mute=0&loop=1&playlist=m5Tja4hJMXQ&modestbranding=1&showinfo=0&rel=0"
+                      title="Vídeo de verificação"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Page One (Suas Informações) */}
