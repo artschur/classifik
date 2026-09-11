@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Sparkle,
   Pencil,
+  Crop,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +56,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { updateImageFramingAsAdmin } from '@/db/queries/images';
+import { ImageFramingDialog } from '@/components/imageFramingDialog';
+import { mediaFraming, mediaUrl } from '@/lib/image-framing';
 
 type Document = {
   id: number;
@@ -90,14 +94,62 @@ export default function SingleCompanionVerify({
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
-  const images = companion.images
-    .filter((media): media is string | Media => {
+  // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o storagePath
+  // e o enquadramento actual, ambos necessários para o admin poder centrar.
+  const [images, setImages] = useState<(string | Media)[]>(() =>
+    companion.images.filter((media): media is string | Media => {
       if (typeof media === 'string') {
         return !media.match(/\.(mp4|webm|ogg)$/i);
       }
       return media.type !== 'video';
     })
-    .map((media) => (typeof media === 'object' ? media.publicUrl : media));
+  );
+
+  const [imageToFrame, setImageToFrame] = useState<Media | null>(null);
+  const [isSavingFraming, setIsSavingFraming] = useState(false);
+
+  const currentImage = images[currentImageIndex];
+  const currentImageUrl = currentImage ? mediaUrl(currentImage) : null;
+  const canFrameCurrent =
+    typeof currentImage === 'object' && Boolean(currentImage.storagePath);
+
+  const handleSaveFraming = async (framing: {
+    focalX: number;
+    focalY: number;
+    zoom: number;
+  }) => {
+    if (!imageToFrame?.storagePath) return;
+
+    const target = imageToFrame;
+    setIsSavingFraming(true);
+
+    const result = await updateImageFramingAsAdmin(target.storagePath!, framing);
+
+    setIsSavingFraming(false);
+
+    if (!result.success) {
+      toast({
+        title: 'Erro',
+        description: result.error ?? 'Falha ao guardar o enquadramento.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setImages((prev) =>
+      prev.map((media) =>
+        typeof media === 'object' && media.storagePath === target.storagePath
+          ? { ...media, ...framing }
+          : media
+      )
+    );
+    setImageToFrame(null);
+    toast({
+      title: 'Enquadramento guardado',
+      description: 'A foto original não foi alterada.',
+      variant: 'success',
+    });
+  };
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -338,11 +390,23 @@ export default function SingleCompanionVerify({
           <CardContent className="grid gap-4">
             <div className="relative w-full h-[32rem] bg-black/20 rounded-lg overflow-hidden">
               <Image
-                src={images[currentImageIndex] ?? '/image.png'}
+                src={currentImageUrl ?? '/image.png'}
                 alt={companion.name}
                 fill={true}
                 className="object-contain rounded-lg"
               />
+              {canFrameCurrent && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="absolute top-2 left-2 bg-black/60 text-white hover:bg-black/80"
+                  onClick={() => setImageToFrame(currentImage as Media)}
+                >
+                  <Crop className="h-4 w-4 mr-1.5" />
+                  Centralizar
+                </Button>
+              )}
               {images.length > 1 && (
                 <>
                   <Button
@@ -730,6 +794,21 @@ export default function SingleCompanionVerify({
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImageFramingDialog
+        open={imageToFrame !== null}
+        onOpenChange={(open) => {
+          if (!open) setImageToFrame(null);
+        }}
+        imageUrl={imageToFrame?.publicUrl ?? null}
+        initialFraming={
+          imageToFrame
+            ? mediaFraming(imageToFrame)
+            : { focalX: 50, focalY: 50, zoom: 100 }
+        }
+        isSaving={isSavingFraming}
+        onSave={handleSaveFraming}
+      />
     </Card>
   );
 }

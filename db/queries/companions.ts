@@ -1023,9 +1023,14 @@ export async function getUnverifiedCompanions(): Promise<
     .select({
       companionId: imagesTable.companionId,
       public_url: imagesTable.public_url,
+      storage_path: imagesTable.storage_path,
+      focal_x: imagesTable.focal_x,
+      focal_y: imagesTable.focal_y,
+      zoom: imagesTable.zoom,
     })
     .from(imagesTable)
-    .where(inArray(imagesTable.companionId, companionIds));
+    .where(inArray(imagesTable.companionId, companionIds))
+    .orderBy(asc(imagesTable.position), asc(imagesTable.id));
 
   const videosPromise = db
     .select({
@@ -1046,9 +1051,17 @@ export async function getUnverifiedCompanions(): Promise<
     if (!acc.has(img.companionId.toString())) {
       acc.set(img.companionId.toString(), []);
     }
-    acc.get(img.companionId.toString())!.push(img.public_url);
+    // O storage_path vai junto para o admin poder reenquadrar a foto durante
+    // a verificação, que é a forma de identificar a imagem ao gravar.
+    acc.get(img.companionId.toString())!.push({
+      publicUrl: img.public_url,
+      storagePath: img.storage_path,
+      focalX: img.focal_x,
+      focalY: img.focal_y,
+      zoom: img.zoom,
+    });
     return acc;
-  }, new Map<string, string[]>());
+  }, new Map<string, Media[]>());
 
   const videosMap = videos.reduce((acc, vid) => {
     acc.set(vid.companionId.toString(), vid.public_url);

@@ -6,6 +6,7 @@ import { imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
 import { and, asc, eq, inArray, SQL, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
+import { isAdmin } from '@/components/header';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -244,6 +245,49 @@ export async function updateImageFraming(
     return { success: true };
   } catch (error) {
     console.error('Falha ao guardar enquadramento:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro desconhecido',
+    };
+  }
+}
+
+/**
+ * Mesmo enquadramento, mas para o admin ajustar a foto de outra pessoa durante
+ * a verificação. Fica separado de updateImageFraming de propósito: aquele
+ * confirma que a foto pertence a quem está a gravar, e é essa verificação que
+ * não pode ser afrouxada só para servir os dois casos.
+ */
+export async function updateImageFramingAsAdmin(
+  storagePath: string,
+  framing: { focalX: number; focalY: number; zoom: number; }
+): Promise<{ success: boolean; error?: string; }> {
+  try {
+    const clerkId = (await auth()).userId;
+    if (!clerkId || !isAdmin(clerkId)) {
+      return { success: false, error: 'Não autorizado' };
+    }
+
+    const clamp = (value: number, min: number, max: number) =>
+      Math.min(max, Math.max(min, Math.round(value)));
+
+    const [updated] = await db
+      .update(imagesTable)
+      .set({
+        focal_x: clamp(framing.focalX, 0, 100),
+        focal_y: clamp(framing.focalY, 0, 100),
+        zoom: clamp(framing.zoom, 100, 300),
+      })
+      .where(eq(imagesTable.storage_path, storagePath))
+      .returning({ id: imagesTable.id });
+
+    if (!updated) return { success: false, error: 'Foto não encontrada' };
+
+    revalidateCompanionMedia();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Falha ao guardar enquadramento como admin:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',

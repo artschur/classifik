@@ -12,6 +12,8 @@ export interface Media {
   focalX?: number;
   focalY?: number;
   zoom?: number;
+  /** Identifica a foto para quem pode alterá-la (a própria sugar ou o admin). */
+  storagePath?: string;
 }
 
 export type CompanionPreview = Pick<Companion, "id" | "name" | "age"> & {
