@@ -228,6 +228,49 @@ export function RegisterCompanionForm({
     scrollToTop();
   };
 
+  /**
+   * Na edição o perfil já está todo preenchido, então saltar direto para a
+   * etapa que se quer mexer não exige revalidar as anteriores. No cadastro
+   * inicial continua a ser passo a passo, porque aí os dados ainda não existem.
+   */
+  const handleJumpToPage = (page: number) => {
+    if (!companionData) return;
+    setCurrentPage(page);
+    scrollToTop();
+  };
+
+  /** Em que etapa vive cada campo, para poder levar a anunciante até ao erro. */
+  const fieldToPage: Record<string, number> = {
+    ...Object.fromEntries(Object.keys(pageOneSchema.shape).map((f) => [f, 0])),
+    ...Object.fromEntries(Object.keys(pageTwoSchema.shape).map((f) => [f, 1])),
+    ...Object.fromEntries(Object.keys(pageThreeSchema.shape).map((f) => [f, 2])),
+  };
+
+  /**
+   * Guardar a partir de qualquer etapa só funciona se um campo inválido noutra
+   * etapa não fizer o formulário falhar em silêncio: sem isto, carregar em
+   * guardar na aba das fotos não fazia nada visível quando o erro estava, por
+   * exemplo, no concelho. Assim o formulário leva-a até ao campo em falta.
+   */
+  const handleInvalidSubmit = (errors: Record<string, unknown>) => {
+    const firstField = Object.keys(errors)[0];
+    const page = firstField !== undefined ? fieldToPage[firstField] : undefined;
+
+    if (page !== undefined && page !== currentPage) {
+      setCurrentPage(page);
+      scrollToTop();
+    }
+
+    toast({
+      variant: "destructive",
+      title: "Falta preencher um campo",
+      description:
+        page !== undefined
+          ? `Verifique a etapa "${formSections[page]}" antes de guardar.`
+          : "Verifique os campos assinalados antes de guardar.",
+    });
+  };
+
   const getInitialValues = (): RegisterCompanionFormValues => {
     if (companionData) {
       return {
@@ -599,9 +642,32 @@ export function RegisterCompanionForm({
           />
         </div>
       )}
+      {companionData && (
+        <div className="mx-auto max-w-3xl mb-4">
+          <p className="text-sm text-muted-foreground mb-2">
+            Salte para a etapa que quer alterar. Pode guardar a partir de
+            qualquer uma.
+          </p>
+          <nav className="flex flex-wrap gap-2">
+            {formSections.map((section, index) => (
+              <Button
+                key={section}
+                type="button"
+                variant={currentPage === index ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleJumpToPage(index)}
+                aria-current={currentPage === index ? "step" : undefined}
+              >
+                <span className="mr-1.5 text-xs opacity-70">{index + 1}</span>
+                {section}
+              </Button>
+            ))}
+          </nav>
+        </div>
+      )}
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
           className="mx-auto max-w-3xl"
         >
           <Card id="form-fields">
@@ -1409,6 +1475,8 @@ export function RegisterCompanionForm({
                         Arrasta as fotos para mudar a ordem. A primeira é a capa
                         do teu perfil. No ícone de recorte podes escolher que
                         parte da foto fica visível.
+                        {companionData &&
+                          " Aqui as alterações são guardadas automaticamente, não precisas de carregar em guardar."}
                       </p>
                       <PhotoSortableGrid
                         images={images}
@@ -1482,7 +1550,7 @@ export function RegisterCompanionForm({
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex flex-wrap justify-between gap-2">
               {currentPage > 0 && (
                 <Button
                   type="button"
@@ -1493,42 +1561,45 @@ export function RegisterCompanionForm({
                   Anterior
                 </Button>
               )}
-              {currentPage < formSections.length - 1 && (
-                <Button
-                  type="button"
-                  onClick={handleNextPage}
-                  disabled={isRegistering || form.formState.isSubmitting}
-                  className={currentPage === 0 ? "ml-auto" : ""}
-                >
-                  {currentPage === 2 && isRegistering ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Registrando perfil...
-                    </>
-                  ) : currentPage === 2 ? (
-                    "Próximo"
-                  ) : (
-                    "Próximo"
-                  )}
-                </Button>
-              )}
-              {currentPage === formSections.length - 1 && (
-                <Button
-                  type="submit"
-                  disabled={form.formState.isSubmitting || isRegistering}
-                >
-                  {form.formState.isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {companionData ? "Atualizando..." : "Registrando..."}
-                    </>
-                  ) : companionData ? (
-                    "Atualizar"
-                  ) : (
-                    "Registrar"
-                  )}
-                </Button>
-              )}
+              <div className="flex gap-2 ml-auto">
+                {currentPage < formSections.length - 1 && (
+                  <Button
+                    type="button"
+                    variant={companionData ? "outline" : "default"}
+                    onClick={handleNextPage}
+                    disabled={isRegistering || form.formState.isSubmitting}
+                  >
+                    {currentPage === 2 && isRegistering ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Registrando perfil...
+                      </>
+                    ) : (
+                      "Próximo"
+                    )}
+                  </Button>
+                )}
+                {/* Na edição dá para guardar de qualquer etapa; no cadastro
+                    inicial o botão continua só no fim, porque o perfil ainda
+                    está a ser construído de raiz. */}
+                {(companionData || currentPage === formSections.length - 1) && (
+                  <Button
+                    type="submit"
+                    disabled={form.formState.isSubmitting || isRegistering}
+                  >
+                    {form.formState.isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {companionData ? "Atualizando..." : "Registrando..."}
+                      </>
+                    ) : companionData ? (
+                      "Guardar alterações"
+                    ) : (
+                      "Registrar"
+                    )}
+                  </Button>
+                )}
+              </div>
             </CardFooter>
           </Card>
         </form>

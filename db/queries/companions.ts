@@ -47,6 +47,55 @@ import { getImagesByAuthId } from "./images";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { PlanType } from "./kv";
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+/**
+ * O concelho é digitado à mão pela anunciante, então o mesmo sítio chega
+ * escrito de várias formas ("Cascais", "cascais", "CASCAIS"). Guardamos uma
+ * linha canónica por concelho e distrito, identificada pelo slug, e ligamos a
+ * companion a ela. Assim o campo fica pronto para servir de filtro ou de
+ * página própria mais tarde, em vez de ser texto solto repetido.
+ */
+async function resolveNeighborhoodId(
+  tx: typeof db,
+  rawName: string | undefined | null,
+  cityId: number,
+): Promise<number | null> {
+  const name = rawName?.trim();
+  if (!name) return null;
+
+  const slug = slugify(name);
+  if (!slug) return null;
+
+  const [existing] = await tx
+    .select({ id: neighborhoodsTable.id })
+    .from(neighborhoodsTable)
+    .where(
+      and(
+        eq(neighborhoodsTable.slug, slug),
+        eq(neighborhoodsTable.city_id, cityId),
+      ),
+    )
+    .limit(1);
+
+  if (existing) return existing.id;
+
+  const [created] = await tx
+    .insert(neighborhoodsTable)
+    .values({ neighborhood: name, city_id: cityId, slug })
+    .returning({ id: neighborhoodsTable.id });
+
+  return created?.id ?? null;
+}
+
 function buildCompanionConditions(
   cityId: number,
   filters?: FilterTypesCompanions,
@@ -344,7 +393,7 @@ export async function getRandomCompanions(
     conditions.push(inArray(companionsTable.plan_type, plans!));
     // Sem isto, uma sugar cujo plano VIP/Plus já expirou continuava a
     // aparecer no carrossel "VIP" para sempre, porque o plan_type gravado só
-    // é actualizado quando um webhook de assinatura chega — compras avulsas
+    // é actualizado quando um webhook de assinatura chega, e compras avulsas
     // nunca disparam esse evento.
     conditions.push(sql`${companionsTable.ad_expiration_date} > NOW()`);
   }
@@ -557,6 +606,12 @@ export async function registerCompanion(
 
   try {
     const newCompanion = await db.transaction(async (tx) => {
+      const neighborhoodId = await resolveNeighborhoodId(
+        tx as unknown as typeof db,
+        companionData.neighborhood,
+        city,
+      );
+
       const [companion] = await tx
         .insert(companionsTable)
         .values({
@@ -573,6 +628,7 @@ export async function registerCompanion(
           gender_identity,
           languages,
           city_id: city,
+          neighborhood_id: neighborhoodId,
           meets_at_hotel,
           meets_at_own_place,
         } as NewCompanion)
@@ -748,6 +804,7 @@ export async function getCompanionToEdit(
       gender_identity: companionsTable.gender_identity,
       languages: companionsTable.languages,
       city: companionsTable.city_id,
+      neighborhoodId: companionsTable.neighborhood_id,
       meets_at_hotel: companionsTable.meets_at_hotel,
       meets_at_own_place: companionsTable.meets_at_own_place,
     })
@@ -785,13 +842,17 @@ export async function getCompanionToEdit(
       .where(eq(citiesTable.id, companion.city))
       .limit(1),
 
-    db
-      .select({
-        neighborhood: neighborhoodsTable.neighborhood,
-      })
-      .from(neighborhoodsTable)
-      .where(eq(neighborhoodsTable.id, companion.companionId))
-      .limit(1),
+    // Antes isto comparava o id do concelho com o id da companion, dois
+    // números sem qualquer relação, por isso o campo voltava sempre vazio.
+    companion.neighborhoodId
+      ? db
+        .select({
+          neighborhood: neighborhoodsTable.neighborhood,
+        })
+        .from(neighborhoodsTable)
+        .where(eq(neighborhoodsTable.id, companion.neighborhoodId))
+        .limit(1)
+      : Promise.resolve([]),
   ]);
 
   const row = {
@@ -847,6 +908,12 @@ export async function updateCompanionFromForm(
   let email: string | undefined;
 
   await db.transaction(async (tx) => {
+    const neighborhoodId = await resolveNeighborhoodId(
+      tx as unknown as typeof db,
+      data.neighborhood,
+      data.city,
+    );
+
     // Update companionsTable
     const [companion] = await tx
       .update(companionsTable)
@@ -862,6 +929,7 @@ export async function updateCompanionFromForm(
         gender_identity: data.gender_identity,
         languages: data.languages,
         city_id: data.city,
+        neighborhood_id: neighborhoodId,
         meets_at_hotel: data.meets_at_hotel,
         meets_at_own_place: data.meets_at_own_place,
         verified: false,
