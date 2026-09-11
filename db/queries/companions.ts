@@ -963,9 +963,34 @@ export async function updateCompanionFromForm(
   }
 }
 
+/**
+ * Perfis que já estavam aprovados antes da desverificação em massa e que, por
+ * não terem documentos, ficariam invisíveis na fila e sem forma de voltarem ao
+ * ar pela interface. Entram uma vez para poderem ser reaprovados, e a aprovação
+ * tira-os da fila sozinha.
+ *
+ * A tabela é um artefacto temporário dessa operação, por isso a leitura é
+ * tolerante: se ela for apagada, a lista fica vazia e volta a valer só a regra
+ * normal de exigir documento.
+ */
+async function getLegacyApprovedIds(): Promise<number[]> {
+  try {
+    const rows = await db.execute<{ id: number; }>(
+      sql`SELECT id FROM companions_verified_backup`,
+    );
+    return Array.from(rows as Iterable<{ id: number; }>).map((row) =>
+      Number(row.id),
+    );
+  } catch {
+    return [];
+  }
+}
+
 export async function getUnverifiedCompanions(): Promise<
   (CompanionFiltered & { description: string })[]
 > {
+  const legacyApprovedIds = await getLegacyApprovedIds();
+
   let query = db
     .select({
       companion: {
@@ -1007,10 +1032,18 @@ export async function getUnverifiedCompanions(): Promise<
           SELECT 1 FROM ${imagesTable}
           WHERE ${imagesTable.companionId} = ${companionsTable.id}
         )`,
-        sql`EXISTS (
-          SELECT 1 FROM ${documentsTable}
-          WHERE ${documentsTable.companionId} = ${companionsTable.id}
-        )`,
+        // A regra continua a ser "só entra na fila quem enviou documento". A
+        // excepção são os perfis que já estavam aprovados antes, que de outra
+        // forma ficariam presos fora do site sem hipótese de reaprovação.
+        or(
+          sql`EXISTS (
+            SELECT 1 FROM ${documentsTable}
+            WHERE ${documentsTable.companionId} = ${companionsTable.id}
+          )`,
+          legacyApprovedIds.length > 0
+            ? inArray(companionsTable.id, legacyApprovedIds)
+            : sql`false`,
+        ),
       ),
     );
 
