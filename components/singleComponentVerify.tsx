@@ -58,7 +58,7 @@ import {
 } from '@/components/ui/dialog';
 import { updateImageFramingAsAdmin } from '@/db/queries/images';
 import { ImageFramingDialog } from '@/components/imageFramingDialog';
-import { mediaFraming, mediaUrl } from '@/lib/image-framing';
+import { isVideoMedia, mediaFraming, mediaUrl } from '@/lib/image-framing';
 
 type Document = {
   id: number;
@@ -96,13 +96,13 @@ export default function SingleCompanionVerify({
   );
   // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o storagePath
   // e o enquadramento actual, ambos necessários para o admin poder centrar.
+  // O filtro olha para a extensão do ficheiro e não só para o campo `type`,
+  // porque nem todas as origens o preenchem, e um vídeo que escape aqui vai
+  // parar ao <Image> e aparece como um slide em branco.
   const [images, setImages] = useState<(string | Media)[]>(() =>
-    companion.images.filter((media): media is string | Media => {
-      if (typeof media === 'string') {
-        return !media.match(/\.(mp4|webm|ogg)$/i);
-      }
-      return media.type !== 'video';
-    })
+    companion.images.filter(
+      (media): media is string | Media => !isVideoMedia(media)
+    )
   );
 
   const [imageToFrame, setImageToFrame] = useState<Media | null>(null);

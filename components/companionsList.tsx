@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CompanionFiltered, FilterTypesCompanions, Media } from '@/types/types';
-import { framingStyle, mediaFraming, mediaUrl } from '@/lib/image-framing';
+import { framingStyle, isVideoMedia, mediaFraming, mediaUrl } from '@/lib/image-framing';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -105,12 +105,9 @@ const PlanRibbon = ({ plan }: { plan?: string | null }) => {
 export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o
   // enquadramento que a anunciante escolheu para a capa.
-  const images = companion.images.filter((media): media is string | Media => {
-    if (typeof media === 'string') {
-      return !media.match(/\.(mp4|webm|ogg)$/i);
-    }
-    return media.type !== 'video';
-  });
+  const images = companion.images.filter(
+    (media): media is string | Media => !isVideoMedia(media),
+  );
 
   // const getPlanBadge = (planType?: string | null) => {
   //   switch (planType) {

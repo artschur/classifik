@@ -40,6 +40,17 @@ export function mediaUrl(media: string | Media): string {
   return typeof media === 'string' ? media : media.publicUrl;
 }
 
+/**
+ * Nem todas as queries preenchem o campo `type`, por isso confiar só nele
+ * deixava vídeos passarem por imagem e serem entregues ao <Image>, onde
+ * aparecem como um slide em branco. A extensão do ficheiro é o sinal que
+ * existe sempre.
+ */
+export function isVideoMedia(media: string | Media): boolean {
+  if (typeof media === 'object' && media.type === 'video') return true;
+  return /\.(mp4|webm|ogg|mov)$/i.test(mediaUrl(media));
+}
+
 export function mediaFraming(media: string | Media): Framing {
   if (typeof media === 'string') return { ...DEFAULT_FRAMING };
   return {

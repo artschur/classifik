@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { getImagesByCompanionId } from '@/db/queries/images';
 import { useSwipeable } from 'react-swipeable';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { framingStyle, mediaFraming } from '@/lib/image-framing';
+import { framingStyle, isVideoMedia, mediaFraming } from '@/lib/image-framing';
 
 interface ImageGridProps {
   initialImages: (Media | string)[];
@@ -37,9 +37,7 @@ export function ImageGrid({ initialImages, companionId, totalImages }: ImageGrid
   }>({});
   const [nextBatchLoading, setNextBatchLoading] = useState(false);
 
-  const isVideo = (media: Media | string) =>
-    (typeof media === 'object' && media.type === 'video') ||
-    (typeof media === 'string' && media.match(/\.(mp4|webm|ogg)$/i));
+  const isVideo = (media: Media | string) => isVideoMedia(media);
   const getMediaUrl = (media: Media | string) => (typeof media === 'object' ? media.publicUrl : media);
 
   const setVideoRef = (mediaUrl: string) => (el: HTMLVideoElement | null) => {
@@ -180,7 +178,7 @@ export function ImageGrid({ initialImages, companionId, totalImages }: ImageGrid
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {images.map((media, index) => {
-          const isVideoMedia = isVideo(media);
+          const mediaIsVideo = isVideo(media);
           const mediaUrl = getMediaUrl(media);
 
           return (
@@ -192,7 +190,7 @@ export function ImageGrid({ initialImages, companionId, totalImages }: ImageGrid
               onClick={() => setSelectedMedia(media)}
             >
               <div className="relative w-full h-full">
-                {isVideoMedia ? (
+                {mediaIsVideo ? (
                   <>
                     {!videoStates[mediaUrl]?.ready && <div className="absolute inset-0 bg-neutral-900 animate-pulse" />}
                     <video
