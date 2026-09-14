@@ -12,6 +12,11 @@ const isPublicRoute = createRouteMatcher([
   "/companions/(.*)",
   "/blog",
   "/blog/(.*)",
+  // Os planos são material de venda: quem ainda não tem conta deve poder ver
+  // preços e benefícios. O login só é pedido no momento de comprar.
+  // Sem a variante sem barra final, o link do menu (/checkout) não batia com
+  // nenhum destes padrões e caía no login.
+  "/checkout",
   "/checkout/",
   "/checkout/(.*)",
   "/politica-de-cookies",
