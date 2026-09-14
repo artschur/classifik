@@ -14,6 +14,9 @@ import { X, Heart, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
+/** Marca que a escolha Sugar/Cliente já foi mostrada a este navegador. */
+const LEAD_CHOICE_KEY = 'lead-choice-seen';
+
 export function TwoStepModal() {
   const { isSignedIn, isLoaded } = useAuth();
   const [open, setOpen] = React.useState(false);
@@ -31,21 +34,43 @@ export function TwoStepModal() {
 
     const ageVerified = localStorage.getItem('age-verified') === "true";
 
-    if (ageVerified) {
-      setStep(2);
-      setOpen(true);
-    } else {
+    // A verificação de idade continua a aparecer até ser confirmada: é o
+    // passo que não pode ser saltado.
+    if (!ageVerified) {
       setStep(1);
+      setOpen(true);
+      return;
+    }
+
+    // A escolha Sugar/Cliente é mostrada uma vez só. Antes reabria a cada
+    // carregamento de página, mesmo para quem já tinha escolhido.
+    if (localStorage.getItem(LEAD_CHOICE_KEY) !== "true") {
+      setStep(2);
       setOpen(true);
     }
   }, [isSignedIn, isLoaded]); // Re-run when auth state changes
+
+  // Marca no momento em que a escolha chega ao ecrã, e não apenas quando é
+  // clicada, para que fechar no X ou recarregar a página também não a repita.
+  React.useEffect(() => {
+    if (open && step === 2) {
+      localStorage.setItem(LEAD_CHOICE_KEY, "true");
+    }
+  }, [open, step]);
 
   if (isSignedIn) {
     return null;
   }
   const handleAgeConfirm = () => {
     localStorage.setItem('age-verified', 'true');
-    // Move to step 2
+
+    // Quem já tinha visto a escolha antes não a leva outra vez: confirmada a
+    // idade, o modal fecha.
+    if (localStorage.getItem(LEAD_CHOICE_KEY) === 'true') {
+      setOpen(false);
+      return;
+    }
+
     setStep(2);
   };
 
@@ -153,7 +178,10 @@ export function TwoStepModal() {
                   href="/location"
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "w-full group relative overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 dark:border-blue-800 p-6 text-left transition-all duration-300",
+                    // O `block` é necessário porque isto é um <a>, que por
+                    // omissão é inline: sem ele o w-full não pega e o fundo
+                    // parte-se em fragmentos.
+                    "block w-full group relative overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 dark:border-blue-800 p-6 text-left transition-all duration-300",
                     "hover:border-blue-400 hover:shadow-lg hover:scale-[1.02] dark:hover:border-blue-600"
                   )}
                 >

@@ -115,7 +115,10 @@ export function LeadSelectionModal({ open: controlledOpen, onOpenChange }: LeadS
               href="/location"
               onClick={() => setOpen(false)}
               className={cn(
-                "w-full group relative overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 dark:border-blue-800 p-6 text-left transition-all duration-300",
+                // O `block` é necessário porque isto é um <a>, que por omissão
+                // é inline: sem ele o w-full não pega e o fundo parte-se em
+                // fragmentos.
+                "block w-full group relative overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 dark:border-blue-800 p-6 text-left transition-all duration-300",
                 "hover:border-blue-400 hover:shadow-lg hover:scale-[1.02] dark:hover:border-blue-600"
               )}
             >
