@@ -76,6 +76,15 @@
   * {
     @apply border-border;
   }
+  html {
+    /* Tamanho base do site. As classes do Tailwind (text-sm, text-lg, p-4...)
+       são todas em rem, por isso este número escala o site inteiro de forma
+       proporcional: é o único sítio a mexer para aumentar ou reduzir tudo.
+       106.25% dá 17px com o padrão de 16px do navegador. Fica em percentagem,
+       e não em px, para respeitar quem alterou o tamanho de letra padrão no
+       próprio navegador. */
+    font-size: 106.25%;
+  }
   body {
     @apply bg-background text-foreground;
   }

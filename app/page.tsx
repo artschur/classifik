@@ -261,15 +261,15 @@ export default async function HomePage() {
                 <ul className="flex flex-wrap gap-x-8 gap-y-3 text-white/80">
                   <li>
                     <span className="block text-2xl lg:text-3xl font-bold text-white">18</span>
-                    <span className="text-sm text-white/60">distritos cobertos</span>
+                    <span className="text-base text-white/60">distritos cobertos</span>
                   </li>
                   <li>
                     <span className="block text-2xl lg:text-3xl font-bold text-white">100%</span>
-                    <span className="text-sm text-white/60">verificação de identidade</span>
+                    <span className="text-base text-white/60">verificação de identidade</span>
                   </li>
                   <li>
                     <span className="block text-2xl lg:text-3xl font-bold text-white">0 €</span>
-                    <span className="text-sm text-white/60">para anunciar</span>
+                    <span className="text-base text-white/60">para anunciar</span>
                   </li>
                 </ul>
 
@@ -336,7 +336,7 @@ export default async function HomePage() {
                     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent z-10" />
                     <Image
                       src={doDia?.imageUrl ?? '/banner-square.jpeg'}
-                      alt={doDia ? `${doDia.name} — Exclusiva Onesugar` : 'Curadoria Cris Galera — Embaixadora de Qualidade'}
+                      alt={doDia ? `${doDia.name}, exclusiva Onesugar` : 'Curadoria Cris Galera, embaixadora de qualidade'}
                       fill
                       className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
                       priority
@@ -361,7 +361,7 @@ export default async function HomePage() {
                       <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{doDia.city}</span>
                     </div>
                     {doDia.shortDescription && (
-                      <p className="text-white/60 text-sm leading-relaxed">{doDia.shortDescription}</p>
+                      <p className="text-white/60 text-base leading-relaxed">{doDia.shortDescription}</p>
                     )}
                     <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
                       Ver perfil →
@@ -392,7 +392,7 @@ export default async function HomePage() {
                   <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rose-400/60 to-transparent z-10" />
                   <Image
                     src={doDia?.imageUrl ?? '/onesugar-mobile.jpeg'}
-                    alt={doDia ? `${doDia.name} — Exclusiva Onesugar` : 'Bem vindo a Onesugar'}
+                    alt={doDia ? `${doDia.name}, exclusiva Onesugar` : 'Bem vindo a Onesugar'}
                     fill
                     className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
                     priority
@@ -412,13 +412,13 @@ export default async function HomePage() {
                     <span className="text-xl font-bold text-white">{doDia.name}</span>
                     {doDia.verified && <ShieldCheck className="h-5 w-5 text-rose-400 shrink-0" />}
                   </div>
-                  <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-white/80 text-sm font-medium">
+                  <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 text-white/80 text-base font-medium">
                     <span>{doDia.age} anos</span>
                     <span className="text-white/30">·</span>
                     <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{doDia.city}</span>
                   </div>
                   {doDia.shortDescription && (
-                    <p className="text-white/60 text-sm">{doDia.shortDescription}</p>
+                    <p className="text-white/60 text-base">{doDia.shortDescription}</p>
                   )}
                   <Link href={`/companions/${doDia.id}`} className="inline-flex items-center gap-2 text-rose-300 hover:text-rose-200 text-sm font-bold transition-colors">
                     Ver perfil →
@@ -444,15 +444,15 @@ export default async function HomePage() {
                 <ul className="flex justify-center gap-6 text-white/80">
                   <li>
                     <span className="block text-xl font-bold text-white">18</span>
-                    <span className="text-[11px] text-white/60">distritos</span>
+                    <span className="text-sm text-white/60">distritos</span>
                   </li>
                   <li>
                     <span className="block text-xl font-bold text-white">100%</span>
-                    <span className="text-[11px] text-white/60">verificados</span>
+                    <span className="text-sm text-white/60">verificados</span>
                   </li>
                   <li>
                     <span className="block text-xl font-bold text-white">0 €</span>
-                    <span className="text-[11px] text-white/60">para anunciar</span>
+                    <span className="text-sm text-white/60">para anunciar</span>
                   </li>
                 </ul>
 
@@ -521,8 +521,8 @@ export default async function HomePage() {
         <section className="py-10 px-6">
           <div className="container mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-rose-950/60 to-zinc-900 border border-rose-900/30 px-8 py-10 text-center space-y-6">
             <h2 className="text-2xl font-bold">Junte-se à Onesugar</h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Seja uma Sugar verificada ou encontre a companhia ideal — registe-se agora.
+            <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Seja uma Sugar verificada ou encontre a companhia ideal, registe-se agora.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
@@ -544,14 +544,14 @@ export default async function HomePage() {
         {/* ── VIDEO ── */}
         <div className="flex justify-center w-full px-4 py-8">
           <div className="w-full max-w-4xl">
-            <LiteYouTube videoId="t9drDCVVev0" title="Onesugar — Acompanhantes verificadas em Portugal" />
+            <LiteYouTube videoId="t9drDCVVev0" title="Onesugar, acompanhantes verificadas em Portugal" />
           </div>
         </div>
 
         {/* ── EDITORIAL INTRO ── */}
         <section className="py-10 px-6">
           <div className="container mx-auto max-w-3xl text-center">
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-base text-muted-foreground leading-relaxed">
               A Onesugar é a plataforma de referência para quem procura
               acompanhantes verificadas em Portugal. Com presença activa nos 18
               distritos do país, da Linha de Cascais ao Algarve, de Bragança ao
@@ -560,7 +560,7 @@ export default async function HomePage() {
               confirmada, fotografia actual e disponibilidade real antes de
               qualquer publicação.
             </p>
-            <p className="text-sm text-muted-foreground leading-relaxed mt-3">
+            <p className="text-base text-muted-foreground leading-relaxed mt-3">
               Se está à procura de uma{' '}
               <Link href="/location/lisboa" className="text-rose-500 hover:underline">
                 acompanhante em Lisboa
@@ -583,7 +583,7 @@ export default async function HomePage() {
             <h2 className="text-2xl font-bold text-center mb-2">
               Recursos exclusivos da Onesugar para acompanhantes em Portugal
             </h2>
-            <p className="text-sm text-muted-foreground text-center mb-10">
+            <p className="text-base text-muted-foreground text-center mb-10">
               Oferecemos ferramentas inovadoras para garantir a sua satisfação e
               confiança.
             </p>
@@ -615,8 +615,8 @@ export default async function HomePage() {
                   className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3"
                 >
                   {f.icon}
-                  <h3 className="font-semibold text-sm">{f.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <h3 className="font-semibold text-base">{f.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {f.desc}
                   </p>
                 </div>
@@ -631,7 +631,7 @@ export default async function HomePage() {
             <h2 className="text-2xl font-bold text-center mb-2">
               Como funciona a Onesugar
             </h2>
-            <p className="text-sm text-muted-foreground text-center mb-10">
+            <p className="text-base text-muted-foreground text-center mb-10">
               Encontre a sua acompanhante ideal em apenas tres passos simples.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -663,7 +663,7 @@ export default async function HomePage() {
                     {s.icon}
                   </div>
                   <h3 className="font-semibold">{s.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-base text-muted-foreground leading-relaxed">
                     {s.desc}
                   </p>
                 </div>
@@ -678,7 +678,7 @@ export default async function HomePage() {
             <h2 className="text-2xl font-bold mb-3">
               Seja uma Sugar na Onesugar
             </h2>
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            <p className="text-base text-muted-foreground mb-6 leading-relaxed">
               Aumente a sua visibilidade, conquiste clientes e promova-se de
               forma segura. A plataforma com maior crescimento de acompanhantes
               verificadas em Portugal.
@@ -741,8 +741,8 @@ export default async function HomePage() {
         <section className="py-10 px-6">
           <div className="container mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-rose-950/60 to-zinc-900 border border-rose-900/30 px-8 py-10 text-center space-y-6">
             <h2 className="text-2xl font-bold">Junte-se à Onesugar</h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Seja uma Sugar verificada ou encontre a companhia ideal — registe-se agora.
+            <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Seja uma Sugar verificada ou encontre a companhia ideal, registe-se agora.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
@@ -767,7 +767,7 @@ export default async function HomePage() {
             <h2 className="text-2xl font-bold text-center mb-2">
               Acompanhantes Verificadas nos 18 Distritos de Portugal
             </h2>
-            <p className="text-sm text-muted-foreground text-center mb-10 max-w-2xl mx-auto">
+            <p className="text-base text-muted-foreground text-center mb-10 max-w-2xl mx-auto">
               A Onesugar tem perfis activos em todos os distritos de Portugal
               continental. Selecione a sua região e encontre acompanhantes
               verificadas perto de si.
@@ -777,7 +777,7 @@ export default async function HomePage() {
               <h3 className="text-base font-semibold mb-2 text-rose-500">
                 Norte de Portugal
               </h3>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+              <p className="text-base text-muted-foreground mb-4 leading-relaxed">
                 O norte concentra os dois maiores mercados da plataforma. Porto e
                 Braga lideram em volume de perfis activos, com uma oferta
                 diversificada que inclui acompanhantes de luxo, escorts
@@ -801,7 +801,7 @@ export default async function HomePage() {
               <h3 className="text-base font-semibold mb-2 text-rose-500">
                 Centro de Portugal
               </h3>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+              <p className="text-base text-muted-foreground mb-4 leading-relaxed">
                 Coimbra e Aveiro destacam-se no centro, com Leiria a crescer
                 rapidamente pela sua posição entre Lisboa e o norte. A região
                 Centro cobre também Viseu, Guarda e Castelo Branco, com perfis
@@ -824,7 +824,7 @@ export default async function HomePage() {
               <h3 className="text-base font-semibold mb-2 text-rose-500">
                 Lisboa, Alentejo e Algarve
               </h3>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+              <p className="text-base text-muted-foreground mb-4 leading-relaxed">
                 Lisboa tem o maior volume de perfis activos da plataforma,
                 seguida de Setúbal que cobre toda a Margem Sul e a Península de
                 Setúbal. O Algarve, com destaque para Faro, concentra uma
@@ -849,7 +849,7 @@ export default async function HomePage() {
               <h3 className="text-base font-semibold mb-2 text-rose-500">
                 Ilhas
               </h3>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+              <p className="text-base text-muted-foreground mb-4 leading-relaxed">
                 A Madeira é um destino internacional com procura crescente por
                 acompanhantes verificadas. A Onesugar tem perfis activos na ilha
                 com disponibilidade actualizada.
@@ -908,8 +908,8 @@ export default async function HomePage() {
                 },
               ].map((item, i) => (
                 <div key={i} className="border-b border-border pb-5">
-                  <h3 className="font-semibold text-sm mb-2">{item.q}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <h3 className="font-semibold text-base mb-2">{item.q}</h3>
+                  <p className="text-base text-muted-foreground leading-relaxed">
                     {item.a}
                   </p>
                 </div>
@@ -924,7 +924,7 @@ export default async function HomePage() {
             <h3 className="text-xl font-bold mb-3">
               Pronto para uma experiência inesquecível em Portugal?
             </h3>
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            <p className="text-base text-muted-foreground mb-6 leading-relaxed">
               Descubra as acompanhantes mais requintadas de Portugal e viva
               momentos únicos com total discrição. Perfis verificados nos 18
               distritos do país.

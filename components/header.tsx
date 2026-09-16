@@ -45,8 +45,19 @@ interface NavItem {
   isExternal?: boolean;
 }
 
-const registerTabClassName =
-  'text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary';
+// O Tailwind usa rem em text-sm, e rem olha sempre para o tamanho de letra
+// do <html>, não para o elemento mais próximo. Não há como "isolar" um
+// pedaço da página do zoom geral do site a não ser fixando o tamanho aqui
+// em pixels, por isso o menu usa text-[14px] em vez de text-sm: o resto do
+// site cresce com o zoom da raiz (app/globals.css), o menu não.
+const desktopNavItemClassPrimary =
+  'text-[14px] font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary';
+const desktopNavItemClassOutline =
+  'text-[14px] font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary';
+const mobileNavItemClass =
+  'text-[14px] border border-neutral-200 rounded-xl p-2 font-medium transition-colors hover:text-primary flex items-center gap-4';
+
+const registerTabClassName = desktopNavItemClassPrimary;
 
 /**
  * A aba "Registo" muda de destino consoante quem clica: quem ainda não é
@@ -79,40 +90,35 @@ const restNavItems: NavItem[] = [
     href: '/location',
     icon: <Heart />,
     prefetch: false,
-    className:
-      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+    className: desktopNavItemClassOutline,
   },
   {
     label: 'Planos',
     href: '/checkout',
     icon: <ShoppingBag className="h-4 w-4" />,
     prefetch: true,
-    className:
-      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+    className: desktopNavItemClassOutline,
   },
   {
     label: 'Contos',
     href: '/contos',
     icon: <ScrollText className="h-4 w-4" />,
     prefetch: false,
-    className:
-      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+    className: desktopNavItemClassOutline,
   },
   {
     label: 'Ajuda no registo',
     href: '/ajuda-anunciantes',
     icon: <HelpCircle className="h-4 w-4" />,
     prefetch: false,
-    className:
-      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+    className: desktopNavItemClassOutline,
   },
   {
     label: 'Blog',
     href: 'https://blog.onesugar.pt',
     icon: <User className="h-4 w-4" />,
     prefetch: false,
-    className:
-      'text-sm font-medium transition-all duration-300 text-white hover:bg-neutral-100 hover:text-black bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary',
+    className: desktopNavItemClassOutline,
     isExternal: true,
   }
 ];
@@ -145,7 +151,10 @@ export default async function Header() {
             <span className="font-bold text-xl hidden sm:inline">onesugar</span>
           </Link>
           {/* Desktop Nav */}
-          <nav className="hidden md:flex gap-x-16">
+          {/* O espaçamento fixo de 4rem entre os itens não cabia abaixo dos
+              1366px e empurrava o cabeçalho para fora do ecrã, criando scroll
+              horizontal no site inteiro. Agora só é usado quando há espaço. */}
+          <nav className="hidden lg:flex gap-x-4 xl:gap-x-10">
             {navItems.map(({ label, href, prefetch, className, isExternal }) => (
               <Link
                 key={href}
@@ -161,7 +170,7 @@ export default async function Header() {
             {isUserAdmin && (
               <Link
                 href="/verify"
-                className="text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
+                className={desktopNavItemClassPrimary}
                 prefetch={false}
               >
                 Verificar
@@ -170,7 +179,7 @@ export default async function Header() {
             {userId && (
               <Link
                 href="/profile"
-                className="text-sm font-medium transition-all duration-300 text-white bg-primary/90 hover:bg-primary rounded-full py-2 px-4 hover:shadow-lg hover:scale-105 hover:ring-2 hover:ring-primary"
+                className={desktopNavItemClassPrimary}
                 prefetch={false}
               >
                 Perfil
@@ -201,7 +210,7 @@ export default async function Header() {
             {/* Mobile Sheet */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
+                <Button variant="ghost" size="icon" className="lg:hidden">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Abrir menu</span>
                 </Button>
@@ -216,7 +225,7 @@ export default async function Header() {
                     <Link
                       key={href}
                       href={href}
-                      className="text-sm border border-neutral-200 rounded-xl p-2 font-medium transition-colors hover:text-primary flex items-center gap-4"
+                      className={mobileNavItemClass}
                       prefetch={false}
                       {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
                     >
@@ -226,7 +235,7 @@ export default async function Header() {
                   {isUserAdmin && (
                     <Link
                       href="/verify"
-                      className="text-sm border border-neutral-200 rounded-xl p-2 font-medium transition-colors hover:text-primary flex items-center gap-4"
+                      className={mobileNavItemClass}
                       prefetch={false}
                     >
                       Verificar
@@ -235,7 +244,7 @@ export default async function Header() {
                   {userId && (
                     <Link
                       href="/profile"
-                      className="text-sm border border-neutral-200 rounded-xl p-2 font-medium transition-colors hover:text-primary flex items-center gap-4"
+                      className={mobileNavItemClass}
                       prefetch={false}
                     >
                       <User className="h-4 w-4" />
