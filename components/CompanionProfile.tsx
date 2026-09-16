@@ -71,6 +71,10 @@ export async function CompanionProfile({
   // Anúncio pausado pela própria companion — invisível a todos, sem excepção.
   if (companion.paused) notFound();
 
+  // As listagens já escondem quem não está verificada, mas o link direto
+  // por ID ignorava essa verificação e mostrava o perfil na mesma.
+  if (!companion.verified) notFound();
+
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
   const initialMedia = images.map((img) => ({
