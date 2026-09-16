@@ -2,7 +2,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { db } from '..';
-import { imagesTable } from '../schema';
+import { companionsTable, imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
 import { and, asc, eq, inArray, SQL, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
@@ -84,12 +84,22 @@ export async function uploadImage(
       .from(imagesTable)
       .where(eq(imagesTable.companionId, companionId));
 
+    // Se o perfil já está no ar, a foto nova fica invisível ao público até
+    // ser vista por um admin; o anúncio aprovado continua como estava. Num
+    // registo por aprovar não é preciso: o perfil inteiro ainda está escondido.
+    const [companion] = await db
+      .select({ verified: companionsTable.verified })
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companionId))
+      .limit(1);
+
     await db.insert(imagesTable).values({
       companionId: companionId,
       authId: clerkId,
       storage_path: path,
       public_url: data.publicUrl,
       position: Number(nextPosition) || 0,
+      pending_approval: companion?.verified === true,
     });
 
     revalidateCompanionMedia();
@@ -295,6 +305,73 @@ export async function updateImageFramingAsAdmin(
   }
 }
 
+/**
+ * Publica as fotos que estavam à espera. Chamada pela aprovação do perfil,
+ * que é o único momento em que conteúdo novo passa a ser visível.
+ */
+export async function approvePendingImages(
+  companionId: number
+): Promise<{ success: boolean; error?: string; }> {
+  const clerkId = (await auth()).userId;
+  if (!clerkId || !isAdmin(clerkId)) {
+    return { success: false, error: 'Não autorizado' };
+  }
+
+  await db
+    .update(imagesTable)
+    .set({ pending_approval: false })
+    .where(
+      and(
+        eq(imagesTable.companionId, companionId),
+        eq(imagesTable.pending_approval, true)
+      )
+    );
+
+  revalidateCompanionMedia();
+  return { success: true };
+}
+
+/**
+ * Deita fora as fotos que a acompanhante juntou numa edição recusada, do
+ * armazenamento e da base. As que já estavam aprovadas não são tocadas: o
+ * anúncio que está no ar tem de continuar exactamente como estava.
+ */
+export async function discardPendingImages(
+  companionId: number
+): Promise<{ success: boolean; error?: string; }> {
+  const clerkId = (await auth()).userId;
+  if (!clerkId || !isAdmin(clerkId)) {
+    return { success: false, error: 'Não autorizado' };
+  }
+
+  const pending = await db
+    .select({ storagePath: imagesTable.storage_path })
+    .from(imagesTable)
+    .where(
+      and(
+        eq(imagesTable.companionId, companionId),
+        eq(imagesTable.pending_approval, true)
+      )
+    );
+
+  if (pending.length === 0) return { success: true };
+
+  await Promise.all([
+    supabase.storage.from('images').remove(pending.map((p) => p.storagePath)),
+    db
+      .delete(imagesTable)
+      .where(
+        and(
+          eq(imagesTable.companionId, companionId),
+          eq(imagesTable.pending_approval, true)
+        )
+      ),
+  ]);
+
+  revalidateCompanionMedia();
+  return { success: true };
+}
+
 export async function getImagesByCompanionId(
   companionId: number,
   limit: number = 3,
@@ -312,7 +389,10 @@ export async function getImagesByCompanionId(
 
   const conditions: SQL[] = [
     eq(imagesTable.companionId, companionId),
-    eq(imagesTable.is_verification_video, false)];
+    eq(imagesTable.is_verification_video, false),
+    // Fotos de uma edição por aprovar não aparecem no perfil público: o
+    // visitante continua a ver o conjunto que foi aprovado.
+    eq(imagesTable.pending_approval, false)];
 
   const [images, [{ count }]] = await Promise.all([
     db

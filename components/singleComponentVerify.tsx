@@ -112,6 +112,16 @@ export default function SingleCompanionVerify({
   const currentImageUrl = currentImage ? mediaUrl(currentImage) : null;
   const canFrameCurrent =
     typeof currentImage === 'object' && Boolean(currentImage.storagePath);
+  const currentImageIsNew =
+    typeof currentImage === 'object' && currentImage.pendingApproval === true;
+
+  // Um perfil que já está no ar só aparece nesta fila por causa de alterações
+  // por rever. Recusar aqui descarta a edição; não apaga a acompanhante.
+  const isEdit = companion.isPendingEdit === true;
+  const pendingChanges = companion.pendingChanges ?? [];
+  const newPhotoCount = images.filter(
+    (media) => typeof media === 'object' && media.pendingApproval
+  ).length;
 
   const handleSaveFraming = async (framing: {
     focalX: number;
@@ -173,8 +183,10 @@ export default function SingleCompanionVerify({
       try {
         await approveCompanion(companion.id);
         toast({
-          title: 'Companheira Aprovada',
-          description: `${companion.name} foi aprovada com sucesso.`,
+          title: isEdit ? 'Alterações aprovadas' : 'Companheira Aprovada',
+          description: isEdit
+            ? `As alterações de ${companion.name} já estão no ar.`
+            : `${companion.name} foi aprovada com sucesso.`,
           variant: 'success',
         });
         onActionComplete(companion.id);
@@ -193,20 +205,29 @@ export default function SingleCompanionVerify({
     setError(null);
     startTransition(async () => {
       try {
-        await deleteAllDocumentsFromCompanion(companion.id);
+        // Numa edição os documentos de verificação continuam válidos: o que
+        // está a ser recusado são as alterações, não a identidade dela.
+        if (!isEdit) {
+          await deleteAllDocumentsFromCompanion(companion.id);
+        }
         await rejectCompanion(companion.id);
 
         toast({
-          title: 'Companheira Rejeitada',
-          description: `${companion.name} foi rejeitada.`,
+          title: isEdit ? 'Alterações recusadas' : 'Companheira Rejeitada',
+          description: isEdit
+            ? `O perfil de ${companion.name} continua no ar como estava.`
+            : `${companion.name} foi rejeitada.`,
           variant: 'success',
         });
         onActionComplete(companion.id);
       } catch (e) {
-        setError('Falha ao rejeitar a companheira. Por favor, tente novamente.');
+        const message = isEdit
+          ? 'Falha ao recusar as alterações. Por favor, tente novamente.'
+          : 'Falha ao rejeitar a companheira. Por favor, tente novamente.';
+        setError(message);
         toast({
           title: 'Erro',
-          description: 'Falha ao rejeitar a companheira. Por favor, tente novamente.',
+          description: message,
           variant: 'destructive',
         });
       }
@@ -366,8 +387,15 @@ export default function SingleCompanionVerify({
     <Card className="w-full max-w-2xl px-2">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">
+          <CardTitle className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0 flex items-center gap-2 flex-wrap">
             {companion.name}
+            {isEdit ? (
+              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                Edição de perfil no ar
+              </Badge>
+            ) : (
+              <Badge variant="secondary">Registo novo</Badge>
+            )}
           </CardTitle>
           {companion.phone && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -388,6 +416,42 @@ export default function SingleCompanionVerify({
         {/* Profile Tab */}
         <TabsContent value="profile">
           <CardContent className="grid gap-4">
+            {isEdit && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-900 dark:bg-blue-950/40">
+                <p className="font-medium mb-2">
+                  Este perfil está no ar. Aqui só se decide o que ela mudou.
+                </p>
+                {pendingChanges.length > 0 ? (
+                  <ul className="space-y-1">
+                    {pendingChanges.map((change) => (
+                      <li key={change.label}>
+                        <span className="font-medium">{change.label}:</span>{' '}
+                        <span className="text-muted-foreground line-through">
+                          {change.before}
+                        </span>{' '}
+                        <span aria-hidden>&rarr;</span>{' '}
+                        <span className="font-medium">{change.after}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Sem alterações de texto.
+                  </p>
+                )}
+                {newPhotoCount > 0 && (
+                  <p className="mt-2">
+                    {newPhotoCount === 1
+                      ? '1 foto nova por aprovar, assinalada no carrossel.'
+                      : `${newPhotoCount} fotos novas por aprovar, assinaladas no carrossel.`}
+                  </p>
+                )}
+                <p className="mt-2 text-muted-foreground">
+                  Recusar descarta estas alterações e mantém o anúncio como
+                  está. Não apaga o perfil.
+                </p>
+              </div>
+            )}
             <div className="relative w-full h-[32rem] bg-black/20 rounded-lg overflow-hidden">
               <Image
                 src={currentImageUrl ?? '/image.png'}
@@ -395,6 +459,11 @@ export default function SingleCompanionVerify({
                 fill={true}
                 className="object-contain rounded-lg"
               />
+              {currentImageIsNew && (
+                <Badge className="absolute top-2 right-2 bg-blue-600 text-white hover:bg-blue-600">
+                  Foto nova
+                </Badge>
+              )}
               {canFrameCurrent && (
                 <Button
                   type="button"
@@ -661,14 +730,16 @@ export default function SingleCompanionVerify({
             onClick={handleReject}
             disabled={isPending}
           >
-            <X className="w-4 h-4 mr-2" /> Rejeitar
+            <X className="w-4 h-4 mr-2" />{' '}
+            {isEdit ? 'Recusar alterações' : 'Rejeitar'}
           </Button>
           <Button
             className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white"
             onClick={handleApprove}
             disabled={isPending}
           >
-            <Check className="w-4 h-4 mr-2" /> Aprovar
+            <Check className="w-4 h-4 mr-2" />{' '}
+            {isEdit ? 'Aprovar alterações' : 'Aprovar'}
           </Button>
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}

@@ -604,12 +604,14 @@ export function RegisterCompanionForm({
       if (!clerkId) {
         throw new Error("User ID not found");
       }
-      await updateCompanionFromForm(clerkId, data);
+      const { pendingReview } = await updateCompanionFromForm(clerkId, data);
       await user?.reload();
       toast({
         variant: "success",
-        title: "Perfil Atualizado",
-        description: "Seu perfil foi atualizado com sucesso.",
+        title: pendingReview ? "Alterações enviadas" : "Perfil Atualizado",
+        description: pendingReview
+          ? "O seu anúncio continua no ar com a versão aprovada. As alterações, incluindo fotos novas, aparecem assim que forem revistas."
+          : "Seu perfil foi atualizado com sucesso.",
       });
       await completeFirstStepRegistration();
       router.refresh();

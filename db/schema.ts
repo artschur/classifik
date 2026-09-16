@@ -260,6 +260,10 @@ export const imagesTable = pgTable(
     focal_x: integer('focal_x').default(50).notNull(),
     focal_y: integer('focal_y').default(50).notNull(),
     zoom: integer('zoom').default(100).notNull(),
+    // Fotos enviadas numa edição de perfil já aprovado ficam invisíveis ao
+    // público até um admin as ver. As do registo inicial entram a false: o
+    // perfil inteiro já está escondido pelo `verified` nessa fase.
+    pending_approval: boolean('pending_approval').default(false).notNull(),
   },
   (table) => ({
     images_owner_idx: index('images_ownimages_auth_idx').on(table.authId),
@@ -415,3 +419,26 @@ export const storiesTable = pgTable(
 
 export type DbStory = typeof storiesTable.$inferSelect;
 export type NewDbStory = typeof storiesTable.$inferInsert;
+
+/**
+ * Alterações a um perfil já aprovado, à espera de revisão. Enquanto esta linha
+ * existir, o site continua a mostrar a versão aprovada: só na aprovação é que
+ * o `payload` é escrito nas tabelas reais.
+ *
+ * Uma linha por acompanhante — voltar a guardar substitui a proposta anterior,
+ * porque o que interessa rever é sempre o estado final que ela quer publicar.
+ * O payload tem o formato do formulário de registo (RegisterCompanionFormValues).
+ */
+export const companionPendingEditsTable = pgTable('companion_pending_edits', {
+  companion_id: integer('companion_id')
+    .primaryKey()
+    .references(() => companionsTable.id, { onDelete: 'cascade' }),
+  payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type CompanionPendingEdit =
+  typeof companionPendingEditsTable.$inferSelect;
+export type NewCompanionPendingEdit =
+  typeof companionPendingEditsTable.$inferInsert;

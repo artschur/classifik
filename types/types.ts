@@ -14,6 +14,11 @@ export interface Media {
   zoom?: number;
   /** Identifica a foto para quem pode alterá-la (a própria sugar ou o admin). */
   storagePath?: string;
+  /**
+   * Foto enviada numa edição e ainda por aprovar. Só é preenchido na fila de
+   * verificação: nas leituras públicas estas fotos nem chegam a ser lidas.
+   */
+  pendingApproval?: boolean;
 }
 
 export type CompanionPreview = Pick<Companion, "id" | "name" | "age"> & {
@@ -40,6 +45,20 @@ export type CompanionFiltered = Pick<
   planType?: string | null;
   verificationVideoUrl?: string | null;
   phone?: string;
+  /**
+   * Distingue, na fila de verificação, uma edição de um perfil que já está no
+   * ar de um registo novo que nunca foi aprovado. Recusar os dois tem
+   * consequências opostas: a edição é descartada, o registo é apagado.
+   */
+  isPendingEdit?: boolean;
+  /** O que ela mudou face ao que está publicado, para o admin comparar. */
+  pendingChanges?: PendingChange[];
+};
+
+export type PendingChange = {
+  label: string;
+  before: string;
+  after: string;
 };
 
 export type FilterTypesCompanions = {

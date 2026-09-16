@@ -11,6 +11,7 @@ import {
   reviewsTable,
   blockedUsersTable,
   documentsTable,
+  companionPendingEditsTable,
 } from "../schema";
 import { db } from "..";
 import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
@@ -28,6 +29,7 @@ import {
   CompanionPreview,
   FilterTypesCompanions,
   Media,
+  PendingChange,
 } from "../../types/types";
 import {
   eq,
@@ -43,7 +45,11 @@ import {
 } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { getEmail } from "./userActions";
-import { getImagesByAuthId } from "./images";
+import {
+  approvePendingImages,
+  discardPendingImages,
+  getImagesByAuthId,
+} from "./images";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { PlanType } from "./kv";
 
@@ -240,7 +246,14 @@ async function getCompanionImages(
       zoom: imagesTable.zoom,
     })
     .from(imagesTable)
-    .where(inArray(imagesTable.companionId, companionIds))
+    .where(
+      and(
+        inArray(imagesTable.companionId, companionIds),
+        // Fotos de uma edição por rever não entram nas listagens: o que está
+        // no ar continua a ser o conjunto aprovado.
+        eq(imagesTable.pending_approval, false),
+      ),
+    )
     .orderBy(asc(imagesTable.position), asc(imagesTable.id));
 
   return images.reduce((acc, img) => {
@@ -865,7 +878,17 @@ export async function getCompanionToEdit(
   if (!row) {
     return null;
   }
-  return {
+
+  // Se ela já guardou alterações que estão à espera de revisão, é isso que
+  // tem de reaparecer no formulário. Mostrar a versão publicada dava a
+  // sensação de que o que escreveu se tinha perdido.
+  const [pendingEdit] = await db
+    .select({ payload: companionPendingEditsTable.payload })
+    .from(companionPendingEditsTable)
+    .where(eq(companionPendingEditsTable.companion_id, companion.companionId))
+    .limit(1);
+
+  const published = {
     companionId: row.companionId,
     name: row.name ?? "",
     shortDescription: row.shortDescription ?? "",
@@ -899,10 +922,25 @@ export async function getCompanionToEdit(
     meets_at_hotel: row.meets_at_hotel ?? false,
     meets_at_own_place: row.meets_at_own_place ?? false,
   };
+
+  if (!pendingEdit) return published;
+
+  return {
+    ...published,
+    ...(pendingEdit.payload as Partial<RegisterCompanionFormValues>),
+    companionId: published.companionId,
+  };
 }
 
-export async function updateCompanionFromForm(
-  clerkId: string,
+/**
+ * Escreve mesmo os valores do formulário no perfil. É o caminho usado tanto
+ * por quem ainda não foi aprovada (que não tem nada no ar a proteger) como
+ * pela aprovação de uma edição que esteve à espera.
+ *
+ * Não mexe no `verified` de propósito: quem decide isso é quem chama.
+ */
+async function applyCompanionFormValues(
+  companionId: number,
   data: RegisterCompanionFormValues,
 ) {
   let email: string | undefined;
@@ -914,7 +952,6 @@ export async function updateCompanionFromForm(
       data.city,
     );
 
-    // Update companionsTable
     const [companion] = await tx
       .update(companionsTable)
       .set({
@@ -932,11 +969,10 @@ export async function updateCompanionFromForm(
         neighborhood_id: neighborhoodId,
         meets_at_hotel: data.meets_at_hotel,
         meets_at_own_place: data.meets_at_own_place,
-        verified: false,
         updated_at: new Date(),
       } as NewCompanion)
-      .where(eq(companionsTable.auth_id, clerkId))
-      .returning({ id: companionsTable.id, email: companionsTable.email });
+      .where(eq(companionsTable.id, companionId))
+      .returning({ email: companionsTable.email });
 
     email = companion?.email;
 
@@ -955,12 +991,62 @@ export async function updateCompanionFromForm(
         piercings: data.piercings,
         smoker: data.smoker,
       } as NewCharacteristic)
-      .where(eq(characteristicsTable.companion_id, companion.id));
+      .where(eq(characteristicsTable.companion_id, companionId));
   });
 
+  // Só depois de os valores serem mesmo os publicados é que o CRM é
+  // actualizado: enquanto a edição está à espera, o nome e o telefone que
+  // valem continuam a ser os aprovados.
   if (email) {
     await upsertContactInRD({ email, name: data.name, phone: data.phoneNumber });
   }
+}
+
+/**
+ * Guarda uma edição de perfil.
+ *
+ * Quem já foi aprovada não sai do ar por editar: a proposta fica guardada à
+ * parte e o site continua a mostrar a versão aprovada até um admin a rever.
+ * Quem ainda não passou pela verificação grava directamente, porque não há
+ * versão publicada nenhuma para proteger.
+ */
+export async function updateCompanionFromForm(
+  clerkId: string,
+  data: RegisterCompanionFormValues,
+): Promise<{ pendingReview: boolean; }> {
+  const [companion] = await db
+    .select({
+      id: companionsTable.id,
+      verified: companionsTable.verified,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.auth_id, clerkId))
+    .limit(1);
+
+  if (!companion) {
+    throw new Error("Perfil não encontrado");
+  }
+
+  if (!companion.verified) {
+    await applyCompanionFormValues(companion.id, data);
+    return { pendingReview: false };
+  }
+
+  await db
+    .insert(companionPendingEditsTable)
+    .values({
+      companion_id: companion.id,
+      payload: data as unknown as Record<string, unknown>,
+    })
+    .onConflictDoUpdate({
+      target: companionPendingEditsTable.companion_id,
+      set: {
+        payload: data as unknown as Record<string, unknown>,
+        updated_at: new Date(),
+      },
+    });
+
+  return { pendingReview: true };
 }
 
 /**
@@ -984,6 +1070,72 @@ async function getLegacyApprovedIds(): Promise<number[]> {
   } catch {
     return [];
   }
+}
+
+/** Campos comparados no ecrã de revisão, pela ordem em que são mostrados. */
+const EDIT_DIFF_FIELDS: { key: keyof RegisterCompanionFormValues; label: string; }[] =
+  [
+    { key: "name", label: "Nome" },
+    { key: "age", label: "Idade" },
+    { key: "price", label: "Preço" },
+    { key: "phoneNumber", label: "Telemóvel" },
+    { key: "instagramHandle", label: "Instagram" },
+    { key: "shortDescription", label: "Descrição curta" },
+    { key: "description", label: "Descrição" },
+    { key: "languages", label: "Línguas" },
+    { key: "gender", label: "Género" },
+    { key: "gender_identity", label: "Identidade de género" },
+    { key: "weight", label: "Peso" },
+    { key: "height", label: "Altura" },
+    { key: "ethnicity", label: "Etnia" },
+    { key: "eye_color", label: "Cor dos olhos" },
+    { key: "hair_color", label: "Cor do cabelo" },
+    { key: "hair_length", label: "Comprimento do cabelo" },
+    { key: "shoe_size", label: "Número de calçado" },
+    { key: "silicone", label: "Silicone" },
+    { key: "tattoos", label: "Tatuagens" },
+    { key: "piercings", label: "Piercings" },
+    { key: "smoker", label: "Fumadora" },
+    { key: "meets_at_hotel", label: "Atende em hotel" },
+    { key: "meets_at_own_place", label: "Atende em local próprio" },
+  ];
+
+function describeValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "(vazio)";
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "boolean") return value ? "Sim" : "Não";
+  return String(value);
+}
+
+/**
+ * Compara o que está publicado com o que foi proposto. Números passam pela
+ * comparação numérica porque a base devolve-os como texto: sem isso, "1.70"
+ * e 1.7 apareciam como uma alteração que ninguém fez.
+ */
+function sameValue(published: unknown, proposed: unknown): boolean {
+  const isEmpty = (value: unknown) =>
+    value === null || value === undefined || value === "";
+
+  if (!isEmpty(published) && !isEmpty(proposed)) {
+    const a = Number(published);
+    const b = Number(proposed);
+    if (!Number.isNaN(a) && !Number.isNaN(b)) return a === b;
+  }
+
+  return describeValue(published) === describeValue(proposed);
+}
+
+function diffPendingEdit(
+  published: Record<string, unknown>,
+  proposed: Record<string, unknown>,
+): PendingChange[] {
+  return EDIT_DIFF_FIELDS.filter(
+    ({ key }) => key in proposed && !sameValue(published[key], proposed[key]),
+  ).map(({ key, label }) => ({
+    label,
+    before: describeValue(published[key]),
+    after: describeValue(proposed[key]),
+  }));
 }
 
 export async function getUnverifiedCompanions(): Promise<
@@ -1018,6 +1170,19 @@ export async function getUnverifiedCompanions(): Promise<
         piercings: characteristicsTable.piercings,
         smoker: characteristicsTable.smoker,
       },
+      // Fica à parte do grupo `companion` porque esse é devolvido inteiro ao
+      // ecrã: estes campos servem só para comparar com a edição proposta.
+      publishedOnly: {
+        phoneNumber: companionsTable.phone,
+        instagramHandle: companionsTable.instagramHandle,
+        gender: companionsTable.gender,
+        gender_identity: companionsTable.gender_identity,
+        languages: companionsTable.languages,
+        meets_at_hotel: companionsTable.meets_at_hotel,
+        meets_at_own_place: companionsTable.meets_at_own_place,
+        hair_length: characteristicsTable.hair_length,
+        shoe_size: characteristicsTable.shoe_size,
+      },
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
@@ -1026,23 +1191,48 @@ export async function getUnverifiedCompanions(): Promise<
       eq(characteristicsTable.companion_id, companionsTable.id),
     )
     .where(
-      and(
-        eq(companionsTable.verified, false),
-        sql`EXISTS (
-          SELECT 1 FROM ${imagesTable}
-          WHERE ${imagesTable.companionId} = ${companionsTable.id}
-        )`,
-        // A regra continua a ser "só entra na fila quem enviou documento". A
-        // excepção são os perfis que já estavam aprovados antes, que de outra
-        // forma ficariam presos fora do site sem hipótese de reaprovação.
-        or(
+      or(
+        // Registo novo, ainda sem nada publicado.
+        and(
+          eq(companionsTable.verified, false),
           sql`EXISTS (
-            SELECT 1 FROM ${documentsTable}
-            WHERE ${documentsTable.companionId} = ${companionsTable.id}
+            SELECT 1 FROM ${imagesTable}
+            WHERE ${imagesTable.companionId} = ${companionsTable.id}
           )`,
-          legacyApprovedIds.length > 0
-            ? inArray(companionsTable.id, legacyApprovedIds)
-            : sql`false`,
+          // A regra continua a ser "só entra na fila quem enviou documento". A
+          // excepção são os perfis que já estavam aprovados antes, que de outra
+          // forma ficariam presos fora do site sem hipótese de reaprovação.
+          or(
+            sql`EXISTS (
+              SELECT 1 FROM ${documentsTable}
+              WHERE ${documentsTable.companionId} = ${companionsTable.id}
+            )`,
+            legacyApprovedIds.length > 0
+              ? inArray(companionsTable.id, legacyApprovedIds)
+              : sql`false`,
+          ),
+        ),
+        // Perfil no ar com alterações por rever. Entra na fila sem sair do
+        // site: o visitante continua a ver a versão aprovada.
+        //
+        // O `verified` aqui não é redundante. Sem ele, um perfil por aprovar
+        // que tivesse um rascunho antigo entrava na fila por esta via, sem
+        // passar pela exigência de documento, e aparecia como registo novo —
+        // ou seja, com o botão de recusar a apagá-lo.
+        and(
+          eq(companionsTable.verified, true),
+          or(
+            sql`EXISTS (
+              SELECT 1 FROM ${companionPendingEditsTable}
+              WHERE ${companionPendingEditsTable.companion_id} = ${companionsTable.id}
+            )`,
+            // Fotos novas contam como edição, mesmo sem texto nenhum mudado.
+            sql`EXISTS (
+              SELECT 1 FROM ${imagesTable}
+              WHERE ${imagesTable.companionId} = ${companionsTable.id}
+                AND ${imagesTable.pending_approval}
+            )`,
+          ),
         ),
       ),
     );
@@ -1052,6 +1242,8 @@ export async function getUnverifiedCompanions(): Promise<
 
   const companionIds = results.map((r) => r.companion.id);
 
+  // Aqui, ao contrário das leituras públicas, as fotos por aprovar têm mesmo
+  // de aparecer: são elas que o admin precisa de ver.
   const imagesPromise = db
     .select({
       companionId: imagesTable.companionId,
@@ -1060,10 +1252,24 @@ export async function getUnverifiedCompanions(): Promise<
       focal_x: imagesTable.focal_x,
       focal_y: imagesTable.focal_y,
       zoom: imagesTable.zoom,
+      pending_approval: imagesTable.pending_approval,
     })
     .from(imagesTable)
     .where(inArray(imagesTable.companionId, companionIds))
-    .orderBy(asc(imagesTable.position), asc(imagesTable.id));
+    // As novas primeiro: é o que o admin está ali para rever.
+    .orderBy(
+      desc(imagesTable.pending_approval),
+      asc(imagesTable.position),
+      asc(imagesTable.id),
+    );
+
+  const pendingEditsPromise = db
+    .select({
+      companionId: companionPendingEditsTable.companion_id,
+      payload: companionPendingEditsTable.payload,
+    })
+    .from(companionPendingEditsTable)
+    .where(inArray(companionPendingEditsTable.companion_id, companionIds));
 
   const videosPromise = db
     .select({
@@ -1078,7 +1284,11 @@ export async function getUnverifiedCompanions(): Promise<
       ),
     );
 
-  const [images, videos] = await Promise.all([imagesPromise, videosPromise]);
+  const [images, videos, pendingEdits] = await Promise.all([
+    imagesPromise,
+    videosPromise,
+    pendingEditsPromise,
+  ]);
 
   const imagesMap = images.reduce((acc, img) => {
     if (!acc.has(img.companionId.toString())) {
@@ -1092,32 +1302,59 @@ export async function getUnverifiedCompanions(): Promise<
       focalX: img.focal_x,
       focalY: img.focal_y,
       zoom: img.zoom,
+      pendingApproval: img.pending_approval,
     });
     return acc;
   }, new Map<string, Media[]>());
+
+  const pendingEditsMap = new Map(
+    pendingEdits.map((edit) => [edit.companionId, edit.payload]),
+  );
 
   const videosMap = videos.reduce((acc, vid) => {
     acc.set(vid.companionId.toString(), vid.public_url);
     return acc;
   }, new Map<string, string>());
 
-  return results.map(({ companion, city, characteristics }) => ({
-    ...companion,
-    description: companion.description,
-    city: city.name,
-    weight: characteristics.weight,
-    height: characteristics.height,
-    eyeColor: characteristics.eye_color,
-    hairColor: characteristics.hair_color,
-    silicone: characteristics.silicone,
-    tattoos: characteristics.tattoos,
-    piercings: characteristics.piercings,
-    smoker: characteristics.smoker,
-    ethinicity: characteristics.ethnicity,
-    planType: companion.planType,
-    images: imagesMap.get(String(companion.id)) || [],
-    verificationVideoUrl: videosMap.get(String(companion.id)) || null,
-  }));
+  return results.map(({ companion, city, characteristics, publishedOnly }) => {
+    const proposed = pendingEditsMap.get(companion.id);
+    const images = imagesMap.get(String(companion.id)) || [];
+
+    // Estar no ar e aparecer nesta lista só acontece por causa de uma edição
+    // por rever, seja no texto, seja em fotos novas.
+    const isPendingEdit =
+      companion.verified === true &&
+      (Boolean(proposed) || images.some((image) => image.pendingApproval));
+
+    return {
+      ...companion,
+      description: companion.description,
+      city: city.name,
+      weight: characteristics.weight,
+      height: characteristics.height,
+      eyeColor: characteristics.eye_color,
+      hairColor: characteristics.hair_color,
+      silicone: characteristics.silicone,
+      tattoos: characteristics.tattoos,
+      piercings: characteristics.piercings,
+      smoker: characteristics.smoker,
+      ethinicity: characteristics.ethnicity,
+      planType: companion.planType,
+      images,
+      verificationVideoUrl: videosMap.get(String(companion.id)) || null,
+      isPendingEdit,
+      pendingChanges: proposed
+        ? diffPendingEdit(
+          {
+            ...companion,
+            ...characteristics,
+            ...publishedOnly,
+          },
+          proposed,
+        )
+        : [],
+    };
+  });
 }
 
 export async function updateCompanionAge(id: number, age: number) {
@@ -1138,14 +1375,51 @@ export async function updateCompanionAge(id: number, age: number) {
   return { success: true, id, age };
 }
 
+/**
+ * Aprova um registo novo ou uma edição de um perfil que já está no ar. Nos dois
+ * casos é aqui que o conteúdo por rever passa a ser o publicado: as alterações
+ * guardadas à espera são escritas no perfil e as fotos novas tornam-se visíveis.
+ */
 export async function approveCompanion(id: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error("Não autorizado");
+  }
+
+  const [before] = await db
+    .select({ verified: companionsTable.verified })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, id))
+    .limit(1);
+
+  const [pendingEdit] = await db
+    .select({ payload: companionPendingEditsTable.payload })
+    .from(companionPendingEditsTable)
+    .where(eq(companionPendingEditsTable.companion_id, id))
+    .limit(1);
+
+  if (pendingEdit) {
+    await applyCompanionFormValues(
+      id,
+      pendingEdit.payload as unknown as RegisterCompanionFormValues,
+    );
+    await db
+      .delete(companionPendingEditsTable)
+      .where(eq(companionPendingEditsTable.companion_id, id));
+  }
+
+  await approvePendingImages(id);
+
   const [companion] = await db
     .update(companionsTable)
     .set({ verified: true })
     .where(eq(companionsTable.id, id))
     .returning({ email: companionsTable.email, name: companionsTable.name });
 
-  if (companion?.email) {
+  // O evento de conversão marca a entrada na plataforma, por isso só dispara
+  // na primeira aprovação. Aprovar uma edição de quem já estava no ar não é
+  // uma conversão nova e não pode voltar a contar como tal.
+  if (before?.verified !== true && companion?.email) {
     await tagCompanionInRD(companion.email, "aprovado", companion.name);
     await sendConversionEventToRD(
       companion.email,
@@ -1163,17 +1437,55 @@ export async function approveCompanion(id: number) {
   return { success: true, id };
 }
 
+/**
+ * Recusar tem dois significados opostos, consoante o que está em revisão:
+ *
+ * - Perfil já no ar: o que se recusa é a edição. As alterações propostas e as
+ *   fotos novas são descartadas, e o anúncio aprovado fica exactamente como
+ *   estava. Apagar a acompanhante aqui seria destruir uma cliente por causa
+ *   de uma mudança de descrição.
+ * - Registo que nunca foi aprovado: não há nada publicado, e recusar significa
+ *   mesmo não aceitar o perfil.
+ */
 export async function rejectCompanion(id: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error("Não autorizado");
+  }
+
+  const [companion] = await db
+    .select({ verified: companionsTable.verified })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, id))
+    .limit(1);
+
+  if (!companion) {
+    return { success: false, id, discardedEdit: false };
+  }
+
+  if (companion.verified) {
+    await db
+      .delete(companionPendingEditsTable)
+      .where(eq(companionPendingEditsTable.companion_id, id));
+    await discardPendingImages(id);
+
+    revalidateTag("companion", "max");
+    revalidateTag("companions", "max");
+    revalidateTag("companions-filter", "max");
+
+    return { success: true, id, discardedEdit: true };
+  }
+
   let email: string | undefined;
   let name: string | undefined;
 
   await db.transaction(async (tx) => {
-    const [companion] = await tx
+    const [deleted] = await tx
       .delete(companionsTable)
       .where(eq(companionsTable.id, id))
       .returning({ email: companionsTable.email, name: companionsTable.name });
-    email = companion?.email;
-    name = companion?.name;
+    email = deleted?.email;
+    name = deleted?.name;
   });
 
   if (email) {
@@ -1187,7 +1499,7 @@ export async function rejectCompanion(id: number) {
   revalidateTag("companions", "max");
   revalidateTag("companions-filter", "max");
 
-  return { success: true, id };
+  return { success: true, id, discardedEdit: false };
 }
 
 /**
