@@ -171,15 +171,3 @@ export function CustomToaster({
     </div>
   );
 }
-
-// Export the showToast function for external use
-export const showCustomToast = (
-  title: string,
-  description?: string,
-  type: 'success' | 'error' | 'info' | 'warning' = 'info',
-  persistent: boolean = false
-) => {
-  // This would need to be implemented with a global state management solution
-  // For now, you can use the built-in toast from your existing setup
-  console.log('Toast triggered:', { title, description, type, persistent });
-};

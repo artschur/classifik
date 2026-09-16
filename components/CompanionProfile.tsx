@@ -142,7 +142,9 @@ export async function CompanionProfile({
                 />
                 <CharacteristicItem
                   label="Altura"
-                  value={`${companion.height} cm`}
+                  // O formulário grava a altura em metros (1,70), por isso
+                  // mostrá-la como está dava "1.7 cm".
+                  value={`${Math.round(Number(companion.height) * 100)} cm`}
                 />
                 <CharacteristicItem
                   label="Peso"

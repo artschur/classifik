@@ -84,7 +84,6 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {companions.map((companion) => {
-              console.log('[HeroCarousel] companion:', companion.name, 'planType:', companion.planType)
               const firstImage = companion.images[0]
               const imageUrl = firstImage ? getImageUrl(firstImage) : "/placeholder.svg?height=400&width=300"
 

@@ -33,7 +33,6 @@ export function GlobalPopupWrapper({
       description: 'Seus 2 meses grátis foram adicionados ao seu plano.',
       variant: 'success',
     });
-    console.log('Global popup confirmed');
   };
 
   const handleCancel = () => {
@@ -43,13 +42,9 @@ export function GlobalPopupWrapper({
       description: 'Você pode aproveitar esta oferta a qualquer momento.',
       variant: 'default',
     });
-    console.log('Global popup cancelled');
   };
 
-  const handleClose = () => {
-    // Add any custom logic for closing
-    console.log('Global popup closed');
-  };
+  const handleClose = () => {};
 
   return (
     <GlobalPopup

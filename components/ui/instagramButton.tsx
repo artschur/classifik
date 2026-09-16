@@ -13,6 +13,21 @@ interface InstagramButtonProps {
   className?: string;
 }
 
+/**
+ * O campo é texto livre, por isso chega de tudo: "@nome", o link completo
+ * colado do telemóvel, com barra no fim ou com ?igshid=... Sem limpar, o
+ * botão gerava URLs mortas como instagram.com/@nome.
+ */
+function normalizeInstagramHandle(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/^instagram\.com\//i, '')
+    .replace(/^@+/, '')
+    .replace(/[/?].*$/, '');
+}
+
 export function InstagramButton({
   instagramHandle,
   companionId,
@@ -22,9 +37,13 @@ export function InstagramButton({
   const handleClick = () => {
     trackEvent(companionId, 'instagram_click');
   };
+
+  const handle = normalizeInstagramHandle(instagramHandle);
+  if (!handle) return null;
+
   return (
     <Link
-      href={`https://instagram.com/${instagramHandle}`}
+      href={`https://instagram.com/${handle}`}
       target="_blank"
       rel="noopener noreferrer"
       className={cn(

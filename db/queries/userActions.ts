@@ -36,15 +36,17 @@ export async function getLastSignInByClerkId(clerkId: string) {
       const elapsed = new Date().getTime() - timestamp;
       const hours = Math.floor(elapsed / msPerHour);
 
-      if (hours < 24) {
-        return `${hours} hours ago`;
-      } else {
-        const days = Math.floor(hours / 24);
-        return days === 1 ? "1 day ago" : `${days} days ago`;
+      if (hours < 1) {
+        return "há menos de uma hora";
       }
+      if (hours < 24) {
+        return hours === 1 ? "há 1 hora" : `há ${hours} horas`;
+      }
+      const days = Math.floor(hours / 24);
+      return days === 1 ? "há 1 dia" : `há ${days} dias`;
     };
     if (!lastSignIn) {
-      return "Never";
+      return "Nunca";
     }
     return getRelativeTime(lastSignIn);
   }

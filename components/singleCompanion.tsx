@@ -135,7 +135,8 @@ export default function SingleCompanionComponent({
             <CharacteristicItem
               label="Altura"
               icon={<Ruler className="w-5 h-5" />}
-              value={`${companion.height} cm`}
+              // A altura é gravada em metros (1,70); sem converter dava "1.7 cm".
+              value={`${Math.round(Number(companion.height) * 100)} cm`}
             />
             <CharacteristicItem
               label="Peso"
