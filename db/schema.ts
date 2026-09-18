@@ -131,6 +131,10 @@ export const companionsTable = pgTable(
     // dados continuam intactos) — diferente de `verified`, que é a aprovação
     // do admin, e não deve ser reutilizado para isto.
     paused: boolean('paused').default(false).notNull(),
+    // Marca que foi o admin a devolver o perfil à fila de verificação. Sem
+    // isto, desverificar quem já não tem documento guardado tirava-a do site
+    // sem a fazer aparecer na fila, deixando-a sem caminho de volta.
+    sent_to_review_at: timestamp('sent_to_review_at'),
 
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),

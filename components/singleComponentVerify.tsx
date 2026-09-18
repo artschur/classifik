@@ -118,6 +118,10 @@ export default function SingleCompanionVerify({
   // Um perfil que já está no ar só aparece nesta fila por causa de alterações
   // por rever. Recusar aqui descarta a edição; não apaga a acompanhante.
   const isEdit = companion.isPendingEdit === true;
+  // Já esteve publicada e foi o admin que a tirou do ar. Como não está
+  // verificada, recusar aqui apaga o perfil de vez — por isso o botão diz
+  // isso em vez de "Rejeitar".
+  const wasSentToReview = companion.wasSentToReview === true && !isEdit;
   const pendingChanges = companion.pendingChanges ?? [];
   const newPhotoCount = images.filter(
     (media) => typeof media === 'object' && media.pendingApproval
@@ -393,6 +397,10 @@ export default function SingleCompanionVerify({
               <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
                 Edição de perfil no ar
               </Badge>
+            ) : wasSentToReview ? (
+              <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
+                Devolvida à verificação
+              </Badge>
             ) : (
               <Badge variant="secondary">Registo novo</Badge>
             )}
@@ -416,10 +424,12 @@ export default function SingleCompanionVerify({
         {/* Profile Tab */}
         <TabsContent value="profile">
           <CardContent className="grid gap-4">
-            {isEdit && (
+            {(isEdit || pendingChanges.length > 0) && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-900 dark:bg-blue-950/40">
                 <p className="font-medium mb-2">
-                  Este perfil está no ar. Aqui só se decide o que ela mudou.
+                  {isEdit
+                    ? 'Este perfil está no ar. Aqui só se decide o que ela mudou.'
+                    : 'Alterações por aplicar, guardadas antes de o perfil sair do ar.'}
                 </p>
                 {pendingChanges.length > 0 ? (
                   <ul className="space-y-1">
@@ -446,10 +456,12 @@ export default function SingleCompanionVerify({
                       : `${newPhotoCount} fotos novas por aprovar, assinaladas no carrossel.`}
                   </p>
                 )}
-                <p className="mt-2 text-muted-foreground">
-                  Recusar descarta estas alterações e mantém o anúncio como
-                  está. Não apaga o perfil.
-                </p>
+                {isEdit && (
+                  <p className="mt-2 text-muted-foreground">
+                    Recusar descarta estas alterações e mantém o anúncio como
+                    está. Não apaga o perfil.
+                  </p>
+                )}
               </div>
             )}
             <div className="relative w-full h-[32rem] bg-black/20 rounded-lg overflow-hidden">
@@ -717,6 +729,13 @@ export default function SingleCompanionVerify({
       </Tabs>
 
       <CardFooter className="flex flex-col gap-4">
+        {wasSentToReview && (
+          <p className="w-full text-sm text-amber-900 dark:text-amber-200">
+            Este perfil já esteve publicado e foi tirado do ar por um admin.
+            Aprovar devolve-o ao site; &quot;Apagar perfil&quot; remove-o de vez,
+            com fotos e avaliações.
+          </p>
+        )}
         <Textarea
           placeholder="Adicionar notas de verificação (opcional)"
           className="mb-2"
@@ -731,7 +750,11 @@ export default function SingleCompanionVerify({
             disabled={isPending}
           >
             <X className="w-4 h-4 mr-2" />{' '}
-            {isEdit ? 'Recusar alterações' : 'Rejeitar'}
+            {isEdit
+              ? 'Recusar alterações'
+              : wasSentToReview
+                ? 'Apagar perfil'
+                : 'Rejeitar'}
           </Button>
           <Button
             className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white"

@@ -42,6 +42,7 @@ import {
   inArray,
   or,
   ilike,
+  isNotNull,
 } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { getEmail } from "./userActions";
@@ -1183,6 +1184,9 @@ export async function getUnverifiedCompanions(): Promise<
         hair_length: characteristicsTable.hair_length,
         shoe_size: characteristicsTable.shoe_size,
       },
+      review: {
+        sentToReviewAt: companionsTable.sent_to_review_at,
+      },
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
@@ -1199,14 +1203,16 @@ export async function getUnverifiedCompanions(): Promise<
             SELECT 1 FROM ${imagesTable}
             WHERE ${imagesTable.companionId} = ${companionsTable.id}
           )`,
-          // A regra continua a ser "só entra na fila quem enviou documento". A
-          // excepção são os perfis que já estavam aprovados antes, que de outra
-          // forma ficariam presos fora do site sem hipótese de reaprovação.
+          // A regra continua a ser "só entra na fila quem enviou documento". As
+          // excepções são os perfis que já estavam aprovados antes, que de
+          // outra forma ficariam presos fora do site sem hipótese de
+          // reaprovação, e os que o admin devolveu à fila de propósito.
           or(
             sql`EXISTS (
               SELECT 1 FROM ${documentsTable}
               WHERE ${documentsTable.companionId} = ${companionsTable.id}
             )`,
+            isNotNull(companionsTable.sent_to_review_at),
             legacyApprovedIds.length > 0
               ? inArray(companionsTable.id, legacyApprovedIds)
               : sql`false`,
@@ -1316,7 +1322,7 @@ export async function getUnverifiedCompanions(): Promise<
     return acc;
   }, new Map<string, string>());
 
-  return results.map(({ companion, city, characteristics, publishedOnly }) => {
+  return results.map(({ companion, city, characteristics, publishedOnly, review }) => {
     const proposed = pendingEditsMap.get(companion.id);
     const images = imagesMap.get(String(companion.id)) || [];
 
@@ -1342,6 +1348,10 @@ export async function getUnverifiedCompanions(): Promise<
       planType: companion.planType,
       images,
       verificationVideoUrl: videosMap.get(String(companion.id)) || null,
+      // Já esteve aprovada e foi o admin que a devolveu à fila. Importa
+      // distinguir de um registo novo: recusar aqui apaga um perfil que
+      // esteve publicado, não um candidato que nunca entrou.
+      wasSentToReview: review.sentToReviewAt !== null,
       isPendingEdit,
       pendingChanges: proposed
         ? diffPendingEdit(
@@ -1412,7 +1422,7 @@ export async function approveCompanion(id: number) {
 
   const [companion] = await db
     .update(companionsTable)
-    .set({ verified: true })
+    .set({ verified: true, sent_to_review_at: null })
     .where(eq(companionsTable.id, id))
     .returning({ email: companionsTable.email, name: companionsTable.name });
 
@@ -1523,6 +1533,73 @@ export async function setCompanionPaused(clerkId: string, paused: boolean) {
   revalidateTag("companions-filter", "max");
 
   return { success: true, paused };
+}
+
+/**
+ * Pausa ou reactiva um anúncio a partir da página do próprio perfil, pelo
+ * admin. Fica separada de setCompanionPaused porque aquela identifica a
+ * companion pela sessão de quem grava, e é essa verificação de dono que não
+ * pode ser afrouxada só para servir os dois casos.
+ */
+export async function setCompanionPausedAsAdmin(
+  companionId: number,
+  paused: boolean,
+) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    return { success: false, error: "Não autorizado" };
+  }
+
+  const [companion] = await db
+    .update(companionsTable)
+    .set({ paused, updated_at: new Date() })
+    .where(eq(companionsTable.id, companionId))
+    .returning({ id: companionsTable.id });
+
+  if (!companion) {
+    return { success: false, error: "Perfil não encontrado." };
+  }
+
+  revalidateTag("companion", "max");
+  revalidateTag("companions", "max");
+  revalidateTag("companions-filter", "max");
+
+  return { success: true, paused };
+}
+
+/**
+ * Tira o anúncio do ar e devolve-o à fila de verificação.
+ *
+ * O `sent_to_review_at` não é decorativo: a fila exige documento de
+ * verificação para alguém entrar, e há perfis aprovados que já não têm
+ * documento. Sem esta marca, desverificá-los tirava-os do site sem os fazer
+ * aparecer na fila, deixando-os sem caminho de volta pela interface.
+ */
+export async function sendCompanionToReview(companionId: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    return { success: false, error: "Não autorizado" };
+  }
+
+  const [companion] = await db
+    .update(companionsTable)
+    .set({
+      verified: false,
+      sent_to_review_at: new Date(),
+      updated_at: new Date(),
+    })
+    .where(eq(companionsTable.id, companionId))
+    .returning({ id: companionsTable.id, name: companionsTable.name });
+
+  if (!companion) {
+    return { success: false, error: "Perfil não encontrado." };
+  }
+
+  revalidateTag("companion", "max");
+  revalidateTag("companions", "max");
+  revalidateTag("companions-filter", "max");
+
+  return { success: true, name: companion.name };
 }
 
 export async function getCompanionIdByClerkId(id: string): Promise<number> {

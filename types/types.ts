@@ -53,6 +53,11 @@ export type CompanionFiltered = Pick<
   isPendingEdit?: boolean;
   /** O que ela mudou face ao que está publicado, para o admin comparar. */
   pendingChanges?: PendingChange[];
+  /**
+   * Perfil que já esteve aprovado e que o admin devolveu à fila. Recusar
+   * aqui apaga algo que esteve publicado, por isso o botão diz o que faz.
+   */
+  wasSentToReview?: boolean;
 };
 
 export type PendingChange = {
@@ -87,6 +92,8 @@ export type CompanionById = Omit<
   | "city_id"
   | "neighborhood_id"
   | "stripe_customer_id"
+  // Interessa só à fila de verificação; a página do perfil não o lê.
+  | "sent_to_review_at"
 > & {
   // Add characteristics fields with exact names from select query
   weight: Characteristic["weight"];

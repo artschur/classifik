@@ -47,6 +47,9 @@ import { InstagramButton } from './ui/instagramButton';
 import { getAudioUrlByCompanionId } from '@/db/queries/audio';
 import AudioPlayer from '@/audio-player';
 import { IconMicrophone } from '@tabler/icons-react';
+import { auth } from '@clerk/nextjs/server';
+import { isAdmin } from '@/components/header';
+import { AdminProfileControls } from './admin-profile-controls';
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
@@ -68,12 +71,14 @@ export async function CompanionProfile({
       getAudioUrlByCompanionId(id),
     ]);
 
-  // Anúncio pausado pela própria companion — invisível a todos, sem excepção.
-  if (companion.paused) notFound();
+  const { userId } = await auth();
+  const viewerIsAdmin = Boolean(userId && isAdmin(userId));
 
-  // As listagens já escondem quem não está verificada, mas o link direto
-  // por ID ignorava essa verificação e mostrava o perfil na mesma.
-  if (!companion.verified) notFound();
+  // Anúncio pausado, ou por aprovar: invisível ao público. O admin é a
+  // excepção, senão perdia o acesso à página onde estão os próprios
+  // controlos e não tinha como reverter o que acabou de fazer.
+  const hiddenFromPublic = companion.paused || !companion.verified;
+  if (hiddenFromPublic && !viewerIsAdmin) notFound();
 
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -89,6 +94,14 @@ export async function CompanionProfile({
   }));
   return (
     <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      {viewerIsAdmin && (
+        <AdminProfileControls
+          companionId={id}
+          name={companion.name}
+          paused={companion.paused}
+          verified={companion.verified}
+        />
+      )}
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{companion.name}</h1>
         <div className="flex items-center mt-2 space-x-4">
