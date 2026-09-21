@@ -1,3 +1,5 @@
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 import { ProductCard } from './productCard';
 import {
   BASIC_PRICE_ID,
@@ -69,6 +71,24 @@ const products: Product[] = [
 ];
 
 export default async function CheckoutPage() {
+  // A tabela de preços é informação de quem anuncia: quem procura
+  // acompanhante não tem motivo para a ver. Daí a página ter deixado de ser
+  // pública e fechar-se a quem escolheu "Sou Cliente".
+  //
+  // O teste é contra `false` e não a favor de `true` de propósito. Exigir a
+  // marca de anunciante fechava a porta a contas legítimas que não a têm:
+  // perfis criados antes desse passo existir, e contas com plano e cliente
+  // Stripe nos metadados cujo perfil foi entretanto apagado. Bloquear apenas
+  // quem se declarou cliente cumpre o mesmo objectivo sem esse risco.
+  //
+  // A verificação fica aqui e não só no proxy porque o proxy deixa passar
+  // qualquer sessão autenticada nas rotas protegidas, sem distinguir cliente
+  // de anunciante.
+  const { sessionClaims } = await auth();
+  if (sessionClaims?.metadata?.isCompanion === false) {
+    redirect('/location');
+  }
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">Selecione seu Anúncio</h1>

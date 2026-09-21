@@ -66,6 +66,23 @@ const registerTabClassName = desktopNavItemClassPrimary;
  * também de edição — reenviar alguém já registado para a calculadora
  * seria mandá-lo para trás.
  */
+/**
+ * A aba dos planos não aparece a quem procura acompanhante: preços de anúncio
+ * não lhe dizem respeito. Também não aparece a quem ainda não entrou, que
+ * antes era levado a uma página de login sem perceber porquê.
+ *
+ * Fica visível para todas as outras sessões, e não só para quem tem a marca
+ * de anunciante, porque há contas legítimas sem essa marca — o mesmo critério
+ * da própria página.
+ */
+const plansNavItem: NavItem = {
+  label: 'Planos',
+  href: '/checkout',
+  icon: <ShoppingBag className="h-4 w-4" />,
+  prefetch: true,
+  className: desktopNavItemClassOutline,
+};
+
 function buildRegisterNavItem(isRegisteredCompanion: boolean): NavItem {
   return isRegisteredCompanion
     ? {
@@ -90,13 +107,6 @@ const restNavItems: NavItem[] = [
     href: '/location',
     icon: <Heart />,
     prefetch: false,
-    className: desktopNavItemClassOutline,
-  },
-  {
-    label: 'Planos',
-    href: '/checkout',
-    icon: <ShoppingBag className="h-4 w-4" />,
-    prefetch: true,
     className: desktopNavItemClassOutline,
   },
   {
@@ -127,8 +137,10 @@ export default async function Header() {
   const { userId, sessionClaims } = await auth();
   const isUserAdmin = userId && isAdmin(userId);
   const isRegisteredCompanion = sessionClaims?.metadata?.isCompanion === true;
+  const isClient = sessionClaims?.metadata?.isCompanion === false;
   const navItems: NavItem[] = [
     buildRegisterNavItem(isRegisteredCompanion),
+    ...(userId && !isClient ? [plansNavItem] : []),
     ...restNavItems,
   ];
 
