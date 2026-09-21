@@ -71,7 +71,10 @@ import {
 import { cn } from "@/lib/utils";
 import { IconBrandInstagram, IconLanguage } from "@tabler/icons-react";
 import { registerCompanionAction } from "@/app/actions/register";
-import { completeFirstStepRegistration } from "@/app/companions/register/action";
+import {
+  completeFirstStepRegistration,
+  saveRegistrationContact,
+} from "@/app/companions/register/action";
 import { EarningsCalculator } from "@/components/earnings-calculator";
 
 const pageOneSchema = z.object({
@@ -190,6 +193,32 @@ export function RegisterCompanionForm({
     window.scrollTo({ top: 100, behavior: "smooth" });
   };
 
+  // Nome e telemóvel já enviados ao RD com sucesso, para não repetir a chamada
+  // sempre que ela volta atrás e avança outra vez na mesma etapa.
+  const lastSentContactRef = React.useRef<string | null>(null);
+
+  /**
+   * Leva nome e telemóvel ao RD antes de existir perfil, que é o que permite
+   * voltar a falar com quem desiste a meio do registo.
+   *
+   * Só marca como enviado depois de a chamada correr bem. Assim, se a primeira
+   * tentativa falhar, a seguinte (no carregamento da foto) repete-a em vez de
+   * a dar por feita — e quando correu bem, essa seguinte não faz nada.
+   */
+  const syncRegistrationContact = () => {
+    const { name, phoneNumber } = form.getValues();
+    const contact = `${name}|${phoneNumber}`;
+
+    if (!name || !phoneNumber) return;
+    if (lastSentContactRef.current === contact) return;
+
+    void saveRegistrationContact(name, phoneNumber)
+      .then(() => {
+        lastSentContactRef.current = contact;
+      })
+      .catch(() => { });
+  };
+
   const validateCurrentPage = async () => {
     const values = form.getValues();
     companionData ? setCompanionId(companionData?.companionId) : null;
@@ -215,6 +244,12 @@ export function RegisterCompanionForm({
   const handleNextPage = async () => {
     const isValid = await validateCurrentPage();
     if (isValid) {
+      // A primeira etapa é a que tem nome e telemóvel. Só em registo novo:
+      // na edição o perfil já existe e o contacto já está sincronizado.
+      if (!companionData && currentPage === 0) {
+        syncRegistrationContact();
+      }
+
       // Just move to next page - don't create account yet
       setCurrentPage((prev) => prev + 1);
       scrollToTop();
@@ -380,6 +415,10 @@ export function RegisterCompanionForm({
           const companion = await registerCompanionAction(formData);
           currentCompanionId = companion.id;
           setCompanionId(companion.id);
+          // Rede de segurança: no percurso normal isto não faz nada, porque o
+          // contacto já foi ao passar a primeira etapa. Só age se aquela
+          // chamada tiver falhado.
+          syncRegistrationContact();
         } catch (error) {
           toast({
             variant: "destructive",

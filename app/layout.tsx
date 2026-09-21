@@ -8,6 +8,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import Footer from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import Navbar from '@/components/header';
+import { RDLeadSync } from '@/components/rd-lead-sync';
 import { ThemeProvider } from '@/components/theme-provider';
 import { WhatsAppButton } from '@/components/whatsapp-button';
 import { TwoStepModal } from '@/components/two-step-modal';
@@ -169,6 +170,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Navbar />
+            {/* Não desenha nada: garante que quem acaba de criar conta entra
+                no RD Station, seja qual for a página por onde chegou. */}
+            <RDLeadSync />
             <main className="flex-grow">{children}</main>
             <Footer />
             <WhatsAppButton />

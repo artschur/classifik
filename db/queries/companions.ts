@@ -666,7 +666,11 @@ export async function registerCompanion(
       return companion;
     });
 
-    await upsertContactInRD({ email, name, phone: phoneNumber });
+    // O contacto já foi para o RD quando ela passou a primeira etapa do
+    // formulário, que é bem antes de chegar aqui. Repetir o envio neste ponto
+    // era uma segunda chamada com exactamente os mesmos dados. Quem trata
+    // disso, incluindo repetir se a primeira tentativa falhou, é o formulário
+    // (syncRegistrationContact em components/formCompanionRegister.tsx).
 
     return JSON.parse(JSON.stringify(newCompanion));
   } catch (error) {

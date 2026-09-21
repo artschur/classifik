@@ -13,6 +13,26 @@ export const RD_CONVERSION_RECUSADA = 'sugar-recusada';
 /** Lead captado na calculadora pública, antes de existir conta. */
 export const RD_CONVERSION_CALCULADORA = 'calculadora-ganhos';
 
+/**
+ * Tags de estado no RD Station.
+ *
+ * As tags do RD são cumulativas: não há forma de tirar uma pela API. Por isso
+ * o progresso do registo não é uma tag que muda de valor, mas marcos que se
+ * acumulam. A lista de quem parou a meio é a segmentação "tem
+ * registo-incompleto e não tem registo-concluido", que se corrige sozinha
+ * quando a pessoa termina — uma tag única de "não finalizou" ficava a mentir
+ * para sempre a partir do momento em que ela acabasse o registo.
+ */
+export type RDTag =
+  | 'aprovado'
+  | 'recusado'
+  /** Criou conta. Ainda não se sabe se quer anunciar ou só ver o site. */
+  | 'conta-criada'
+  /** Declarou que quer anunciar, mas ainda não chegou ao fim do registo. */
+  | 'registo-incompleto'
+  /** Enviou documento e vídeo: o registo está completo. */
+  | 'registo-concluido';
+
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 
 async function getAccessToken(): Promise<string> {
@@ -103,7 +123,7 @@ export async function upsertContactInRD(contact: {
  */
 export async function tagCompanionInRD(
   email: string,
-  tag: 'aprovado' | 'recusado',
+  tag: RDTag,
   name?: string,
 ): Promise<void> {
   if (!process.env.RD_STATION_CLIENT_ID) {

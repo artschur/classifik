@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { tagCompanionInRD } from "@/lib/rd-station";
 
 export async function handleOnboard(formData: FormData) {
   try {
@@ -34,8 +35,17 @@ export async function handleOnboard(formData: FormData) {
 
     // 2. Update Clerk
     await client.users.updateUser(userId, {
-      publicMetadata: metadata,
+      publicMetadata: { ...user.publicMetadata, ...metadata },
     });
+
+    // A partir daqui ela é candidata a anunciante. A tag fica até ao fim do
+    // registo; quem parar a meio é quem tem esta e não tem a de concluído.
+    if (isCompanion) {
+      const email = user.emailAddresses[0]?.emailAddress;
+      if (email) {
+        await tagCompanionInRD(email, "registo-incompleto", user.fullName ?? undefined);
+      }
+    }
 
     // 3. Redirect logic
     if (isCompanion) {

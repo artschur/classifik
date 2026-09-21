@@ -13,11 +13,37 @@ import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { and, eq, inArray } from "drizzle-orm";
 import { getClerkIdByCompanionId } from "@/db/queries/userActions";
+import { tagCompanionInRD } from "@/lib/rd-station";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
+
+/**
+ * Chegar aqui significa que o documento e o vídeo estão ambos enviados, que é
+ * o fim do registo. A tag no RD é o que tira a pessoa da lista de quem parou
+ * a meio, já que as tags do RD não se podem remover.
+ *
+ * Não é exportada: neste ficheiro tudo o que se exporta vira uma acção
+ * chamável do browser, e isto é um detalhe interno.
+ */
+async function markRegistrationComplete(userId: string) {
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+
+  await client.users.updateUserMetadata(userId, {
+    publicMetadata: {
+      ...(user.publicMetadata || {}),
+      hasUploadedDocs: true,
+    },
+  });
+
+  const email = user.emailAddresses[0]?.emailAddress;
+  if (email) {
+    await tagCompanionInRD(email, "registo-concluido", user.fullName ?? undefined);
+  }
+}
 
 export async function uploadDocument(formData: FormData) {
   try {
@@ -69,16 +95,7 @@ export async function uploadDocument(formData: FormData) {
 
     // Check for both the video and at least one ID document
     if (status.isVerificationVideoUploaded && status.isDocumentUploaded) {
-      const client = await clerkClient();
-      const user = await client.users.getUser(userId);
-      const existingPublicMetadata = user.publicMetadata || {};
-
-      await client.users.updateUserMetadata(userId, {
-        publicMetadata: {
-          ...existingPublicMetadata,
-          hasUploadedDocs: true,
-        },
-      });
+      await markRegistrationComplete(userId);
     }
 
     revalidatePath("/verify");
@@ -416,16 +433,7 @@ export async function saveDocumentAfterUpload(
 
     // Check for both the video and at least one ID document
     if (status.isVerificationVideoUploaded && status.isDocumentUploaded) {
-      const client = await clerkClient();
-      const user = await client.users.getUser(userId);
-      const existingPublicMetadata = user.publicMetadata || {};
-
-      await client.users.updateUserMetadata(userId, {
-        publicMetadata: {
-          ...existingPublicMetadata,
-          hasUploadedDocs: true,
-        },
-      });
+      await markRegistrationComplete(userId);
     }
 
     revalidatePath("/verify");

@@ -13,6 +13,8 @@ declare global {
       isCompanion?: boolean;
       isRegistrationComplete?: boolean;
       hasUploadedDocs?: boolean;
+      /** Já foi enviado para o RD Station. Impede o reenvio a cada página. */
+      rdSynced?: boolean;
     };
   }
 }
