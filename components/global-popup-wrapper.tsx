@@ -30,7 +30,7 @@ export function GlobalPopupWrapper({
     // Show success toast in bottom right
     toast({
       title: 'Oferta Aplicada!',
-      description: 'Seus 2 meses grátis foram adicionados ao seu plano.',
+      description: 'O seu mês grátis foi adicionado ao seu plano.',
       variant: 'success',
     });
   };

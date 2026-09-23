@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { isUserACompanion } from '@/db/queries/companions';
 import { ProductCard } from './productCard';
 import {
   BASIC_PRICE_ID,
@@ -84,10 +86,16 @@ export default async function CheckoutPage() {
   // A verificação fica aqui e não só no proxy porque o proxy deixa passar
   // qualquer sessão autenticada nas rotas protegidas, sem distinguir cliente
   // de anunciante.
-  const { sessionClaims } = await auth();
+  const { userId, sessionClaims } = await auth();
   if (sessionClaims?.metadata?.isCompanion === false) {
     redirect('/location');
   }
+
+  // Os preços ficam à vista mesmo sem perfil: é informação que ela precisa
+  // para decidir se vale a pena investir o tempo do registo. O que não pode
+  // acontecer é assinar sem ter anúncio, e isso é travado no botão e nas
+  // rotas que iniciam o pagamento.
+  const hasProfile = userId ? await isUserACompanion(userId) : false;
 
   return (
     <div className="container mx-auto py-10">
@@ -98,14 +106,37 @@ export default async function CheckoutPage() {
       </p>
       <div className="flex flex-col items-start justify-start my-6 p-6 border border-neutral-800 rounded-lg bg-card">
         <h2 className="text-neutral-100 text-xl">
-          Na escolha de um plano, os 2 primeiros meses são grátis (apenas para
-          as 15 primeiras sugars )
+          Na escolha de um plano, o primeiro mês é grátis (apenas para as 15
+          primeiras sugars)
         </h2>
         <p className="text-lg text-neutral-400">Cancele quando quiser!</p>
       </div>
+      {!hasProfile && (
+        <div className="my-6 p-4 border border-amber-300 bg-amber-50 rounded-lg dark:border-amber-900 dark:bg-amber-950/40">
+          <p className="font-medium mb-1">
+            Ainda não tem perfil criado.
+          </p>
+          <p className="text-base text-muted-foreground mb-3">
+            Um plano serve para destacar o seu anúncio, por isso é preciso ter
+            o anúncio primeiro. Veja aqui os preços à vontade e crie o perfil
+            quando decidir: depois volta e escolhe o plano.
+          </p>
+          <Link
+            href="/companions/register"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
+          >
+            Criar o meu perfil
+          </Link>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            hasProfile={hasProfile}
+          />
         ))}
       </div>
     </div>

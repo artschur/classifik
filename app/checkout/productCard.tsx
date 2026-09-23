@@ -8,12 +8,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import Link from 'next/link';
 import { Product } from './page';
 
 const buttonClasses =
   'w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4';
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  hasProfile,
+}: {
+  product: Product;
+  hasProfile: boolean;
+}) {
   const handleCheckout = async () => {
     try {
       const res = await fetch('/api/can-checkout');
@@ -47,12 +54,18 @@ export function ProductCard({ product }: { product: Product }) {
       <CardContent className="flex flex-col flex-grow justify-end">
         <p className="text-3xl font-bold mt-auto">{product.price}</p>
       </CardContent>
-      {/* Sem estados de sessão: a página só abre para quem já está
-          autenticada como anunciante, por isso quem chega aqui pode comprar. */}
       <CardFooter>
-        <button onClick={handleCheckout} className={buttonClasses}>
-          Comprar
-        </button>
+        {/* Sem perfil o botão não finge que compra: leva ao registo, que é o
+            passo que falta mesmo. */}
+        {hasProfile ? (
+          <button onClick={handleCheckout} className={buttonClasses}>
+            Comprar
+          </button>
+        ) : (
+          <Link href="/companions/register" className={buttonClasses}>
+            Criar perfil primeiro
+          </Link>
+        )}
       </CardFooter>
     </Card>
   );

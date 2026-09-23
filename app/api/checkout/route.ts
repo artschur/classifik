@@ -2,6 +2,7 @@ import { db, kv } from '@/db';
 import { stripe } from '@/db/stripe';
 import { auth } from '@clerk/nextjs/server';
 import { priceIdToPlan } from '@/db/queries/kv';
+import { isUserACompanion } from '@/db/queries/companions';
 import { companionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -11,6 +12,14 @@ export async function GET(req: Request) {
 
         if (!userId) {
             return new Response('Unauthorized', { status: 401 });
+        }
+
+        // O mesmo requisito do /api/can-checkout, repetido aqui porque aquele
+        // só informa o botão: é este endereço que cria mesmo a assinatura, e
+        // chega-se a ele escrevendo o URL à mão. Sem perfil não há anúncio
+        // para destacar, e o pagamento ficaria sem dono.
+        if (!(await isUserACompanion(userId))) {
+            return Response.redirect(new URL('/companions/register', req.url), 303);
         }
 
         const url = new URL(req.url);
@@ -62,7 +71,9 @@ export async function GET(req: Request) {
                 },
             ],
             subscription_data: {
-                trial_period_days: 60, // 2 months = 60 days
+                // Um mês. Quem já estiver a meio de um período de dois meses
+                // mantém-no: a Stripe fixa a duração no momento da assinatura.
+                trial_period_days: 30,
                 trial_settings: {
                     end_behavior: {
                         missing_payment_method: 'cancel', // Cancel if no payment method at trial end
