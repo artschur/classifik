@@ -32,8 +32,26 @@ export const admins = [
   'user_3IXZlEwPFLdsmc4izgFYopSHsjF', // Duarte
 ];
 
+/**
+ * Admins acrescentados pelo ambiente, separados por vírgulas.
+ *
+ * Existe por causa do desenvolvimento local: a instância de testes do Clerk
+ * tem utilizadores próprios, com identificadores diferentes dos de produção,
+ * e sem isto não havia forma de abrir as páginas de administração em
+ * localhost sem mexer no código de cada vez.
+ *
+ * A variável não tem prefixo público de propósito: todos os usos de isAdmin
+ * são do lado do servidor, por isso nada disto chega ao navegador.
+ */
+function envAdmins(): string[] {
+  return (process.env.ADMIN_USER_IDS ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
 export const isAdmin = (userId: string): boolean => {
-  return admins.includes(userId);
+  return admins.includes(userId) || envAdmins().includes(userId);
 };
 
 interface NavItem {
