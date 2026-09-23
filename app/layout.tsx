@@ -180,8 +180,10 @@ export default function RootLayout({
             <CustomToaster
               isEnabled={true}
               autoShow={true}
-              autoShowDelay={2000}
-              title="2 Meses Grátis em Qualquer Plano!"
+              // Espera antes de aparecer a quem não rolou nada; quem rolar
+              // vê-o mais cedo.
+              autoShowDelay={20000}
+              title="1 Mês Grátis em Qualquer Plano!"
               description="Comece seu período de teste gratuito hoje. Sem compromisso!"
               type="info"
               buttonText="Começar Teste Grátis"
@@ -192,7 +194,7 @@ export default function RootLayout({
             <TwoStepModal />
             <GlobalPopupWrapper
               isEnabled={false}
-              title="Ganhe 2 meses grátis no seu Plano!"
+              title="Ganhe 1 mês grátis no seu Plano!"
               description="Por tempo limitado! Aproveite!"
               confirmText="Mostre-me!"
               cancelText="Não quero"

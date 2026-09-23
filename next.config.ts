@@ -1,5 +1,25 @@
 import type { NextConfig } from 'next';
 
+/**
+ * Origens do Clerk autorizadas pela política de segurança.
+ *
+ * Em produção o Clerk é servido do nosso próprio domínio. Em
+ * desenvolvimento as chaves de teste servem-no de *.clerk.accounts.dev, e
+ * sem esta excepção o navegador bloqueia o script: a página abre mas não há
+ * forma de iniciar sessão em localhost, o que torna impossível experimentar
+ * localmente qualquer coisa que dependa de estar autenticado.
+ *
+ * A excepção existe apenas quando se corre em desenvolvimento; o que vai
+ * para produção continua restrito ao domínio próprio.
+ */
+const clerkOrigins = [
+  'https://clerk.onesugar.pt',
+  // Abrange os dois anfitriões que o Clerk usa em desenvolvimento: o SDK vem
+  // de <instância>.clerk.accounts.dev e as páginas de entrada de
+  // <instância>.accounts.dev.
+  ...(process.env.NODE_ENV === 'development' ? ['https://*.accounts.dev'] : []),
+].join(' ');
+
 const nextConfig: NextConfig = {
   trailingSlash: false,
 
@@ -91,7 +111,7 @@ const nextConfig: NextConfig = {
               // Scripts: Next.js chunks (self), inline scripts do ThemeProvider
               // e Schema.org (unsafe-inline), Clerk SDK, GA4, Vercel Analytics.
               // unsafe-eval: necessário para Next.js dev HMR e algumas libs.
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.onesugar.pt https://www.googletagmanager.com https://va.vercel-scripts.com",
+              `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${clerkOrigins} https://www.googletagmanager.com https://va.vercel-scripts.com`,
 
               // Estilos: Tailwind injeta <style> tags dinâmicas (unsafe-inline obrigatório)
               "style-src 'self' 'unsafe-inline'",
@@ -106,11 +126,11 @@ const nextConfig: NextConfig = {
               // Fetch/XHR/WebSocket: self, Clerk API, Supabase DB + storage,
               // GA4 beacon hits (googletagmanager + google-analytics),
               // Vercel Speed Insights
-              "connect-src 'self' https://clerk.onesugar.pt https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://vitals.vercel-insights.com",
+              `connect-src 'self' ${clerkOrigins} https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://vitals.vercel-insights.com`,
 
               // Iframes: YouTube embeds + Clerk OAuth (popups de login social
               // podem abrir iframes de clerk.onesugar.pt)
-              "frame-src https://www.youtube-nocookie.com https://clerk.onesugar.pt",
+              `frame-src https://www.youtube-nocookie.com ${clerkOrigins}`,
 
               // Media: self + Supabase storage (vídeos de verificação das companions)
               "media-src 'self' https://vacjsnuttfzgcdaaqjxd.supabase.co",
@@ -126,7 +146,7 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
 
               // Limita destinos de formulários: self e Clerk para login/signup
-              "form-action 'self' https://clerk.onesugar.pt",
+              `form-action 'self' ${clerkOrigins}`,
             ].join('; '),
           },
         ],

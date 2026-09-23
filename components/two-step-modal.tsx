@@ -13,6 +13,7 @@ import {
 import { X, Heart, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useEngagement } from '@/hooks/use-engagement';
 
 /** Marca que a escolha Sugar/Cliente já foi mostrada a este navegador. */
 const LEAD_CHOICE_KEY = 'lead-choice-seen';
@@ -22,6 +23,10 @@ export function TwoStepModal() {
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<1 | 2>(1);
 
+  // A escolha Sugar/Cliente espera que a pessoa mostre interesse. A
+  // verificação de idade não espera por nada: é obrigação legal e tem de vir
+  // antes do conteúdo.
+  const engaged = useEngagement({ afterMs: 8000, afterScrollPx: 300 });
 
   React.useEffect(() => {
     if (!isLoaded || isSignedIn) {
@@ -42,13 +47,14 @@ export function TwoStepModal() {
       return;
     }
 
-    // A escolha Sugar/Cliente é mostrada uma vez só. Antes reabria a cada
-    // carregamento de página, mesmo para quem já tinha escolhido.
-    if (localStorage.getItem(LEAD_CHOICE_KEY) !== "true") {
+    // A escolha Sugar/Cliente é mostrada uma vez só, e só depois de a pessoa
+    // ter começado a explorar. Antes reabria a cada carregamento de página e
+    // saltava à frente antes de se ver seja o que for.
+    if (engaged && localStorage.getItem(LEAD_CHOICE_KEY) !== "true") {
       setStep(2);
       setOpen(true);
     }
-  }, [isSignedIn, isLoaded]); // Re-run when auth state changes
+  }, [isSignedIn, isLoaded, engaged]); // Re-run when auth state changes
 
   // Marca no momento em que a escolha chega ao ecrã, e não apenas quando é
   // clicada, para que fechar no X ou recarregar a página também não a repita.
@@ -83,18 +89,41 @@ export function TwoStepModal() {
     setOpen(false);
   };
 
+  // A verificação de idade não se fecha: sair sem responder não é uma das
+  // respostas possíveis. Antes havia dois X sobrepostos, o desta caixa e o
+  // que o DialogContent desenha sozinho, e qualquer um deles abria o site
+  // inteiro sem ninguém ter confirmado nada.
+  const bloquearFecho = step === 1;
+
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden">
-          {/* Close Button */}
-          <button
-            onClick={handleClose}
-            className="absolute right-4 top-4 z-50 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Fechar</span>
-          </button>
+      <Dialog
+        open={open}
+        onOpenChange={(aberto) => {
+          if (bloquearFecho && !aberto) return;
+          setOpen(aberto);
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-[500px] p-0 overflow-hidden"
+          showCloseButton={!bloquearFecho}
+          onEscapeKeyDown={(e) => {
+            if (bloquearFecho) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (bloquearFecho) e.preventDefault();
+          }}
+        >
+          {/* Fechar: só na escolha de perfil, nunca na verificação de idade */}
+          {!bloquearFecho && (
+            <button
+              onClick={handleClose}
+              className="absolute right-4 top-4 z-50 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Fechar</span>
+            </button>
+          )}
 
           {step === 1 ? (
             // Step 1: Age Verification

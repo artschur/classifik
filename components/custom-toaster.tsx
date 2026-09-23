@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react';
 import { X, CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEngagement } from '@/hooks/use-engagement';
+
+/**
+ * A chave antiga era um cookie com o mesmo nome. Usar um nome diferente no
+ * armazenamento local evita ler o cookie de 30 dias que já expirou e
+ * ressuscitar o aviso a quem o tinha dispensado.
+ */
+const dismissKey = (chave: string) => `${chave}-v2`;
 
 interface Toast {
   id: string;
@@ -41,59 +49,64 @@ export function CustomToaster({
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [hasBeenDismissed, setHasBeenDismissed] = useState(false);
 
+  // Só aparece a quem já começou a explorar, e nunca antes da verificação de
+  // idade: dois avisos sobrepostos à chegada eram a terceira interrupção
+  // seguida, antes de se ver uma única fotografia.
+  const engaged = useEngagement({ afterMs: autoShowDelay, afterScrollPx: 600 });
+
   useEffect(() => {
-    // Check if user has dismissed the toaster before
-    const checkDismissed = () => {
-      if (typeof document !== 'undefined') {
-        const dismissed = document.cookie
-          .split('; ')
-          .find((row) => row.startsWith(`${cookieKey}=`));
-        if (dismissed) {
-          setHasBeenDismissed(true);
-          return true;
-        }
-      }
-      return false;
-    };
+    if (!isEnabled || !autoShow) return;
 
-    const isDismissed = checkDismissed();
-
-    if (isEnabled && autoShow && !isDismissed) {
-      const timer = setTimeout(() => {
-        showToast(title, description, type);
-      }, autoShowDelay);
-
-      return () => clearTimeout(timer);
+    // Guardado no armazenamento local e sem prazo. Antes era um cookie de 30
+    // dias, que voltava a aparecer passado um mês a quem já tinha dito que
+    // não queria ver aquilo.
+    if (localStorage.getItem(dismissKey(cookieKey)) === 'true') {
+      setHasBeenDismissed(true);
+      return;
     }
-  }, [isEnabled, autoShow, autoShowDelay, title, description, type, cookieKey]);
 
-  const showToast = (
-    toastTitle: string,
-    toastDescription?: string,
-    toastType: 'success' | 'error' | 'info' | 'warning' = 'info'
-  ) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newToast: Toast = {
-      id,
-      title: toastTitle,
-      description: toastDescription,
-      type: toastType,
-      persistent,
+    if (!engaged) return;
+    if (localStorage.getItem('age-verified') !== 'true') return;
+
+    // Nunca por cima de uma caixa de diálogo aberta. O aviso fica no canto,
+    // por baixo da cortina do diálogo: aparecia inalcançável, sem sequer se
+    // conseguir carregar no X para o dispensar. Espera que o ecrã esteja
+    // livre — que é também quando a pessoa lhe vai prestar atenção.
+    const mostrarSeHouverEspaco = () => {
+      if (document.querySelector('[role="dialog"]')) return false;
+      setToasts((prev) =>
+        prev.length > 0
+          ? prev
+          : [{ id: 'promo', title, description, type, persistent }],
+      );
+      return true;
     };
 
-    setToasts((prev) => [...prev, newToast]);
-  };
+    if (mostrarSeHouverEspaco()) return;
+
+    const tentativa = setInterval(() => {
+      if (mostrarSeHouverEspaco()) clearInterval(tentativa);
+    }, 1000);
+
+    return () => clearInterval(tentativa);
+  }, [
+    isEnabled,
+    autoShow,
+    engaged,
+    title,
+    description,
+    type,
+    persistent,
+    cookieKey,
+  ]);
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
 
-    // Save cookie when user dismisses the toaster
-    if (typeof document !== 'undefined') {
-      const expires = new Date();
-      expires.setDate(expires.getDate() + 30); // Cookie expires in 30 days
-      document.cookie = `${cookieKey}=true; expires=${expires.toUTCString()}; path=/`;
-      setHasBeenDismissed(true);
-    }
+    // Fechar uma vez chega: não volta a aparecer, nem nesta visita nem nas
+    // seguintes.
+    localStorage.setItem(dismissKey(cookieKey), 'true');
+    setHasBeenDismissed(true);
   };
 
   const getIcon = (type: Toast['type']) => {
