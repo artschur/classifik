@@ -410,6 +410,12 @@ export const storiesTable = pgTable(
       .$type<{ afterIndex: number; src: string; storagePath: string; alt: string }[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
+    // Ligação opcional ao perfil de uma acompanhante, para quem acaba de ler
+    // ter um caminho directo para o anúncio. SET NULL ao apagar o perfil: o
+    // conto vale por si e não deve desaparecer atrás dele.
+    companion_id: integer('companion_id').references(() => companionsTable.id, {
+      onDelete: 'set null',
+    }),
     published_at: timestamp('published_at').defaultNow().notNull(),
     created_at: timestamp('created_at').defaultNow().notNull(),
   },

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { CompanionPicker, type DistrictOption } from '../companion-picker';
 
 function slugify(str: string) {
   return str
@@ -23,11 +24,14 @@ type InlineImage = { file: File; preview: string; alt: string };
 
 export function NewStoryForm({
   collections,
+  districts,
 }: {
   collections: { slug: string; label: string }[];
+  districts: DistrictOption[];
 }) {
   const router = useRouter();
 
+  const [companionId, setCompanionId] = useState<number | null>(null);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [collection, setCollection] = useState(collections[0]?.label ?? '');
@@ -111,6 +115,7 @@ export function NewStoryForm({
     fd.append('featured', String(featured));
     fd.append('publishedAt', publishedAt);
     fd.append('paragraphCount', String(paragraphs.length));
+    if (companionId) fd.append('companionId', String(companionId));
     paragraphs.forEach((p, i) => fd.append(`paragraph_${i}`, p));
     if (coverFile) fd.append('coverImage', coverFile);
 
@@ -234,6 +239,17 @@ export function NewStoryForm({
               className="h-4 w-4 accent-rose-600"
             />
             <Label htmlFor="featured">Marcar como história em destaque</Label>
+          </div>
+
+          <div className="col-span-2 border-t pt-4 mt-1">
+            <p className="text-sm font-medium mb-1">
+              Ligar a um perfil (opcional)
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Quem acabar de ler passa a ter um caminho directo para o anúncio.
+              Só aparecem perfis verificados e no ar.
+            </p>
+            <CompanionPicker options={districts} onChange={setCompanionId} />
           </div>
         </div>
       </section>

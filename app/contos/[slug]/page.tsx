@@ -5,7 +5,11 @@ import { notFound } from 'next/navigation';
 import { getStoryBySlug, getAllSlugs, stories as staticStories, dbToStory } from '@/lib/stories';
 import { StoryCard } from '@/components/story-card';
 import { StoryViewTracker } from '@/components/story-view-tracker';
-import { getAllDbStories, getDbStoryBySlug } from '@/db/queries/stories';
+import {
+  getAllDbStories,
+  getDbStoryBySlug,
+  getStoryCompanion,
+} from '@/db/queries/stories';
 import { getAllStoryViews } from '@/app/actions/story-views';
 
 export const dynamicParams = true;
@@ -58,6 +62,12 @@ export default async function StoryPage({
   const dbStory = await getDbStoryBySlug(slug).catch(() => null);
   const story = dbStory ? dbToStory(dbStory) : getStoryBySlug(slug);
   if (!story) notFound();
+
+  // Devolve null se o perfil tiver sido pausado ou devolvido à verificação
+  // entretanto, para o conto não apontar para uma página que já não abre.
+  const storyCompanion = await getStoryCompanion(
+    dbStory?.companion_id ?? null,
+  ).catch(() => null);
 
   // Related stories: same collection, excluding current
   const dbStories = await getAllDbStories().catch(() => []);
@@ -164,6 +174,43 @@ export default async function StoryPage({
       <div className="mt-10 pt-6 border-t border-border text-right">
         <span className="font-bold text-foreground">{story.author}</span>
       </div>
+
+      {/* Perfil ligado a este conto, quando existe e está no ar */}
+      {storyCompanion && (
+        <Link
+          href={`/companions/${storyCompanion.id}`}
+          className="mt-10 flex items-center gap-4 rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 transition-colors hover:border-rose-500/60 hover:bg-rose-500/10"
+        >
+          {storyCompanion.imageUrl && (
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+              <Image
+                src={storyCompanion.imageUrl}
+                alt={storyCompanion.name}
+                fill
+                className="object-cover"
+                sizes="80px"
+              />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-widest text-rose-400">
+              Conheça quem inspirou este conto
+            </p>
+            <p className="font-bold text-lg">
+              {storyCompanion.name}
+              <span className="font-normal text-muted-foreground">
+                {' '}
+                · {storyCompanion.age} anos · {storyCompanion.city}
+              </span>
+            </p>
+            {storyCompanion.shortDescription && (
+              <p className="text-sm text-muted-foreground truncate">
+                {storyCompanion.shortDescription}
+              </p>
+            )}
+          </div>
+        </Link>
+      )}
 
       {/* Related stories */}
       {related.length > 0 && (

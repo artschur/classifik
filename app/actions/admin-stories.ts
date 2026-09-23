@@ -3,7 +3,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
-import { createDbStory, deleteDbStory, setDbStoryFeatured } from '@/db/queries/stories';
+import {
+  createDbStory,
+  deleteDbStory,
+  setDbStoryCompanion,
+  setDbStoryFeatured,
+} from '@/db/queries/stories';
 import { isAdmin } from '@/components/header';
 
 const supabase = createClient(
@@ -29,6 +34,11 @@ export async function createStoryAction(
     const publishedAtRaw = formData.get('publishedAt') as string | null;
     const publishedAt = publishedAtRaw ? new Date(publishedAtRaw) : new Date();
     const paragraphCount = parseInt(formData.get('paragraphCount') as string) || 0;
+
+    // Ligação opcional ao perfil de uma acompanhante: campo vazio fica sem
+    // ligação, e o conto comporta-se como qualquer outro.
+    const companionIdRaw = formData.get('companionId') as string | null;
+    const companionId = companionIdRaw ? Number(companionIdRaw) : null;
 
     const paragraphs: string[] = [];
     for (let i = 0; i < paragraphCount; i++) {
@@ -83,6 +93,7 @@ export async function createStoryAction(
       published_at: publishedAt,
       paragraphs,
       inline_images: inlineImages,
+      companion_id: companionId,
     });
 
     revalidatePath('/contos');
@@ -91,6 +102,31 @@ export async function createStoryAction(
   } catch (err) {
     console.error(err);
     return { success: false, error: err instanceof Error ? err.message : 'Erro ao criar conto' };
+  }
+}
+
+/**
+ * Liga ou desliga um conto do perfil de uma acompanhante. Existe à parte da
+ * criação porque os contos não têm ecrã de edição: sem isto, só os contos
+ * novos poderiam ser ligados e os já publicados ficavam de fora.
+ */
+export async function setStoryCompanionAction(
+  id: number,
+  companionId: number | null,
+): Promise<{ success: boolean; error?: string; }> {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) return { success: false, error: 'Não autorizado' };
+
+  try {
+    await setDbStoryCompanion(id, companionId);
+    revalidatePath('/contos');
+    revalidatePath('/admin/contos');
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Erro ao ligar o perfil',
+    };
   }
 }
 

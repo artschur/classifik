@@ -1,7 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/components/header';
-import { getAllDbStories } from '@/db/queries/stories';
+import {
+  getAllDbStories,
+  getLinkableCompanionsByDistrict,
+} from '@/db/queries/stories';
 import { stories as staticStories, dbToStory } from '@/lib/stories';
 import { NewStoryForm } from './new-story-form';
 
@@ -9,7 +12,10 @@ export default async function NewStoryPage() {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) redirect('/');
 
-  const dbStories = await getAllDbStories().catch(() => []);
+  const [dbStories, districts] = await Promise.all([
+    getAllDbStories().catch(() => []),
+    getLinkableCompanionsByDistrict(),
+  ]);
   const dbSlugs = new Set(dbStories.map((s) => s.slug));
   const allStories = [
     ...dbStories.map(dbToStory),
@@ -27,7 +33,7 @@ export default async function NewStoryPage() {
           Preencha os campos e publique o conto no site.
         </p>
       </div>
-      <NewStoryForm collections={collections} />
+      <NewStoryForm collections={collections} districts={districts} />
     </div>
   );
 }

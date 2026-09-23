@@ -3,9 +3,13 @@ import Image from 'next/image';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/components/header';
-import { getAllDbStories } from '@/db/queries/stories';
+import {
+  getAllDbStories,
+  getLinkableCompanionsByDistrict,
+} from '@/db/queries/stories';
 import { DeleteStoryButton } from './delete-button';
 import { FeatureStoryButton } from './feature-button';
+import { LinkCompanionButton } from './link-companion-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +17,14 @@ export default async function AdminContosPage() {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) redirect('/');
 
-  const stories = await getAllDbStories();
+  const [stories, districts] = await Promise.all([
+    getAllDbStories(),
+    getLinkableCompanionsByDistrict(),
+  ]);
+
+  const nomePorId = new Map(
+    districts.flatMap((d) => d.companions.map((c) => [c.id, c.name] as const)),
+  );
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-4xl">
@@ -77,6 +88,18 @@ export default async function AdminContosPage() {
                   <p className="text-xs text-muted-foreground">
                     {new Date(story.published_at).toLocaleDateString('pt-PT')} · /contos/{story.slug}
                   </p>
+                  <div className="mt-2">
+                    <LinkCompanionButton
+                      storyId={story.id}
+                      companionId={story.companion_id}
+                      companionName={
+                        story.companion_id
+                          ? (nomePorId.get(story.companion_id) ?? null)
+                          : null
+                      }
+                      options={districts}
+                    />
+                  </div>
                 </div>
 
                 {/* Actions */}
