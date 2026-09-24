@@ -509,6 +509,110 @@ export async function countCompanionsPages(
 }
 
 // Main function to get filtered companions
+/**
+ * Perfis no ar, só o que o mapa do site precisa: o identificador e a data da
+ * última alteração. Sem cache de longa duração de propósito — o mapa existe
+ * para o buscador saber que há uma acompanhante nova, e servir-lhe uma lista
+ * de há meia hora atrasa justamente aquilo que ele vem buscar.
+ */
+export async function getSitemapCompanions(): Promise<
+  { id: number; updatedAt: Date | null; }[]
+> {
+  return db
+    .select({
+      id: companionsTable.id,
+      updatedAt: companionsTable.updated_at,
+    })
+    .from(companionsTable)
+    .where(
+      and(eq(companionsTable.verified, true), eq(companionsTable.paused, false)),
+    )
+    .orderBy(asc(companionsTable.id));
+}
+
+/**
+ * Todas as acompanhantes no ar, para a listagem geral em /companions.
+ *
+ * Existe porque o buscador não encontrava caminho nenhum até aos perfis: a
+ * lista dos distritos é desenhada no navegador, por isso o código que o
+ * servidor entrega não tem uma única ligação para /companions/<id>. Esta
+ * consulta alimenta uma página desenhada no servidor, com as ligações já no
+ * HTML e paginação por endereço.
+ *
+ * A ordem termina no id de propósito: sem desempate estável, a mesma
+ * acompanhante podia aparecer em duas páginas ou em nenhuma.
+ */
+export const getAllActiveCompanions = unstable_cache(
+  async (
+    page: number,
+    pageSize: number,
+  ): Promise<{ companions: CompanionPreview[]; total: number; }> => {
+    const offset = (page - 1) * pageSize;
+
+    const [{ total }] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(companionsTable)
+      .where(
+        and(
+          eq(companionsTable.verified, true),
+          eq(companionsTable.paused, false),
+        ),
+      );
+
+    if (total === 0) return { companions: [], total: 0 };
+
+    const rows = await db
+      .select({
+        id: companionsTable.id,
+        name: companionsTable.name,
+        age: companionsTable.age,
+        price: companionsTable.price,
+        shortDescription: companionsTable.shortDescription,
+        city: citiesTable.city,
+        planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as(
+          'planType',
+        ),
+        planRank: sql<number>`CASE
+          WHEN ${companionsTable.ad_expiration_date} <= NOW() OR ${companionsTable.ad_expiration_date} IS NULL THEN 3
+          WHEN ${companionsTable.plan_type} = 'vip' THEN 0
+          WHEN ${companionsTable.plan_type} = 'plus' THEN 1
+          WHEN ${companionsTable.plan_type} = 'classic' THEN 2
+          ELSE 3 END`.as('planRank'),
+      })
+      .from(companionsTable)
+      .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+      .where(
+        and(
+          eq(companionsTable.verified, true),
+          eq(companionsTable.paused, false),
+        ),
+      )
+      .orderBy(sql`"planRank" asc`, asc(companionsTable.id))
+      .limit(pageSize)
+      .offset(offset);
+
+    if (rows.length === 0) return { companions: [], total };
+
+    const imagesMap = await getCompanionImages(rows.map((r) => r.id));
+
+    return {
+      companions: rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        age: row.age,
+        price: row.price,
+        shortDescription: row.shortDescription,
+        city: row.city,
+        planType: row.planType,
+        images: imagesMap.get(String(row.id)) || [],
+      })) as unknown as CompanionPreview[],
+      total,
+    };
+  },
+  ["companions-all"],
+  { revalidate: 1800, tags: ["companions", "companions-filter"] },
+);
+
 export const getCompanionsToFilter = unstable_cache(
   async (
     citySlug: string,
