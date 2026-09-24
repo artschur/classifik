@@ -19,6 +19,11 @@ export const metadata: Metadata = {
   description:
     'Contos eróticos, romances intensos e fantasias envolventes para despertar emoções, imaginação e novas sensações.',
   robots: { index: true, follow: true },
+  // Canonical fixo em /contos: as vistas filtradas (?colecao=...) são
+  // subconjuntos desta listagem e consolidam os sinais aqui.
+  alternates: {
+    canonical: 'https://www.onesugar.pt/contos',
+  },
   openGraph: {
     title: 'Contos Eróticos | Onesugar',
     description: 'Histórias que ficam na memória.',

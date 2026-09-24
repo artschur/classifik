@@ -37,6 +37,11 @@ export async function generateMetadata({
     title: `${story.title} — ${story.collection} | Onesugar`,
     description: story.excerpt,
     robots: { index: true, follow: true },
+    // Canonical autorreferente por conto. Sem isto cada conto herdava o
+    // canonical da homepage definido no layout raiz.
+    alternates: {
+      canonical: `https://www.onesugar.pt/contos/${story.slug}`,
+    },
     openGraph: {
       title: story.title,
       description: story.excerpt,

@@ -23,6 +23,25 @@ const clerkOrigins = [
 const nextConfig: NextConfig = {
   trailingSlash: false,
 
+  // ── Metadata dentro do <head> ────────────────────────────────────────────
+  // FIX SEO: title, description, canonical e meta robots estavam a ser
+  // emitidos fora do <head> (Screaming Frog: Outside <head>).
+  //
+  // Causa: o layout raiz renderiza o <Navbar />, que chama auth() do Clerk,
+  // e /location/[city] e /contos lêem searchParams. Isso torna as rotas
+  // dinâmicas (x-vercel-cache: MISS). Com o app/loading.tsx a abrir um
+  // Suspense e o generateMetadata a esperar pelo Supabase, o Next.js faz
+  // "streaming metadata": envia o <head> logo e o metadata depois, dentro do
+  // <body>. Só os
+  // user agents em htmlLimitedBots recebem o metadata bloqueante no <head>,
+  // e a lista padrão não inclui o Googlebot. Por isso o generateStaticParams
+  // não resolvia: as rotas nunca chegam a ser estáticas.
+  //
+  // /.*/ desliga o streaming metadata para todos os user agents: o servidor
+  // espera pelo generateMetadata e escreve tudo no <head>.
+  // Doc: https://nextjs.org/docs/app/api-reference/config/next-config-js/htmlLimitedBots
+  htmlLimitedBots: /.*/,
+
   // ── Redirects ────────────────────────────────────────────────────────────
   async redirects() {
     return [

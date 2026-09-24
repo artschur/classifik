@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: 'Sobre a Onesugar | Plataforma de acompanhantes em Portugal',
   description:
     'Saiba mais sobre a Onesugar, uma plataforma confiável para encontrar acompanhantes verificadas e serviços de acompanhantes premium em Portugal.',
+  // Canonical autorreferente. Sem isto a página herda o canonical do
+  // layout raiz e declara-se duplicada da homepage.
+  alternates: {
+    canonical: 'https://www.onesugar.pt/sobre',
+  },
 }
 
 const sobreData = {
