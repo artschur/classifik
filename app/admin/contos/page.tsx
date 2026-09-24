@@ -10,6 +10,7 @@ import {
 import { DeleteStoryButton } from './delete-button';
 import { FeatureStoryButton } from './feature-button';
 import { LinkCompanionButton } from './link-companion-button';
+import { ChangeCoverButton } from './change-cover-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,7 +89,8 @@ export default async function AdminContosPage() {
                   <p className="text-xs text-muted-foreground">
                     {new Date(story.published_at).toLocaleDateString('pt-PT')} · /contos/{story.slug}
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <ChangeCoverButton storyId={story.id} slug={story.slug} />
                     <LinkCompanionButton
                       storyId={story.id}
                       companionId={story.companion_id}

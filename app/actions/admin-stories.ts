@@ -6,7 +6,9 @@ import { revalidatePath } from 'next/cache';
 import {
   createDbStory,
   deleteDbStory,
+  getDbStoryBySlug,
   setDbStoryCompanion,
+  setDbStoryCover,
   setDbStoryFeatured,
 } from '@/db/queries/stories';
 import { isAdmin } from '@/components/header';
@@ -102,6 +104,70 @@ export async function createStoryAction(
   } catch (err) {
     console.error(err);
     return { success: false, error: err instanceof Error ? err.message : 'Erro ao criar conto' };
+  }
+}
+
+/**
+ * Troca a imagem de capa de um conto já publicado.
+ *
+ * Existe à parte da criação porque os contos não têm ecrã de edição: a capa
+ * só se podia escolher no momento de publicar, e trocá-la depois obrigava a
+ * apagar o conto e a escrevê-lo outra vez.
+ *
+ * A capa antiga é removida do armazenamento a seguir à troca. Só o é depois
+ * de a nova estar gravada: se a gravação falhar a meio, o conto fica com a
+ * imagem que já tinha em vez de ficar sem nenhuma.
+ */
+export async function setStoryCoverAction(
+  formData: FormData,
+): Promise<{ success: boolean; url?: string; error?: string; }> {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) return { success: false, error: 'Não autorizado' };
+
+  try {
+    const id = Number(formData.get('storyId'));
+    const slug = formData.get('slug') as string;
+    const file = formData.get('coverImage') as File | null;
+
+    if (!Number.isInteger(id) || !slug) {
+      return { success: false, error: 'Conto inválido' };
+    }
+    if (!file || file.size === 0) {
+      return { success: false, error: 'Escolha uma imagem' };
+    }
+    if (!file.type.startsWith('image/')) {
+      return { success: false, error: 'O ficheiro tem de ser uma imagem' };
+    }
+
+    // O conto é procurado pelo slug mas actualizado pelo id. Se os dois não
+    // apontarem ao mesmo, a capa apagada no fim seria a de outro conto.
+    const anterior = await getDbStoryBySlug(slug);
+    if (!anterior || anterior.id !== id) {
+      return { success: false, error: 'Conto não encontrado' };
+    }
+
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `stories/${slug}/cover-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('images').upload(path, file);
+    if (error) throw new Error(error.message);
+
+    const { data } = supabase.storage.from('images').getPublicUrl(path);
+    await setDbStoryCover(id, data.publicUrl, path);
+
+    const antiga = anterior?.cover_storage_path;
+    if (antiga && antiga !== path) {
+      await supabase.storage.from('images').remove([antiga]);
+    }
+
+    revalidatePath('/contos');
+    revalidatePath(`/contos/${slug}`);
+    revalidatePath('/admin/contos');
+    return { success: true, url: data.publicUrl };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Erro ao trocar a capa',
+    };
   }
 }
 

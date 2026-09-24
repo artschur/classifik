@@ -106,6 +106,21 @@ export async function getStoryCompanion(
   return { ...companion, imageUrl: foto?.url ?? null };
 }
 
+/** Troca a imagem de capa de um conto já publicado. */
+export async function setDbStoryCover(
+  id: number,
+  coverImageUrl: string,
+  coverStoragePath: string,
+): Promise<void> {
+  await db
+    .update(storiesTable)
+    .set({
+      cover_image_url: coverImageUrl,
+      cover_storage_path: coverStoragePath,
+    })
+    .where(eq(storiesTable.id, id));
+}
+
 /** Liga ou desliga um conto de um perfil. `null` desfaz a ligação. */
 export async function setDbStoryCompanion(
   id: number,
