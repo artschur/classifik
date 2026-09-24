@@ -22,6 +22,8 @@ import {
   Sparkle,
   Pencil,
   Crop,
+  ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +58,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { updateImageFramingAsAdmin } from '@/db/queries/images';
+import {
+  updateImageFramingAsAdmin,
+  updateImagesOrderAsAdmin,
+} from '@/db/queries/images';
 import { ImageFramingDialog } from '@/components/imageFramingDialog';
 import { isVideoMedia, mediaFraming, mediaUrl } from '@/lib/image-framing';
 
@@ -107,6 +112,50 @@ export default function SingleCompanionVerify({
 
   const [imageToFrame, setImageToFrame] = useState<Media | null>(null);
   const [isSavingFraming, setIsSavingFraming] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+
+  /**
+   * Move a foto que está a ser vista uma posição para trás ou para a frente.
+   *
+   * A ordem manda no perfil: a primeira foto é a capa, que é o que decide se
+   * alguém abre o anúncio. Reordenar no carrossel, enquanto se revê foto a
+   * foto, é o momento natural para o fazer.
+   *
+   * O ecrã actualiza-se primeiro e só depois se grava; se a gravação falhar,
+   * volta atrás. Evita que cada clique fique à espera do servidor.
+   */
+  const moveCurrentImage = async (direction: -1 | 1) => {
+    const destino = currentImageIndex + direction;
+    if (destino < 0 || destino >= images.length) return;
+
+    const anterior = images;
+    const nova = [...images];
+    [nova[currentImageIndex], nova[destino]] = [
+      nova[destino],
+      nova[currentImageIndex],
+    ];
+
+    setImages(nova);
+    setCurrentImageIndex(destino);
+    setIsSavingOrder(true);
+
+    const caminhos = nova
+      .map((media) => (typeof media === 'object' ? media.storagePath : null))
+      .filter((p): p is string => Boolean(p));
+
+    const result = await updateImagesOrderAsAdmin(companion.id, caminhos);
+    setIsSavingOrder(false);
+
+    if (!result.success) {
+      setImages(anterior);
+      setCurrentImageIndex(currentImageIndex);
+      toast({
+        title: 'Erro',
+        description: result.error ?? 'Não foi possível guardar a ordem.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const currentImage = images[currentImageIndex];
   const currentImageUrl = currentImage ? mediaUrl(currentImage) : null;
@@ -476,6 +525,13 @@ export default function SingleCompanionVerify({
                   Foto nova
                 </Badge>
               )}
+              {images.length > 0 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white">
+                  {currentImageIndex === 0
+                    ? 'Capa'
+                    : `${currentImageIndex + 1} de ${images.length}`}
+                </div>
+              )}
               {canFrameCurrent && (
                 <Button
                   type="button"
@@ -487,6 +543,34 @@ export default function SingleCompanionVerify({
                   <Crop className="h-4 w-4 mr-1.5" />
                   Centralizar
                 </Button>
+              )}
+              {images.length > 1 && (
+                <div className="absolute bottom-2 right-2 flex gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="bg-black/60 text-white hover:bg-black/80"
+                    onClick={() => moveCurrentImage(-1)}
+                    disabled={currentImageIndex === 0 || isSavingOrder}
+                    title="Mover esta foto para trás"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="bg-black/60 text-white hover:bg-black/80"
+                    onClick={() => moveCurrentImage(1)}
+                    disabled={
+                      currentImageIndex === images.length - 1 || isSavingOrder
+                    }
+                    title="Mover esta foto para a frente"
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               )}
               {images.length > 1 && (
                 <>

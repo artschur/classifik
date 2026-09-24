@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { db } from '..';
 import { companionsTable, imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
-import { and, asc, eq, inArray, SQL, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, notInArray, SQL, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { isAdmin } from '@/components/header';
 
@@ -298,6 +298,81 @@ export async function updateImageFramingAsAdmin(
     return { success: true };
   } catch (error) {
     console.error('Falha ao guardar enquadramento como admin:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro desconhecido',
+    };
+  }
+}
+
+/**
+ * Mesma reordenação, mas para o admin mexer nas fotos de outra pessoa durante
+ * a verificação. Fica separada de updateImagesOrder de propósito: aquela
+ * confirma que as fotos pertencem a quem está a gravar, e é essa verificação
+ * que não pode ser afrouxada só para servir os dois casos.
+ *
+ * Recebe apenas as fotos que o admin vê no carrossel. As restantes imagens do
+ * mesmo perfil — vídeos, sobretudo — são empurradas para trás destas, senão
+ * ficavam com posições a colidir com as novas e a ordem final passava a
+ * depender do desempate por id.
+ */
+export async function updateImagesOrderAsAdmin(
+  companionId: number,
+  orderedStoragePaths: string[]
+): Promise<{ success: boolean; error?: string; }> {
+  try {
+    const clerkId = (await auth()).userId;
+    if (!clerkId || !isAdmin(clerkId)) {
+      return { success: false, error: 'Não autorizado' };
+    }
+    if (orderedStoragePaths.length === 0) return { success: true };
+
+    // Só aceita caminhos que sejam mesmo deste perfil, para o pedido não
+    // poder mexer nas fotos de outra pessoa.
+    const doPerfil = await db
+      .select({ storagePath: imagesTable.storage_path })
+      .from(imagesTable)
+      .where(
+        and(
+          eq(imagesTable.companionId, companionId),
+          inArray(imagesTable.storage_path, orderedStoragePaths)
+        )
+      );
+
+    const validos = new Set(doPerfil.map((i) => i.storagePath));
+    if (validos.size !== orderedStoragePaths.length) {
+      return { success: false, error: 'Existem fotos que não são deste perfil' };
+    }
+
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < orderedStoragePaths.length; i++) {
+        await tx
+          .update(imagesTable)
+          .set({ position: i })
+          .where(
+            and(
+              eq(imagesTable.companionId, companionId),
+              eq(imagesTable.storage_path, orderedStoragePaths[i])
+            )
+          );
+      }
+
+      // Tudo o resto vai para depois das fotos reordenadas.
+      await tx
+        .update(imagesTable)
+        .set({ position: orderedStoragePaths.length })
+        .where(
+          and(
+            eq(imagesTable.companionId, companionId),
+            notInArray(imagesTable.storage_path, orderedStoragePaths)
+          )
+        );
+    });
+
+    revalidateCompanionMedia();
+    return { success: true };
+  } catch (error) {
+    console.error('Falha ao reordenar fotos como admin:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',
