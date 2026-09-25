@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "Política de Cookies | OneSugar Portugal",
   description:
     "Sabe como a OneSugar utiliza cookies para melhorar a tua navegação. Aprende a gerir, bloquear ou eliminar cookies no nosso portal de anúncios.",
+  // Canonical autorreferente. Sem isto a página herda o canonical do
+  // layout raiz e declara-se duplicada da homepage.
+  alternates: {
+    canonical: 'https://www.onesugar.pt/politica-de-cookies',
+  },
 }
 
 const cookiesData = {

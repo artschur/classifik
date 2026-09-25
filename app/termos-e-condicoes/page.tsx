@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "Termos e Condições de Utilização | OneSugar Portugal",
   description:
     "Consulta os Termos e Condições da OneSugar. Conhece as regras, responsabilidades e diretrizes para anunciantes e utilizadores no nosso portal de anúncios em Portugal.",
+  // Canonical autorreferente. Sem isto a página herda o canonical do
+  // layout raiz e declara-se duplicada da homepage.
+  alternates: {
+    canonical: 'https://www.onesugar.pt/termos-e-condicoes',
+  },
 }
 
 const termosData = {

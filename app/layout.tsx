@@ -38,15 +38,11 @@ export const metadata: Metadata = {
   },
   description:
     'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discrição que merece na Onesugar.',
-  // CANONICAL: define o canonical da homepage e serve de fallback para rotas
-  // sem metadata próprio. Páginas de localidade (/location/[city]) sobrescrevem
-  // este valor via alternates.canonical no seu próprio generateMetadata —
-  // o Next.js App Router faz merge de metadata, e a página filha tem precedência.
-  // NÃO remover daqui: sem este campo, a homepage fica sem canonical após o
-  // merge com as páginas filhas que definem o seu próprio.
-  alternates: {
-    canonical: 'https://www.onesugar.pt',
-  },
+  // CANONICAL: não é definido aqui de propósito. O metadata do layout raiz é
+  // herdado por todas as rotas, e um canonical neste ponto fazia com que
+  // qualquer página sem canonical próprio (institucionais, contos) se
+  // declarasse duplicada da homepage. Cada página indexável define o seu
+  // próprio alternates.canonical; a homepage define o dela em app/page.tsx.
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
