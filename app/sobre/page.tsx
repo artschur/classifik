@@ -2,7 +2,8 @@ import type { Metadata } from "next"
 import { AboutPage } from "@/components/about-page"
 
 export const metadata: Metadata = {
-  title: 'Sobre a Onesugar | Plataforma de acompanhantes em Portugal',
+  // absolute: a marca já está no início, o template não a repete no fim.
+  title: { absolute: 'Sobre a OneSugar | Plataforma de acompanhantes em Portugal' },
   description:
     'Saiba mais sobre a Onesugar, uma plataforma confiável para encontrar acompanhantes verificadas e serviços de acompanhantes premium em Portugal.',
   // Canonical autorreferente. Sem isto a página herda o canonical do

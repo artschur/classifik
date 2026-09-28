@@ -166,7 +166,7 @@ const districts = {
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
-  title: 'Onesugar | Acompanhantes em Portugal',
+  title: 'OneSugar | Acompanhantes em Portugal',
   description:
     'Encontre as acompanhantes premium em Portugal com privacidade garantida e perfis verificados na Onesugar.',
   keywords: [
@@ -180,18 +180,18 @@ export const metadata: Metadata = {
     'Encontros discretos',
     'Acompanhantes verificadas',
   ],
-  authors: [{ name: 'Onesugar' }],
-  creator: 'Onesugar',
-  publisher: 'Onesugar',
+  authors: [{ name: 'OneSugar' }],
+  creator: 'OneSugar',
+  publisher: 'OneSugar',
   metadataBase: new URL('https://www.onesugar.pt'),
   alternates: {
     canonical: 'https://www.onesugar.pt',
   },
   openGraph: {
-    title: 'Onesugar - Sugars Premium em Portugal',
+    title: 'OneSugar | Acompanhantes premium em Portugal',
     description: 'Serviços de Acompanhantes premium e discretas em Lisboa, Porto e todo Portugal.',
     url: 'https://www.onesugar.pt',
-    siteName: 'Onesugar',
+    siteName: 'OneSugar',
     locale: 'pt_PT',
     type: 'website',
     images: [
@@ -199,7 +199,7 @@ export const metadata: Metadata = {
         url: 'https://www.onesugar.pt/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Onesugar - Acompanhantes Premium',
+        alt: 'OneSugar, acompanhantes premium em Portugal',
       },
     ],
   },

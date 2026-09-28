@@ -31,10 +31,10 @@ export async function generateMetadata({
   const { slug } = await params;
   const dbStory = await getDbStoryBySlug(slug).catch(() => null);
   const story = dbStory ? dbToStory(dbStory) : getStoryBySlug(slug);
-  if (!story) return { title: 'Conto não encontrado | Onesugar' };
+  if (!story) return { title: 'Conto não encontrado' };
 
   return {
-    title: `${story.title} — ${story.collection} | Onesugar`,
+    title: `${story.title} | ${story.collection}`,
     description: story.excerpt,
     robots: { index: true, follow: true },
     // Canonical autorreferente por conto. Sem isto cada conto herdava o
@@ -46,7 +46,7 @@ export async function generateMetadata({
       title: story.title,
       description: story.excerpt,
       url: `https://www.onesugar.pt/contos/${slug}`,
-      siteName: 'Onesugar',
+      siteName: 'OneSugar',
       locale: 'pt_PT',
       type: 'article',
       ...(story.coverImage && {

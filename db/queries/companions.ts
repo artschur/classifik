@@ -531,6 +531,26 @@ export async function getSitemapCompanions(): Promise<
 }
 
 /**
+ * Nome do distrito de um perfil, para o título da página do perfil.
+ *
+ * O título só com o nome repetia-se entre perfis com o mesmo nome (duas
+ * "Bianca" tinham exactamente o mesmo título) e não dizia ao buscador onde a
+ * acompanhante está. Devolve null se o perfil não tiver distrito.
+ */
+export async function getCompanionCityName(
+  companionId: number,
+): Promise<string | null> {
+  const [row] = await db
+    .select({ city: citiesTable.city })
+    .from(companionsTable)
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .where(eq(companionsTable.id, companionId))
+    .limit(1);
+
+  return row?.city ?? null;
+}
+
+/**
  * Todas as acompanhantes no ar, para a listagem geral em /companions.
  *
  * Existe porque o buscador não encontrava caminho nenhum até aos perfis: a

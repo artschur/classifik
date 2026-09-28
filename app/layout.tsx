@@ -33,8 +33,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.onesugar.pt'),
   title: {
-    default: 'Onesugar | Acompanhantes em Portugal',
-    template: '%s | Onesugar',
+    default: 'OneSugar | Acompanhantes em Portugal',
+    // A marca entra só por aqui. Os títulos das páginas não a repetem, senão
+    // o resultado fica "Página | OneSugar | OneSugar".
+    template: '%s | OneSugar',
   },
   description:
     'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discrição que merece na Onesugar.',
@@ -59,10 +61,10 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Onesugar | Acompanhantes em Portugal',
+    title: 'OneSugar | Acompanhantes em Portugal',
     description: 'A sua escolha segura para acompanhantes premium em Portugal.',
     url: 'https://www.onesugar.pt',
-    siteName: 'Onesugar',
+    siteName: 'OneSugar',
     locale: 'pt_PT',
     type: 'website',
     images: [
@@ -70,13 +72,13 @@ export const metadata: Metadata = {
         url: '/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Onesugar - Acompanhantes Premium em Portugal',
+        alt: 'OneSugar, acompanhantes premium em Portugal',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Onesugar | Acompanhantes em Portugal',
+    title: 'OneSugar | Acompanhantes em Portugal',
     description: 'A sua escolha segura para acompanhantes premium em Portugal.',
     images: ['/images/og-image.jpg'],
   },
@@ -118,7 +120,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: 'Onesugar',
+              name: 'OneSugar',
               url: 'https://www.onesugar.pt',
               logo: 'https://www.onesugar.pt/logo.png',
               description:

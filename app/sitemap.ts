@@ -1,15 +1,18 @@
 import { MetadataRoute } from 'next';
 import { getAvailableCities } from '@/db/queries';
 import { getSitemapCompanions } from '@/db/queries/companions';
+import { getAllDbStories } from '@/db/queries/stories';
+import { stories as staticStories } from '@/lib/stories';
 
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.onesugar.pt';
 
-  const [cities, companions] = await Promise.all([
+  const [cities, companions, dbStories] = await Promise.all([
     getAvailableCities().catch(() => []),
     getSitemapCompanions().catch(() => []),
+    getAllDbStories().catch(() => []),
   ]);
 
   const cityUrls = cities.map(city => ({
@@ -29,6 +32,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Contos: os da base de dados mais os estáticos que ainda não foram
+  // migrados para ela, a mesma regra da listagem em /contos. Cada conto tem
+  // canonical próprio desde o PR #88 e precisa de estar aqui para ser
+  // descoberto sem depender só das ligações internas.
+  const dbSlugs = new Set(dbStories.map(story => story.slug));
+  const storyUrls = [
+    ...dbStories.map(story => ({
+      url: `${baseUrl}/contos/${story.slug}`,
+      lastModified: story.published_at,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    })),
+    ...staticStories
+      .filter(story => !dbSlugs.has(story.slug))
+      .map(story => ({
+        url: `${baseUrl}/contos/${story.slug}`,
+        lastModified: new Date(story.publishedAt),
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      })),
+  ];
+
   return [
     {
       url: `${baseUrl}/`,
@@ -42,12 +67,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    },
+    // /blog não entra: responde 301 para blog.onesugar.pt, que tem o seu
+    // próprio sitemap. Um sitemap só deve listar endereços que respondem 200.
     {
       url: `${baseUrl}/ajuda-anunciantes`,
       lastModified: new Date(),
@@ -66,7 +87,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily' as const,
       priority: 0.9,
     },
+    {
+      url: `${baseUrl}/contos`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/sobre`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly' as const,
+      priority: 0.4,
+    },
     ...cityUrls,
     ...companionUrls,
+    ...storyUrls,
   ];
 }

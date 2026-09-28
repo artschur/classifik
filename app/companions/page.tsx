@@ -48,7 +48,7 @@ export async function generateMetadata({
 
   // O título das páginas seguintes diz em que página se está, senão o
   // buscador vê várias páginas com o mesmo título e trata-as como repetidas.
-  const title = page > 1 ? `${TITULO} — página ${page}` : TITULO;
+  const title = page > 1 ? `${TITULO}, página ${page}` : TITULO;
 
   return {
     title,
@@ -70,7 +70,7 @@ export async function generateMetadata({
       title,
       description: DESCRICAO,
       url: urlDaPagina(page),
-      siteName: 'Onesugar',
+      siteName: 'OneSugar',
       locale: 'pt_PT',
       type: 'website',
     },
