@@ -9,26 +9,13 @@ import { getReviewsByCompanionId } from '@/db/queries/reviews';
 import { PageViewTracker } from '@/components/analytics-components';
 import { auth } from '@clerk/nextjs/server';
 import {
-  getCompanionCityName,
+  getCompanionDistrict,
   isUserBlocked,
 } from '@/db/queries/companions';
 import { BlockedProfileMessage } from '@/components/blocked-profile-message';
 import { getCompanionById } from '@/db/queries';
+import { distritoPorSlug } from '@/lib/districts';
 import type { Metadata } from 'next';
-
-// Preposição certa antes do distrito: "no Porto", "na Guarda", "em Lisboa".
-const PREPOSICAO_DISTRITO: Record<string, string> = {
-  porto: 'no',
-  guarda: 'na',
-  madeira: 'na',
-  'açores': 'nos',
-  acores: 'nos',
-};
-
-function emDistrito(cidade: string): string {
-  const prep = PREPOSICAO_DISTRITO[cidade.trim().toLowerCase()] ?? 'em';
-  return `${prep} ${cidade.trim()}`;
-}
 
 export async function generateMetadata({
   params,
@@ -39,10 +26,15 @@ export async function generateMetadata({
   const companionId = parseInt(id);
 
   try {
-    const [companion, cidade] = await Promise.all([
+    const [companion, district] = await Promise.all([
       getCompanionById(companionId),
-      getCompanionCityName(companionId).catch(() => null),
+      getCompanionDistrict(companionId).catch(() => null),
     ]);
+
+    // O nome chega como a anunciante o escreveu, às vezes com espaço no fim,
+    // o que dava "Angelinne samya , acompanhante em Faro" no título.
+    const nome = companion.name.trim();
+    const distrito = district ? distritoPorSlug(district.slug, district.city) : null;
 
     // Textos escritos à mão para alguns perfis. O título fica sem a marca: o
     // template do layout acrescenta " | OneSugar" a todos os títulos.
@@ -51,7 +43,9 @@ export async function generateMetadata({
         description: 'Gabi Mendes, 23 anos, estudante de sociologia, é uma morena charmosa, feminina e muito atraente.',
       },
       254: {
-        title: 'Sophia | Especialista em Massagem Erótica',
+        title: distrito
+          ? `Sophia | Especialista em Massagem Erótica ${distrito.emNome}`
+          : 'Sophia | Especialista em Massagem Erótica',
         description: 'Descubra a experiência de massagem erótica de Sofia em um ambiente discreto e relaxante, com atmosfera tranquila, toque sensual e uma jornada única de prazer e conexão.',
       },
       183: {
@@ -61,16 +55,16 @@ export async function generateMetadata({
 
     // "Bianca, acompanhante em Lisboa": distingue perfis com o mesmo nome e
     // leva o distrito para o título. Sem distrito, fica só o nome.
-    const tituloPadrao = cidade
-      ? `${companion.name}, acompanhante ${emDistrito(cidade)}`
-      : companion.name;
+    const tituloPadrao = distrito
+      ? `${nome}, acompanhante ${distrito.emNome}`
+      : nome;
 
     const custom = customMetadata[companionId];
     const title = custom?.title ?? tituloPadrao;
     const description =
       custom?.description ||
-      companion.shortDescription ||
-      `Conheça ${companion.name} na OneSugar.`;
+      companion.shortDescription?.trim() ||
+      `Conheça ${nome} na OneSugar.`;
 
     return {
       title,

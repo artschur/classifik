@@ -50,6 +50,99 @@ import { IconMicrophone } from '@tabler/icons-react';
 import { auth } from '@clerk/nextjs/server';
 import { isAdmin } from '@/components/header';
 import { AdminProfileControls } from './admin-profile-controls';
+import Link from 'next/link';
+import { getCompanionDistrict } from '@/db/queries/companions';
+import { distritoPorSlug, type Distrito } from '@/lib/districts';
+
+const SITE_URL = 'https://www.onesugar.pt';
+
+/**
+ * Dados estruturados do perfil: ProfilePage com a acompanhante (Person) como
+ * entidade principal e o caminho Início > distrito > perfil. Liga o perfil ao
+ * site e à organização pelos @id declarados no layout e na home, para o
+ * buscador (e os assistentes de IA) lerem cada perfil como uma pessoa com
+ * localidade, e não como uma página solta.
+ *
+ * Ficam de fora de propósito telefone, Instagram e preço: o contacto não
+ * deve circular em texto aberto fora do botão.
+ */
+function profileJsonLd({
+  id,
+  nome,
+  descricao,
+  imagem,
+  idiomas,
+  distrito,
+}: {
+  id: number;
+  nome: string;
+  descricao: string | null;
+  imagem: string | null;
+  idiomas: string[];
+  distrito: Distrito | null;
+}) {
+  const url = `${SITE_URL}/companions/${id}`;
+  const breadcrumb = [
+    { name: 'Início', item: `${SITE_URL}/` },
+    ...(distrito
+      ? [
+          {
+            name: `Acompanhantes ${distrito.emNome}`,
+            item: `${SITE_URL}/location/${distrito.slug}`,
+          },
+        ]
+      : []),
+    { name: nome, item: url },
+  ];
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'ProfilePage',
+        '@id': `${url}#profilepage`,
+        url,
+        name: distrito ? `${nome}, acompanhante ${distrito.emNome}` : nome,
+        inLanguage: 'pt-PT',
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        breadcrumb: { '@id': `${url}#breadcrumb` },
+        mainEntity: { '@id': `${url}#person` },
+      },
+      {
+        '@type': 'Person',
+        '@id': `${url}#person`,
+        name: nome,
+        url,
+        ...(descricao ? { description: descricao } : {}),
+        ...(imagem ? { image: imagem } : {}),
+        ...(idiomas.length ? { knowsLanguage: idiomas } : {}),
+        ...(distrito
+          ? {
+              homeLocation: {
+                '@type': 'Place',
+                name: distrito.nome,
+                address: {
+                  '@type': 'PostalAddress',
+                  addressRegion: distrito.nome,
+                  addressCountry: 'PT',
+                },
+              },
+            }
+          : {}),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${url}#breadcrumb`,
+        itemListElement: breadcrumb.map((b, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: b.name,
+          item: b.item,
+        })),
+      },
+    ],
+  };
+}
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
@@ -63,12 +156,13 @@ export async function CompanionProfile({
   id: number;
   reviewsRating: number | 'Sem avaliações';
 }) {
-  const [companion, { images, total }, audio] =
+  const [companion, { images, total }, audio, district] =
     await Promise.all([
       getCompanionById(id),
       getImagesByCompanionId(id, 3, 0),
       // getVerificationVideosByCompanionId(id),
       getAudioUrlByCompanionId(id),
+      getCompanionDistrict(id).catch(() => null),
     ]);
 
   const { userId } = await auth();
@@ -92,8 +186,55 @@ export async function CompanionProfile({
     focalY: img.focalY,
     zoom: img.zoom,
   }));
+  const nome = companion.name.trim();
+  const distrito = district ? distritoPorSlug(district.slug, district.city) : null;
+  const primeiraFoto =
+    initialMedia.find((m) => m.type === 'image')?.publicUrl ?? null;
+  const jsonLd = profileJsonLd({
+    id,
+    nome,
+    descricao: companion.shortDescription?.trim() || null,
+    imagem: primeiraFoto,
+    idiomas: Array.isArray(companion.languages) ? companion.languages : [],
+    distrito,
+  });
+
   return (
     <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
+      {/* Caminho até ao perfil. O link para o distrito devolve autoridade à
+          página do distrito e é o mesmo caminho descrito no BreadcrumbList. */}
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
+        <ol className="flex flex-wrap items-center gap-1">
+          <li>
+            <Link href="/" className="hover:underline">
+              Início
+            </Link>
+          </li>
+          {distrito && (
+            <>
+              <li aria-hidden="true">›</li>
+              <li>
+                <Link
+                  href={`/location/${distrito.slug}`}
+                  className="hover:underline text-rose-500"
+                >
+                  Acompanhantes {distrito.emNome}
+                </Link>
+              </li>
+            </>
+          )}
+          <li aria-hidden="true">›</li>
+          <li aria-current="page" className="text-foreground">
+            {nome}
+          </li>
+        </ol>
+      </nav>
       {viewerIsAdmin && (
         <AdminProfileControls
           companionId={id}

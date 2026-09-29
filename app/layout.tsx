@@ -1,4 +1,10 @@
 import type { Metadata, Viewport } from 'next';
+import {
+  BRAND_ALTERNATE_NAMES,
+  BRAND_NAME,
+  BRAND_OFFICIAL_PROFILES,
+  ORGANIZATION_ID,
+} from '@/lib/brand';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
@@ -120,8 +126,13 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: 'OneSugar',
+              '@id': ORGANIZATION_ID,
+              name: BRAND_NAME,
+              alternateName: BRAND_ALTERNATE_NAMES,
               url: 'https://www.onesugar.pt',
+              ...(BRAND_OFFICIAL_PROFILES.length
+                ? { sameAs: BRAND_OFFICIAL_PROFILES }
+                : {}),
               logo: 'https://www.onesugar.pt/logo.png',
               description:
                 'A sua escolha segura para acompanhantes premium em Portugal.',

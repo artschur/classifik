@@ -531,23 +531,25 @@ export async function getSitemapCompanions(): Promise<
 }
 
 /**
- * Nome do distrito de um perfil, para o título da página do perfil.
+ * Distrito de um perfil (nome na base e slug), para o título, o breadcrumb e
+ * os dados estruturados da página do perfil.
  *
  * O título só com o nome repetia-se entre perfis com o mesmo nome (duas
  * "Bianca" tinham exactamente o mesmo título) e não dizia ao buscador onde a
- * acompanhante está. Devolve null se o perfil não tiver distrito.
+ * acompanhante está. O slug serve para ligar o perfil de volta à página do
+ * distrito. Devolve null se o perfil não tiver distrito.
  */
-export async function getCompanionCityName(
+export async function getCompanionDistrict(
   companionId: number,
-): Promise<string | null> {
+): Promise<{ city: string; slug: string } | null> {
   const [row] = await db
-    .select({ city: citiesTable.city })
+    .select({ city: citiesTable.city, slug: citiesTable.slug })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
     .where(eq(companionsTable.id, companionId))
     .limit(1);
 
-  return row?.city ?? null;
+  return row ?? null;
 }
 
 /**
