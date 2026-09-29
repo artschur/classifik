@@ -5,6 +5,7 @@ import { IconBrandWhatsapp } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { useAnalytics } from '@/hooks/analytics';
+import { gaEvent } from '@/lib/ga';
 interface WhatsAppButtonProps {
   phone: string;
   className?: string;
@@ -21,6 +22,9 @@ export function WhatsAppButton({
 
   const handleClick = () => {
     trackEvent(companionId, 'whatsapp_click');
+    // Contacto com a acompanhante no GA4, com o ID do perfil. Distingue-se do
+    // botão flutuante de suporte, que usa o número da própria OneSugar.
+    gaEvent('contato_whatsapp', { companion_id: companionId, metodo: 'whatsapp' });
   };
 
   return (

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { IconBrandInstagram } from '@tabler/icons-react';
 import { useAnalytics } from '@/hooks/analytics';
+import { gaEvent } from '@/lib/ga';
 
 interface InstagramButtonProps {
   instagramHandle: string;
@@ -36,6 +37,7 @@ export function InstagramButton({
   const { trackEvent } = useAnalytics();
   const handleClick = () => {
     trackEvent(companionId, 'instagram_click');
+    gaEvent('contato_instagram', { companion_id: companionId, metodo: 'instagram' });
   };
 
   const handle = normalizeInstagramHandle(instagramHandle);
