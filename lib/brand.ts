@@ -15,7 +15,9 @@ export const BRAND_ALTERNATE_NAMES = ['OneSugar Portugal', 'onesugar.pt'];
  * com o URL completo. Só entram perfis geridos pela própria OneSugar.
  * Com a lista vazia, o sameAs simplesmente não é emitido.
  */
-export const BRAND_OFFICIAL_PROFILES: string[] = [];
+export const BRAND_OFFICIAL_PROFILES: string[] = [
+  'https://www.instagram.com/onesugar_pt/',
+];
 
 export const ORGANIZATION_ID = 'https://www.onesugar.pt/#organization';
 export const WEBSITE_ID = 'https://www.onesugar.pt/#website';
