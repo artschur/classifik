@@ -14,7 +14,7 @@ import {
 import { LeadCapture } from './lead-capture';
 
 export const metadata: Metadata = {
-  title: 'Quanto Ganha uma Acompanhante em Portugal? Calculadora | Onesugar',
+  title: 'Quanto Ganha uma Acompanhante em Portugal? Calculadora',
   description:
     'Simule quanto pode ganhar como acompanhante em Portugal. Calculadora gratuita por valor/hora, atendimentos e dias de trabalho, com dicas para definir o seu preço.',
   alternates: {
@@ -22,11 +22,11 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   openGraph: {
-    title: 'Quanto Ganha uma Acompanhante em Portugal? | Onesugar',
+    title: 'Quanto Ganha uma Acompanhante em Portugal? | OneSugar',
     description:
       'Calculadora gratuita de rendimentos para acompanhantes em Portugal.',
     url: 'https://www.onesugar.pt/quanto-ganha-acompanhante',
-    siteName: 'Onesugar',
+    siteName: 'OneSugar',
     locale: 'pt_PT',
     type: 'website',
   },

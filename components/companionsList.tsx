@@ -17,15 +17,28 @@ export function CompanionsList({
   location,
   page,
   filters,
+  initialCompanions,
 }: {
   location: string;
   page: number;
   filters?: FilterTypesCompanions;
+  // Lista já buscada no servidor. Quando vem preenchida, os cartões (e as
+  // ligações /companions/<id>) saem no HTML entregue ao buscador, sem esperar
+  // pelo JavaScript. Sem ela, o componente continua a buscar no navegador.
+  initialCompanions?: CompanionFiltered[];
 }) {
-  const [companions, setCompanions] = useState<CompanionFiltered[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [companions, setCompanions] = useState<CompanionFiltered[]>(
+    initialCompanions ?? [],
+  );
+  const [loading, setLoading] = useState(initialCompanions === undefined);
 
   useEffect(() => {
+    // Os dados do servidor já correspondem a esta cidade, página e filtros:
+    // cada mudança de filtro ou de página muda a key do Suspense na página e
+    // o servidor volta a entregar a lista certa. Buscar de novo aqui só
+    // repetiria o pedido.
+    if (initialCompanions !== undefined) return;
+
     const fetchCompanions = async () => {
       setLoading(true);
       try {
@@ -39,7 +52,7 @@ export function CompanionsList({
     };
 
     fetchCompanions();
-  }, [location, page, filters]);
+  }, [location, page, filters, initialCompanions]);
 
   if (loading) {
     return <CompanionsListSkeleton />;

@@ -15,7 +15,7 @@ import { getAllStoryViews } from '@/app/actions/story-views';
 import { getAllDbStories } from '@/db/queries/stories';
 
 export const metadata: Metadata = {
-  title: 'Contos Eróticos | Histórias que ficam na memória | Onesugar',
+  title: 'Contos Eróticos | Histórias que ficam na memória',
   description:
     'Contos eróticos, romances intensos e fantasias envolventes para despertar emoções, imaginação e novas sensações.',
   robots: { index: true, follow: true },
@@ -25,10 +25,10 @@ export const metadata: Metadata = {
     canonical: 'https://www.onesugar.pt/contos',
   },
   openGraph: {
-    title: 'Contos Eróticos | Onesugar',
+    title: 'Contos Eróticos | OneSugar',
     description: 'Histórias que ficam na memória.',
     url: 'https://www.onesugar.pt/contos',
-    siteName: 'Onesugar',
+    siteName: 'OneSugar',
     locale: 'pt_PT',
     type: 'website',
   },

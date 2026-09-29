@@ -16,7 +16,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Cadastre-se agora | One Sugar',
+  title: 'Registe-se como anunciante',
   description: 'Join OneSugar Portugal and create your companion profile to connect with verified members seeking private and premium experiences.',
 };
 

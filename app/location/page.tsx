@@ -13,12 +13,12 @@ export const metadata: Metadata = {
     canonical: 'https://www.onesugar.pt/location',
   },
   openGraph: {
-    title: 'Acompanhantes em Portugal por Distrito | Onesugar',
+    title: 'Acompanhantes em Portugal por Distrito | OneSugar',
     description:
       'Encontre acompanhantes verificadas em todos os distritos de Portugal. '
       + 'Perfis reais e disponibilidade actualizada.',
     url: '/location',
-    siteName: 'Onesugar',
+    siteName: 'OneSugar',
     locale: 'pt_PT',
     type: 'website',
     images: [
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
         url: '/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Onesugar - Acompanhantes Premium em Portugal',
+        alt: 'OneSugar, acompanhantes premium em Portugal',
       },
     ],
   },

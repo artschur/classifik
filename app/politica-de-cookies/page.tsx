@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { LegalPage } from "@/components/legal-page"
 
 export const metadata: Metadata = {
-  title: "Política de Cookies | OneSugar Portugal",
+  title: "Política de Cookies",
   description:
     "Sabe como a OneSugar utiliza cookies para melhorar a tua navegação. Aprende a gerir, bloquear ou eliminar cookies no nosso portal de anúncios.",
   // Canonical autorreferente. Sem isto a página herda o canonical do

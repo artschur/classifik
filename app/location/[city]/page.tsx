@@ -8,7 +8,10 @@ import {
 } from '@/components/companionsList';
 import { CompanionFilters } from '@/components/companionFilters';
 import Pagination from '@/components/ui/pagination';
-import { countCompanionsPages } from '@/db/queries/companions';
+import {
+  countCompanionsPages,
+  getCompanionsToFilter,
+} from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { PlanType } from '@/db/queries/kv';
 
@@ -1255,7 +1258,7 @@ export async function generateMetadata({
       title: current.title,
       description: current.description,
       url: `https://www.onesugar.pt/location/${cityKey}`,
-      siteName: 'Onesugar',
+      siteName: 'OneSugar',
       locale: 'pt_PT',
       type: 'website',
     },
@@ -1442,6 +1445,43 @@ function RegistrationCTABottom({ citySlug }: { citySlug: string }) {
   );
 }
 
+// Mesmo tamanho de página usado por getCompanionsToFilter. A paginação contava
+// 5 perfis por página enquanto a lista mostra 9, o que criava páginas finais
+// vazias (respondem 200 com a lista em branco).
+const COMPANIONS_PAGE_SIZE = 9;
+
+// Busca os perfis do distrito no servidor e entrega-os já prontos à lista.
+// Antes a lista era buscada só no navegador, depois do JavaScript: o HTML do
+// distrito não tinha uma única ligação /companions/<id>, e o Googlebot não
+// descobria os perfis a partir das páginas de distrito.
+async function DistrictCompanionsList({
+  location,
+  page,
+  filters,
+}: {
+  location: string;
+  page: number;
+  filters: FilterTypesCompanions;
+}) {
+  const companions = await getCompanionsToFilter(location, page, filters).catch(
+    (error) => {
+      console.error('Failed to fetch companions:', error);
+      return undefined;
+    },
+  );
+
+  // Se a busca no servidor falhar, a lista volta ao comportamento antigo e
+  // tenta de novo no navegador, em vez de mostrar o distrito vazio.
+  return (
+    <CompanionsList
+      location={location}
+      page={page}
+      filters={filters}
+      initialCompanions={companions}
+    />
+  );
+}
+
 async function PaginationComponent({
   location,
   filters,
@@ -1465,7 +1505,9 @@ export default async function CompanionsPage({
   searchParams: Promise<FilterTypesCompanions>;
 }) {
   const [{ city }, sParams] = await Promise.all([params, searchParams]);
-  const page = parseInt(sParams.page ?? '1', 10);
+  // Um número de página que não seja inteiro positivo passa a valer como 1:
+  // parseInt('abc') devolve NaN, que ia parar à base de dados como deslocamento.
+  const page = Math.max(1, parseInt(sParams.page ?? '1', 10) || 1);
 
   return (
     <div className="container mx-auto px-10 py-8">
@@ -1498,7 +1540,7 @@ export default async function CompanionsPage({
         key={JSON.stringify(sParams)}
         fallback={<CompanionsListSkeleton />}
       >
-        <CompanionsList location={city} page={page} filters={sParams} />
+        <DistrictCompanionsList location={city} page={page} filters={sParams} />
       </Suspense>
 
       {/* CTA 1 - entre perfis e editorial */}
@@ -1516,7 +1558,11 @@ export default async function CompanionsPage({
           <div className="z-20 fixed bottom-4 min-h-14 min-w-36 left-1/2 transform -translate-x-1/2 bg-stone-800/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg" />
         }
       >
-        <PaginationComponent location={city} filters={sParams} limit={5} />
+        <PaginationComponent
+          location={city}
+          filters={sParams}
+          limit={COMPANIONS_PAGE_SIZE}
+        />
       </Suspense>
     </div>
   );

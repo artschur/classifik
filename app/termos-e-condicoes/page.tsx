@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { LegalPage } from "@/components/legal-page"
 
 export const metadata: Metadata = {
-  title: "Termos e Condições de Utilização | OneSugar Portugal",
+  title: "Termos e Condições de Utilização",
   description:
     "Consulta os Termos e Condições da OneSugar. Conhece as regras, responsabilidades e diretrizes para anunciantes e utilizadores no nosso portal de anúncios em Portugal.",
   // Canonical autorreferente. Sem isto a página herda o canonical do

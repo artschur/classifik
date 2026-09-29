@@ -19,13 +19,13 @@ import { IconBrandWhatsapp } from '@tabler/icons-react';
 import { TocMobile, TocDesktop } from './toc';
 
 export const metadata: Metadata = {
-  title: 'Ajuda para Anunciantes | Onesugar',
+  title: 'Ajuda para Anunciantes',
   description: 'Guia completo para criar e publicar o teu perfil na Onesugar: registo, fotos, vídeo de verificação, aprovação e perguntas frequentes.',
   alternates: {
     canonical: 'https://www.onesugar.pt/ajuda-anunciantes',
   },
   openGraph: {
-    title: 'Ajuda para Anunciantes | Onesugar',
+    title: 'Ajuda para Anunciantes | OneSugar',
     description: 'Guia completo para criar e publicar o teu perfil na Onesugar.',
     url: 'https://www.onesugar.pt/ajuda-anunciantes',
     type: 'article',
