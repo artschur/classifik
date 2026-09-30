@@ -111,7 +111,10 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
             {filteredCities.map((city) => (
               <li key={city.slug}>
                 <Link
-                  href={`/location/${city.slug}?gender=feminino`}
+                  // Endereço limpo: a página de distrito já abre em feminino
+                  // por omissão. Com o filtro aqui, existiam dois endereços
+                  // para a mesma página a competirem no buscador.
+                  href={`/location/${city.slug}`}
                   className="flex items-center h-full text-2xl border border-neutral-800 text-neutral-400 hover:text-white hover:bg-primary transition-colors duration-400 cursor-pointer px-4 py-2 rounded-lg"
                 >
                   Distrito de {city.city}

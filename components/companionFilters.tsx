@@ -226,20 +226,22 @@ export function CompanionFilters({
                 {/* gender */}
                 <div className="space-y-4">
                   <h4 className="font-medium text-sm">Gênero</h4>
+                  {/* Sem parâmetro no endereço, a página abre em feminino, por
+                      isso é esse que o selector mostra. E "Todos" grava o
+                      valor `todos` em vez de apagar o parâmetro: apagá-lo
+                      voltaria a cair no feminino por omissão, e a opção ficava
+                      sem efeito. */}
                   <Select
-                    value={(pendingFilters.gender as string) || "all"}
+                    value={(pendingFilters.gender as string) || "feminino"}
                     onValueChange={(value) =>
-                      handlePendingFilter(
-                        "gender",
-                        value === "all" ? null : value,
-                      )
+                      handlePendingFilter("gender", value)
                     }
                   >
                     <SelectTrigger className="w-full rounded-xl">
                       <SelectValue placeholder="Selecione o gênero" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="todos">Todos</SelectItem>
                       <SelectItem value="feminino">Feminino</SelectItem>
                       <SelectItem value="masculino">Masculino</SelectItem>
                       <SelectItem value="trans">Trans</SelectItem>

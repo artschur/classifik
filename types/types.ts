@@ -79,7 +79,25 @@ export type FilterTypesCompanions = {
   weight?: string;
   smoker?: string;
   eyeColor?: string;
-  gender?: "Masculino" | "Feminino" | "Trans";
+  /**
+   * Género pedido. O tipo é tolerante às maiúsculas porque o selector do
+   * filtro grava em minúsculas e a construção da consulta compara sempre em
+   * minúsculas; exigir uma das duas formas aqui só criava conversões pelo
+   * caminho.
+   *
+   * `todos` é o pedido explícito de não filtrar. É preciso um valor para
+   * isso: sem parâmetro no endereço, a página de distrito abre em feminino,
+   * por isso apagar o parâmetro deixaria a opção "Todos" sem efeito. A
+   * construção da consulta não reconhece `todos` como género e não filtra.
+   */
+  gender?:
+  | "Masculino"
+  | "Feminino"
+  | "Trans"
+  | "masculino"
+  | "feminino"
+  | "trans"
+  | "todos";
 };
 
 export type CompanionById = Omit<

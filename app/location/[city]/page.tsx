@@ -1504,10 +1504,25 @@ export default async function CompanionsPage({
   params: Promise<{ city: string }>;
   searchParams: Promise<FilterTypesCompanions>;
 }) {
-  const [{ city }, sParams] = await Promise.all([params, searchParams]);
+  const [{ city }, rawParams] = await Promise.all([params, searchParams]);
   // Um número de página que não seja inteiro positivo passa a valer como 1:
   // parseInt('abc') devolve NaN, que ia parar à base de dados como deslocamento.
-  const page = Math.max(1, parseInt(sParams.page ?? '1', 10) || 1);
+  const page = Math.max(1, parseInt(rawParams.page ?? '1', 10) || 1);
+
+  // O feminino é o que se mostra por omissão, por ser a maior procura. Até
+  // aqui isso conseguia-se pondo ?gender=feminino em todos os links internos,
+  // o que criava dois endereços para a mesma página de distrito — um limpo e
+  // um com o filtro — a competirem entre si no buscador, com o limpo a não
+  // receber ligação nenhuma de dentro do site.
+  //
+  // Agora o endereço limpo já abre em feminino e os links deixam de precisar
+  // do parâmetro. Quem quiser ver todos escolhe "Todos" no filtro, que grava
+  // `todos`: um valor que a construção da consulta não reconhece como género
+  // e por isso não filtra nada.
+  const sParams: FilterTypesCompanions = {
+    ...rawParams,
+    gender: rawParams.gender ?? 'feminino',
+  };
 
   return (
     <div className="container mx-auto px-10 py-8">
