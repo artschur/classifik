@@ -276,6 +276,7 @@ export async function CompanionProfile({
                 phone={sanitizedPhone}
                 companionId={id}
                 className="w-full"
+                inert={companion.is_demo}
               />
               {
                 companion.instagramHandle && (
@@ -283,6 +284,7 @@ export async function CompanionProfile({
                     instagramHandle={companion.instagramHandle}
                     className="w-full"
                     companionId={id}
+                    inert={companion.is_demo}
                   />)}
 
               <div className="mt-6 text-sm text-muted-foreground">

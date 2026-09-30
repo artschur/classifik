@@ -135,6 +135,10 @@ export const companionsTable = pgTable(
     // isto, desverificar quem já não tem documento guardado tirava-a do site
     // sem a fazer aparecer na fila, deixando-a sem caminho de volta.
     sent_to_review_at: timestamp('sent_to_review_at'),
+    // Perfil colocado de propósito, sem pessoa por trás. Aparece no site como
+    // qualquer outro, mas os botões de contacto ficam inertes: os números e
+    // os Instagram que lá estão não são de quem o perfil diz ser.
+    is_demo: boolean('is_demo').default(false).notNull(),
 
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),

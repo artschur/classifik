@@ -11,6 +11,12 @@ interface InstagramButtonProps {
   instagramHandle: string;
   companionId: number;
   className?: string;
+  /**
+   * Perfil de demonstração: o botão continua igual, mas não leva a lado
+   * nenhum. Os endereços guardados nesses perfis apontam para contas de
+   * terceiros, que nada têm a ver com o perfil onde aparecem.
+   */
+  inert?: boolean;
 }
 
 /**
@@ -32,6 +38,7 @@ export function InstagramButton({
   instagramHandle,
   companionId,
   className,
+  inert = false,
 }: InstagramButtonProps) {
   const { trackEvent } = useAnalytics();
   const handleClick = () => {
@@ -41,20 +48,37 @@ export function InstagramButton({
   const handle = normalizeInstagramHandle(instagramHandle);
   if (!handle) return null;
 
+  const classes = cn(
+    buttonVariants({ variant: 'default' }),
+    'w-full bg-stone-950 hover:bg-stone-800 text-white flex items-center justify-start mt-2',
+    className
+  );
+
+  const conteudo = (
+    <>
+      <IconBrandInstagram className="w-4 h-4 mr-2" />
+      Ver instagram
+    </>
+  );
+
+  // Sem href e sem registo de clique, pelo mesmo motivo do WhatsApp.
+  if (inert) {
+    return (
+      <button type="button" className={classes}>
+        {conteudo}
+      </button>
+    );
+  }
+
   return (
     <Link
       href={`https://instagram.com/${handle}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(
-        buttonVariants({ variant: 'default' }),
-        'w-full bg-stone-950 hover:bg-stone-800 text-white flex items-center justify-start mt-2',
-        className
-      )}
+      className={classes}
       onClick={handleClick}
     >
-      <IconBrandInstagram className="w-4 h-4 mr-2" />
-      Ver instagram
+      {conteudo}
     </Link>
   );
 }
