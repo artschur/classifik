@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import { getAllActiveCompanions } from '@/db/queries/companions';
-import { framingStyle, mediaUrl, mediaFraming } from '@/lib/image-framing';
+import { CompanionsIndexList } from '@/components/companions-index-list';
 
 const SITE = 'https://www.onesugar.pt';
 const PAGE_SIZE = 24;
@@ -86,7 +85,6 @@ export default async function CompanionsIndexPage({
   const page = lerPagina(pageParam);
 
   const { companions, total } = await getAllActiveCompanions(page, PAGE_SIZE);
-  const ultimaPagina = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // Dados estruturados da listagem: diz ao buscador que isto é uma lista
   // ordenada de perfis e qual o endereço de cada um.
@@ -124,94 +122,18 @@ export default async function CompanionsIndexPage({
         {total > 0 && (
           <p className="text-sm text-muted-foreground mt-2">
             {total} {total === 1 ? 'perfil verificado' : 'perfis verificados'}
-            {ultimaPagina > 1 && ` · página ${page} de ${ultimaPagina}`}
           </p>
         )}
       </header>
 
-      {companions.length === 0 ? (
-        <p className="text-muted-foreground py-16 text-center">
-          Ainda não há perfis nesta página.{' '}
-          <Link href="/companions" className="text-primary hover:underline">
-            Voltar ao início da lista
-          </Link>
-        </p>
-      ) : (
-        <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {companions.map((companion) => {
-            const capa = companion.images?.[0];
-            return (
-              <li key={companion.id}>
-                <Link
-                  href={`/companions/${companion.id}`}
-                  className="group block overflow-hidden rounded-xl border transition-shadow hover:shadow-lg"
-                >
-                  {/* overflow-hidden é obrigatório aqui: o enquadramento das
-                      fotos aplica uma ampliação por transformação, e sem
-                      recorte nesta caixa a foto transbordava e tapava o nome
-                      e a idade por baixo. */}
-                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted">
-                    {capa ? (
-                      <Image
-                        src={mediaUrl(capa)}
-                        alt={`${companion.name}, acompanhante verificada em ${companion.city}`}
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        // Sem efeito de ampliação ao passar o rato: seria
-                        // escrito por cima pela transformação do
-                        // enquadramento, e só funcionaria nas fotos sem zoom.
-                        className="object-cover"
-                        style={framingStyle(mediaFraming(capa))}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                        Sem fotografia
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <h2 className="font-semibold truncate">{companion.name}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {companion.age} anos · {companion.city}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {/* Paginação por ligação, para o buscador poder seguir as páginas
-          seguintes sem depender de JavaScript. */}
-      {ultimaPagina > 1 && (
-        <nav
-          className="mt-10 flex items-center justify-center gap-3"
-          aria-label="Paginação"
-        >
-          {page > 1 && (
-            <Link
-              href={page === 2 ? '/companions' : `/companions?page=${page - 1}`}
-              rel="prev"
-              className="rounded-full border px-4 py-2 text-sm hover:bg-accent"
-            >
-              ← Anterior
-            </Link>
-          )}
-          <span className="text-sm text-muted-foreground">
-            Página {page} de {ultimaPagina}
-          </span>
-          {page < ultimaPagina && (
-            <Link
-              href={`/companions?page=${page + 1}`}
-              rel="next"
-              className="rounded-full border px-4 py-2 text-sm hover:bg-accent"
-            >
-              Seguinte →
-            </Link>
-          )}
-        </nav>
-      )}
+      {/* A grelha cresce ao rolar. A primeira leva vem daqui, do servidor, para
+          os perfis estarem no HTML; o resto chega por acção de servidor. */}
+      <CompanionsIndexList
+        initialCompanions={companions}
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={total}
+      />
     </div>
   );
 }

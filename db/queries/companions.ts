@@ -480,35 +480,7 @@ export async function getRandomCompanions(
     planType: row.planType,
   }));
 }
-// New function to count total companions for pagination
-export async function countCompanionsPages(
-  citySlug: string,
-  pageSize: number,
-  filters?: FilterTypesCompanions,
-): Promise<number> {
-  const cityId = await getCityIdFromSlug(citySlug);
-  if (!cityId) return 0;
 
-  const companionConditions = buildCompanionConditions(cityId, filters);
-  const characteristicConditions = buildCharacteristicConditions(filters);
-  const allConditions = [
-    ...companionConditions,
-    ...characteristicConditions,
-  ].filter(Boolean);
-
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(DISTINCT ${companionsTable.id})` })
-    .from(companionsTable)
-    .innerJoin(
-      characteristicsTable,
-      eq(characteristicsTable.companion_id, companionsTable.id),
-    )
-    .where(and(...allConditions));
-
-  return Math.ceil(count / pageSize);
-}
-
-// Main function to get filtered companions
 /**
  * Perfis no ar, só o que o mapa do site precisa: o identificador e a data da
  * última alteração. Sem cache de longa duração de propósito — o mapa existe

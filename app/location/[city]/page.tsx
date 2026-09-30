@@ -7,11 +7,7 @@ import {
   CompanionsListSkeleton,
 } from '@/components/companionsList';
 import { CompanionFilters } from '@/components/companionFilters';
-import Pagination from '@/components/ui/pagination';
-import {
-  countCompanionsPages,
-  getCompanionsToFilter,
-} from '@/db/queries/companions';
+import { getCompanionsToFilter } from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { PlanType } from '@/db/queries/kv';
 
@@ -1424,7 +1420,7 @@ function RegistrationCTAInline({ citySlug }: { citySlug: string }) {
   );
 }
 
-// CTA Posicao 2 - apos o FAQ, antes da paginacao
+// CTA Posicao 2 - apos o FAQ
 function RegistrationCTABottom({ citySlug }: { citySlug: string }) {
   const cityLabel = getCityLabel(citySlug);
   return (
@@ -1445,9 +1441,9 @@ function RegistrationCTABottom({ citySlug }: { citySlug: string }) {
   );
 }
 
-// Mesmo tamanho de página usado por getCompanionsToFilter. A paginação contava
-// 5 perfis por página enquanto a lista mostra 9, o que criava páginas finais
-// vazias (respondem 200 com a lista em branco).
+// Mesmo tamanho de leva usado por getCompanionsToFilter. A lista usa-o para
+// saber quando chegou ao fim: uma leva incompleta significa que não há mais
+// nada para trazer ao rolar.
 const COMPANIONS_PAGE_SIZE = 9;
 
 // Busca os perfis do distrito no servidor e entrega-os já prontos à lista.
@@ -1458,10 +1454,12 @@ async function DistrictCompanionsList({
   location,
   page,
   filters,
+  pageSize,
 }: {
   location: string;
   page: number;
   filters: FilterTypesCompanions;
+  pageSize: number;
 }) {
   const companions = await getCompanionsToFilter(location, page, filters).catch(
     (error) => {
@@ -1478,21 +1476,9 @@ async function DistrictCompanionsList({
       page={page}
       filters={filters}
       initialCompanions={companions}
+      pageSize={pageSize}
     />
   );
-}
-
-async function PaginationComponent({
-  location,
-  filters,
-  limit,
-}: {
-  location: string;
-  filters: FilterTypesCompanions;
-  limit: number;
-}) {
-  const totalPages = await countCompanionsPages(location, limit, filters);
-  return <Pagination totalPages={totalPages} />;
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -1555,7 +1541,12 @@ export default async function CompanionsPage({
         key={JSON.stringify(sParams)}
         fallback={<CompanionsListSkeleton />}
       >
-        <DistrictCompanionsList location={city} page={page} filters={sParams} />
+        <DistrictCompanionsList
+          location={city}
+          page={page}
+          filters={sParams}
+          pageSize={COMPANIONS_PAGE_SIZE}
+        />
       </Suspense>
 
       {/* CTA 1 - entre perfis e editorial */}
@@ -1564,21 +1555,8 @@ export default async function CompanionsPage({
       {/* Posicao 2: Editorial + FAQ - abaixo dos perfis */}
       <CityEditorialAndFAQ citySlug={city} />
 
-      {/* CTA 2 - apos FAQ, antes da paginacao */}
+      {/* CTA 2 - apos FAQ */}
       <RegistrationCTABottom citySlug={city} />
-
-      <Suspense
-        key={JSON.stringify(sParams) + '-pagination'}
-        fallback={
-          <div className="z-20 fixed bottom-4 min-h-14 min-w-36 left-1/2 transform -translate-x-1/2 bg-stone-800/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg" />
-        }
-      >
-        <PaginationComponent
-          location={city}
-          filters={sParams}
-          limit={COMPANIONS_PAGE_SIZE}
-        />
-      </Suspense>
     </div>
   );
 }

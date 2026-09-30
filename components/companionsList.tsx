@@ -8,7 +8,8 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCompanionsToFilter } from '@/db/queries/companions';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Check } from 'lucide-react';
 import { PlanType } from '@/db/queries/kv';
@@ -18,6 +19,7 @@ export function CompanionsList({
   page,
   filters,
   initialCompanions,
+  pageSize = 9,
 }: {
   location: string;
   page: number;
@@ -26,11 +28,22 @@ export function CompanionsList({
   // ligações /companions/<id>) saem no HTML entregue ao buscador, sem esperar
   // pelo JavaScript. Sem ela, o componente continua a buscar no navegador.
   initialCompanions?: CompanionFiltered[];
+  /** Quantos vêm de cada vez. Serve para saber quando a lista acabou. */
+  pageSize?: number;
 }) {
+  const searchParams = useSearchParams();
   const [companions, setCompanions] = useState<CompanionFiltered[]>(
     initialCompanions ?? [],
   );
   const [loading, setLoading] = useState(initialCompanions === undefined);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextPage, setNextPage] = useState(page + 1);
+  // Uma primeira página cheia significa que pode haver mais. Se vier
+  // incompleta, já se sabe que acabou e nem se tenta.
+  const [hasMore, setHasMore] = useState(
+    (initialCompanions?.length ?? pageSize) >= pageSize,
+  );
+  const sentinela = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Os dados do servidor já correspondem a esta cidade, página e filtros:
@@ -44,6 +57,7 @@ export function CompanionsList({
       try {
         const data = await getCompanionsToFilter(location, page, filters);
         setCompanions(data);
+        setHasMore(data.length >= pageSize);
       } catch (error) {
         console.error('Failed to fetch companions:', error);
       } finally {
@@ -52,18 +66,96 @@ export function CompanionsList({
     };
 
     fetchCompanions();
-  }, [location, page, filters, initialCompanions]);
+  }, [location, page, filters, initialCompanions, pageSize]);
+
+  const carregarMais = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await getCompanionsToFilter(location, nextPage, filters);
+
+      setCompanions((anteriores) => {
+        // A consulta ordena por plano depois de cortar a página, por isso a
+        // mesma acompanhante pode reaparecer numa página seguinte. Sem este
+        // filtro, aparecia duas vezes no ecrã.
+        const vistos = new Set(anteriores.map((c) => c.id));
+        return [...anteriores, ...data.filter((c) => !vistos.has(c.id))];
+      });
+
+      setNextPage((n) => n + 1);
+      if (data.length < pageSize) setHasMore(false);
+    } catch (error) {
+      console.error('Failed to load more companions:', error);
+      // Não desliga o carregamento: a pessoa pode tentar outra vez no botão,
+      // em vez de a lista ficar presa por uma falha de rede passageira.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, location, nextPage, filters, pageSize]);
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const alvo = sentinela.current;
+    if (!alvo) return;
+
+    // Começa a buscar antes de a sentinela entrar no ecrã, para a lista
+    // crescer sem a pessoa ficar a olhar para um vazio.
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas[0]?.isIntersecting) carregarMais();
+      },
+      { rootMargin: '600px' },
+    );
+
+    observador.observe(alvo);
+    return () => observador.disconnect();
+  }, [hasMore, carregarMais]);
+
+  // O gatilho é uma ligação verdadeira, com o endereço da página seguinte e
+  // os filtros actuais. Quem tem JavaScript nunca chega a carregar nela
+  // porque o rolar já trouxe os perfis; o buscador segue-a e descobre o resto
+  // da lista, que é o que evita perder o que a paginação por endereço dava.
+  const proximoEndereco = (() => {
+    const p = new URLSearchParams(searchParams?.toString() ?? '');
+    p.set('page', String(nextPage));
+    return `?${p.toString()}`;
+  })();
 
   if (loading) {
     return <CompanionsListSkeleton />;
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {companions.map((companion: CompanionFiltered) => (
-        <CompanionCard key={companion.id} companion={companion} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {companions.map((companion: CompanionFiltered) => (
+          <CompanionCard key={companion.id} companion={companion} />
+        ))}
+      </div>
+
+      {hasMore && (
+        <div ref={sentinela} className="flex justify-center py-10">
+          {loadingMore ? (
+            <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-[420px] w-full rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <Link
+              href={proximoEndereco}
+              onClick={(e) => {
+                e.preventDefault();
+                carregarMais();
+              }}
+              className="rounded-full border px-6 py-3 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              Ver mais perfis
+            </Link>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
