@@ -139,6 +139,13 @@ export const companionsTable = pgTable(
     // qualquer outro, mas os botões de contacto ficam inertes: os números e
     // os Instagram que lá estão não são de quem o perfil diz ser.
     is_demo: boolean('is_demo').default(false).notNull(),
+    // O destaque único no hero da homepage. Campo próprio, e não plan_type:
+    // plan_type também decide o selo de plano nas listagens, a ordenação por
+    // plano e quem entra no carrossel do topo, e é reescrito sempre que um
+    // webhook do Stripe confirma uma assinatura — reaproveitá-lo para isto
+    // apagava o VIP dela em todo o resto do site, e a renovação seguinte
+    // apagava o "do dia" sem avisar ninguém.
+    is_sugar_of_day: boolean('is_sugar_of_day').default(false).notNull(),
 
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),

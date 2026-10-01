@@ -51,7 +51,7 @@ import {
   discardPendingImages,
   getImagesByAuthId,
 } from "./images";
-import { unstable_cache, revalidateTag } from "next/cache";
+import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import { PlanType } from "./kv";
 
 function slugify(value: string) {
@@ -368,9 +368,13 @@ export async function getDoDiaCompanion() {
     )
     .where(
       and(
-        eq(companionsTable.plan_type, 'do_dia'),
+        eq(companionsTable.is_sugar_of_day, true),
         eq(companionsTable.verified, true),
         eq(companionsTable.paused, false),
+        // O destaque é só para VIP. Se o VIP expirar, ela sai do hero sozinha
+        // em vez de lá ficar de graça até alguém reparar.
+        eq(companionsTable.plan_type, 'vip'),
+        sql`${companionsTable.ad_expiration_date} > NOW()`,
       ),
     )
     // Com o limit(1) sobre o join, sem ordenar saía uma foto qualquer do
@@ -1698,6 +1702,89 @@ export async function sendCompanionToReview(companionId: number) {
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");
   revalidateTag("companions-filter", "max");
+
+  return { success: true, name: companion.name };
+}
+
+/**
+ * Marca uma sugar como "do dia" — o destaque único no hero da homepage.
+ *
+ * Só aceita quem tem VIP activo: plan_type = 'vip' não chega sozinho, porque
+ * fica gravado mesmo depois de expirar (só é reescrito quando chega o
+ * próximo webhook do Stripe). A troca é uma única transacção — desmarca
+ * quem tinha o título e marca a nova — para nunca haver duas ao mesmo tempo,
+ * nem por um instante.
+ */
+export async function setSugarOfDay(companionId: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    return { success: false, error: "Não autorizado" };
+  }
+
+  const [elegivel] = await db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      verified: companionsTable.verified,
+      paused: companionsTable.paused,
+      plan_type: companionsTable.plan_type,
+      ad_expiration_date: companionsTable.ad_expiration_date,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, companionId))
+    .limit(1);
+
+  if (!elegivel) {
+    return { success: false, error: "Perfil não encontrado." };
+  }
+  const vipActivo =
+    elegivel.plan_type === "vip" &&
+    elegivel.ad_expiration_date !== null &&
+    elegivel.ad_expiration_date > new Date();
+  if (!vipActivo || !elegivel.verified || elegivel.paused) {
+    return {
+      success: false,
+      error: "Só uma sugar com VIP activo, verificada e no ar pode ser destacada.",
+    };
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(companionsTable)
+      .set({ is_sugar_of_day: false, updated_at: new Date() })
+      .where(eq(companionsTable.is_sugar_of_day, true));
+
+    await tx
+      .update(companionsTable)
+      .set({ is_sugar_of_day: true, updated_at: new Date() })
+      .where(eq(companionsTable.id, companionId));
+  });
+
+  revalidateTag("companion", "max");
+  revalidatePath("/");
+
+  return { success: true, name: elegivel.name };
+}
+
+/** Tira o destaque sem escolher outra sugar para o lugar. */
+export async function clearSugarOfDay(companionId: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    return { success: false, error: "Não autorizado" };
+  }
+
+  const [companion] = await db
+    .update(companionsTable)
+    .set({ is_sugar_of_day: false, updated_at: new Date() })
+    .where(eq(companionsTable.id, companionId))
+    .returning({ id: companionsTable.id, name: companionsTable.name });
+
+  if (!companion) {
+    return { success: false, error: "Perfil não encontrado." };
+  }
+
+  revalidateTag("companion", "max");
+  revalidatePath("/");
 
   return { success: true, name: companion.name };
 }

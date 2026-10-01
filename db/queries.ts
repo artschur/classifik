@@ -28,6 +28,7 @@ export async function getCompanionDetails(id: number) {
       verified: companionsTable.verified,
       paused: companionsTable.paused,
       is_demo: companionsTable.is_demo,
+      is_sugar_of_day: companionsTable.is_sugar_of_day,
       shortDescription: companionsTable.shortDescription,
       description: companionsTable.description,
       age: companionsTable.age,

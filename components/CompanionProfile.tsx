@@ -100,6 +100,14 @@ export async function CompanionProfile({
           name={companion.name}
           paused={companion.paused}
           verified={companion.verified}
+          // plan_type = 'vip' fica gravado mesmo depois de expirar, por isso
+          // a data é que decide se o VIP ainda vale.
+          vipActive={
+            companion.plan_type === 'vip' &&
+            companion.ad_expiration_date !== null &&
+            new Date(companion.ad_expiration_date) > new Date()
+          }
+          isSugarOfDay={companion.is_sugar_of_day}
         />
       )}
       <div className="mb-6">

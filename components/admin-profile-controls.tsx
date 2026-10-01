@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { EyeOff, Eye, ShieldAlert } from 'lucide-react';
+import { EyeOff, Eye, ShieldAlert, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
+  clearSugarOfDay,
   sendCompanionToReview,
   setCompanionPausedAsAdmin,
+  setSugarOfDay,
 } from '@/db/queries/companions';
 
 /**
@@ -18,17 +20,55 @@ export function AdminProfileControls({
   name,
   paused,
   verified,
+  vipActive,
+  isSugarOfDay,
 }: {
   companionId: number;
   name: string;
   paused: boolean;
   verified: boolean;
+  /** VIP pago e ainda dentro da validade — só estas podem ser "do dia". */
+  vipActive: boolean;
+  isSugarOfDay: boolean;
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [isPaused, setIsPaused] = useState(paused);
   const [isVerified, setIsVerified] = useState(verified);
+  const [isDoDia, setIsDoDia] = useState(isSugarOfDay);
   const [confirmingReview, setConfirmingReview] = useState(false);
+
+  // Quem já é "do dia" vê sempre o botão, para se poder tirar o destaque
+  // mesmo que o VIP tenha entretanto expirado.
+  const podeSerDoDia = vipActive && isVerified && !isPaused;
+  const mostrarDoDia = podeSerDoDia || isDoDia;
+
+  const handleToggleDoDia = () => {
+    startTransition(async () => {
+      const result = isDoDia
+        ? await clearSugarOfDay(companionId)
+        : await setSugarOfDay(companionId);
+
+      if (!result.success) {
+        toast({
+          title: 'Erro',
+          description: result.error ?? 'Não foi possível alterar o destaque.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const agora = !isDoDia;
+      setIsDoDia(agora);
+      toast({
+        title: agora ? 'Sugar do dia' : 'Destaque removido',
+        description: agora
+          ? `${name} passou a ser a sugar do dia na página inicial. A anterior, se havia, foi substituída.`
+          : `${name} deixou de estar em destaque na página inicial.`,
+        variant: 'success',
+      });
+    });
+  };
 
   const handleTogglePause = () => {
     startTransition(async () => {
@@ -143,7 +183,32 @@ export function AdminProfileControls({
               <ShieldAlert className="h-4 w-4 mr-1.5" /> Mover para verificação
             </Button>
           ))}
+
+        {mostrarDoDia && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleDoDia}
+            disabled={isPending}
+            className={
+              isDoDia
+                ? 'border-rose-400 text-rose-700 dark:text-rose-300'
+                : undefined
+            }
+          >
+            <Star
+              className={`h-4 w-4 mr-1.5 ${isDoDia ? 'fill-rose-400 text-rose-400' : ''}`}
+            />
+            {isDoDia ? 'Remover de sugar do dia' : 'Tornar sugar do dia'}
+          </Button>
+        )}
       </div>
+
+      {isDoDia && (
+        <p className="mt-2 text-sm text-rose-700 dark:text-rose-300">
+          É a sugar do dia: aparece em destaque no topo da página inicial.
+        </p>
+      )}
 
       {confirmingReview && (
         <p className="mt-2 text-sm text-muted-foreground">
