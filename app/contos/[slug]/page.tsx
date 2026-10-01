@@ -131,13 +131,18 @@ export default async function StoryPage({
 
       {/* Cover image */}
       {story.coverImage && (
-        <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden mb-10 bg-zinc-900">
+        // Quadrada e a toda a largura: com 16:9 e object-contain, uma capa
+        // quadrada ficava encolhida ao centro com faixas vazias dos lados.
+        // object-cover preenche a caixa; uma capa que não seja quadrada perde
+        // as pontas, mas nunca deixa espaço sobrando.
+        <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-10 bg-zinc-900">
           <Image
             src={story.coverImage}
             alt={story.title}
             fill
             priority
-            className="object-contain object-center"
+            sizes="(max-width: 704px) 100vw, 672px"
+            className="object-cover object-center"
           />
         </div>
       )}
