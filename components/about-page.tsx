@@ -1,4 +1,5 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
+import type { Locale } from "@/lib/i18n"
 import { ArrowLeft, Shield, Users, Zap, Globe, Heart, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -22,6 +23,7 @@ export interface AboutPageProps {
   ctaText?: string
   ctaLink?: string
   footer?: string
+  locale?: Locale
 }
 
 const iconMap = {
@@ -42,17 +44,19 @@ export function AboutPage({
   ctaText,
   ctaLink,
   footer,
+  locale = "pt",
 }: AboutPageProps) {
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-        <Link
+        <LocaleLink
+          locale={locale}
           href="/"
           className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar ao início
-        </Link>
+          {locale === "en" ? "Back to home" : "Voltar ao início"}
+        </LocaleLink>
 
         <header className="mb-12 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl text-balance">
@@ -109,7 +113,7 @@ export function AboutPage({
         {ctaText && ctaLink && (
           <div className="mt-12 text-center">
             <Button asChild size="lg">
-              <Link href={ctaLink}>{ctaText}</Link>
+              <LocaleLink locale={locale} href={ctaLink}>{ctaText}</LocaleLink>
             </Button>
           </div>
         )}

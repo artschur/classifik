@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { gaEvent } from '@/lib/ga';
+import { stripLocale } from '@/lib/i18n';
 
 /**
  * Destinos que contam como intenção de anunciar. Um clique em qualquer link
@@ -36,8 +37,11 @@ export function CtaClickTracker() {
       }
       if (url.origin !== window.location.origin) return;
 
+      // /en/quanto-ganha-acompanhante conta como /quanto-ganha-acompanhante;
+      // o idioma fica visível na página de origem.
+      const { path } = stripLocale(url.pathname);
       const destino = DESTINOS_ANUNCIO.find(
-        (d) => url.pathname === d || url.pathname.startsWith(`${d}/`),
+        (d) => path === d || path.startsWith(`${d}/`),
       );
       if (!destino) return;
 

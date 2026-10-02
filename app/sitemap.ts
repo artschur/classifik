@@ -3,8 +3,37 @@ import { getAvailableCities } from '@/db/queries';
 import { getSitemapCompanions } from '@/db/queries/companions';
 import { getAllDbStories } from '@/db/queries/stories';
 import { stories as staticStories } from '@/lib/stories';
+import { absoluteUrl, hasEnglish } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
+
+type Entry = MetadataRoute.Sitemap[number];
+
+/**
+ * Para cada página com versão em inglês: as duas versões entram no mapa e
+ * cada uma declara a outra (hreflang em xhtml:link), como o Google pede.
+ * As páginas só em português ficam como estavam.
+ */
+function withEnglish(entries: Entry[]): MetadataRoute.Sitemap {
+  const out: MetadataRoute.Sitemap = [];
+  for (const entry of entries) {
+    const path = new URL(entry.url).pathname;
+    if (!hasEnglish(path)) {
+      out.push(entry);
+      continue;
+    }
+    const alternates = {
+      languages: {
+        'pt-PT': absoluteUrl(path, 'pt'),
+        en: absoluteUrl(path, 'en'),
+        'x-default': absoluteUrl(path, 'pt'),
+      },
+    };
+    out.push({ ...entry, alternates });
+    out.push({ ...entry, url: absoluteUrl(path, 'en'), alternates });
+  }
+  return out;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.onesugar.pt';
@@ -54,7 +83,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })),
   ];
 
-  return [
+  return withEnglish([
     {
       url: `${baseUrl}/`,
       lastModified: new Date(),
@@ -102,5 +131,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cityUrls,
     ...companionUrls,
     ...storyUrls,
-  ];
+  ]);
 }

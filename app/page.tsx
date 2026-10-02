@@ -32,6 +32,9 @@ import {
   ORGANIZATION_ID,
   WEBSITE_ID,
 } from '@/lib/brand';
+import { HomeEn } from '@/components/en/home-en';
+import { getLocale } from '@/lib/locale.server';
+import { OG_LOCALE, pageAlternates } from '@/lib/i18n';
 
 // ── Schema JSON-LD ────────────────────────────────────────────────────────────
 
@@ -171,7 +174,7 @@ const districts = {
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
-export const metadata: Metadata = {
+const metadataPt: Metadata = {
   title: 'OneSugar | Acompanhantes em Portugal',
   description:
     'Encontre as acompanhantes premium em Portugal com privacidade garantida e perfis verificados na Onesugar.',
@@ -190,9 +193,7 @@ export const metadata: Metadata = {
   creator: 'OneSugar',
   publisher: 'OneSugar',
   metadataBase: new URL('https://www.onesugar.pt'),
-  alternates: {
-    canonical: 'https://www.onesugar.pt',
-  },
+  alternates: pageAlternates('/', 'pt'),
   openGraph: {
     title: 'OneSugar | Acompanhantes premium em Portugal',
     description: 'Serviços de Acompanhantes premium e discretas em Lisboa, Porto e todo Portugal.',
@@ -222,12 +223,46 @@ export const metadata: Metadata = {
   category: 'adult services',
 };
 
+const descriptionEn =
+  'Verified escorts in Lisbon, Porto, the Algarve and across Portugal. Every profile passes an identity check, and you contact companions directly, with full discretion.';
+
+/** A versão inglesa (/en) usa o mesmo conteúdo base com texto, hreflang e OG próprios. */
+const metadataEn: Metadata = {
+  ...metadataPt,
+  title: 'OneSugar | Verified Escorts in Portugal',
+  description: descriptionEn,
+  keywords: undefined,
+  alternates: pageAlternates('/', 'en'),
+  openGraph: {
+    title: 'OneSugar | Verified Escorts in Portugal',
+    description: descriptionEn,
+    url: 'https://www.onesugar.pt/en',
+    siteName: 'OneSugar',
+    locale: OG_LOCALE.en,
+    alternateLocale: [OG_LOCALE.pt],
+    type: 'website',
+    images: [
+      {
+        url: 'https://www.onesugar.pt/images/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'OneSugar, verified escorts in Portugal',
+      },
+    ],
+  },
+};
+
+export async function generateMetadata(): Promise<Metadata> {
+  return (await getLocale()) === 'en' ? metadataEn : metadataPt;
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
   kv.ping().catch(() => null);
 
-  const doDia = await getDoDiaCompanion();
+  const [doDia, locale] = await Promise.all([getDoDiaCompanion(), getLocale()]);
+  if (locale === 'en') return <HomeEn doDia={doDia} />;
 
   return (
     <div className="flex min-h-screen flex-col">

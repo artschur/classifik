@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { Search, X } from 'lucide-react';
+import { useLocale } from '@/components/locale-provider';
+import { LocaleLink } from '@/components/locale-link';
+import { nomeDistrito } from '@/lib/districts';
 
 interface City {
   slug: string;
@@ -14,6 +16,10 @@ interface SearchableCitiesProps {
 }
 
 export function SearchableCities({ cities }: SearchableCitiesProps) {
+  const locale = useLocale();
+  const en = locale === 'en';
+  // Em inglês procura e ordena pelo nome inglês ("Lisbon"), que é o que aparece.
+  const nomeDe = (c: City) => (en ? nomeDistrito(c.slug, 'en') : c.city);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,15 +50,16 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
   const filteredCities = useMemo(() => {
     if (!searchQuery.trim()) {
 
-      return cities.toSorted((c1: City, c2: City) => c1.city.localeCompare(c2.city))
+      return cities.toSorted((c1: City, c2: City) => nomeDe(c1).localeCompare(nomeDe(c2)))
     }
 
     const query = searchQuery.toLowerCase();
 
     return cities.filter((city) =>
-      city.city.toLowerCase().includes(query)
+      nomeDe(city).toLowerCase().includes(query) || city.city.toLowerCase().includes(query)
     );
-  }, [cities, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cities, searchQuery, en]);
 
   const totalCities = cities.length;
   const filteredCitiesCount = filteredCities.length;
@@ -66,7 +73,7 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Procure distritos... (⌘K)"
+            placeholder={en ? 'Search districts... (⌘K)' : 'Procure distritos... (⌘K)'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-12 py-3 text-lg rounded-full border-2 border-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
@@ -75,7 +82,7 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
             <button
               onClick={handleClear}
               className="absolute right-4 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
-              aria-label="Clear search"
+              aria-label={en ? 'Clear search' : 'Limpar pesquisa'}
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -84,7 +91,15 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
         {searchQuery && (
           <p className="mt-2 text-sm text-muted-foreground px-4">
             {filteredCitiesCount === 0 ? (
-              <>Nenhum distrito encontrada para &quot;{searchQuery}&quot;</>
+              en ? (
+                <>No district found for &quot;{searchQuery}&quot;</>
+              ) : (
+                <>Nenhum distrito encontrada para &quot;{searchQuery}&quot;</>
+              )
+            ) : en ? (
+              <>
+                {filteredCitiesCount} of {totalCities} districts found
+              </>
             ) : (
               <>
                 {filteredCitiesCount} de {totalCities} distrito encontrados
@@ -99,10 +114,10 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="text-6xl mb-4">🔍</div>
           <p className="text-xl font-semibold text-muted-foreground">
-            Nenhuma distrito encontrado
+            {en ? 'No district found' : 'Nenhuma distrito encontrado'}
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Tente procurar por outro distrito
+            {en ? 'Try searching for another district' : 'Tente procurar por outro distrito'}
           </p>
         </div>
       ) : (
@@ -110,15 +125,16 @@ export function SearchableCities({ cities }: SearchableCitiesProps) {
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filteredCities.map((city) => (
               <li key={city.slug}>
-                <Link
+                <LocaleLink
+                  locale={locale}
                   // Endereço limpo: a página de distrito já abre em feminino
                   // por omissão. Com o filtro aqui, existiam dois endereços
                   // para a mesma página a competirem no buscador.
                   href={`/location/${city.slug}`}
                   className="flex items-center h-full text-2xl border border-neutral-800 text-neutral-400 hover:text-white hover:bg-primary transition-colors duration-400 cursor-pointer px-4 py-2 rounded-lg"
                 >
-                  Distrito de {city.city}
-                </Link>
+                  {en ? `${nomeDistrito(city.slug, 'en')} district` : `Distrito de ${city.city}`}
+                </LocaleLink>
               </li>
             ))}
           </ul>

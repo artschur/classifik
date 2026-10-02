@@ -50,9 +50,74 @@ import { IconMicrophone } from '@tabler/icons-react';
 import { auth } from '@clerk/nextjs/server';
 import { isAdmin } from '@/components/header';
 import { AdminProfileControls } from './admin-profile-controls';
-import Link from 'next/link';
 import { getCompanionDistrict } from '@/db/queries/companions';
-import { distritoPorSlug, type Distrito } from '@/lib/districts';
+import { distritoPorSlug, inDistrict, nomeDistrito, type Distrito } from '@/lib/districts';
+import { getLocale } from '@/lib/locale.server';
+import { absoluteUrl, localizeHref, type Locale } from '@/lib/i18n';
+import { traduzirValor } from '@/lib/i18n-values';
+import { LocaleLink } from '@/components/locale-link';
+
+const TEXT = {
+  pt: {
+    home: 'Início',
+    verified: 'Verificada',
+    voice: 'Ouça minha voz',
+    about: (n: string) => `Sobre ${n}`,
+    originalNote: '',
+    age: 'Idade',
+    years: 'anos',
+    height: 'Altura',
+    weight: 'Peso',
+    ethnicity: 'Etnia',
+    eyes: 'Cor dos olhos',
+    hair: 'Cor do cabelo',
+    silicone: 'Silicone',
+    tattoos: 'Tatuagens',
+    piercings: 'Piercings',
+    smoker: 'Fumante',
+    hotel: 'Atende em Hotel',
+    ownPlace: 'Atende em Local Próprio',
+    yes: 'Sim',
+    no: 'Não',
+    perHour: '/hora',
+    languages: 'Idiomas',
+  },
+  en: {
+    home: 'Home',
+    verified: 'Verified',
+    voice: 'Listen to my voice',
+    about: (n: string) => `About ${n}`,
+    originalNote: 'Description written by the advertiser, in Portuguese.',
+    age: 'Age',
+    years: 'years old',
+    height: 'Height',
+    weight: 'Weight',
+    ethnicity: 'Ethnicity',
+    eyes: 'Eye colour',
+    hair: 'Hair colour',
+    silicone: 'Implants',
+    tattoos: 'Tattoos',
+    piercings: 'Piercings',
+    smoker: 'Smoker',
+    hotel: 'Hotel visits',
+    ownPlace: 'Own place',
+    yes: 'Yes',
+    no: 'No',
+    perHour: '/hour',
+    languages: 'Languages',
+  },
+} as const;
+
+/** "há 3 horas" passa a "3 hours ago" na versão inglesa. */
+function ultimaVisitaEn(texto: string): string {
+  if (texto === 'há menos de uma hora') return 'less than an hour ago';
+  if (texto === 'Nunca') return 'Never';
+  const m = texto.match(/^há (\d+) (hora|horas|dia|dias)$/);
+  if (!m) return texto;
+  const n = Number(m[1]);
+  const unidade = m[2].startsWith('hora') ? 'hour' : 'day';
+  return `${n} ${unidade}${n === 1 ? '' : 's'} ago`;
+}
 
 const SITE_URL = 'https://www.onesugar.pt';
 
@@ -73,6 +138,7 @@ function profileJsonLd({
   imagem,
   idiomas,
   distrito,
+  locale,
 }: {
   id: number;
   nome: string;
@@ -80,15 +146,20 @@ function profileJsonLd({
   imagem: string | null;
   idiomas: string[];
   distrito: Distrito | null;
+  locale: Locale;
 }) {
-  const url = `${SITE_URL}/companions/${id}`;
+  const en = locale === 'en';
+  const url = absoluteUrl(`/companions/${id}`, locale);
+  const distritoNome = distrito ? (en ? inDistrict(distrito.slug) : distrito.emNome) : '';
   const breadcrumb = [
-    { name: 'Início', item: `${SITE_URL}/` },
+    { name: en ? 'Home' : 'Início', item: en ? `${SITE_URL}/en` : `${SITE_URL}/` },
     ...(distrito
       ? [
           {
-            name: `Acompanhantes ${distrito.emNome}`,
-            item: `${SITE_URL}/location/${distrito.slug}`,
+            name: en ? `Escorts ${distritoNome}` : `Acompanhantes ${distritoNome}`,
+            // Os distritos ainda podem não ter versão inglesa: o caminho
+            // aponta para o endereço que de facto existe.
+            item: `${SITE_URL}${localizeHref(`/location/${distrito.slug}`, locale)}`,
           },
         ]
       : []),
@@ -102,8 +173,12 @@ function profileJsonLd({
         '@type': 'ProfilePage',
         '@id': `${url}#profilepage`,
         url,
-        name: distrito ? `${nome}, acompanhante ${distrito.emNome}` : nome,
-        inLanguage: 'pt-PT',
+        name: distrito
+          ? en
+            ? `${nome}, escort ${distritoNome}`
+            : `${nome}, acompanhante ${distritoNome}`
+          : nome,
+        inLanguage: en ? 'en' : 'pt-PT',
         isPartOf: { '@id': `${SITE_URL}/#website` },
         breadcrumb: { '@id': `${url}#breadcrumb` },
         mainEntity: { '@id': `${url}#person` },
@@ -115,15 +190,17 @@ function profileJsonLd({
         url,
         ...(descricao ? { description: descricao } : {}),
         ...(imagem ? { image: imagem } : {}),
-        ...(idiomas.length ? { knowsLanguage: idiomas } : {}),
+        ...(idiomas.length
+          ? { knowsLanguage: idiomas.map((l) => traduzirValor(l, locale)) }
+          : {}),
         ...(distrito
           ? {
               homeLocation: {
                 '@type': 'Place',
-                name: distrito.nome,
+                name: en ? nomeDistrito(distrito.slug, 'en') : distrito.nome,
                 address: {
                   '@type': 'PostalAddress',
-                  addressRegion: distrito.nome,
+                  addressRegion: en ? nomeDistrito(distrito.slug, 'en') : distrito.nome,
                   addressCountry: 'PT',
                 },
               },
@@ -144,9 +221,9 @@ function profileJsonLd({
   };
 }
 
-async function LastSignIn({ clerkId }: { clerkId: string }) {
+async function LastSignIn({ clerkId, locale }: { clerkId: string; locale: Locale }) {
   const lastSignIn = await getLastSignInByClerkId(clerkId);
-  return <span>{lastSignIn}</span>;
+  return <span>{locale === 'en' ? ultimaVisitaEn(String(lastSignIn)) : lastSignIn}</span>;
 }
 
 export async function CompanionProfile({
@@ -156,14 +233,17 @@ export async function CompanionProfile({
   id: number;
   reviewsRating: number | 'Sem avaliações';
 }) {
-  const [companion, { images, total }, audio, district] =
+  const [companion, { images, total }, audio, district, locale] =
     await Promise.all([
       getCompanionById(id),
       getImagesByCompanionId(id, 3, 0),
       // getVerificationVideosByCompanionId(id),
       getAudioUrlByCompanionId(id),
       getCompanionDistrict(id).catch(() => null),
+      getLocale(),
     ]);
+  const t = TEXT[locale];
+  const en = locale === 'en';
 
   const { userId } = await auth();
   const viewerIsAdmin = Boolean(userId && isAdmin(userId));
@@ -197,6 +277,7 @@ export async function CompanionProfile({
     imagem: primeiraFoto,
     idiomas: Array.isArray(companion.languages) ? companion.languages : [],
     distrito,
+    locale,
   });
 
   return (
@@ -212,20 +293,21 @@ export async function CompanionProfile({
       <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-1">
           <li>
-            <Link href="/" className="hover:underline">
-              Início
-            </Link>
+            <LocaleLink locale={locale} href="/" className="hover:underline">
+              {t.home}
+            </LocaleLink>
           </li>
           {distrito && (
             <>
               <li aria-hidden="true">›</li>
               <li>
-                <Link
+                <LocaleLink
+                  locale={locale}
                   href={`/location/${distrito.slug}`}
                   className="hover:underline text-rose-500"
                 >
-                  Acompanhantes {distrito.emNome}
-                </Link>
+                  {en ? `Escorts ${inDistrict(distrito.slug)}` : `Acompanhantes ${distrito.emNome}`}
+                </LocaleLink>
               </li>
             </>
           )}
@@ -256,7 +338,7 @@ export async function CompanionProfile({
         <div className="flex items-center mt-2 space-x-4">
           {companion.verified && (
             <Badge variant="secondary" className="bg-green-100 text-green-800">
-              <Check className="w-3 h-3 mr-1" /> Verificada
+              <Check className="w-3 h-3 mr-1" /> {t.verified}
             </Badge>
           )}
           <div className="flex items-center text-yellow-400">
@@ -266,7 +348,7 @@ export async function CompanionProfile({
           <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground">
             <Suspense fallback={<Skeleton className="h-4 w-24" />}>
-              <LastSignIn clerkId={companion.auth_id} />
+              <LastSignIn clerkId={companion.auth_id} locale={locale} />
             </Suspense>
           </span>
         </div>
@@ -285,67 +367,73 @@ export async function CompanionProfile({
                 <div className="flex flex-col w-full gap-4 pb-4">
                   <h2 className="text-xl">
                     <IconMicrophone className="inline-block mr-2" />
-                    Ouça minha voz
+                    {t.voice}
                   </h2>
                   <AudioPlayer songUrl={audio.publicUrl} />
                 </div>
               )}
               <h2 className="text-2xl font-semibold mb-4 max-">
-                Sobre {companion.name}
+                {t.about(nome)}
               </h2>
-              <p className="text-muted-foreground mb-6 whitespace-normal truncate break-words overflow-wrap-anywhere">
+              {en && (
+                <p className="text-xs text-muted-foreground mb-2 italic">{t.originalNote}</p>
+              )}
+              <p
+                lang={en ? 'pt-PT' : undefined}
+                className="text-muted-foreground mb-6 whitespace-normal truncate break-words overflow-wrap-anywhere"
+              >
                 {companion.description}
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6">
                 <CharacteristicItem
-                  label="Idade"
-                  value={companion.age == 40 ? `${companion.age}+ anos` : `${companion.age} anos`}
+                  label={t.age}
+                  value={companion.age == 40 ? `${companion.age}+ ${t.years}` : `${companion.age} ${t.years}`}
                 />
                 <CharacteristicItem
-                  label="Altura"
+                  label={t.height}
                   // O formulário grava a altura em metros (1,70), por isso
                   // mostrá-la como está dava "1.7 cm".
                   value={`${Math.round(Number(companion.height) * 100)} cm`}
                 />
                 <CharacteristicItem
-                  label="Peso"
+                  label={t.weight}
                   value={`${companion.weight} kg`}
                 />
-                <CharacteristicItem label="Etnia" value={companion.ethnicity} />
+                <CharacteristicItem label={t.ethnicity} value={traduzirValor(companion.ethnicity, locale)} />
                 <CharacteristicItem
-                  label="Cor dos olhos"
-                  value={companion.eyeColor || 'N/A'}
+                  label={t.eyes}
+                  value={traduzirValor(companion.eyeColor, locale)}
                 />
                 <CharacteristicItem
-                  label="Cor do cabelo"
-                  value={companion.hairColor}
+                  label={t.hair}
+                  value={traduzirValor(companion.hairColor, locale)}
                 />
                 <CharacteristicItem
-                  label="Silicone"
-                  value={companion.silicone ? 'Sim' : 'Não'}
+                  label={t.silicone}
+                  value={companion.silicone ? t.yes : t.no}
                 />
                 <CharacteristicItem
-                  label="Tatuagens"
-                  value={companion.tattoos ? 'Sim' : 'Não'}
+                  label={t.tattoos}
+                  value={companion.tattoos ? t.yes : t.no}
                 />
                 <CharacteristicItem
-                  label="Piercings"
-                  value={companion.piercings ? 'Sim' : 'Não'}
+                  label={t.piercings}
+                  value={companion.piercings ? t.yes : t.no}
                 />
                 {companion.smoker !== undefined && (
                   <CharacteristicItem
-                    label="Fumante"
-                    value={companion.smoker ? 'Sim' : 'Não'}
+                    label={t.smoker}
+                    value={companion.smoker ? t.yes : t.no}
                   />
                 )}
                 <CharacteristicItem
-                  label="Atende em Hotel"
-                  value={companion.meets_at_hotel ? 'Sim' : 'Não'}
+                  label={t.hotel}
+                  value={companion.meets_at_hotel ? t.yes : t.no}
                 />
                 <CharacteristicItem
-                  label="Atende em Local Próprio"
-                  value={companion.meets_at_own_place ? 'Sim' : 'Não'}
+                  label={t.ownPlace}
+                  value={companion.meets_at_own_place ? t.yes : t.no}
                 />
               </div>
             </CardContent>
@@ -401,7 +489,10 @@ export async function CompanionProfile({
         <div>
           <Card className="sticky top-20">
             <CardContent className="p-6 gap-2 flex flex-col">
-              <div className="break-words overflow-wrap-anywhere whitespace-normal">
+              <div
+                lang={en ? 'pt-PT' : undefined}
+                className="break-words overflow-wrap-anywhere whitespace-normal"
+              >
                 {companion.shortDescription}
               </div>
               <div className="flex justify-between items-center mb-4">
@@ -409,7 +500,7 @@ export async function CompanionProfile({
                   <span className="text-2xl font-bold">
                     € {companion.price}
                   </span>
-                  <span className="text-muted-foreground">/hora</span>
+                  <span className="text-muted-foreground">{t.perHour}</span>
                 </div>
                 <div className="flex space-x-2">
                   <Button size="icon" variant="outline">
@@ -437,7 +528,10 @@ export async function CompanionProfile({
                   />)}
 
               <div className="mt-6 text-sm text-muted-foreground">
-                <p>Idiomas: {companion.languages.join(', ')}</p>
+                <p>
+                  {t.languages}:{' '}
+                  {companion.languages.map((l) => traduzirValor(l, locale)).join(', ')}
+                </p>
               </div>
             </CardContent>
           </Card>

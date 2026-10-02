@@ -14,7 +14,9 @@ import {
 } from '@/db/queries/companions';
 import { BlockedProfileMessage } from '@/components/blocked-profile-message';
 import { getCompanionById } from '@/db/queries';
-import { distritoPorSlug } from '@/lib/districts';
+import { distritoPorSlug, inDistrict } from '@/lib/districts';
+import { getLocale } from '@/lib/locale.server';
+import { OG_LOCALE, absoluteUrl, pageAlternates } from '@/lib/i18n';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -22,8 +24,9 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const [{ id }, locale] = await Promise.all([params, getLocale()]);
   const companionId = parseInt(id);
+  const path = `/companions/${id}`;
 
   try {
     const [companion, district] = await Promise.all([
@@ -60,27 +63,38 @@ export async function generateMetadata({
       : nome;
 
     const custom = customMetadata[companionId];
-    const title = custom?.title ?? tituloPadrao;
-    const description =
+    let title: string = custom?.title ?? tituloPadrao;
+    let description: string =
       custom?.description ||
       companion.shortDescription?.trim() ||
       `Conheça ${nome} na OneSugar.`;
 
+    // Versão inglesa: as descrições são escritas pelas anunciantes em
+    // português, por isso o título e a descrição para o Google são gerados
+    // em inglês a partir do nome e do distrito.
+    if (locale === 'en') {
+      const onde = district ? ` ${inDistrict(district.slug)}` : '';
+      title =
+        companionId === 254
+          ? `Sophia | Erotic Massage Specialist${onde}`
+          : `${nome}, escort${onde}`;
+      description = `${nome}, verified escort${onde}, Portugal. See her photos and details and contact her directly on OneSugar, with full discretion.`;
+    }
+
     return {
       title,
       description,
-      alternates: {
-        canonical: `https://www.onesugar.pt/companions/${id}`,
-      },
+      alternates: pageAlternates(path, locale),
       openGraph: {
         title: `${title} | OneSugar`,
         description,
-        url: `https://www.onesugar.pt/companions/${id}`,
+        url: absoluteUrl(path, locale),
+        locale: OG_LOCALE[locale],
       },
     };
   } catch (e) {
     return {
-      title: 'Acompanhante',
+      title: locale === 'en' ? 'Escort' : 'Acompanhante',
     };
   }
 }

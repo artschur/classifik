@@ -21,6 +21,9 @@ import { TwoStepModal } from '@/components/two-step-modal';
 import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
 import { CustomToaster } from '@/components/custom-toaster';
 import { CtaClickTracker } from '@/components/cta-click-tracker';
+import { LocaleProvider } from '@/components/locale-provider';
+import { getLocale } from '@/lib/locale.server';
+import { HTML_LANG, OG_LOCALE } from '@/lib/i18n';
 
 const GA_MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? 'G-30XJX7BT9D';
@@ -42,7 +45,7 @@ const geistMono = Geist_Mono({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   metadataBase: new URL('https://www.onesugar.pt'),
   title: {
     default: 'OneSugar | Acompanhantes em Portugal',
@@ -96,19 +99,60 @@ export const metadata: Metadata = {
   },
 };
 
+// Valores por omissão em inglês para as páginas /en/. Cada página define os
+// seus próprios título, descrição, canonical e hreflang; isto só cobre o que
+// uma página não definir.
+const EN_DEFAULTS = {
+  title: 'OneSugar | Verified Escorts in Portugal',
+  description:
+    'Verified escorts and companions in Lisbon, Porto, the Algarve and across Portugal. Real profiles, checked one by one, with full discretion.',
+  ogDescription: 'Verified escorts and companions across Portugal.',
+};
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  if (locale !== 'en') return baseMetadata;
+  return {
+    ...baseMetadata,
+    title: { default: EN_DEFAULTS.title, template: '%s | OneSugar' },
+    description: EN_DEFAULTS.description,
+    openGraph: {
+      ...baseMetadata.openGraph,
+      title: EN_DEFAULTS.title,
+      description: EN_DEFAULTS.ogDescription,
+      url: 'https://www.onesugar.pt/en',
+      locale: OG_LOCALE.en,
+      images: [
+        {
+          url: '/images/og-image.jpg',
+          width: 1200,
+          height: 630,
+          alt: 'OneSugar, verified escorts in Portugal',
+        },
+      ],
+    },
+    twitter: {
+      ...baseMetadata.twitter,
+      title: EN_DEFAULTS.title,
+      description: EN_DEFAULTS.ogDescription,
+    },
+  };
+}
+
 export const viewport: Viewport = {
   themeColor: '#000000',
   colorScheme: 'dark',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
   return (
     <html
-      lang="pt"
+      lang={HTML_LANG[locale]}
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
@@ -187,6 +231,7 @@ export default function RootLayout({
           )}
           <CtaClickTracker />
 
+          <LocaleProvider locale={locale}>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -202,7 +247,9 @@ export default function RootLayout({
             <WhatsAppButton />
             <Toaster />
             <CustomToaster
-              isEnabled={true}
+              // A oferta é para anunciantes, e os planos só existem em
+              // português: não aparece nas páginas em inglês.
+              isEnabled={locale === 'pt'}
               autoShow={true}
               // Espera antes de aparecer a quem não rolou nada; quem rolar
               // vê-o mais cedo.
@@ -225,6 +272,7 @@ export default function RootLayout({
               showCloseButton={true}
             />
           </ThemeProvider>
+          </LocaleProvider>
 
           <Analytics />
           <SpeedInsights />
