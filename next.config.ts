@@ -130,14 +130,15 @@ const nextConfig: NextConfig = {
               // Scripts: Next.js chunks (self), inline scripts do ThemeProvider
               // e Schema.org (unsafe-inline), Clerk SDK, GA4, Vercel Analytics.
               // unsafe-eval: necessário para Next.js dev HMR e algumas libs.
-              `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${clerkOrigins} https://www.googletagmanager.com https://va.vercel-scripts.com`,
+              `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${clerkOrigins} https://*.googletagmanager.com https://va.vercel-scripts.com`,
 
               // Estilos: Tailwind injeta <style> tags dinâmicas (unsafe-inline obrigatório)
               "style-src 'self' 'unsafe-inline'",
 
               // Imagens: self (OG, favicons, logo), Supabase storage (perfis),
               // Contentful (imagens do CMS), Clerk (avatares), YouTube thumbnails
-              "img-src 'self' blob: data: https://vacjsnuttfzgcdaaqjxd.supabase.co https://images.ctfassets.net https://img.clerk.com https://i.ytimg.com",
+              // GA4: o Google usa pixels de imagem como alternativa ao envio normal.
+              "img-src 'self' blob: data: https://vacjsnuttfzgcdaaqjxd.supabase.co https://images.ctfassets.net https://img.clerk.com https://i.ytimg.com https://*.google-analytics.com https://*.googletagmanager.com",
 
               // Fontes: Geist é servida de /_next/static/media/ (self)
               "font-src 'self'",
@@ -145,7 +146,12 @@ const nextConfig: NextConfig = {
               // Fetch/XHR/WebSocket: self, Clerk API, Supabase DB + storage,
               // GA4 beacon hits (googletagmanager + google-analytics),
               // Vercel Speed Insights
-              `connect-src 'self' ${clerkOrigins} https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://vitals.vercel-insights.com`,
+              // GA4: os visitantes da Europa enviam para region1.google-analytics.com.
+              // Só com www.google-analytics.com esses envios eram bloqueados pelo
+              // próprio navegador (aviso "configurações de segurança bloqueando a
+              // medição" no diagnóstico da tag). Domínios conforme a documentação
+              // do Google para CSP com o GA4.
+              `connect-src 'self' ${clerkOrigins} https://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://vitals.vercel-insights.com`,
 
               // Iframes: YouTube embeds + Clerk OAuth (popups de login social
               // podem abrir iframes de clerk.onesugar.pt)

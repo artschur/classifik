@@ -20,9 +20,15 @@ import { WhatsAppButton } from '@/components/whatsapp-button';
 import { TwoStepModal } from '@/components/two-step-modal';
 import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
 import { CustomToaster } from '@/components/custom-toaster';
+import { CtaClickTracker } from '@/components/cta-click-tracker';
 
 const GA_MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? 'G-30XJX7BT9D';
+
+// O GA4 só carrega no site oficial. Os previews da Vercel (um por PR) estavam
+// a enviar visitas de teste para a mesma propriedade e apareciam no GA4 como
+// domínios e páginas do site.
+const LOAD_GA = process.env.VERCEL_ENV === 'production';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -159,18 +165,27 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col">
         <ClerkProvider>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-            strategy="lazyOnload"
-          />
-          <Script id="google-analytics" strategy="lazyOnload">
-            {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_MEASUREMENT_ID}');
-            `}
-          </Script>
+          {/* afterInteractive em vez de lazyOnload: com lazyOnload o GA4 só
+              carregava com a página ociosa, e quem saía depressa (comum em
+              quem chega da pesquisa) não era contado. */}
+          {LOAD_GA && (
+            <>
+              <Script
+                src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+                strategy="afterInteractive"
+              />
+              <Script id="google-analytics" strategy="afterInteractive">
+                {`
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  window.gtag = gtag;
+                  gtag('js', new Date());
+                  gtag('config', '${GA_MEASUREMENT_ID}');
+                `}
+              </Script>
+            </>
+          )}
+          <CtaClickTracker />
 
           <ThemeProvider
             attribute="class"
