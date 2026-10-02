@@ -26,6 +26,12 @@ import { LiteYouTube } from '@/components/lite-youtube';
 import { getDoDiaCompanion } from '@/db/queries/companions';
 import { PlanType } from '@/db/queries/kv';
 import { kv } from '@/db/index';
+import {
+  BRAND_ALTERNATE_NAMES,
+  BRAND_NAME,
+  ORGANIZATION_ID,
+  WEBSITE_ID,
+} from '@/lib/brand';
 
 // ── Schema JSON-LD ────────────────────────────────────────────────────────────
 
@@ -55,19 +61,19 @@ function HomeSchemas() {
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Onesugar',
+    '@id': WEBSITE_ID,
+    // name e alternateName alimentam o nome do site que o Google mostra no
+    // resultado e ajudam a separar a marca de produtos com nome parecido.
+    name: BRAND_NAME,
+    alternateName: BRAND_ALTERNATE_NAMES,
     url: 'https://www.onesugar.pt',
     description:
       'A plataforma de referência para acompanhantes verificadas em Portugal. Perfis reais nos 18 distritos do país.',
     inLanguage: 'pt-PT',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: 'https://www.onesugar.pt/location/{search_term_string}',
-      },
-      'query-input': 'required name=search_term_string',
-    },
+    publisher: { '@id': ORGANIZATION_ID },
+    // Sem SearchAction: o Google deixou de mostrar a caixa de pesquisa nos
+    // resultados em 2024, e o modelo antigo só funcionava com o slug exato
+    // de um distrito.
   };
 
   const faqSchema = {
