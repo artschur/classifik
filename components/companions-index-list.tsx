@@ -1,12 +1,35 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getAllActiveCompanions } from '@/db/queries/companions';
 import { framingStyle, mediaFraming, mediaUrl } from '@/lib/image-framing';
 import type { CompanionPreview } from '@/types/types';
+import { useLocale } from '@/components/locale-provider';
+import { LocaleLink } from '@/components/locale-link';
+import { nomeDistrito } from '@/lib/districts';
+
+const TEXT = {
+  pt: {
+    empty: 'Ainda não há perfis nesta página.',
+    back: 'Voltar ao início da lista',
+    alt: (name: string, city: string) => `${name}, acompanhante verificada em ${city}`,
+    noPhoto: 'Sem fotografia',
+    years: 'anos',
+    loading: 'A carregar mais perfis…',
+    more: 'Ver mais perfis',
+  },
+  en: {
+    empty: 'There are no profiles on this page yet.',
+    back: 'Back to the start of the list',
+    alt: (name: string, city: string) => `${name}, verified escort in ${city}`,
+    noPhoto: 'No photo',
+    years: 'years old',
+    loading: 'Loading more profiles…',
+    more: 'See more profiles',
+  },
+} as const;
 
 /**
  * A grelha da listagem geral, que cresce ao rolar.
@@ -27,6 +50,8 @@ export function CompanionsIndexList({
   pageSize: number;
   total: number;
 }) {
+  const locale = useLocale();
+  const t = TEXT[locale];
   const [companions, setCompanions] = useState(initialCompanions);
   const [nextPage, setNextPage] = useState(page + 1);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -79,10 +104,10 @@ export function CompanionsIndexList({
   if (companions.length === 0) {
     return (
       <p className="text-muted-foreground py-16 text-center">
-        Ainda não há perfis nesta página.{' '}
-        <Link href="/companions" className="text-primary hover:underline">
-          Voltar ao início da lista
-        </Link>
+        {t.empty}{' '}
+        <LocaleLink locale={locale} href="/companions" className="text-primary hover:underline">
+          {t.back}
+        </LocaleLink>
       </p>
     );
   }
@@ -92,9 +117,11 @@ export function CompanionsIndexList({
       <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {companions.map((companion) => {
           const capa = companion.images?.[0];
+          const cidade = nomeDistrito(companion.city, locale);
           return (
             <li key={companion.id}>
-              <Link
+              <LocaleLink
+                locale={locale}
                 href={`/companions/${companion.id}`}
                 className="group block overflow-hidden rounded-xl border transition-shadow hover:shadow-lg"
               >
@@ -106,7 +133,7 @@ export function CompanionsIndexList({
                   {capa ? (
                     <Image
                       src={mediaUrl(capa)}
-                      alt={`${companion.name}, acompanhante verificada em ${companion.city}`}
+                      alt={t.alt(companion.name.trim(), cidade)}
                       fill
                       sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       // Sem efeito de ampliação ao passar o rato: seria
@@ -117,17 +144,17 @@ export function CompanionsIndexList({
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                      Sem fotografia
+                      {t.noPhoto}
                     </div>
                   )}
                 </div>
                 <div className="p-3">
                   <h2 className="font-semibold truncate">{companion.name}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {companion.age} anos · {companion.city}
+                    {companion.age} {t.years} · {cidade}
                   </p>
                 </div>
-              </Link>
+              </LocaleLink>
             </li>
           );
         })}
@@ -140,10 +167,11 @@ export function CompanionsIndexList({
         <div ref={sentinela} className="mt-10 flex justify-center">
           {loadingMore ? (
             <span className="text-sm text-muted-foreground">
-              A carregar mais perfis…
+              {t.loading}
             </span>
           ) : (
-            <Link
+            <LocaleLink
+              locale={locale}
               href={`/companions?page=${nextPage}`}
               rel="next"
               onClick={(e) => {
@@ -152,8 +180,8 @@ export function CompanionsIndexList({
               }}
               className="rounded-full border px-6 py-3 text-sm font-medium hover:bg-accent"
             >
-              Ver mais perfis
-            </Link>
+              {t.more}
+            </LocaleLink>
           )}
         </div>
       )}

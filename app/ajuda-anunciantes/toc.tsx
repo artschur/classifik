@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale } from '@/components/locale-provider';
 
 export const tocItems = [
-  { href: '#registo', label: 'Registo' },
-  { href: '#criar-anuncio', label: 'Criar o anúncio' },
-  { href: '#fotografias', label: 'Fotografias' },
-  { href: '#video-verificacao', label: 'Vídeo de verificação' },
-  { href: '#verificacao', label: 'Verificação' },
-  { href: '#aprovacao', label: 'Aprovação' },
-  { href: '#edicoes-perfil', label: 'Edições ao perfil' },
-  { href: '#dicas', label: 'Dicas' },
-  { href: '#faq', label: 'Perguntas frequentes' },
-  { href: '#suporte', label: 'Suporte' },
+  { href: '#registo', label: 'Registo', labelEn: 'Sign up' },
+  { href: '#criar-anuncio', label: 'Criar o anúncio', labelEn: 'Create your listing' },
+  { href: '#fotografias', label: 'Fotografias', labelEn: 'Photos' },
+  { href: '#video-verificacao', label: 'Vídeo de verificação', labelEn: 'Verification video' },
+  { href: '#verificacao', label: 'Verificação', labelEn: 'Verification' },
+  { href: '#aprovacao', label: 'Aprovação', labelEn: 'Approval' },
+  { href: '#edicoes-perfil', label: 'Edições ao perfil', labelEn: 'Editing your profile' },
+  { href: '#dicas', label: 'Dicas', labelEn: 'Tips' },
+  { href: '#faq', label: 'Perguntas frequentes', labelEn: 'FAQ' },
+  { href: '#suporte', label: 'Suporte', labelEn: 'Support' },
 ];
 
 function useActiveSection() {
@@ -42,6 +43,7 @@ function useActiveSection() {
 
 export function TocMobile() {
   const active = useActiveSection();
+  const en = useLocale() === 'en';
 
   return (
     <div className="md:hidden sticky top-16 z-40 bg-background/90 backdrop-blur-md border-b border-border">
@@ -62,7 +64,7 @@ export function TocMobile() {
                     : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
                 }`}
               >
-                {item.label}
+                {en ? item.labelEn : item.label}
               </a>
             );
           })}
@@ -74,12 +76,13 @@ export function TocMobile() {
 
 export function TocDesktop() {
   const active = useActiveSection();
+  const en = useLocale() === 'en';
 
   return (
     <aside className="hidden md:block">
       <div className="sticky top-24">
         <p className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-4 px-2">
-          Nesta página
+          {en ? 'On this page' : 'Nesta página'}
         </p>
         <nav className="space-y-0.5">
           {tocItems.map((item) => {
@@ -99,7 +102,7 @@ export function TocDesktop() {
                     isActive ? 'bg-primary scale-150' : 'bg-border'
                   }`}
                 />
-                {item.label}
+                {en ? item.labelEn : item.label}
               </a>
             );
           })}

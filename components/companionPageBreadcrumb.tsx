@@ -14,20 +14,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { useLocale } from '@/components/locale-provider';
+import { localizeHref } from '@/lib/i18n';
+
 export function CompanionPageBreadcrumb() {
+  const locale = useLocale();
+  const en = locale === 'en';
   return (
     <Breadcrumb className="px-4 sm:px-6 lg:px-8">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Início</BreadcrumbLink>
+          <BreadcrumbLink href={localizeHref('/', locale)}>{en ? 'Home' : 'Início'}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/location">Localização</BreadcrumbLink>
+          <BreadcrumbLink href={localizeHref('/location', locale)}>{en ? 'Locations' : 'Localização'}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Sugars</BreadcrumbPage>
+          <BreadcrumbPage>{en ? 'Escorts' : 'Sugars'}</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

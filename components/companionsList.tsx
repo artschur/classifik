@@ -13,6 +13,9 @@ import { useSearchParams } from 'next/navigation';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Check } from 'lucide-react';
 import { PlanType } from '@/db/queries/kv';
+import { useLocale } from '@/components/locale-provider';
+import { LocaleLink } from '@/components/locale-link';
+import { traduzirValor } from '@/lib/i18n-values';
 
 export function CompanionsList({
   location,
@@ -115,6 +118,7 @@ export function CompanionsList({
   // os filtros actuais. Quem tem JavaScript nunca chega a carregar nela
   // porque o rolar já trouxe os perfis; o buscador segue-a e descobre o resto
   // da lista, que é o que evita perder o que a paginação por endereço dava.
+  const locale = useLocale();
   const proximoEndereco = (() => {
     const p = new URLSearchParams(searchParams?.toString() ?? '');
     p.set('page', String(nextPage));
@@ -150,7 +154,7 @@ export function CompanionsList({
               }}
               className="rounded-full border px-6 py-3 text-sm font-medium transition-colors hover:bg-accent"
             >
-              Ver mais perfis
+              {locale === 'en' ? 'See more profiles' : 'Ver mais perfis'}
             </Link>
           )}
         </div>
@@ -208,6 +212,8 @@ const PlanRibbon = ({ plan }: { plan?: string | null }) => {
 };
 
 export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
+  const locale = useLocale();
+  const en = locale === 'en';
   // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o
   // enquadramento que a anunciante escolheu para a capa.
   const images = companion.images.filter(
@@ -236,7 +242,8 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   // };
 
   return (
-    <Link
+    <LocaleLink
+      locale={locale}
       href={`/companions/${companion.id}`}
       className="transition-transform duration-200 ease-in-out transform hover:scale-102"
     >
@@ -250,7 +257,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
                     <PlanRibbon plan={companion.planType} />
                     <Image
                       src={mediaUrl(image) || '/placeholder.svg'}
-                      alt={`${companion.name} - Image ${index + 1}`}
+                      alt={en ? `${companion.name}, photo ${index + 1}` : `${companion.name}, foto ${index + 1}`}
                       fill={true}
                       className="object-cover"
                       style={framingStyle(mediaFraming(image))}
@@ -286,24 +293,24 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
             <div className="flex items-center gap-2">
               {/*{getPlanBadge(companion.planType)}*/}
               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                <Check className="w-3 h-3 mr-1" /> Verificado
+                <Check className="w-3 h-3 mr-1" /> {en ? 'Verified' : 'Verificado'}
               </Badge>
-              <Badge variant="secondary">{companion.age} anos</Badge>
+              <Badge variant="secondary">{companion.age} {en ? 'years old' : 'anos'}</Badge>
             </div>
           </div>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{companion.shortDescription}</p>
           <div className="flex flex-wrap gap-2">
             {companion.silicone && <Badge variant="outline">Silicone</Badge>}
-            {companion.ethinicity && <Badge variant="outline">{companion.ethinicity}</Badge>}
-            {companion.eyeColor && <Badge variant="outline">{companion.eyeColor}</Badge>}
-            {companion.hairColor && <Badge variant="outline">{companion.hairColor}</Badge>}
+            {companion.ethinicity && <Badge variant="outline">{traduzirValor(companion.ethinicity, locale)}</Badge>}
+            {companion.eyeColor && <Badge variant="outline">{traduzirValor(companion.eyeColor, locale)}</Badge>}
+            {companion.hairColor && <Badge variant="outline">{traduzirValor(companion.hairColor, locale)}</Badge>}
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <span className="text-lg font-bold">€ {companion.price.toFixed(2)}</span>
         </CardFooter>
       </Card>
-    </Link>
+    </LocaleLink>
   );
 }
 

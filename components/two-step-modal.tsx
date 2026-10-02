@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import {
   Dialog,
@@ -14,11 +13,52 @@ import { X, Heart, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useEngagement } from '@/hooks/use-engagement';
+import { useLocale } from '@/components/locale-provider';
+import { LocaleLink } from '@/components/locale-link';
+
+const TEXT = {
+  pt: {
+    close: 'Fechar',
+    ageTitle: 'Verificação de Idade',
+    ageBody:
+      'Você precisa ter 18 anos ou mais para acessar este site. Ao clicar em confirmar, você declara que tem 18 anos ou mais.',
+    leave: 'Sair',
+    confirm: 'Confirmar, tenho 18 anos ou mais',
+    welcome: 'Bem-vindo ao OneSugar!',
+    choose: 'Escolha como deseja continuar:',
+    sugarTitle: 'Sou Sugar',
+    sugarBody: 'Simule os seus ganhos e crie o seu anúncio gratuitamente',
+    sugarPoints: ['Perfil verificado e destaque', '100% do valor do encontro é seu', 'Plataforma segura e discreta'],
+    clientTitle: 'Sou Cliente',
+    clientBody: 'Encontre sugars verificadas em Portugal',
+    clientPoints: ['Acesso a perfis verificados', 'Avaliações e comentários reais', 'Total privacidade garantida'],
+    footer: 'Escolha seu perfil para continuar navegando no OneSugar',
+  },
+  en: {
+    close: 'Close',
+    ageTitle: 'Age verification',
+    ageBody:
+      'You must be 18 or older to access this site. By clicking confirm, you declare that you are 18 or older.',
+    leave: 'Leave',
+    confirm: 'Confirm, I am 18 or older',
+    welcome: 'Welcome to OneSugar!',
+    choose: 'How would you like to continue?',
+    sugarTitle: 'I am a companion',
+    sugarBody: 'Estimate your earnings and create your listing for free',
+    sugarPoints: ['Verified and featured profile', 'You keep 100% of what you earn', 'Safe and discreet platform'],
+    clientTitle: 'I am a client',
+    clientBody: 'Find verified escorts in Portugal',
+    clientPoints: ['Access to verified profiles', 'Real reviews and comments', 'Complete privacy'],
+    footer: 'Choose your profile to keep browsing OneSugar',
+  },
+} as const;
 
 /** Marca que a escolha Sugar/Cliente já foi mostrada a este navegador. */
 const LEAD_CHOICE_KEY = 'lead-choice-seen';
 
 export function TwoStepModal() {
+  const locale = useLocale();
+  const t = TEXT[locale];
   const { isSignedIn, isLoaded } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<1 | 2>(1);
@@ -121,7 +161,7 @@ export function TwoStepModal() {
               className="absolute right-4 top-4 z-50 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Fechar</span>
+              <span className="sr-only">{t.close}</span>
             </button>
           )}
 
@@ -131,11 +171,10 @@ export function TwoStepModal() {
               <div className="p-8">
                 <DialogHeader>
                   <DialogTitle className="text-3xl font-bold text-center mb-2">
-                    Verificação de Idade
+                    {t.ageTitle}
                   </DialogTitle>
                   <DialogDescription className="text-center text-lg">
-                    Você precisa ter 18 anos ou mais para acessar este site. Ao clicar em
-                    confirmar, você declara que tem 18 anos ou mais.
+                    {t.ageBody}
                   </DialogDescription>
                 </DialogHeader>
               </div>
@@ -146,13 +185,13 @@ export function TwoStepModal() {
                   className="flex-1"
                   onClick={handleAgeDecline}
                 >
-                  Sair
+                  {t.leave}
                 </Button>
                 <Button
                   className="flex-1"
                   onClick={handleAgeConfirm}
                 >
-                  Confirmar, tenho 18 anos ou mais
+                  {t.confirm}
                 </Button>
               </div>
             </>
@@ -163,10 +202,10 @@ export function TwoStepModal() {
               <div className="p-8">
                 <DialogHeader>
                   <DialogTitle className="text-3xl font-bold text-center mb-2">
-                    Bem-vindo ao OneSugar!
+                    {t.welcome}
                   </DialogTitle>
                   <DialogDescription className="text-center text-lg">
-                    Escolha como deseja continuar:
+                    {t.choose}
                   </DialogDescription>
                 </DialogHeader>
               </div>
@@ -174,7 +213,8 @@ export function TwoStepModal() {
               {/* Content Section */}
               <div className="p-8 pt-0 space-y-4">
                 {/* Sugar Option — passa pela calculadora antes de criar conta */}
-                <Link
+                <LocaleLink
+                  locale={locale}
                   href="/quanto-ganha-acompanhante"
                   onClick={() => setOpen(false)}
                   className={cn(
@@ -188,22 +228,21 @@ export function TwoStepModal() {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-xl font-bold text-pink-900 dark:text-pink-100 mb-1">
-                        Sou Sugar
+                        {t.sugarTitle}
                       </h3>
                       <p className="text-sm text-pink-700 dark:text-pink-300 mb-3">
-                        Simule os seus ganhos e crie o seu anúncio gratuitamente
+                        {t.sugarBody}
                       </p>
                       <ul className="text-xs text-pink-600 dark:text-pink-400 space-y-1">
-                        <li>• Perfil verificado e destaque</li>
-                        <li>• 100% do valor do encontro é seu</li>
-                        <li>• Plataforma segura e discreta</li>
+                        {t.sugarPoints.map((p) => <li key={p}>• {p}</li>)}
                       </ul>
                     </div>
                   </div>
-                </Link>
+                </LocaleLink>
 
                 {/* Client Option */}
-                <Link
+                <LocaleLink
+                  locale={locale}
                   href="/location"
                   onClick={() => setOpen(false)}
                   className={cn(
@@ -220,22 +259,20 @@ export function TwoStepModal() {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-1">
-                        Sou Cliente
+                        {t.clientTitle}
                       </h3>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                        Encontre sugars verificadas em Portugal
+                        {t.clientBody}
                       </p>
                       <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-                        <li>• Acesso a perfis verificados</li>
-                        <li>• Avaliações e comentários reais</li>
-                        <li>• Total privacidade garantida</li>
+                        {t.clientPoints.map((p) => <li key={p}>• {p}</li>)}
                       </ul>
                     </div>
                   </div>
-                </Link>
+                </LocaleLink>
 
                 <p className="text-xs text-center text-muted-foreground pt-2">
-                  Escolha seu perfil para continuar navegando no OneSugar
+                  {t.footer}
                 </p>
               </div>
             </>

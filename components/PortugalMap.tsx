@@ -9,6 +9,9 @@ import {
 import { useRouter } from 'next/navigation';
 import { DISTRICT_SHAPES, type DistrictShape } from './portugal-map-data';
 import './PortugalMap.css';
+import { useLocale } from '@/components/locale-provider';
+import { crossesLocale, localizeHref } from '@/lib/i18n';
+import { nomeDistrito } from '@/lib/districts';
 
 /**
  * Edit here to change where each district navigates to.
@@ -113,6 +116,7 @@ function DistrictMap({
   onActivate,
   onBackgroundClick,
 }: DistrictMapProps) {
+  const en = useLocale() === 'en';
   const pathRefs = useRef(new Map<string, SVGPathElement>());
   const [centers, setCenters] = useState<Record<string, Point>>({});
 
@@ -145,13 +149,14 @@ function DistrictMap({
         viewBox={viewBox}
         className="portugal-map__svg"
         role="group"
-        aria-label="Mapa de Portugal, escolha um distrito"
+        aria-label={en ? 'Map of Portugal, choose a district' : 'Mapa de Portugal, escolha um distrito'}
         onClick={(event) => {
           if (event.target === event.currentTarget) onBackgroundClick();
         }}
       >
         {shapes.map((district) => {
-          const label = DISTRICT_NAMES[district.id] ?? district.name;
+          const nome = DISTRICT_NAMES[district.id] ?? district.name;
+          const label = en ? nomeDistrito(nome, 'en') : nome;
           const isActive = activeId === district.id;
           const isArmed = armedId === district.id;
 
@@ -170,7 +175,7 @@ function DistrictMap({
               }
               role="button"
               tabIndex={0}
-              aria-label={`Ver acompanhantes em ${label}`}
+              aria-label={en ? `See escorts in ${label}` : `Ver acompanhantes em ${label}`}
               onMouseEnter={() => hasHover && onHoverEnter(district.id)}
               onMouseLeave={() => hasHover && onHoverLeave(district.id)}
               onFocus={() => onHoverEnter(district.id)}
@@ -188,7 +193,9 @@ function DistrictMap({
           style={{ left: `${activeCenter.xPct}%`, top: `${activeCenter.yPct}%` }}
         >
           <span className="portugal-map__tooltip-label">
-            {DISTRICT_NAMES[activeId] ?? activeId}
+            {en
+              ? nomeDistrito(DISTRICT_NAMES[activeId] ?? activeId, 'en')
+              : DISTRICT_NAMES[activeId] ?? activeId}
           </span>
           {!hasHover && armedId === activeId && (
             <button
@@ -196,7 +203,7 @@ function DistrictMap({
               className="portugal-map__confirm-btn"
               onClick={() => onActivate(activeId)}
             >
-              Ver distrito
+              {en ? 'See district' : 'Ver distrito'}
             </button>
           )}
         </div>
@@ -211,9 +218,14 @@ export default function PortugalMap() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [armedId, setArmedId] = useState<string | null>(null);
 
+  const locale = useLocale();
   const navigateTo = (id: string) => {
     const route = DISTRICT_ROUTES[id];
-    if (route) router.push(route);
+    if (!route) return;
+    // Trocar de idioma pede navegação completa (ver LocaleLink).
+    const target = localizeHref(route, locale);
+    if (crossesLocale(target, locale)) window.location.assign(target);
+    else router.push(target);
   };
 
   const handleActivate = (id: string) => {
