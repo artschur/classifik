@@ -9,16 +9,28 @@ import {
 } from "@/db/schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getCompanionIdByClerkId } from "@/db/queries/companions";
-import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { and, eq, inArray } from "drizzle-orm";
 import { getClerkIdByCompanionId } from "@/db/queries/userActions";
 import { tagCompanionInRD } from "@/lib/rd-station";
+import { isAdmin } from "@/components/header";
+import {
+  getSupabaseAdmin,
+  removeStorageFolder,
+  signDocumentUrl,
+} from "@/lib/supabase-admin";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
+/**
+ * Tipos aceites no envio. Fazem parte do nome do ficheiro, por isso não podem
+ * ser texto livre vindo do navegador.
+ */
+const DOCUMENT_TYPES = [
+  "id_card",
+  "passport",
+  "drivers_license",
+  "selfie",
+  "verification_video",
+];
 
 /**
  * Chegar aqui significa que o documento e o vídeo estão ambos enviados, que é
@@ -45,79 +57,40 @@ async function markRegistrationComplete(userId: string) {
   }
 }
 
-export async function uploadDocument(formData: FormData) {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      throw new Error("Authentication required");
-    }
-
-    const companionId = await getCompanionIdByClerkId(userId);
-    const file = formData.get("file") as File;
-    const documentType = formData.get("documentType") as string;
-
-    if (!file || !documentType) {
-      throw new Error("Missing required fields");
-    }
-
-    const fileExtension = file.name.split(".").pop();
-    const fileName = `${userId}_${documentType}_${Date.now()}.${fileExtension}`;
-
-    // All documents including verification videos go to documents bucket
-    const storagePath = `documents/${userId}/${fileName}`;
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("documents")
-      .upload(storagePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      throw new Error(`Error uploading file: ${uploadError.message}`);
-    }
-
-    // Get the public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("documents").getPublicUrl(storagePath);
-
-    // Save document information to database
-    await db.insert(documentsTable).values({
-      authId: userId,
-      companionId,
-      document_type: documentType,
-      storage_path: storagePath,
-      public_url: publicUrl,
-    });
-
-    const status = await verifyItemsIfOnboardingComplete(userId);
-
-    // Check for both the video and at least one ID document
-    if (status.isVerificationVideoUploaded && status.isDocumentUploaded) {
-      await markRegistrationComplete(userId);
-    }
-
-    revalidatePath("/verify");
-    revalidatePath("/companions/verification");
-
-    return { success: true, publicUrl };
-  } catch (error) {
-    console.error("Error uploading document:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-}
-
+/**
+ * Documentos de uma acompanhante, para o ecrã de verificação. Só para admin.
+ *
+ * O bucket é privado, por isso cada documento vem com um endereço assinado e
+ * temporário (`url`) em vez do endereço público, que deixou de abrir.
+ */
 export async function getDocumentsByCompanionId(companionId: number) {
   try {
-    const documents = await db
-      .select()
+    const { userId } = await auth();
+    if (!userId || !isAdmin(userId)) {
+      return { success: false, error: "Não autorizado", documents: [] };
+    }
+
+    const rows = await db
+      .select({
+        id: documentsTable.id,
+        document_type: documentsTable.document_type,
+        storage_path: documentsTable.storage_path,
+        public_url: documentsTable.public_url,
+        verified: documentsTable.verified,
+        verification_date: documentsTable.verification_date,
+        notes: documentsTable.notes,
+        created_at: documentsTable.created_at,
+      })
       .from(documentsTable)
       .where(eq(documentsTable.companionId, companionId))
       .orderBy(documentsTable.created_at);
+
+    const documents = await Promise.all(
+      rows.map(async ({ public_url, ...doc }) => ({
+        ...doc,
+        url: await signDocumentUrl({ storage_path: doc.storage_path, public_url }),
+      })),
+    );
 
     return { success: true, documents };
   } catch (error) {
@@ -130,12 +103,27 @@ export async function getDocumentsByCompanionId(companionId: number) {
   }
 }
 
-export async function getDocumentsByAuthId(authId: string) {
+/**
+ * O que a própria anunciante já enviou. Identifica-a pela sessão, nunca por
+ * um id vindo do navegador, e não devolve endereços: o formulário só precisa
+ * de saber que tipos de documento já lá estão.
+ */
+export async function getMyDocuments() {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: "Authentication required", documents: [] };
+    }
+
     const documents = await db
-      .select()
+      .select({
+        id: documentsTable.id,
+        document_type: documentsTable.document_type,
+        verified: documentsTable.verified,
+        created_at: documentsTable.created_at,
+      })
       .from(documentsTable)
-      .where(eq(documentsTable.authId, authId))
+      .where(eq(documentsTable.authId, userId))
       .orderBy(documentsTable.created_at);
 
     return { success: true, documents };
@@ -156,6 +144,11 @@ export async function verifyDocument(
   notes?: string,
 ) {
   try {
+    const { userId } = await auth();
+    if (!userId || !isAdmin(userId)) {
+      return { success: false, error: "Não autorizado" };
+    }
+
     await db
       .update(documentsTable)
       .set({
@@ -181,11 +174,17 @@ export async function verifyDocument(
 
 export async function deleteDocument(documentId: number) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error("Authentication required");
+    }
+
     const [documentToDelete] = await db
       .select({
         storage_path: documentsTable.storage_path,
         document_type: documentsTable.document_type,
         companionId: documentsTable.companionId,
+        authId: documentsTable.authId,
       })
       .from(documentsTable)
       .where(eq(documentsTable.id, documentId));
@@ -194,10 +193,15 @@ export async function deleteDocument(documentId: number) {
       throw new Error("Document not found");
     }
 
+    // Só a dona do documento ou um admin o podem apagar.
+    if (documentToDelete.authId !== userId && !isAdmin(userId)) {
+      throw new Error("Não autorizado");
+    }
+
     const bucket = "documents"; // All documents now in documents bucket
 
-    const { error: deleteStorageError } = await supabase.storage
-      .from(bucket)
+    const { error: deleteStorageError } = await getSupabaseAdmin()
+      .storage.from(bucket)
       .remove([documentToDelete.storage_path]);
 
     if (deleteStorageError) {
@@ -326,23 +330,25 @@ export async function isVerificationPending(clerkId: string): Promise<boolean> {
   }
 }
 
+/**
+ * Apaga do Storage as fotos e os documentos de um registo recusado. Só admin.
+ *
+ * Antes passava as pastas directamente a `remove`, que só apaga caminhos
+ * exactos: não apagava nada nem dava erro, e os documentos de identidade de
+ * quem foi recusada ficavam guardados sem ninguém saber.
+ */
 export async function deleteAllDocumentsFromCompanion(companionId: number) {
   try {
+    const { userId } = await auth();
+    if (!userId || !isAdmin(userId)) {
+      return { success: false, error: "Não autorizado" };
+    }
+
     const authId = await getClerkIdByCompanionId(companionId);
 
-    const [verificationVideoPath] = await db
-      .select({ storage_path: documentsTable.storage_path })
-      .from(documentsTable)
-      .where(
-        and(
-          eq(documentsTable.companionId, companionId),
-          eq(documentsTable.document_type, "verification_video"),
-        ),
-      );
-
     await Promise.all([
-      supabase.storage.from("images").remove([`${authId}/`]),
-      supabase.storage.from("documents").remove([`documents/${authId}/`]),
+      removeStorageFolder("images", `${authId}/`),
+      removeStorageFolder("documents", `documents/${authId}/`),
     ]);
 
     revalidatePath("/verify");
@@ -372,11 +378,19 @@ export async function getSignedUploadUrl(
       return { success: false as const, error: "Authentication required" };
     }
 
-    const fileName = `${userId}_${documentType}_${Date.now()}.${fileExtension}`;
+    if (!DOCUMENT_TYPES.includes(documentType)) {
+      return { success: false as const, error: "Tipo de documento inválido" };
+    }
+    const extension = fileExtension.toLowerCase();
+    if (!/^[a-z0-9]{1,8}$/.test(extension)) {
+      return { success: false as const, error: "Extensão de ficheiro inválida" };
+    }
+
+    const fileName = `${userId}_${documentType}_${Date.now()}.${extension}`;
     const storagePath = `documents/${userId}/${fileName}`;
 
-    const { data, error } = await supabase.storage
-      .from("documents")
+    const { data, error } = await getSupabaseAdmin()
+      .storage.from("documents")
       .createSignedUploadUrl(storagePath);
 
     if (error) {
@@ -413,12 +427,32 @@ export async function saveDocumentAfterUpload(
       throw new Error("Authentication required");
     }
 
+    if (!DOCUMENT_TYPES.includes(documentType)) {
+      throw new Error("Tipo de documento inválido");
+    }
+
+    // O caminho vem do navegador. Sem esta verificação dava para registar na
+    // própria conta o caminho do documento de outra pessoa, e passar a vê-lo
+    // como se fosse seu.
+    const ownFolder = `documents/${userId}/`;
+    const fileName = storagePath.slice(ownFolder.length);
+    if (
+      !storagePath.startsWith(ownFolder) ||
+      !fileName ||
+      fileName.includes("/") ||
+      fileName.includes("..")
+    ) {
+      throw new Error("Caminho de documento inválido");
+    }
+
     const companionId = await getCompanionIdByClerkId(userId);
 
-    // Get the public URL
+    // O endereço público já não abre (o bucket é privado) e não é usado para
+    // mostrar nada; fica gravado por a coluna ser obrigatória e por ser o que
+    // indica em que bucket está o ficheiro.
     const {
       data: { publicUrl },
-    } = supabase.storage.from("documents").getPublicUrl(storagePath);
+    } = getSupabaseAdmin().storage.from("documents").getPublicUrl(storagePath);
 
     // Save document information to database
     await db.insert(documentsTable).values({
@@ -439,7 +473,7 @@ export async function saveDocumentAfterUpload(
     revalidatePath("/verify");
     revalidatePath("/companions/verification");
 
-    return { success: true as const, publicUrl };
+    return { success: true as const };
   } catch (error) {
     console.error("Error saving document record:", error);
     return {

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   getSignedUploadUrl,
   saveDocumentAfterUpload,
-  getDocumentsByAuthId,
+  getMyDocuments,
   deleteDocument,
 } from "@/app/actions/document-verification";
 import { useUser } from "@clerk/nextjs";
@@ -64,7 +64,6 @@ const DocumentFormSchema = z.object({
 type Document = {
   id: number;
   document_type: string;
-  public_url: string;
   verified: boolean | null;
   created_at: Date | null;
 };
@@ -76,9 +75,7 @@ type Document = {
 async function uploadFileDirectToSupabase(
   file: File,
   documentType: string,
-): Promise<
-  { success: true; publicUrl: string } | { success: false; error: string }
-> {
+): Promise<{ success: true } | { success: false; error: string }> {
   // Step 1: Get a signed upload URL from the server
   const fileExtension = file.name.split(".").pop() || "bin";
   const signedUrlResult = await getSignedUploadUrl(documentType, fileExtension);
@@ -118,7 +115,7 @@ async function uploadFileDirectToSupabase(
     };
   }
 
-  return { success: true, publicUrl: saveResult.publicUrl! };
+  return { success: true };
 }
 
 export function DocumentVerificationForm({
@@ -158,7 +155,7 @@ export function DocumentVerificationForm({
       if (isLoaded && user?.id) {
         setIsLoading(true);
         try {
-          const result = await getDocumentsByAuthId(user.id);
+          const result = await getMyDocuments();
           if (result.success) {
             setDocuments(result.documents as Document[]);
             const hasVerificationVideo = result.documents.some(
@@ -246,7 +243,7 @@ export function DocumentVerificationForm({
           videoInputRef.current.value = "";
         }
 
-        const updatedDocs = await getDocumentsByAuthId(user.id);
+        const updatedDocs = await getMyDocuments();
         if (updatedDocs.success) {
           setDocuments(updatedDocs.documents as Document[]);
           setVideoUploaded(true);
@@ -312,7 +309,7 @@ export function DocumentVerificationForm({
           fileInputRef.current.value = "";
         }
 
-        const updatedDocs = await getDocumentsByAuthId(user.id);
+        const updatedDocs = await getMyDocuments();
         if (updatedDocs.success) {
           setDocuments(updatedDocs.documents as Document[]);
           const hasIdDocument = updatedDocs.documents.some((doc: Document) =>

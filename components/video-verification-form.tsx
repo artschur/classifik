@@ -4,7 +4,7 @@ import * as React from "react";
 import {
   getSignedUploadUrl,
   saveDocumentAfterUpload,
-  getDocumentsByAuthId,
+  getMyDocuments,
 } from "@/app/actions/document-verification";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
@@ -89,7 +89,7 @@ export function VideoVerificationForm({
       const result = await uploadVideoToSupabase(file);
 
       if (result.success) {
-        const updated = await getDocumentsByAuthId(user.id);
+        const updated = await getMyDocuments();
         if (updated.success) setVideoUploaded(true);
 
         toast({

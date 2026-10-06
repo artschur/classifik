@@ -1,7 +1,6 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { createClient } from "@supabase/supabase-js";
 import { eq } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
@@ -10,11 +9,7 @@ import { companionsTable, audioRecordingsTable } from "@/db/schema";
 import { stripe } from "@/db/stripe";
 import { getActiveSubscriptionByClerkId } from "@/db/queries/subscriptions";
 import { setCompanionPaused } from "@/db/queries/companions";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
+import { removeStorageFolder } from "@/lib/supabase-admin";
 
 const DELETE_CONFIRMATION_PHRASE = "APAGAR";
 
@@ -25,26 +20,6 @@ export async function togglePauseAd(paused: boolean) {
   const result = await setCompanionPaused(userId, paused);
   revalidatePath("/profile");
   return result;
-}
-
-/**
- * Apaga recursivamente todos os ficheiros dentro de uma "pasta" num bucket
- * do Supabase Storage. O SDK só apaga por caminho exacto — sem listar
- * primeiro, ficheiros ficariam órfãos no storage mesmo com a conta apagada.
- */
-async function removeStorageFolder(bucket: string, prefix: string) {
-  const { data: files, error } = await supabase.storage
-    .from(bucket)
-    .list(prefix, { limit: 1000 });
-
-  if (error || !files || files.length === 0) return;
-
-  // Entradas de sub-pasta vêm sem `id` (são sintéticas); só interessam ficheiros reais.
-  const paths = files.filter((f) => f.id).map((f) => `${prefix}${f.name}`);
-
-  if (paths.length > 0) {
-    await supabase.storage.from(bucket).remove(paths);
-  }
 }
 
 /**

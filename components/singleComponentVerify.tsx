@@ -68,13 +68,19 @@ import { isVideoMedia, mediaFraming, mediaUrl } from '@/lib/image-framing';
 type Document = {
   id: number;
   document_type: string;
-  public_url: string;
+  // Endereço assinado e temporário: o bucket dos documentos é privado. Null se
+  // o ficheiro já não existir no Storage.
+  url: string | null;
   storage_path: string;
   verified: boolean;
   verification_date: string | null;
   notes: string | null;
   created_at: string;
 };
+
+// O endereço assinado termina no token, por isso a extensão vê-se no caminho.
+const isPdfDocument = (doc: Document) =>
+  doc.storage_path.toLowerCase().endsWith('.pdf');
 
 export default function SingleCompanionVerify({
   companion,
@@ -409,7 +415,13 @@ export default function SingleCompanionVerify({
 
   // Extract video thumbnail if it's a verification video
   const renderDocumentPreview = (doc: Document) => {
-    if (doc.public_url.endsWith('.pdf')) {
+    if (!doc.url) {
+      return (
+        <div className="h-16 w-16 rounded bg-muted flex items-center justify-center">
+          <FileText className="h-8 w-8 text-muted-foreground" />
+        </div>
+      );
+    } else if (isPdfDocument(doc)) {
       return (
         <div className="bg-muted p-2 rounded">
           <FileText className="h-8 w-8" />
@@ -425,10 +437,14 @@ export default function SingleCompanionVerify({
     } else {
       return (
         <div className="h-16 w-16 relative overflow-hidden rounded">
+          {/* unoptimized: um documento de identidade não pode passar pelo
+              optimizador de imagens, que guardaria uma cópia em cache
+              acessível sem o token. */}
           <Image
-            src={doc.public_url}
+            src={doc.url}
             alt={doc.document_type}
             fill
+            unoptimized
             className="object-cover"
           />
         </div>
@@ -869,10 +885,14 @@ export default function SingleCompanionVerify({
           <div className="flex flex-col space-y-4">
             {selectedDocument && (
               <>
-                {selectedDocument.document_type === 'verification_video' ? (
+                {!selectedDocument.url ? (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    Ficheiro indisponível no armazenamento.
+                  </p>
+                ) : selectedDocument.document_type === 'verification_video' ? (
                   <div className="relative w-full aspect-video max-h-96">
                     <video
-                      src={selectedDocument.public_url}
+                      src={selectedDocument.url}
                       controls
                       className="w-full h-full rounded-md"
                       autoPlay={false}
@@ -885,10 +905,10 @@ export default function SingleCompanionVerify({
                       </div>
                     )}
                   </div>
-                ) : selectedDocument.public_url.endsWith('.pdf') ? (
+                ) : isPdfDocument(selectedDocument) ? (
                   <div className="flex justify-center py-8 bg-muted rounded-md">
                     <a
-                      href={selectedDocument.public_url}
+                      href={selectedDocument.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center text-primary"
@@ -899,9 +919,10 @@ export default function SingleCompanionVerify({
                 ) : (
                   <div className="relative aspect-[4/3]">
                     <Image
-                      src={selectedDocument.public_url}
+                      src={selectedDocument.url}
                       alt={selectedDocument.document_type}
                       fill
+                      unoptimized
                       className="object-contain rounded-md"
                     />
                   </div>

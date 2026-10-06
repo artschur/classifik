@@ -53,6 +53,7 @@ import {
 } from "./images";
 import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import { PlanType } from "./kv";
+import { signDocumentUrl } from "@/lib/supabase-admin";
 
 function slugify(value: string) {
   return value
@@ -1248,6 +1249,14 @@ function diffPendingEdit(
 export async function getUnverifiedCompanions(): Promise<
   (CompanionFiltered & { description: string })[]
 > {
+  // A página /verify já só a chama para admins, mas este ficheiro é 'use
+  // server' e a função leva consigo os vídeos de verificação: não pode
+  // depender de quem a chama ter feito a verificação.
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error("Não autorizado");
+  }
+
   const legacyApprovedIds = await getLegacyApprovedIds();
 
   let query = db
@@ -1386,6 +1395,7 @@ export async function getUnverifiedCompanions(): Promise<
   const videosPromise = db
     .select({
       companionId: documentsTable.companionId,
+      storage_path: documentsTable.storage_path,
       public_url: documentsTable.public_url,
     })
     .from(documentsTable)
@@ -1423,8 +1433,16 @@ export async function getUnverifiedCompanions(): Promise<
     pendingEdits.map((edit) => [edit.companionId, edit.payload]),
   );
 
-  const videosMap = videos.reduce((acc, vid) => {
-    acc.set(vid.companionId.toString(), vid.public_url);
+  // O bucket dos documentos é privado: o vídeo só abre por endereço assinado.
+  const signedVideos = await Promise.all(
+    videos.map(async (vid) => ({
+      companionId: vid.companionId,
+      url: await signDocumentUrl(vid),
+    })),
+  );
+
+  const videosMap = signedVideos.reduce((acc, vid) => {
+    if (vid.url) acc.set(vid.companionId.toString(), vid.url);
     return acc;
   }, new Map<string, string>());
 
