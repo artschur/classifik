@@ -1,23 +1,22 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { getCompanionIdByClerkId, getBlockedUsers } from '@/db/queries/companions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Users, X, User, Mail, ShieldAlert } from 'lucide-react';
+import { Shield, X } from 'lucide-react';
 import Link from 'next/link';
 import { unblockUserAction } from '@/app/actions/block-actions';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { PlanType } from '@/db/queries/kv';
 
+/**
+ * Bloqueios da anunciante.
+ *
+ * Esta página listava os primeiros 100 utilizadores do Clerk, com nome e
+ * email, para a anunciante escolher quem bloquear. Isso mostrava a qualquer
+ * VIP os emails dos clientes e das outras anunciantes, e nem servia o
+ * propósito: o contacto é por WhatsApp, e nada naquela lista dizia quem era
+ * o cliente em causa. Fica só a lista de quem já está bloqueado.
+ */
 export default async function BlockPage() {
   const { userId, sessionClaims } = await auth();
 
@@ -36,16 +35,7 @@ export default async function BlockPage() {
 
   try {
     const companionId = await getCompanionIdByClerkId(userId);
-    const clerk = await clerkClient();
-    const [blockedUsers, clerkResponse] = await Promise.all([
-      getBlockedUsers(companionId),
-      clerk.users.getUserList({ limit: 100 }),
-    ]);
-
-    const clerkUsers = clerkResponse.data || [];
-
-    // Create a set of blocked user IDs for quick lookup
-    const blockedUserIds = new Set(blockedUsers.map((user) => user.blocked_user_id));
+    const blockedUsers = await getBlockedUsers(companionId);
 
     return (
       <div className="container mx-auto py-8 px-4 max-w-6xl">
@@ -55,216 +45,27 @@ export default async function BlockPage() {
             Gerenciar Usuários Bloqueados
           </h1>
           <p className="text-muted-foreground mt-2">
-            Bloqueie usuários que você não quer que vejam seu perfil.
+            Usuários bloqueados não conseguem ver o seu perfil.
           </p>
         </div>
 
         <div className="grid gap-6">
-          {/* Users Table */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Lista de Usuários ({clerkUsers.length})
+                <X className="w-5 h-5" />
+                Usuários Bloqueados ({blockedUsers.length})
               </CardTitle>
               <CardDescription>
-                Todos os usuários registrados no sistema. Clique em "Bloquear" para impedir que
-                vejam seu perfil.
+                Lista dos usuários que você bloqueou de ver o seu perfil.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Desktop Table View */}
-              <div className="hidden md:block rounded-md border overflow-x-auto">
-                <Table className="min-w-full">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {clerkUsers.map((user: any) => {
-                      const isBlocked = blockedUserIds.has(user.id);
-                      const isCurrentUser = user.id === userId;
-
-                      return (
-                        <TableRow key={user.id}>
-                          <TableCell className="min-w-[250px]">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage
-                                  src={user.imageUrl}
-                                  alt={user.username || user.firstName || 'User'}
-                                />
-                                <AvatarFallback>
-                                  {user.firstName?.[0] || user.username?.[0] || 'U'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">
-                                  {user.firstName && user.lastName
-                                    ? `${user.firstName} ${user.lastName}`
-                                    : user.username || 'Usuário sem nome'}
-                                </div>
-                                <div className="text-sm text-muted-foreground">ID: {user.id}</div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Mail className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm">
-                                {user.emailAddresses?.[0]?.emailAddress || 'N/A'}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {isCurrentUser ? (
-                              <Badge variant="secondary">Você</Badge>
-                            ) : isBlocked ? (
-                              <Badge variant="destructive">Bloqueado</Badge>
-                            ) : (
-                              <Badge variant="outline">Ativo</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {isCurrentUser ? (
-                              <Button variant="ghost" size="sm" disabled>
-                                N/A
-                              </Button>
-                            ) : isBlocked ? (
-                              <form
-                                action={async () => {
-                                  'use server';
-                                  await unblockUserAction(companionId, user.id);
-                                }}
-                              >
-                                <Button variant="outline" size="sm" type="submit">
-                                  <X className="w-4 h-4 mr-1" />
-                                  Desbloquear
-                                </Button>
-                              </form>
-                            ) : (
-                              <form
-                                action={async () => {
-                                  'use server';
-                                  await import('@/app/actions/block-actions').then(
-                                    ({ blockUserAction }) => blockUserAction(companionId, user.id),
-                                  );
-                                }}
-                              >
-                                <Button variant="destructive" size="sm" type="submit">
-                                  <ShieldAlert className="w-4 h-4 mr-1" />
-                                  Bloquear
-                                </Button>
-                              </form>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                {clerkUsers.map((user: any) => {
-                  const isBlocked = blockedUserIds.has(user.id);
-                  const isCurrentUser = user.id === userId;
-
-                  return (
-                    <div key={user.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage
-                            src={user.imageUrl}
-                            alt={user.username || user.firstName || 'User'}
-                          />
-                          <AvatarFallback>
-                            {user.firstName?.[0] || user.username?.[0] || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">
-                            {user.firstName && user.lastName
-                              ? `${user.firstName} ${user.lastName}`
-                              : user.username || 'Usuário sem nome'}
-                          </div>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {user.emailAddresses?.[0]?.emailAddress || 'N/A'}
-                          </div>
-                          <div className="text-xs text-muted-foreground">ID: {user.id}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          {isCurrentUser ? (
-                            <Badge variant="secondary">Você</Badge>
-                          ) : isBlocked ? (
-                            <Badge variant="destructive">Bloqueado</Badge>
-                          ) : (
-                            <Badge variant="outline">Ativo</Badge>
-                          )}
-                        </div>
-
-                        <div>
-                          {isCurrentUser ? (
-                            <Button variant="ghost" size="sm" disabled>
-                              N/A
-                            </Button>
-                          ) : isBlocked ? (
-                            <form
-                              action={async () => {
-                                'use server';
-                                await unblockUserAction(companionId, user.id);
-                              }}
-                            >
-                              <Button variant="outline" size="sm" type="submit">
-                                <X className="w-4 h-4 mr-1" />
-                                Desbloquear
-                              </Button>
-                            </form>
-                          ) : (
-                            <form
-                              action={async () => {
-                                'use server';
-                                await import('@/app/actions/block-actions').then(
-                                  ({ blockUserAction }) => blockUserAction(companionId, user.id),
-                                );
-                              }}
-                            >
-                              <Button variant="destructive" size="sm" type="submit">
-                                <ShieldAlert className="w-4 h-4 mr-1" />
-                                Bloquear
-                              </Button>
-                            </form>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Blocked Users Summary */}
-          {blockedUsers.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <X className="w-5 h-5" />
-                  Usuários Bloqueados ({blockedUsers.length})
-                </CardTitle>
-                <CardDescription>
-                  Lista detalhada de usuários que você bloqueou de ver seu perfil.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+              {blockedUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Você ainda não bloqueou nenhum usuário.
+                </p>
+              ) : (
                 <div className="space-y-4">
                   {blockedUsers.map((blockedUser: any) => (
                     <div
@@ -298,9 +99,9 @@ export default async function BlockPage() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
 
           {/* Navigation */}
           <div className="flex justify-center">
