@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useAuth, useClerk } from '@clerk/nextjs';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { EarningsCalculator } from '@/components/earnings-calculator';
 import { captureCalculatorLead } from '@/app/actions/calculator-lead';
@@ -21,6 +22,8 @@ import { captureCalculatorLead } from '@/app/actions/calculator-lead';
  */
 export function LeadCapture() {
   const { openSignUp } = useClerk();
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
 
   const [phone, setPhone] = useState('');
   const [acceptsMarketing, setAcceptsMarketing] = useState(true);
@@ -38,6 +41,13 @@ export function LeadCapture() {
     if (phoneLooksValid) params.set('phone', phone.trim());
     if (pricePerHour) params.set('price', String(pricePerHour));
     const target = `/companions/register?${params.toString()}`;
+
+    // O Clerk não abre a janela de registo a quem já tem sessão, e também não
+    // dá erro: o botão ficava sem fazer nada. Quem já entrou segue directo.
+    if (isSignedIn) {
+      router.push(target);
+      return;
+    }
 
     openSignUp({
       forceRedirectUrl: target,
