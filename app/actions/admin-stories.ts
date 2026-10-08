@@ -1,6 +1,5 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import {
@@ -12,11 +11,10 @@ import {
   setDbStoryFeatured,
 } from '@/db/queries/stories';
 import { isAdmin } from '@/components/header';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+/** As imagens dos contos vivem no bucket público "images", em stories/. */
+const storiesStorage = () => getSupabaseAdmin().storage.from('images');
 
 export async function createStoryAction(
   formData: FormData,
@@ -55,9 +53,9 @@ export async function createStoryAction(
     if (coverFile && coverFile.size > 0) {
       const ext = coverFile.name.split('.').pop() ?? 'jpg';
       const path = `stories/${slug}/cover-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('images').upload(path, coverFile);
+      const { error } = await storiesStorage().upload(path, coverFile);
       if (error) throw new Error(`Cover upload failed: ${error.message}`);
-      const { data } = supabase.storage.from('images').getPublicUrl(path);
+      const { data } = storiesStorage().getPublicUrl(path);
       coverImageUrl = data.publicUrl;
       coverStoragePath = path;
     }
@@ -72,9 +70,9 @@ export async function createStoryAction(
         if (file && file.size > 0) {
           const ext = file.name.split('.').pop() ?? 'jpg';
           const path = `stories/${slug}/inline-${item.afterIndex}-${Date.now()}.${ext}`;
-          const { error } = await supabase.storage.from('images').upload(path, file);
+          const { error } = await storiesStorage().upload(path, file);
           if (!error) {
-            const { data } = supabase.storage.from('images').getPublicUrl(path);
+            const { data } = storiesStorage().getPublicUrl(path);
             inlineImages.push({ afterIndex: item.afterIndex, src: data.publicUrl, storagePath: path, alt: item.alt });
           }
         }
@@ -148,15 +146,15 @@ export async function setStoryCoverAction(
 
     const ext = file.name.split('.').pop() ?? 'jpg';
     const path = `stories/${slug}/cover-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('images').upload(path, file);
+    const { error } = await storiesStorage().upload(path, file);
     if (error) throw new Error(error.message);
 
-    const { data } = supabase.storage.from('images').getPublicUrl(path);
+    const { data } = storiesStorage().getPublicUrl(path);
     await setDbStoryCover(id, data.publicUrl, path);
 
     const antiga = anterior?.cover_storage_path;
     if (antiga && antiga !== path) {
-      await supabase.storage.from('images').remove([antiga]);
+      await storiesStorage().remove([antiga]);
     }
 
     revalidatePath('/contos');
@@ -225,8 +223,13 @@ export async function deleteStoryAction(
   if (!userId || !isAdmin(userId)) return { success: false, error: 'Não autorizado' };
 
   try {
-    if (storagePaths.length > 0) {
-      await supabase.storage.from('images').remove(storagePaths);
+    // Os caminhos vêm do navegador e a chave do servidor apaga qualquer
+    // ficheiro do bucket: só passam os que são mesmo imagens de contos.
+    const storyPaths = storagePaths.filter(
+      (path) => path.startsWith('stories/') && !path.includes('..'),
+    );
+    if (storyPaths.length > 0) {
+      await storiesStorage().remove(storyPaths);
     }
     await deleteDbStory(id);
     revalidatePath('/contos');

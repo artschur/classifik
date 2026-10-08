@@ -1,18 +1,18 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
 import { db } from '..';
 import { companionsTable, imagesTable } from '../schema';
 import { auth } from '@clerk/nextjs/server';
 import { and, asc, eq, inArray, notInArray, SQL, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { isAdmin } from '@/components/header';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// As fotos vivem no bucket público "images": toda a gente as lê pelo endereço
+// público, mas só o servidor escreve, com a chave service role. Como essa
+// chave passa por cima de todas as regras do Storage, cada função que envia
+// ou apaga tem de confirmar ela própria de quem é a foto.
+const IMAGES_BUCKET = 'images';
 
 // Compression options
 const compressionOptions = {
@@ -35,8 +35,7 @@ function sanitizeFilename(filename: string): string {
 
 export async function uploadImage(
   file: File,
-  companionId: number,
-  bucket: string = 'images'
+  companionId: number
 ): Promise<{
   fileUrl: string;
   error: Error | null;
@@ -45,6 +44,17 @@ export async function uploadImage(
     const clerkId = (await auth()).userId;
     if (!clerkId) throw new Error('User not authenticated');
     if (!companionId) throw new Error('Companion ID is required');
+
+    // O id do perfil vem do navegador: sem confirmar que é desta conta, dava
+    // para juntar fotos ao perfil de outra pessoa.
+    const [owned] = await db
+      .select({ id: companionsTable.id })
+      .from(companionsTable)
+      .where(
+        and(eq(companionsTable.id, companionId), eq(companionsTable.auth_id, clerkId))
+      )
+      .limit(1);
+    if (!owned) throw new Error('Perfil não pertence a esta conta');
 
     const fileType = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : null;
 
@@ -67,12 +77,11 @@ export async function uploadImage(
 
     const path = `${clerkId}/${compressedFile.name}`;
 
-    const { error: storageError } = await supabase.storage
-      .from(bucket)
-      .upload(path, compressedFile);
+    const storage = getSupabaseAdmin().storage.from(IMAGES_BUCKET);
+    const { error: storageError } = await storage.upload(path, compressedFile);
 
     if (storageError) throw storageError;
-    const { data } = await supabase.storage.from(bucket).getPublicUrl(path);
+    const { data } = storage.getPublicUrl(path);
 
     // Fotos novas entram no fim da ordem existente. Se dois envios em paralelo
     // apanharem a mesma posição não faz mal: o desempate por id mantém a ordem
@@ -147,12 +156,30 @@ export async function getImagesByAuthId(
   return JSON.parse(JSON.stringify(images));
 }
 
-export async function deleteImage(
-  storagePath: string,
-  bucket: string = 'images'
-): Promise<void> {
+/**
+ * Apaga uma foto do perfil. Só a dona da foto ou um admin.
+ *
+ * O caminho tem de corresponder a uma foto registada na tabela: assim não se
+ * consegue apontar para outro ficheiro do bucket, como a capa de um conto.
+ */
+export async function deleteImage(storagePath: string): Promise<void> {
+  const clerkId = (await auth()).userId;
+  if (!clerkId) throw new Error('Não autenticado');
 
-  const removeFromBucket = supabase.storage.from(bucket).remove([storagePath]);
+  const [image] = await db
+    .select({ authId: imagesTable.authId })
+    .from(imagesTable)
+    .where(eq(imagesTable.storage_path, storagePath))
+    .limit(1);
+
+  if (!image) throw new Error('Foto não encontrada');
+  if (image.authId !== clerkId && !isAdmin(clerkId)) {
+    throw new Error('Não autorizado');
+  }
+
+  const removeFromBucket = getSupabaseAdmin()
+    .storage.from(IMAGES_BUCKET)
+    .remove([storagePath]);
   const removeFromDb = db.delete(imagesTable).where(eq(imagesTable.storage_path, storagePath));
 
   await Promise.all([removeFromBucket, removeFromDb]);
@@ -432,7 +459,9 @@ export async function discardPendingImages(
   if (pending.length === 0) return { success: true };
 
   await Promise.all([
-    supabase.storage.from('images').remove(pending.map((p) => p.storagePath)),
+    getSupabaseAdmin()
+      .storage.from(IMAGES_BUCKET)
+      .remove(pending.map((p) => p.storagePath)),
     db
       .delete(imagesTable)
       .where(
