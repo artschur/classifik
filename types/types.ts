@@ -44,6 +44,10 @@ export type CompanionFiltered = Pick<
   images: (string | Media)[];
   planType?: string | null;
   verificationVideoUrl?: string | null;
+  /** Áudio que está no perfil público. Só na fila de verificação. */
+  currentAudioUrl?: string | null;
+  /** Áudio novo à espera de aprovação. Só na fila de verificação. */
+  pendingAudioUrl?: string | null;
   phone?: string;
   /**
    * Distingue, na fila de verificação, uma edição de um perfil que já está no

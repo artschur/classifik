@@ -14,13 +14,16 @@ export default async function DocumentVerificationPage() {
   if (!userId) redirect('/');
 
   const [companion] = await db
-    .select({ id: companionsTable.id })
+    .select({ id: companionsTable.id, verified: companionsTable.verified })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, userId))
     .limit(1)
     .catch(() => [null]);
 
   if (!companion) redirect('/companions/register');
+
+  // Mesma regra do passo do vídeo: quem já está aprovada volta ao perfil.
+  if (companion.verified) redirect('/profile');
 
   const [isPending, uploadStatus] = await Promise.all([
     isVerificationPending(userId),

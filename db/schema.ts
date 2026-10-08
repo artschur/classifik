@@ -300,6 +300,9 @@ export const audioRecordingsTable = pgTable(
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
     created_at: timestamp('created_at').defaultNow().notNull(),
+    // Áudio gravado por quem já está no ar fica à espera do admin, como as
+    // fotos novas: o perfil público continua com o áudio aprovado até lá.
+    pending_approval: boolean('pending_approval').default(false).notNull(),
   },
   (table) => ({
     audio_owner_idx: index('audio_owner_idx').on(table.authId),

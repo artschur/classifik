@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Mic, Square, Play, Pause, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 interface AudioRecorderProps {
   className?: string;
@@ -78,6 +79,13 @@ export function AudioRecorder({
       }, 1000);
     } catch (error) {
       console.error('Error accessing microphone:', error);
+      // Sem isto, um microfone recusado deixava o botão sem resposta nenhuma.
+      toast({
+        title: 'Não foi possível usar o microfone',
+        description:
+          'Autorize o acesso ao microfone no navegador e tente outra vez.',
+        variant: 'destructive',
+      });
     }
   };
 

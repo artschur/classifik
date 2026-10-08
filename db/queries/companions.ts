@@ -12,6 +12,7 @@ import {
   blockedUsersTable,
   documentsTable,
   companionPendingEditsTable,
+  audioRecordingsTable,
 } from "../schema";
 import { db } from "..";
 import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
@@ -54,6 +55,7 @@ import {
 import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import { PlanType } from "./kv";
 import { signDocumentUrl } from "@/lib/supabase-admin";
+import { approvePendingAudio, discardPendingAudio } from "./audio";
 
 function slugify(value: string) {
   return value
@@ -1353,6 +1355,12 @@ export async function getUnverifiedCompanions(): Promise<
               WHERE ${imagesTable.companionId} = ${companionsTable.id}
                 AND ${imagesTable.pending_approval}
             )`,
+            // E o mesmo para um áudio novo.
+            sql`EXISTS (
+              SELECT 1 FROM ${audioRecordingsTable}
+              WHERE ${audioRecordingsTable.companionId} = ${companionsTable.id}
+                AND ${audioRecordingsTable.pending_approval}
+            )`,
           ),
         ),
       ),
@@ -1406,11 +1414,32 @@ export async function getUnverifiedCompanions(): Promise<
       ),
     );
 
-  const [images, videos, pendingEdits] = await Promise.all([
+  const audiosPromise = db
+    .select({
+      companionId: audioRecordingsTable.companionId,
+      public_url: audioRecordingsTable.public_url,
+      pending: audioRecordingsTable.pending_approval,
+    })
+    .from(audioRecordingsTable)
+    .where(inArray(audioRecordingsTable.companionId, companionIds))
+    .orderBy(desc(audioRecordingsTable.created_at));
+
+  const [images, videos, pendingEdits, audios] = await Promise.all([
     imagesPromise,
     videosPromise,
     pendingEditsPromise,
+    audiosPromise,
   ]);
+
+  // O áudio que está no perfil e o que está à espera, para o admin ouvir os
+  // dois. Mais recentes primeiro: fica o primeiro de cada tipo.
+  const audioMap = new Map<number, { current?: string; pending?: string }>();
+  for (const audio of audios) {
+    const entry = audioMap.get(audio.companionId) ?? {};
+    if (audio.pending) entry.pending ??= audio.public_url;
+    else entry.current ??= audio.public_url;
+    audioMap.set(audio.companionId, entry);
+  }
 
   const imagesMap = images.reduce((acc, img) => {
     if (!acc.has(img.companionId.toString())) {
@@ -1450,11 +1479,15 @@ export async function getUnverifiedCompanions(): Promise<
     const proposed = pendingEditsMap.get(companion.id);
     const images = imagesMap.get(String(companion.id)) || [];
 
+    const audio = audioMap.get(companion.id);
+
     // Estar no ar e aparecer nesta lista só acontece por causa de uma edição
-    // por rever, seja no texto, seja em fotos novas.
+    // por rever: no texto, em fotos novas ou num áudio novo.
     const isPendingEdit =
       companion.verified === true &&
-      (Boolean(proposed) || images.some((image) => image.pendingApproval));
+      (Boolean(proposed) ||
+        images.some((image) => image.pendingApproval) ||
+        Boolean(audio?.pending));
 
     return {
       ...companion,
@@ -1472,6 +1505,8 @@ export async function getUnverifiedCompanions(): Promise<
       planType: companion.planType,
       images,
       verificationVideoUrl: videosMap.get(String(companion.id)) || null,
+      currentAudioUrl: audio?.current ?? null,
+      pendingAudioUrl: audio?.pending ?? null,
       // Já esteve aprovada e foi o admin que a devolveu à fila. Importa
       // distinguir de um registo novo: recusar aqui apaga um perfil que
       // esteve publicado, não um candidato que nunca entrou.
@@ -1543,6 +1578,7 @@ export async function approveCompanion(id: number) {
   }
 
   await approvePendingImages(id);
+  await approvePendingAudio(id);
 
   const [companion] = await db
     .update(companionsTable)
@@ -1602,6 +1638,7 @@ export async function rejectCompanion(id: number) {
       .delete(companionPendingEditsTable)
       .where(eq(companionPendingEditsTable.companion_id, id));
     await discardPendingImages(id);
+    await discardPendingAudio(id);
 
     revalidateTag("companion", "max");
     revalidateTag("companions", "max");
@@ -1614,6 +1651,12 @@ export async function rejectCompanion(id: number) {
   let name: string | undefined;
 
   await db.transaction(async (tx) => {
+    // audio_recordings não tem chave estrangeira para companions, por isso não
+    // vai com o cascade. Os ficheiros saem com deleteAllDocumentsFromCompanion.
+    await tx
+      .delete(audioRecordingsTable)
+      .where(eq(audioRecordingsTable.companionId, id));
+
     const [deleted] = await tx
       .delete(companionsTable)
       .where(eq(companionsTable.id, id))

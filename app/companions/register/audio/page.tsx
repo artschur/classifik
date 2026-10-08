@@ -4,9 +4,10 @@ import { redirect } from 'next/navigation';
 import { getCompanionNameByClerkId } from '@/db/queries/companions';
 import AudioFormClient from './audio-form';
 import { isVerificationPending } from '@/app/actions/document-verification';
+import { canRecordAudio } from '@/lib/audio-access';
 
 export default async function AudioPage() {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
 
   if (!userId) {
     redirect('/sign-in');
@@ -18,10 +19,10 @@ export default async function AudioPage() {
   ]);
 
   if (isUserVerified) {
-    redirect('/verification/pending');
+    redirect('/companions/verification/pending');
   }
 
-  if (sessionClaims.metadata.plan !== 'vip') {
+  if (!(await canRecordAudio(userId))) {
     redirect('/checkout');
   }
 

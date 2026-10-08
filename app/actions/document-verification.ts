@@ -348,6 +348,7 @@ export async function deleteAllDocumentsFromCompanion(companionId: number) {
 
     await Promise.all([
       removeStorageFolder("images", `${authId}/`),
+      removeStorageFolder("images", `audio/${authId}/`),
       removeStorageFolder("documents", `documents/${authId}/`),
     ]);
 

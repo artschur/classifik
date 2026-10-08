@@ -521,6 +521,9 @@ export default function SingleCompanionVerify({
                       : `${newPhotoCount} fotos novas por aprovar, assinaladas no carrossel.`}
                   </p>
                 )}
+                {isEdit && companion.pendingAudioUrl && (
+                  <p className="mt-2">Áudio novo por aprovar, mais abaixo.</p>
+                )}
                 {isEdit && (
                   <p className="mt-2 text-muted-foreground">
                     Recusar descarta estas alterações e mantém o anúncio como
@@ -618,6 +621,40 @@ export default function SingleCompanionVerify({
                   controls
                   className="w-full max-h-96 rounded-lg"
                 />
+              </div>
+            )}
+
+            {(companion.pendingAudioUrl || companion.currentAudioUrl) && (
+              <div className="mt-4 space-y-3">
+                <h3 className="text-lg font-semibold">Áudio</h3>
+                {companion.pendingAudioUrl && (
+                  <div className="space-y-1">
+                    <Badge className="bg-blue-600 text-white hover:bg-blue-600">
+                      Áudio novo
+                    </Badge>
+                    <audio
+                      src={companion.pendingAudioUrl}
+                      controls
+                      preload="none"
+                      className="w-full"
+                    />
+                  </div>
+                )}
+                {companion.currentAudioUrl && (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">
+                      {companion.pendingAudioUrl
+                        ? 'Áudio que está no perfil (é substituído ao aprovar):'
+                        : 'Áudio do perfil:'}
+                    </p>
+                    <audio
+                      src={companion.currentAudioUrl}
+                      controls
+                      preload="none"
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </div>
             )}
 

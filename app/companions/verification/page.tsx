@@ -14,13 +14,17 @@ export default async function VideoVerificationPage() {
   if (!userId) redirect('/');
 
   const [companion] = await db
-    .select({ id: companionsTable.id })
+    .select({ id: companionsTable.id, verified: companionsTable.verified })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, userId))
     .limit(1)
     .catch(() => [null]);
 
   if (!companion) redirect('/companions/register');
+
+  // Quem já está aprovada não tem nada a fazer aqui: o vídeo e o documento já
+  // foram vistos. Sem isto, a página mostrava-lhe o passo 1 do registo.
+  if (companion.verified) redirect('/profile');
 
   const [isPending, uploadStatus] = await Promise.all([
     isVerificationPending(userId),

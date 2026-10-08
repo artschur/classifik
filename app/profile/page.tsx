@@ -11,6 +11,8 @@ import { db } from '@/db';
 import { paymentsTable } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { ManageAdActions } from '@/components/manage-ad-actions';
+import { canRecordAudio } from '@/lib/audio-access';
+import { Mic } from 'lucide-react';
 
 interface AdPurchase {
   id: string;
@@ -76,7 +78,11 @@ export default async function AnalyticsDashboard({
   const companion = await getRelevantInfoAnalytics({ clerkId: userId });
 
   // Get remaining days for the current plan
-  const remainingDays = await getRemainingDays(userId);
+  const [remainingDays, showAudio] = await Promise.all([
+    getRemainingDays(userId),
+    // Só com perfil criado: o áudio fica ligado ao anúncio.
+    companion.id !== 0 ? canRecordAudio(userId) : Promise.resolve(false),
+  ]);
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -84,15 +90,18 @@ export default async function AnalyticsDashboard({
         <Link href={'/companions/register'}>
           <Button variant="default">Editar Perfil</Button>
         </Link>
+        {showAudio && (
+          <Link href={'/companions/register/audio'}>
+            <Button variant="default">
+              <Mic className="h-4 w-4" />
+              Gravar áudio
+            </Button>
+          </Link>
+        )}
         {sessionClaims.metadata.plan === 'vip' ? (
-          <div className="flex flex-wrap gap-2">
-            <Link href={'/companions/register/audio/'}>
-              <Button variant="default">Audios</Button>
-            </Link>
-            <Link href={'/block'}>
-              <Button variant="outline">Gerenciar Bloqueios</Button>
-            </Link>
-          </div>
+          <Link href={'/block'}>
+            <Button variant="outline">Gerenciar Bloqueios</Button>
+          </Link>
         ) : null}
         {companion.id !== 0 && (
           <ManageAdActions initialPaused={companion.paused} />

@@ -16,11 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import {
-  getAudioUrlByClerkId,
-  updateAudio,
-  uploadAudio,
-} from '@/db/queries/audio';
+import { getMyAudio, updateAudio, uploadAudio } from '@/db/queries/audio';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +43,7 @@ export default function AudioFormClient({
   const [hasExistingAudio, setHasExistingAudio] = useState<{
     id: number;
     publicUrl: string;
+    pendingApproval: boolean;
   } | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const router = useRouter();
@@ -56,7 +53,7 @@ export default function AudioFormClient({
 
     const checkExistingAudio = async () => {
       try {
-        const existing = await getAudioUrlByClerkId(userId);
+        const existing = await getMyAudio();
 
         if (isMounted) {
           setHasExistingAudio(existing);
@@ -115,28 +112,26 @@ export default function AudioFormClient({
       });
 
       // Use the appropriate function based on whether audio exists
+      // A conta e o perfil vêm da sessão, no servidor.
       const result = hasExistingAudio
-        ? await updateAudio({
-          audioFile,
-          companionId,
-          clerkId: userId,
-        })
-        : await uploadAudio({
-          audioFile,
-          companionId,
-          clerkId: userId,
-        });
+        ? await updateAudio({ audioFile })
+        : await uploadAudio({ audioFile });
 
       if (result.error) {
         throw new Error(result.error);
       }
 
       toast({
-        title: 'Audio enviado',
-        description: 'Seu áudio foi enviado com sucesso.',
+        title: 'Áudio enviado',
+        description: result.pendingReview
+          ? 'O seu áudio novo vai ser revisto pela nossa equipa. Até lá, o perfil continua com o áudio anterior.'
+          : 'O seu áudio foi enviado com sucesso.',
       });
 
-      router.push('/companions/verification');
+      // O áudio abre-se a partir do perfil, e é para lá que ela volta. Antes ia
+      // para /companions/verification, que mostrava a quem já está aprovada o
+      // passo do vídeo como se estivesse a começar o registo.
+      router.push('/profile');
 
       setAudioBlob(null);
     } catch (error) {
@@ -163,12 +158,17 @@ export default function AudioFormClient({
           <CardTitle>Grave seu áudio</CardTitle>
           <CardDescription>
             Adicione um audio para atrair mais visitantes para o seu perfil.
-            {hasExistingAudio && (
+            {hasExistingAudio?.pendingApproval ? (
+              <p className="mt-2 text-amber-600">
+                O seu áudio mais recente está à espera de aprovação. Gravar um
+                novo substitui o que está à espera.
+              </p>
+            ) : hasExistingAudio ? (
               <p className="mt-2 text-amber-600">
                 Você já possui um áudio gravado. Gravar um novo substituirá o
-                existente.
+                existente, depois de aprovado pela nossa equipa.
               </p>
-            )}
+            ) : null}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -202,8 +202,9 @@ export default function AudioFormClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Substituir áudio existente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você já possui um áudio gravado. Se continuar, seu áudio atual
-              será substituído permanentemente pelo novo.
+              Você já possui um áudio gravado. Se continuar, o novo substitui o
+              atual. Se o seu perfil já estiver publicado, a troca só acontece
+              depois de a nossa equipa aprovar o áudio novo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

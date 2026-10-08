@@ -101,8 +101,11 @@ const nextConfig: NextConfig = {
             value: 'strict-origin-when-cross-origin',
           },
           {
+            // O microfone fica permitido só ao próprio site: a anunciante grava
+            // o áudio do perfil no navegador. Com microphone=() o pedido era
+            // recusado sem aviso e o botão de gravar não fazia nada.
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(self), geolocation=()',
           },
           {
             // FIX SEO: adiciona Content-Security-Policy.
@@ -158,7 +161,8 @@ const nextConfig: NextConfig = {
               `frame-src https://www.youtube-nocookie.com ${clerkOrigins}`,
 
               // Media: self + Supabase storage (vídeos de verificação das companions)
-              "media-src 'self' https://vacjsnuttfzgcdaaqjxd.supabase.co",
+              // blob: para ouvir o áudio acabado de gravar, antes de ser enviado.
+              "media-src 'self' blob: https://vacjsnuttfzgcdaaqjxd.supabase.co",
 
               // Service workers: self para SW do próprio domínio, blob para
               // workers criados via URL.createObjectURL()
