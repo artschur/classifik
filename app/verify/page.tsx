@@ -12,19 +12,76 @@ import {
   AlertDialogDescription,
 } from '@/components/ui/alert-dialog';
 import { isAdmin } from '@/components/header';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getCandidates } from '@/db/queries/candidates';
+import { CandidateCard } from '@/components/candidate-card';
+import { getAvailableCities } from '@/db/queries';
+import { getPausedCompanions } from '@/db/queries/paused';
+import { PausedCompanions } from '@/components/paused-companions';
+
+/** Candidatas a anunciante à espera de contacto, ainda sem perfil na OneSugar. */
+async function FetchCandidates() {
+  const [candidates, cidades] = await Promise.all([getCandidates(), getAvailableCities()]);
+  const cities = cidades
+    .map((c) => ({ id: c.id, city: c.city }))
+    .sort((a, b) => a.city.localeCompare(b.city, 'pt'));
+
+  if (candidates.length === 0) {
+    return (
+      <p className="text-lg text-center text-gray-500">
+        Não há candidatas importadas por rever.
+      </p>
+    );
+  }
+
+  // A consulta já vem ordenada por distrito; aqui só se agrupa, mantendo a
+  // ordem e, dentro de cada distrito, a pontuação.
+  const porDistrito = new Map<string, { nome: string; lista: typeof candidates }>();
+  for (const candidate of candidates) {
+    const slug = candidate.distritoSlug ?? 'sem-distrito';
+    const grupo = porDistrito.get(slug) ?? { nome: candidate.distrito ?? 'Sem distrito', lista: [] };
+    grupo.lista.push(candidate);
+    porDistrito.set(slug, grupo);
+  }
+
+  return (
+    <div className="w-full space-y-8">
+      <nav aria-label="Distritos" className="flex flex-wrap gap-2">
+        {[...porDistrito].map(([slug, { nome, lista }]) => (
+          <a
+            key={slug}
+            href={`#importadas-${slug}`}
+            className="rounded-full border px-3 py-1 text-sm hover:bg-muted"
+          >
+            {nome} <span className="text-muted-foreground">({lista.length})</span>
+          </a>
+        ))}
+      </nav>
+
+      {[...porDistrito].map(([slug, { nome, lista }]) => (
+        <section key={slug} id={`importadas-${slug}`} className="scroll-mt-24 space-y-6">
+          <h2 className="text-xl font-semibold border-b pb-2">
+            {nome} <span className="text-muted-foreground font-normal">· {lista.length}</span>
+          </h2>
+          <div className="flex flex-col items-center space-y-8">
+            {lista.map((candidate) => (
+              <CandidateCard key={candidate.id} candidate={candidate} cities={cities} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/** Perfis publicados mas escondidos, que de outra forma não têm onde aparecer. */
+async function FetchPaused() {
+  return <PausedCompanions companions={await getPausedCompanions()} />;
+}
 
 async function FetchUnverifiedCompanions() {
-  const userId = (await auth()).userId;
-  if (!userId) {
-    return <RedirectToSignIn />;
-  }
-  console.log(userId)
-  if (isAdmin(userId)) {
-    const response = await getUnverifiedCompanions();
-    return <VerifyCompanionsList initialCompanions={response} />;
-  } else {
-    redirect('/location');
-  }
+  const response = await getUnverifiedCompanions();
+  return <VerifyCompanionsList initialCompanions={response} />;
 }
 
 function CompanionsListSkeleton() {
@@ -37,7 +94,17 @@ function CompanionsListSkeleton() {
   );
 }
 
-export default function VerifyCompanionPage() {
+export default async function VerifyCompanionPage() {
+  // A verificação fica aqui, antes dos separadores: as duas listas trazem
+  // dados pessoais e nenhuma deve chegar a ser calculada para outra pessoa.
+  const { userId } = await auth();
+  if (!userId) {
+    return <RedirectToSignIn />;
+  }
+  if (!isAdmin(userId)) {
+    redirect('/location');
+  }
+
   return (
     <section className="p-4 flex flex-col items-center justify-center w-full h-full space-y-4">
       <h1 className="text-3xl font-bold">Companion Verification</h1>
@@ -66,9 +133,28 @@ export default function VerifyCompanionPage() {
         </AlertDialog>
       </div>
 
-      <Suspense fallback={<CompanionsListSkeleton />}>
-        <FetchUnverifiedCompanions />
-      </Suspense>
+      <Tabs defaultValue="registos" className="w-full max-w-2xl">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="registos">Registos</TabsTrigger>
+          <TabsTrigger value="importadas">Importadas</TabsTrigger>
+          <TabsTrigger value="pausa">Em pausa</TabsTrigger>
+        </TabsList>
+        <TabsContent value="registos" className="mt-6">
+          <Suspense fallback={<CompanionsListSkeleton />}>
+            <FetchUnverifiedCompanions />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="importadas" className="mt-6">
+          <Suspense fallback={<CompanionsListSkeleton />}>
+            <FetchCandidates />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="pausa" className="mt-6">
+          <Suspense fallback={<CompanionsListSkeleton />}>
+            <FetchPaused />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }
