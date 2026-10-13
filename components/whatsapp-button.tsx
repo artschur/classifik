@@ -2,6 +2,7 @@
 
 import { IconBrandWhatsapp } from '@tabler/icons-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { gaEvent } from '@/lib/ga';
 
 interface WhatsAppButtonProps {
@@ -13,8 +14,13 @@ export const WhatsAppButton = ({
   phoneNumber = '351913895353',
   message = '',
 }: WhatsAppButtonProps) => {
+  const pathname = usePathname();
   const whatsappUrl = `https://wa.me/${phoneNumber}${message ? `?text=${encodeURIComponent(message)}` : ''
     }`;
+
+  // No perfil de uma anunciante, um botão verde fixo da OneSugar competia
+  // com o WhatsApp dela e levava clientes a escrever ao suporte por engano.
+  if (/^\/companions\/\d+\/?$/.test(pathname ?? '')) return null;
 
   return (
     <Link
