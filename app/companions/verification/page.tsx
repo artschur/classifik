@@ -14,7 +14,7 @@ export default async function VideoVerificationPage() {
   if (!userId) redirect('/');
 
   const [companion] = await db
-    .select({ id: companionsTable.id, verified: companionsTable.verified })
+    .select({ id: companionsTable.id, identityVerified: companionsTable.identity_verified })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, userId))
     .limit(1)
@@ -22,9 +22,10 @@ export default async function VideoVerificationPage() {
 
   if (!companion) redirect('/companions/register');
 
-  // Quem já está aprovada não tem nada a fazer aqui: o vídeo e o documento já
-  // foram vistos. Sem isto, a página mostrava-lhe o passo 1 do registo.
-  if (companion.verified) redirect('/profile');
+  // Quem já tem a identidade verificada não tem nada a fazer aqui: o vídeo e
+  // o documento já foram vistos. Quem está online sem selo (perfil importado,
+  // publicado só com consentimento) continua a poder enviá-los.
+  if (companion.identityVerified) redirect('/profile');
 
   const [isPending, uploadStatus] = await Promise.all([
     isVerificationPending(userId),

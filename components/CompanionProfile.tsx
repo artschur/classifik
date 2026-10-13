@@ -53,6 +53,7 @@ import { AdminProfileControls } from './admin-profile-controls';
 import Link from 'next/link';
 import { getCompanionDistrict } from '@/db/queries/companions';
 import { distritoPorSlug, type Distrito } from '@/lib/districts';
+import { isImportedAuthId } from '@/lib/imported-profiles';
 
 const SITE_URL = 'https://www.onesugar.pt';
 
@@ -145,6 +146,9 @@ function profileJsonLd({
 }
 
 async function LastSignIn({ clerkId }: { clerkId: string }) {
+  // Perfil importado ainda sem conta: não há último acesso para mostrar, e
+  // perguntar ao Clerk só devolvia um erro.
+  if (isImportedAuthId(clerkId)) return null;
   const lastSignIn = await getLastSignInByClerkId(clerkId);
   return <span>{lastSignIn}</span>;
 }
@@ -254,7 +258,9 @@ export async function CompanionProfile({
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{companion.name}</h1>
         <div className="flex items-center mt-2 space-x-4">
-          {companion.verified && (
+          {/* O selo é da identidade (documento visto), não de estar
+              publicada: há perfis online sem documento. */}
+          {companion.identity_verified && (
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               <Check className="w-3 h-3 mr-1" /> Verificada
             </Badge>

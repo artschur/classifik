@@ -56,55 +56,7 @@ import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import { PlanType } from "./kv";
 import { signDocumentUrl } from "@/lib/supabase-admin";
 import { approvePendingAudio, discardPendingAudio } from "./audio";
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
-}
-
-/**
- * O concelho é digitado à mão pela anunciante, então o mesmo sítio chega
- * escrito de várias formas ("Cascais", "cascais", "CASCAIS"). Guardamos uma
- * linha canónica por concelho e distrito, identificada pelo slug, e ligamos a
- * companion a ela. Assim o campo fica pronto para servir de filtro ou de
- * página própria mais tarde, em vez de ser texto solto repetido.
- */
-async function resolveNeighborhoodId(
-  tx: typeof db,
-  rawName: string | undefined | null,
-  cityId: number,
-): Promise<number | null> {
-  const name = rawName?.trim();
-  if (!name) return null;
-
-  const slug = slugify(name);
-  if (!slug) return null;
-
-  const [existing] = await tx
-    .select({ id: neighborhoodsTable.id })
-    .from(neighborhoodsTable)
-    .where(
-      and(
-        eq(neighborhoodsTable.slug, slug),
-        eq(neighborhoodsTable.city_id, cityId),
-      ),
-    )
-    .limit(1);
-
-  if (existing) return existing.id;
-
-  const [created] = await tx
-    .insert(neighborhoodsTable)
-    .values({ neighborhood: name, city_id: cityId, slug })
-    .returning({ id: neighborhoodsTable.id });
-
-  return created?.id ?? null;
-}
+import { resolveNeighborhoodId } from "./neighborhoods";
 
 function buildCompanionConditions(
   cityId: number,
@@ -295,6 +247,7 @@ function buildCompanionsQuery(
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
+        identityVerified: companionsTable.identity_verified,
         hasActiveAd: sql<boolean>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.has_active_ad} ELSE false END`.as('hasActiveAd'),
         planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
       },
@@ -354,6 +307,7 @@ export async function getDoDiaCompanion() {
       price: companionsTable.price,
       shortDescription: companionsTable.shortDescription,
       verified: companionsTable.verified,
+      identityVerified: companionsTable.identity_verified,
       city: citiesTable.city,
       imageUrl: imagesTable.public_url,
       focalX: imagesTable.focal_x,
@@ -394,6 +348,7 @@ export async function getDoDiaCompanion() {
     price: row.price,
     shortDescription: row.shortDescription,
     verified: row.verified,
+    identityVerified: row.identityVerified,
     city: row.city,
     imageUrl: row.imageUrl,
     focalX: row.focalX,
@@ -1580,16 +1535,27 @@ export async function approveCompanion(id: number) {
   await approvePendingImages(id);
   await approvePendingAudio(id);
 
+  // O selo acompanha o documento: quem chega aqui pelo registo normal enviou-o
+  // (é a condição para entrar na fila), mas aprovar uma edição de um perfil
+  // importado, que pode estar online sem documento, não lho pode dar.
   const [companion] = await db
     .update(companionsTable)
-    .set({ verified: true, sent_to_review_at: null })
+    .set({
+      verified: true,
+      sent_to_review_at: null,
+      identity_verified: sql`${companionsTable.identity_verified} OR EXISTS (
+        SELECT 1 FROM ${documentsTable} WHERE ${documentsTable.companionId} = ${id}
+      )`,
+    })
     .where(eq(companionsTable.id, id))
     .returning({ email: companionsTable.email, name: companionsTable.name });
 
   // O evento de conversão marca a entrada na plataforma, por isso só dispara
   // na primeira aprovação. Aprovar uma edição de quem já estava no ar não é
   // uma conversão nova e não pode voltar a contar como tal.
-  if (before?.verified !== true && companion?.email) {
+  // Perfis importados ainda sem conta têm um email provisório (.invalid):
+  // não há ninguém do outro lado para receber a automação do RD.
+  if (before?.verified !== true && companion?.email && !companion.email.endsWith('.invalid')) {
     await tagCompanionInRD(companion.email, "aprovado", companion.name);
     await sendConversionEventToRD(
       companion.email,

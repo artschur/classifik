@@ -14,7 +14,7 @@ export default async function DocumentVerificationPage() {
   if (!userId) redirect('/');
 
   const [companion] = await db
-    .select({ id: companionsTable.id, verified: companionsTable.verified })
+    .select({ id: companionsTable.id, identityVerified: companionsTable.identity_verified })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, userId))
     .limit(1)
@@ -22,8 +22,8 @@ export default async function DocumentVerificationPage() {
 
   if (!companion) redirect('/companions/register');
 
-  // Mesma regra do passo do vídeo: quem já está aprovada volta ao perfil.
-  if (companion.verified) redirect('/profile');
+  // Mesma regra do passo do vídeo: com a identidade verificada, volta ao perfil.
+  if (companion.identityVerified) redirect('/profile');
 
   const [isPending, uploadStatus] = await Promise.all([
     isVerificationPending(userId),

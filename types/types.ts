@@ -44,6 +44,8 @@ export type CompanionFiltered = Pick<
   images: (string | Media)[];
   planType?: string | null;
   verificationVideoUrl?: string | null;
+  /** Selo "Verificada": documento visto pelo admin. Só nas listagens. */
+  identityVerified?: boolean;
   /** Áudio que está no perfil público. Só na fila de verificação. */
   currentAudioUrl?: string | null;
   /** Áudio novo à espera de aprovação. Só na fila de verificação. */

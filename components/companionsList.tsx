@@ -285,9 +285,12 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
             <h3 className="text-lg font-semibold">{companion.name}</h3>
             <div className="flex items-center gap-2">
               {/*{getPlanBadge(companion.planType)}*/}
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                <Check className="w-3 h-3 mr-1" /> Verificado
-              </Badge>
+              {/* Antes aparecia a toda a gente. Agora só com o documento visto. */}
+              {companion.identityVerified && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <Check className="w-3 h-3 mr-1" /> Verificado
+                </Badge>
+              )}
               <Badge variant="secondary">{companion.age} anos</Badge>
             </div>
           </div>

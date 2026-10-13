@@ -26,6 +26,7 @@ export async function getCompanionDetails(id: number) {
       phone: companionsTable.phone,
       price: companionsTable.price,
       verified: companionsTable.verified,
+      identity_verified: companionsTable.identity_verified,
       paused: companionsTable.paused,
       is_demo: companionsTable.is_demo,
       is_sugar_of_day: companionsTable.is_sugar_of_day,

@@ -127,6 +127,10 @@ export const companionsTable = pgTable(
     meets_at_hotel: boolean('meets_at_hotel').default(false).notNull(),
     meets_at_own_place: boolean('meets_at_own_place').default(false).notNull(),
     verified: boolean('verified').default(false).notNull(),
+    // Selo "Verificada": o admin viu o documento e o vídeo. Diferente de
+    // `verified`, que é estar publicado: uma candidata importada pode ficar
+    // online com consentimento mas sem documento, e aí não tem selo.
+    identity_verified: boolean('identity_verified').default(false).notNull(),
     // A companion pausa o próprio anúncio (fica invisível no site, mas os
     // dados continuam intactos) — diferente de `verified`, que é a aprovação
     // do admin, e não deve ser reutilizado para isto.
