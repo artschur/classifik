@@ -5,7 +5,9 @@ import Image from "next/image"
 import type { CompanionPreview, Media } from "@/types/types"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import Link from "next/link"
+import { useLocale } from "@/components/locale-provider"
+import { LocaleLink } from "@/components/locale-link"
+import { nomeDistrito } from "@/lib/districts"
 
 const planRibbonStyles: Record<string, { bg: string; color: string; label: string; emoji: string }> = {
   vip:     { bg: 'linear-gradient(to right, #facc15, #f59e0b)', color: '#713f12', label: 'VIP',     emoji: '👑' },
@@ -42,6 +44,7 @@ function PlanBadge({ plan }: { plan?: string | null }) {
 
 export function HeroCarousel({ companions }: { companions: CompanionPreview[] }) {
   const carouselRef = useRef<HTMLDivElement>(null)
+  const locale = useLocale()
 
   const scrollLeft = () => {
     if (carouselRef.current) {
@@ -88,7 +91,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
               const imageUrl = firstImage ? getImageUrl(firstImage) : "/placeholder.svg?height=400&width=300"
 
               return (
-                <Link href={`/companions/${companion.id}`} key={companion.id + companion.name} className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <LocaleLink locale={locale} href={`/companions/${companion.id}`} key={companion.id + companion.name} className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   <Card
                     key={companion.id}
                     className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300"
@@ -110,8 +113,8 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
                       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                         <h3 className="text-xl font-bold mb-1">{companion.name}</h3>
                         <div className="flex items-center justify-between text-base">
-                          <span className="text-white/90">{companion.age} {companion.age == 40 ? "+" : ""} anos</span>
-                          <span className="text-white/90">{companion.city}</span>
+                          <span className="text-white/90">{companion.age} {companion.age == 40 ? "+" : ""} {locale === "en" ? "years old" : "anos"}</span>
+                          <span className="text-white/90">{nomeDistrito(companion.city, locale)}</span>
                         </div>
                         <div className="mt-2">
                           <span className="text-lg font-bold">
@@ -121,7 +124,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
                       </div>
                     </div>
                   </Card>
-                </Link>
+                </LocaleLink>
               )
             })}
           </div>

@@ -7,6 +7,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { IconBrandInstagram } from '@tabler/icons-react';
 import { useAnalytics } from '@/hooks/analytics';
 import { gaEvent } from '@/lib/ga';
+import { useLocale } from '@/components/locale-provider';
 
 interface InstagramButtonProps {
   instagramHandle: string;
@@ -42,6 +43,7 @@ export function InstagramButton({
   inert = false,
 }: InstagramButtonProps) {
   const { trackEvent } = useAnalytics();
+  const locale = useLocale();
   const handleClick = () => {
     trackEvent(companionId, 'instagram_click');
     gaEvent('contato_instagram', { companion_id: companionId, metodo: 'instagram' });
@@ -59,7 +61,7 @@ export function InstagramButton({
   const conteudo = (
     <>
       <IconBrandInstagram className="w-4 h-4 mr-2" />
-      Ver instagram
+      {locale === 'en' ? 'View Instagram' : 'Ver instagram'}
     </>
   );
 

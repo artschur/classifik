@@ -26,6 +26,41 @@ import Image from 'next/image';
 import { auth } from '@clerk/nextjs/server';
 import { ModeToggle } from './modeToggle';
 import { isExternal } from 'util/types';
+import { LocaleLink } from '@/components/locale-link';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { getLocale, getPathWithoutLocale } from '@/lib/locale.server';
+import type { Locale } from '@/lib/i18n';
+
+const NAV_TEXT = {
+  pt: {
+    plans: 'Planos',
+    editProfile: 'Editar perfil',
+    register: 'Registo',
+    companions: 'Acompanhantes',
+    stories: 'Contos',
+    help: 'Ajuda no registo',
+    verify: 'Verificar',
+    profile: 'Perfil',
+    login: 'Login',
+    signUp: 'Registrar',
+    openMenu: 'Abrir menu',
+    blogUrl: 'https://blog.onesugar.pt',
+  },
+  en: {
+    plans: 'Plans',
+    editProfile: 'Edit profile',
+    register: 'Advertise',
+    companions: 'Escorts',
+    stories: 'Stories',
+    help: 'Advertiser help',
+    verify: 'Verify',
+    profile: 'Profile',
+    login: 'Log in',
+    signUp: 'Sign up',
+    openMenu: 'Open menu',
+    blogUrl: 'https://blog.onesugar.pt/en/',
+  },
+} as const;
 
 export const admins = [
   'user_31n1xQBKnF2DWIj5UR4zZUJP3ZG', // Agência Classifik
@@ -93,25 +128,28 @@ const registerTabClassName = desktopNavItemClassPrimary;
  * de anunciante, porque há contas legítimas sem essa marca — o mesmo critério
  * da própria página.
  */
-const plansNavItem: NavItem = {
-  label: 'Planos',
-  href: '/checkout',
-  icon: <ShoppingBag className="h-4 w-4" />,
-  prefetch: true,
-  className: desktopNavItemClassOutline,
-};
+function buildPlansNavItem(locale: Locale): NavItem {
+  return {
+    label: NAV_TEXT[locale].plans,
+    href: '/checkout',
+    icon: <ShoppingBag className="h-4 w-4" />,
+    prefetch: true,
+    className: desktopNavItemClassOutline,
+  };
+}
 
-function buildRegisterNavItem(isRegisteredCompanion: boolean): NavItem {
+function buildRegisterNavItem(isRegisteredCompanion: boolean, locale: Locale): NavItem {
+  const t = NAV_TEXT[locale];
   return isRegisteredCompanion
     ? {
-      label: 'Editar perfil',
+      label: t.editProfile,
       href: '/companions/register',
       icon: <ChartNoAxesColumnIncreasing />,
       prefetch: false,
       className: registerTabClassName,
     }
     : {
-      label: 'Registo',
+      label: t.register,
       href: '/quanto-ganha-acompanhante',
       icon: <ChartNoAxesColumnIncreasing />,
       prefetch: false,
@@ -119,23 +157,26 @@ function buildRegisterNavItem(isRegisteredCompanion: boolean): NavItem {
     };
 }
 
-const restNavItems: NavItem[] = [
+// Os contos ainda não têm versão em inglês: no menu inglês ficam de fora.
+function buildRestNavItems(locale: Locale): NavItem[] {
+  const t = NAV_TEXT[locale];
+  const items: NavItem[] = [
   {
-    label: 'Acompanhantes',
+    label: t.companions,
     href: '/location',
     icon: <Heart />,
     prefetch: false,
     className: desktopNavItemClassOutline,
   },
   {
-    label: 'Contos',
+    label: t.stories,
     href: '/contos',
     icon: <ScrollText className="h-4 w-4" />,
     prefetch: false,
     className: desktopNavItemClassOutline,
   },
   {
-    label: 'Ajuda no registo',
+    label: t.help,
     href: '/ajuda-anunciantes',
     icon: <HelpCircle className="h-4 w-4" />,
     prefetch: false,
@@ -143,30 +184,35 @@ const restNavItems: NavItem[] = [
   },
   {
     label: 'Blog',
-    href: 'https://blog.onesugar.pt',
+    href: t.blogUrl,
     icon: <User className="h-4 w-4" />,
     prefetch: false,
     className: desktopNavItemClassOutline,
     isExternal: true,
   }
-];
+  ];
+  return locale === 'en' ? items.filter((item) => item.href !== '/contos') : items;
+}
 
 export default async function Header() {
   const { userId, sessionClaims } = await auth();
+  const [locale, currentPath] = await Promise.all([getLocale(), getPathWithoutLocale()]);
+  const t = NAV_TEXT[locale];
   const isUserAdmin = userId && isAdmin(userId);
   const isRegisteredCompanion = sessionClaims?.metadata?.isCompanion === true;
   const isClient = sessionClaims?.metadata?.isCompanion === false;
   const navItems: NavItem[] = [
-    buildRegisterNavItem(isRegisteredCompanion),
-    ...(userId && !isClient ? [plansNavItem] : []),
-    ...restNavItems,
+    buildRegisterNavItem(isRegisteredCompanion, locale),
+    ...(userId && !isClient ? [buildPlansNavItem(locale)] : []),
+    ...buildRestNavItems(locale),
   ];
 
   return (
     <header className="sticky top-0 z-50 transition-all duration-200 bg-white/70 backdrop-blur-md dark:bg-gray-950/70">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link
+          <LocaleLink
+            locale={locale}
             href="/"
             className="flex items-center space-x-2"
             prefetch={false}
@@ -179,14 +225,15 @@ export default async function Header() {
               className="dark:invert"
             />
             <span className="font-bold text-xl hidden sm:inline">onesugar</span>
-          </Link>
+          </LocaleLink>
           {/* Desktop Nav */}
           {/* O espaçamento fixo de 4rem entre os itens não cabia abaixo dos
               1366px e empurrava o cabeçalho para fora do ecrã, criando scroll
               horizontal no site inteiro. Agora só é usado quando há espaço. */}
           <nav className="hidden lg:flex gap-x-4 xl:gap-x-10">
             {navItems.map(({ label, href, prefetch, className, isExternal }) => (
-              <Link
+              <LocaleLink
+                locale={locale}
                 key={href}
                 href={href}
                 prefetch={prefetch}
@@ -195,7 +242,7 @@ export default async function Header() {
 
               >
                 {label}
-              </Link>
+              </LocaleLink>
             ))}
             {isUserAdmin && (
               <Link
@@ -203,7 +250,7 @@ export default async function Header() {
                 className={desktopNavItemClassPrimary}
                 prefetch={false}
               >
-                Verificar
+                {t.verify}
               </Link>
             )}
             {userId && (
@@ -212,11 +259,12 @@ export default async function Header() {
                 className={desktopNavItemClassPrimary}
                 prefetch={false}
               >
-                Perfil
+                {t.profile}
               </Link>
             )}
           </nav>
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher locale={locale} initialPath={currentPath} className="hidden sm:flex" />
             <SignedIn>
               <UserButton />
               <ModeToggle />
@@ -224,7 +272,7 @@ export default async function Header() {
             <SignedOut>
               <SignInButton signUpForceRedirectUrl={"/onboarding"}>
                 <Button variant="ghost" className="rounded-full" size="sm">
-                  Login
+                  {t.login}
                 </Button>
               </SignInButton>
               <SignUpButton signInForceRedirectUrl={"/onboarding"}>
@@ -232,7 +280,7 @@ export default async function Header() {
                   className="hidden sm:inline-flex rounded-full"
                   size="sm"
                 >
-                  Registrar
+                  {t.signUp}
                 </Button>
               </SignUpButton>
               <ModeToggle />
@@ -242,7 +290,7 @@ export default async function Header() {
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="lg:hidden">
                   <Menu className="h-5 w-5" />
-                  <span className="sr-only">Abrir menu</span>
+                  <span className="sr-only">{t.openMenu}</span>
                 </Button>
               </SheetTrigger>
               <SheetContent
@@ -252,7 +300,8 @@ export default async function Header() {
                 <SheetTitle />
                 <nav className="flex flex-col space-y-2">
                   {navItems.map(({ label, href, icon, isExternal }) => (
-                    <Link
+                    <LocaleLink
+                      locale={locale}
                       key={href}
                       href={href}
                       className={mobileNavItemClass}
@@ -260,7 +309,7 @@ export default async function Header() {
                       {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
                     >
                       {icon} {label}
-                    </Link>
+                    </LocaleLink>
                   ))}
                   {isUserAdmin && (
                     <Link
@@ -268,7 +317,7 @@ export default async function Header() {
                       className={mobileNavItemClass}
                       prefetch={false}
                     >
-                      Verificar
+                      {t.verify}
                     </Link>
                   )}
                   {userId && (
@@ -278,10 +327,11 @@ export default async function Header() {
                       prefetch={false}
                     >
                       <User className="h-4 w-4" />
-                      Perfil
+                      {t.profile}
                     </Link>
                   )}
                 </nav>
+                <LanguageSwitcher locale={locale} initialPath={currentPath} className="mt-4" />
                 <div className="mt-4">
                   <SignedIn>
                     <div className="flex items-center space-x-2 text-black">
@@ -296,7 +346,7 @@ export default async function Header() {
                           className="rounded-full"
                           size="sm"
                         >
-                          Login
+                          {t.login}
                         </Button>
                       </SignInButton>
                       <SignUpButton>
@@ -304,7 +354,7 @@ export default async function Header() {
                           className="sm:inline-flex rounded-full"
                           size="sm"
                         >
-                          Registrar
+                          {t.signUp}
                         </Button>
                       </SignUpButton>
                     </div>

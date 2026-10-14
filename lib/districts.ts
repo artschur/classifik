@@ -44,3 +44,33 @@ export function distritoPorSlug(slug: string, nomeNaBase?: string): Distrito {
   const prep = conhecido?.prep ?? 'em';
   return { slug, nome, emNome: `${prep} ${nome}` };
 }
+
+/** Nomes em inglês que diferem do português. Os restantes ficam iguais. */
+const NOMES_EN: Record<string, string> = {
+  lisboa: 'Lisbon',
+  acores: 'Azores',
+};
+
+function normalizar(nome: string): string {
+  return nome
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '-');
+}
+
+/**
+ * Nome do distrito para mostrar, a partir do slug ou do nome guardado na base
+ * ("Setubal" vira "Setúbal"; em inglês "Lisboa" vira "Lisbon").
+ */
+export function nomeDistrito(slugOuNome: string, locale: 'pt' | 'en' = 'pt'): string {
+  const chave = normalizar(slugOuNome);
+  if (locale === 'en' && NOMES_EN[chave]) return NOMES_EN[chave];
+  return DISTRITOS[chave]?.nome ?? slugOuNome.trim();
+}
+
+/** "in Lisbon", "in Porto": em inglês a preposição é sempre "in". */
+export function inDistrict(slugOuNome: string): string {
+  return `in ${nomeDistrito(slugOuNome, 'en')}`;
+}

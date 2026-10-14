@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { useAnalytics } from '@/hooks/analytics';
 import { gaEvent } from '@/lib/ga';
+import { useLocale } from '@/components/locale-provider';
 interface WhatsAppButtonProps {
   phone: string;
   className?: string;
@@ -27,6 +28,7 @@ export function WhatsAppButton({
 }: WhatsAppButtonProps) {
   const sanitizedPhone = phone.replace(/\D/g, '');
   const { trackEvent } = useAnalytics();
+  const locale = useLocale();
 
   const handleClick = () => {
     trackEvent(companionId, 'whatsapp_click');
@@ -44,7 +46,7 @@ export function WhatsAppButton({
   const conteudo = (
     <>
       <IconBrandWhatsapp className="w-4 h-4 mr-2" />
-      Conversar no WhatsApp
+      {locale === 'en' ? 'Chat on WhatsApp' : 'Conversar no WhatsApp'}
     </>
   );
 

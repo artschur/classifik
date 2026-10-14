@@ -11,6 +11,7 @@ import { ReviewsSkeleton } from './ui/review';
 import { IconEyeClosed } from '@tabler/icons-react';
 import { companionsTable } from '@/db/schema';
 import { usePathname } from 'next/navigation';
+import { useLocale } from '@/components/locale-provider';
 
 function ReviewsContent({
   reviews,
@@ -19,10 +20,13 @@ function ReviewsContent({
   reviews: ReviewResponse[];
   user: any;
 }) {
+  const locale = useLocale();
   if (reviews.length === 0) {
     return (
       <div className="py-8 mt-8 h-32 text-center flex flex-col items-center">
-        <p className="text-muted-foreground mt-8">Nenhum review ainda</p>
+        <p className="text-muted-foreground mt-8">
+          {locale === 'en' ? 'No reviews yet' : 'Nenhum review ainda'}
+        </p>
       </div>
     );
   }
@@ -42,14 +46,18 @@ export function ReviewsList({
   initialReviews: ReviewResponse[];
 }) {
   const { user } = useUser();
+  const locale = useLocale();
+  const pathname = usePathname();
   if (!user) {
     return (
       <div className="py-8 text-center flex flex-col items-center">
         <IconEyeClosed className="w-12 h-12 mx-auto text-muted-foreground" />
-        <p className="text-muted-foreground">Faça login para ver os reviews</p>
-        <SignInButton mode="modal" forceRedirectUrl={usePathname()}>
+        <p className="text-muted-foreground">
+          {locale === 'en' ? 'Log in to read the reviews' : 'Faça login para ver os reviews'}
+        </p>
+        <SignInButton mode="modal" forceRedirectUrl={pathname}>
           <div className="px-4 p-2 m-4 hover:cursor-pointer rounded-lg bg-primary">
-            Entrar
+            {locale === 'en' ? 'Log in' : 'Entrar'}
           </div>
         </SignInButton>
 
