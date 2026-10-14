@@ -54,7 +54,7 @@ const baseMetadata: Metadata = {
     template: '%s | OneSugar',
   },
   description:
-    'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis verificados com rigor. Encontre a discrição que merece na Onesugar.',
+    'A sua escolha segura para acompanhantes premium em Portugal. Privacidade garantida e perfis revistos pela equipa. Encontre a discrição que merece na Onesugar.',
   // CANONICAL: não é definido aqui de propósito. O metadata do layout raiz é
   // herdado por todas as rotas, e um canonical neste ponto fazia com que
   // qualquer página sem canonical próprio (institucionais, contos) se
@@ -105,7 +105,7 @@ const baseMetadata: Metadata = {
 const EN_DEFAULTS = {
   title: 'OneSugar | Verified Escorts in Portugal',
   description:
-    'Verified escorts and companions in Lisbon, Porto, the Algarve and across Portugal. Real profiles, checked one by one, with full discretion.',
+    'Verified escorts and companions in Lisbon, Porto, the Algarve and across Portugal. Every profile reviewed by our team, with full discretion.',
   ogDescription: 'Verified escorts and companions across Portugal.',
 };
 

@@ -87,7 +87,7 @@ function districtLabel(slug: string): string {
 const faq = [
   {
     q: 'What is OneSugar?',
-    a: 'OneSugar is a Portuguese platform for finding verified escorts and companions in Portugal. It covers all 18 districts of mainland Portugal plus Madeira, and every profile goes through an identity check before it is published.',
+    a: 'OneSugar is a Portuguese platform for finding verified escorts and companions in Portugal. It covers all 18 districts of mainland Portugal plus Madeira, and every profile is reviewed by the team before it is published; profiles with the Verified badge have confirmed their identity with a document.',
   },
   {
     q: 'How are profiles verified?',
@@ -154,12 +154,12 @@ function Stats({ compact = false }: { compact?: boolean }) {
   const items = compact
     ? [
         ['18', 'districts'],
-        ['100%', 'verified'],
+        ['100%', 'reviewed'],
         ['€0', 'to advertise'],
       ]
     : [
         ['18', 'districts covered'],
-        ['100%', 'identity checked'],
+        ['100%', 'reviewed by our team'],
         ['€0', 'to advertise'],
       ];
   return (
@@ -289,7 +289,7 @@ export function HomeEn({ doDia }: { doDia: DoDia }) {
               <div className="space-y-6">
                 <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-bold px-4 py-1.5 rounded-full">
                   <ShieldCheck className="h-4 w-4 text-rose-400" />
-                  Every profile checked by hand
+                  Every profile reviewed by hand
                 </span>
 
                 {/* Mesmo texto do H1 mobile, aqui como <p> para haver um só H1 */}
@@ -382,7 +382,7 @@ export function HomeEn({ doDia }: { doDia: DoDia }) {
               <div className="relative z-10 w-full space-y-4 text-center">
                 <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold px-4 py-1.5 rounded-full mx-auto">
                   <ShieldCheck className="h-3.5 w-3.5 text-rose-400" />
-                  Every profile checked by hand
+                  Every profile reviewed by hand
                 </span>
                 <h1 id="hero-heading-mobile" className="text-2xl sm:text-3xl font-bold tracking-tighter text-white">
                   {heroHeadline}
@@ -459,7 +459,7 @@ export function HomeEn({ doDia }: { doDia: DoDia }) {
         <section className="py-12 px-6 bg-card/50">
           <div className="container mx-auto">
             <h2 className="text-2xl font-bold text-center mb-2">
-              How OneSugar keeps every profile real
+              How OneSugar reviews every profile
             </h2>
             <p className="text-base text-muted-foreground text-center mb-10">
               Tools that let you check a companion before you get in touch.
@@ -467,8 +467,8 @@ export function HomeEn({ doDia }: { doDia: DoDia }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 { icon: <Mic className="w-6 h-6 text-rose-500" />, title: 'Voice verification', desc: 'Hear a voice message recorded by the companion herself.' },
-                { icon: <ShieldCheck className="w-6 h-6 text-rose-500" />, title: 'Identity check', desc: 'Documents are checked by the OneSugar team before the profile goes live.' },
-                { icon: <Video className="w-6 h-6 text-rose-500" />, title: 'Verification videos', desc: 'Watch a short video that confirms the photos are genuine.' },
+                { icon: <ShieldCheck className="w-6 h-6 text-rose-500" />, title: 'Verified badge', desc: 'The badge shows the companion confirmed her identity with a document.' },
+                { icon: <Video className="w-6 h-6 text-rose-500" />, title: 'Team review', desc: 'Every profile is reviewed by the OneSugar team before it goes live.' },
                 { icon: <Star className="w-6 h-6 text-rose-500" />, title: 'Real reviews', desc: 'Read what other clients say about each companion.' },
               ].map((f) => (
                 <div key={f.title} className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3">
@@ -498,7 +498,7 @@ export function HomeEn({ doDia }: { doDia: DoDia }) {
                 {
                   icon: <UserCheck className="w-7 h-7 text-rose-500" />,
                   title: 'Read her profile',
-                  desc: 'See genuine photos, reviews from other clients, the languages she speaks and everything you need to know. Every profile was checked by OneSugar before it went live.',
+                  desc: 'See genuine photos, reviews from other clients, the languages she speaks and everything you need to know. Every profile is reviewed by OneSugar before it goes live, and the Verified badge shows who confirmed her identity.',
                 },
                 {
                   icon: <MessageCircle className="w-7 h-7 text-rose-500" />,
@@ -532,7 +532,7 @@ export function HomeEn({ doDia }: { doDia: DoDia }) {
                   centered={false}
                 />
                 <div className="space-y-4">
-                  <FeatureItem icon={Shield} title="Verified by OneSugar" description="Every companion goes through a strict check, so the person you meet matches her profile." />
+                  <FeatureItem icon={Shield} title="Verified by OneSugar" description="Every profile is reviewed by our team, and the Verified badge confirms identity with a document." />
                   <FeatureItem icon={MapPin} title="All over Portugal" description="Companions in Lisbon, Porto, the Algarve and every district in between." />
                   <FeatureItem icon={Clock} title="Flexible availability" description="Arrange a meeting that fits your plans, whether you are here for one night or a few weeks." />
                   <FeatureItem icon={Star} title="Genuine reviews" description="Feedback from real clients on each companion's profile." />

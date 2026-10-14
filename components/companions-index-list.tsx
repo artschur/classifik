@@ -14,7 +14,7 @@ const TEXT = {
   pt: {
     empty: 'Ainda não há perfis nesta página.',
     back: 'Voltar ao início da lista',
-    alt: (name: string, city: string) => `${name}, acompanhante verificada em ${city}`,
+    alt: (name: string, city: string) => `${name}, acompanhante em ${city}`,
     noPhoto: 'Sem fotografia',
     years: 'anos',
     loading: 'A carregar mais perfis…',
@@ -23,7 +23,7 @@ const TEXT = {
   en: {
     empty: 'There are no profiles on this page yet.',
     back: 'Back to the start of the list',
-    alt: (name: string, city: string) => `${name}, verified escort in ${city}`,
+    alt: (name: string, city: string) => `${name}, escort in ${city}`,
     noPhoto: 'No photo',
     years: 'years old',
     loading: 'Loading more profiles…',

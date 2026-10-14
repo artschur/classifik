@@ -88,7 +88,7 @@ function HomeSchemas() {
         name: 'O que é a Onesugar?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'A Onesugar é a plataforma portuguesa de referência para quem procura acompanhantes verificadas em Portugal. Opera nos 18 distritos do país e distingue-se pelo rigoroso processo de verificação de identidade e disponibilidade antes de publicar qualquer perfil.',
+          text: 'A Onesugar é a plataforma portuguesa de referência para quem procura acompanhantes verificadas em Portugal. Opera nos 18 distritos do país e distingue-se por rever cada perfil antes de o publicar; os perfis com o selo Verificada confirmaram a identidade com documento.',
         },
       },
       {
@@ -112,7 +112,7 @@ function HomeSchemas() {
         name: 'É seguro contactar acompanhantes pela Onesugar?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Sim. A Onesugar não guarda histórico de contactos entre utilizadores e acompanhantes, nem partilha dados pessoais com terceiros. A verificação prévia de todos os perfis elimina os principais riscos associados a portais sem moderação.',
+          text: 'Sim. A Onesugar não guarda histórico de contactos entre utilizadores e acompanhantes, nem partilha dados pessoais com terceiros. A revisão prévia de cada perfil e o selo Verificada reduzem os riscos associados a portais sem moderação.',
         },
       },
       {
@@ -224,7 +224,7 @@ const metadataPt: Metadata = {
 };
 
 const descriptionEn =
-  'Verified escorts in Lisbon, Porto, the Algarve and across Portugal. Every profile passes an identity check, and you contact companions directly, with full discretion.';
+  'Verified escorts in Lisbon, Porto, the Algarve and across Portugal. Profiles with the Verified badge have passed an identity check, and you contact companions directly, with full discretion.';
 
 /** A versão inglesa (/en) usa o mesmo conteúdo base com texto, hreflang e OG próprios. */
 const metadataEn: Metadata = {
@@ -290,7 +290,7 @@ export default async function HomePage() {
                 {/* Selo de confiança — rótulo visual, não é cabeçalho */}
                 <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-sm font-bold px-4 py-1.5 rounded-full">
                   <ShieldCheck className="h-4 w-4 text-rose-400" />
-                  Perfis verificados um a um
+                  Perfis revistos um a um
                 </span>
 
                 {/* Mesmo texto do H1 do bloco mobile, aqui como <p> para não duplicar o H1 */}
@@ -306,7 +306,7 @@ export default async function HomePage() {
                   </li>
                   <li>
                     <span className="block text-2xl lg:text-3xl font-bold text-white">100%</span>
-                    <span className="text-base text-white/60">verificação de identidade</span>
+                    <span className="text-base text-white/60">perfis revistos pela equipa</span>
                   </li>
                   <li>
                     <span className="block text-2xl lg:text-3xl font-bold text-white">0 €</span>
@@ -472,7 +472,7 @@ export default async function HomePage() {
                 {/* Selo de confiança */}
                 <span className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold px-4 py-1.5 rounded-full mx-auto">
                   <ShieldCheck className="h-3.5 w-3.5 text-rose-400" />
-                  Perfis verificados um a um
+                  Perfis revistos um a um
                 </span>
                 <h1
                   id="hero-heading-mobile"
@@ -489,7 +489,7 @@ export default async function HomePage() {
                   </li>
                   <li>
                     <span className="block text-xl font-bold text-white">100%</span>
-                    <span className="text-sm text-white/60">verificados</span>
+                    <span className="text-sm text-white/60">revistos</span>
                   </li>
                   <li>
                     <span className="block text-xl font-bold text-white">0 €</span>
@@ -638,12 +638,12 @@ export default async function HomePage() {
                 {
                   icon: <ShieldCheck className="w-6 h-6 text-rose-500" />,
                   title: 'Verificacao completa',
-                  desc: 'Documentos verificados para garantir a sua segurança e tranquilidade.',
+                  desc: 'O selo Verificada indica que a identidade foi confirmada com documento.',
                 },
                 {
                   icon: <Video className="w-6 h-6 text-rose-500" />,
-                  title: 'Videos exclusivos',
-                  desc: 'Visualize videos de verificacao para confirmar a autenticidade dos perfis.',
+                  title: 'Revisão da equipa',
+                  desc: 'Cada perfil é revisto pela equipa da Onesugar antes de ser publicado.',
                 },
                 {
                   icon: <Star className="w-6 h-6 text-rose-500" />,
@@ -687,7 +687,7 @@ export default async function HomePage() {
                   icon: <UserCheck className="w-7 h-7 text-rose-500" />,
                   step: '2',
                   title: 'Conheça o perfil da acompanhante',
-                  desc: 'Explore fotografias autênticas, avaliações reais de outros clientes e todas as informações essenciais. Cada perfil foi verificado pela Onesugar antes de ser publicado. Com segurança e discrição.',
+                  desc: 'Explore fotografias autênticas, avaliações reais de outros clientes e todas as informações essenciais. Cada perfil é revisto pela Onesugar antes de ser publicado, e o selo Verificada mostra quem confirmou a identidade. Com segurança e discrição.',
                 },
                 {
                   icon: <MessageCircle className="w-7 h-7 text-rose-500" />,
@@ -747,7 +747,7 @@ export default async function HomePage() {
                   <FeatureItem
                     icon={Shield}
                     title="Verificação exclusiva da Onesugar"
-                    description="Todas as Sugars passam por um rigoroso processo de verificação para garantir autenticidade e qualidade."
+                    description="Todos os perfis são revistos pela equipa, e o selo Verificada indica as Sugars que confirmaram a identidade com documento."
                   />
                   <FeatureItem
                     icon={MapPin}
@@ -929,7 +929,7 @@ export default async function HomePage() {
               {[
                 {
                   q: 'O que é a Onesugar?',
-                  a: 'A Onesugar é a plataforma portuguesa de referência para quem procura acompanhantes verificadas em Portugal. Opera nos 18 distritos do país e distingue-se pelo rigoroso processo de verificação de identidade e disponibilidade antes de publicar qualquer perfil.',
+                  a: 'A Onesugar é a plataforma portuguesa de referência para quem procura acompanhantes verificadas em Portugal. Opera nos 18 distritos do país e distingue-se por rever cada perfil antes de o publicar; os perfis com o selo Verificada confirmaram a identidade com documento.',
                 },
                 {
                   q: 'Como funciona a verificação de perfis na Onesugar?',
@@ -941,7 +941,7 @@ export default async function HomePage() {
                 },
                 {
                   q: 'É seguro contactar acompanhantes pela Onesugar?',
-                  a: 'Sim. A Onesugar nao guarda histórico de contactos entre utilizadores e acompanhantes, nem partilha dados pessoais com terceiros. A verificação prévia de todos os perfis elimina os principais riscos associados a portais sem moderação.',
+                  a: 'Sim. A Onesugar nao guarda histórico de contactos entre utilizadores e acompanhantes, nem partilha dados pessoais com terceiros. A revisão prévia de cada perfil e o selo Verificada reduzem os riscos associados a portais sem moderação.',
                 },
                 {
                   q: 'Como posso anunciar como acompanhante na Onesugar?',

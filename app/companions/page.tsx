@@ -13,13 +13,13 @@ const TEXT = {
   pt: {
     title: 'Acompanhantes verificadas em Portugal',
     description:
-      'Todos os perfis verificados da OneSugar num só lugar. Acompanhantes de norte a sul de Portugal, com verificação de identidade, discrição e contacto directo.',
+      'Todos os perfis da OneSugar num só lugar. Acompanhantes de norte a sul de Portugal, com discrição e contacto directo.',
     page: 'página',
   },
   en: {
     title: 'Verified Escorts in Portugal',
     description:
-      'Every verified escort profile on OneSugar in one place. Companions from Lisbon and Porto to the Algarve, with identity checks, discretion and direct contact.',
+      'Every escort profile on OneSugar in one place. Companions from Lisbon and Porto to the Algarve, with discretion and direct contact.',
     page: 'page',
   },
 } as const;
@@ -141,8 +141,8 @@ export default async function CompanionsIndexPage({
         <h1 className="text-3xl font-bold mb-3">{t.title}</h1>
         {locale === 'en' ? (
           <p className="text-base text-muted-foreground">
-            Every verified profile on the platform, in one list. Each companion
-            went through an identity check before her listing went live. Browse
+            Every profile on the platform, in one list, each one reviewed by our
+            team before going live. Browse
             the full list or{' '}
             <LocaleLink locale={locale} href="/location" className="text-primary hover:underline">
               search by district
@@ -151,9 +151,8 @@ export default async function CompanionsIndexPage({
           </p>
         ) : (
           <p className="text-base text-muted-foreground">
-            Reunimos aqui todos os perfis verificados da plataforma. Cada
-            acompanhante passou por verificação de identidade antes de o anúncio
-            ficar visível. Pode percorrer a lista completa ou{' '}
+            Reunimos aqui todos os perfis da plataforma, cada um revisto pela
+            equipa antes de ficar visível. Pode percorrer a lista completa ou{' '}
             <Link href="/location" className="text-primary hover:underline">
               procurar por distrito
             </Link>

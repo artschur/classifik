@@ -55,14 +55,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas no Porto. Perfis reais, discrição total e a maior selecção de escorts do norte de Portugal na Onesugar.',
     h1: 'Acompanhantes no Porto',
     intro:
-      'O Porto é a segunda maior cidade de Portugal e uma das capitais europeias com maior crescimento turístico da última década. Para quem procura acompanhantes no Porto com perfis verificados e encontros discretos, a Onesugar disponibiliza a maior selecção de companheiras activas na cidade e na área metropolitana. Da Ribeira à Boavista, de Matosinhos ao centro histórico, os perfis da plataforma cobrem as principais zonas do Grande Porto com disponibilidade actualizada. Todos os perfis são verificados antes de qualquer publicação. Navegue pela selecção disponível, filtre por preferência e entre em contacto directamente, sem intermediários.',
+      'O Porto é a segunda maior cidade de Portugal e uma das capitais europeias com maior crescimento turístico da última década. Para quem procura acompanhantes no Porto com perfis verificados e encontros discretos, a Onesugar disponibiliza a maior selecção de companheiras activas na cidade e na área metropolitana. Da Ribeira à Boavista, de Matosinhos ao centro histórico, os perfis da plataforma cobrem as principais zonas do Grande Porto com disponibilidade actualizada. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue pela selecção disponível, filtre por preferência e entre em contacto directamente, sem intermediários.',
     editorial: {
       mainHeading: 'Acompanhantes no Porto: a maior selecção verificada da cidade',
       sections: [
         {
           paragraphs: [
             'O Porto concentra o maior volume de procura por acompanhantes do norte de Portugal, reflexo de uma cidade que combina um tecido urbano activo, turismo internacional em crescimento constante e uma vida nocturna que é referência a nível nacional. A procura por escorts no Porto e por acompanhantes de luxo na cidade tem crescido de forma consistente, acompanhando o perfil cada vez mais diversificado de quem visita e vive aqui.',
-            'Na Onesugar, os perfis disponíveis no Porto cobrem diferentes tipos de encontro: companhia para jantares e eventos, encontros privados, e perfis especializados para quem procura experiências específicas. Todos os perfis passaram pelo processo de verificação da plataforma, o que garante que as informações apresentadas são actuais e correspondem à realidade.',
+            'Na Onesugar, os perfis disponíveis no Porto cobrem diferentes tipos de encontro: companhia para jantares e eventos, encontros privados, e perfis especializados para quem procura experiências específicas. Todos os perfis são revistos pela equipa antes de serem publicados, e os que têm o selo Verificada confirmaram a identidade com documento.',
           ],
         },
         {
@@ -116,7 +116,7 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Lisboa. Perfis reais, escorts de luxo e a maior selecção da capital portuguesa na Onesugar.',
     h1: 'Acompanhantes em Lisboa',
     intro:
-      'Lisboa é a capital de Portugal e uma das cidades europeias com maior crescimento de turismo internacional nos últimos anos. Para quem procura acompanhantes em Lisboa com perfis verificados e encontros discretos, a Onesugar disponibiliza a maior selecção de companheiras activas na cidade e na área metropolitana. De Alfama ao Parque das Nações, do Chiado a Cascais, os perfis da plataforma cobrem as principais zonas de Lisboa com disponibilidade actualizada. Todos os perfis são verificados antes de qualquer publicação. Navegue pela selecção disponível, filtre por preferência e entre em contacto directamente, sem intermediários.',
+      'Lisboa é a capital de Portugal e uma das cidades europeias com maior crescimento de turismo internacional nos últimos anos. Para quem procura acompanhantes em Lisboa com perfis verificados e encontros discretos, a Onesugar disponibiliza a maior selecção de companheiras activas na cidade e na área metropolitana. De Alfama ao Parque das Nações, do Chiado a Cascais, os perfis da plataforma cobrem as principais zonas de Lisboa com disponibilidade actualizada. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue pela selecção disponível, filtre por preferência e entre em contacto directamente, sem intermediários.',
     editorial: {
       mainHeading: 'Acompanhantes em Lisboa: perfis verificados na capital',
       sections: [
@@ -150,7 +150,7 @@ const cityMetadata: Record<string, CityData> = {
     faq: [
       {
         q: 'Como encontrar acompanhantes em Lisboa com perfis verificados?',
-        a: 'Na Onesugar, todos os perfis listados em Lisboa passaram por verificação de identidade e disponibilidade. Filtre por tipo de encontro, zona e disponibilidade directamente na página.',
+        a: 'Na Onesugar, todos os perfis listados em Lisboa foram revistos pela equipa, e o selo Verificada indica os que confirmaram a identidade. Filtre por tipo de encontro, zona e disponibilidade directamente na página.',
       },
       {
         q: 'A Onesugar tem escorts em Lisboa que falam inglês?',
@@ -177,14 +177,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Braga. Perfis reais, discrição total e escorts verificadas na capital do Minho na Onesugar.',
     h1: 'Acompanhantes em Braga',
     intro:
-      'Braga é a terceira maior cidade de Portugal e um dos principais centros urbanos do Minho. Conhecida pela sua arquitectura religiosa e pela vibrante comunidade académica da Universidade do Minho, a cidade combina tradição e modernidade de uma forma que poucos centros urbanos portugueses conseguem. Para quem procura acompanhantes em Braga com perfis verificados e encontros discretos, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e na região. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis e contacte directamente.',
+      'Braga é a terceira maior cidade de Portugal e um dos principais centros urbanos do Minho. Conhecida pela sua arquitectura religiosa e pela vibrante comunidade académica da Universidade do Minho, a cidade combina tradição e modernidade de uma forma que poucos centros urbanos portugueses conseguem. Para quem procura acompanhantes em Braga com perfis verificados e encontros discretos, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e na região. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue pelos perfis disponíveis e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Braga: oferta verificada na capital do Minho',
       sections: [
         {
           paragraphs: [
             'Braga ocupa o terceiro lugar no ranking das cidades portuguesas com maior volume de procura por acompanhantes, o que reflecte tanto a sua dimensão urbana como o perfil da sua população. Uma cidade universitária activa, com um centro histórico cada vez mais cosmopolita e uma vida nocturna que se estende pelos bairros da Sé e do centro, Braga tem as condições que sustentam uma procura real e constante.',
-            'Na Onesugar, os perfis disponíveis em Braga incluem acompanhantes verificadas com disponibilidade para diferentes tipos de encontro. A verificação de identidade e disponibilidade é feita antes de qualquer perfil ser publicado, garantindo que as informações são reais e actuais.',
+            'Na Onesugar, os perfis disponíveis em Braga incluem acompanhantes verificadas com disponibilidade para diferentes tipos de encontro. Cada perfil é revisto pela equipa antes de ser publicado, e o selo Verificada indica os que confirmaram a identidade com documento.',
           ],
         },
         {
@@ -233,14 +233,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Aveiro. Perfis reais, discrição total e escorts de luxo na Veneza de Portugal na Onesugar.',
     h1: 'Acompanhantes em Aveiro',
     intro:
-      'Aveiro é uma das cidades mais singulares de Portugal, conhecida pelos seus canais, pelos barcos moliceiros e pela arquitectura Arte Nova que pontua o seu centro histórico. Para quem procura acompanhantes em Aveiro com perfis verificados, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e na região. Com praias a poucos quilómetros, boa ligação ferroviária ao Porto e a Coimbra, e uma presença universitária activa, Aveiro tem as condições para uma oferta diversificada. Todos os perfis são verificados. Navegue abaixo e contacte directamente.',
+      'Aveiro é uma das cidades mais singulares de Portugal, conhecida pelos seus canais, pelos barcos moliceiros e pela arquitectura Arte Nova que pontua o seu centro histórico. Para quem procura acompanhantes em Aveiro com perfis verificados, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e na região. Com praias a poucos quilómetros, boa ligação ferroviária ao Porto e a Coimbra, e uma presença universitária activa, Aveiro tem as condições para uma oferta diversificada. Todos os perfis são revistos pela equipa. Navegue abaixo e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Aveiro: perfis verificados na Veneza de Portugal',
       sections: [
         {
           paragraphs: [
             'Aveiro é frequentemente descrita como a Veneza portuguesa, uma designação que reflecte tanto a beleza dos seus canais como o carácter único que a distingue de qualquer outra cidade do país. Para quem procura acompanhantes em Aveiro ou escorts na região, essa singularidade é também um atributo: a cidade tem uma escala que combina qualidade de oferta com discrição natural.',
-            'Na Onesugar, os perfis disponíveis em Aveiro passam por verificação antes de qualquer publicação. A verificação de identidade e disponibilidade é o que garante que o utilizador não perde tempo com perfis falsos ou desactualizados.',
+            'Na Onesugar, os perfis disponíveis em Aveiro são revistos pela equipa antes de qualquer publicação, o que ajuda o utilizador a não perder tempo com perfis falsos ou desactualizados. O selo Verificada indica os perfis com a identidade confirmada por documento.',
           ],
         },
         {
@@ -260,7 +260,7 @@ const cityMetadata: Record<string, CityData> = {
     faq: [
       {
         q: 'Como encontrar acompanhantes em Aveiro com perfis verificados?',
-        a: 'Na Onesugar, todos os perfis listados em Aveiro passaram por verificação. Filtre por disponibilidade ou preferência directamente na página e contacte sem intermediários.',
+        a: 'Na Onesugar, todos os perfis listados em Aveiro foram revistos pela equipa, e o selo Verificada indica os que confirmaram a identidade. Filtre por disponibilidade ou preferência directamente na página e contacte sem intermediários.',
       },
       {
         q: 'Há acompanhantes de luxo em Aveiro na plataforma?',
@@ -268,7 +268,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Aveiro são reais?',
-        a: 'Sim. Todos os perfis da Onesugar passam por verificação de identidade e disponibilidade antes de serem publicados. Perfis com o selo verificado confirmaram os dados na plataforma.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. Perfis com o selo verificado confirmaram os dados na plataforma.',
       },
       {
         q: 'É seguro contactar escorts em Aveiro através da Onesugar?',
@@ -283,14 +283,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Coimbra. Perfis reais, acompanhantes de luxo e escorts verificadas na cidade universitária na Onesugar.',
     h1: 'Acompanhantes em Coimbra',
     intro:
-      'Coimbra é uma das cidades mais emblemáticas de Portugal, sede da mais antiga universidade do país e palco de uma vida académica que molda a sua identidade há séculos. Para quem procura acompanhantes em Coimbra com perfis verificados e encontros discretos, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e na região. O ambiente singular de Coimbra, com os seus bairros históricos, a Alta Universitária e a zona da Baixa, proporciona um contexto com carácter para qualquer tipo de encontro. Todos os perfis são verificados. Navegue abaixo e contacte directamente.',
+      'Coimbra é uma das cidades mais emblemáticas de Portugal, sede da mais antiga universidade do país e palco de uma vida académica que molda a sua identidade há séculos. Para quem procura acompanhantes em Coimbra com perfis verificados e encontros discretos, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e na região. O ambiente singular de Coimbra, com os seus bairros históricos, a Alta Universitária e a zona da Baixa, proporciona um contexto com carácter para qualquer tipo de encontro. Todos os perfis são revistos pela equipa. Navegue abaixo e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Coimbra: perfis verificados na cidade do conhecimento',
       sections: [
         {
           paragraphs: [
             'Coimbra tem uma identidade que não se encontra em nenhuma outra cidade portuguesa. A Universidade de Coimbra, Património Mundial da UNESCO, o Fado de Coimbra, as suas repúblicas académicas e o ritmo particular da cidade criam um ambiente com personalidade própria. Para quem procura acompanhantes em Coimbra ou acompanhantes de luxo na cidade, esse contexto é parte do que torna os encontros aqui distintos.',
-            'Na Onesugar, os perfis disponíveis em Coimbra foram verificados individualmente antes de serem publicados. Isso significa fotografias actuais, disponibilidade confirmada e dados que correspondem ao que encontra na prática.',
+            'Na Onesugar, os perfis disponíveis em Coimbra foram revistos individualmente pela equipa antes de serem publicados. Isso significa fotografias actuais, disponibilidade confirmada e dados que correspondem ao que encontra na prática.',
           ],
         },
         {
@@ -317,7 +317,7 @@ const cityMetadata: Record<string, CityData> = {
     faq: [
       {
         q: 'Como encontrar acompanhantes em Coimbra com perfis verificados?',
-        a: 'Na Onesugar, todos os perfis listados em Coimbra passaram por verificação de identidade e disponibilidade. Filtre por tipo de encontro, disponibilidade e preferência directamente na página.',
+        a: 'Na Onesugar, todos os perfis listados em Coimbra foram revistos pela equipa, e o selo Verificada indica os que confirmaram a identidade. Filtre por tipo de encontro, disponibilidade e preferência directamente na página.',
       },
       {
         q: 'Há acompanhantes de luxo em Coimbra disponíveis?',
@@ -325,7 +325,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Coimbra são reais?',
-        a: 'Sim. Todos os perfis da Onesugar passam por verificação de identidade e disponibilidade antes de serem publicados. O selo verificado confirma que os dados foram validados.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. O selo verificado confirma que os dados foram validados.',
       },
       {
         q: 'Há escorts disponíveis em Coimbra durante a semana?',
@@ -344,14 +344,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Viana do Castelo. Perfis reais, discrição total e escorts verificadas no Alto Minho na Onesugar.',
     h1: 'Acompanhantes em Viana do Castelo',
     intro:
-      'Viana do Castelo é a capital do Alto Minho, uma cidade com uma identidade cultural forte, marcada pela arquitectura minhota, pela romaria da Senhora da Agonia e pela presença do rio Lima a atravessar o seu centro histórico. Para quem procura acompanhantes em Viana do Castelo com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região. A menor escala urbana de Viana do Castelo é, para muitos utilizadores, um atributo em termos de discrição. Todos os perfis são verificados. Navegue abaixo e contacte directamente.',
+      'Viana do Castelo é a capital do Alto Minho, uma cidade com uma identidade cultural forte, marcada pela arquitectura minhota, pela romaria da Senhora da Agonia e pela presença do rio Lima a atravessar o seu centro histórico. Para quem procura acompanhantes em Viana do Castelo com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região. A menor escala urbana de Viana do Castelo é, para muitos utilizadores, um atributo em termos de discrição. Todos os perfis são revistos pela equipa. Navegue abaixo e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Viana do Castelo: o Alto Minho na Onesugar',
       sections: [
         {
           paragraphs: [
             'Viana do Castelo tem uma posição geográfica que a torna num ponto relevante para quem se desloca entre o Porto e a Galiza, ou para quem vive e trabalha na região do Alto Minho. A cidade tem uma escala humana que combina qualidade de vida com a vitalidade de um centro urbano activo, e essa dimensão é também um factor na procura por acompanhantes em Viana do Castelo.',
-            'Na Onesugar, os perfis disponíveis em Viana do Castelo foram verificados antes de qualquer publicação. Para quem procura escorts em Viana do Castelo ou acompanhantes de luxo na região do Minho, a verificação garante que as informações apresentadas são reais e actuais.',
+            'Na Onesugar, os perfis disponíveis em Viana do Castelo foram revistos pela equipa antes de qualquer publicação. Para quem procura escorts em Viana do Castelo ou acompanhantes de luxo na região do Minho, o selo Verificada indica os perfis com a identidade confirmada por documento.',
           ],
         },
         {
@@ -374,7 +374,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Viana do Castelo são verificados?',
-        a: 'Sim. Todos os perfis publicados na Onesugar passam por verificação de identidade e disponibilidade. O selo de verificação confirma que os dados foram validados pela plataforma.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. O selo de verificação confirma que os dados foram validados pela plataforma.',
       },
       {
         q: 'Há acompanhantes de luxo disponíveis em Viana do Castelo?',
@@ -393,14 +393,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Castelo Branco. Perfis reais, discrição total e contacto directo na Onesugar.',
     h1: 'Acompanhantes em Castelo Branco',
     intro:
-      'Castelo Branco é a capital da Beira Baixa e um dos centros urbanos mais activos do interior de Portugal. Se está à procura de acompanhantes em Castelo Branco com perfis reais e verificados, a Onesugar é a plataforma com a maior selecção disponível na região. Todos os perfis passam por verificação antes de serem publicados, eliminando os riscos comuns de outras plataformas. Encontros discretos, comunicação directa e total privacidade. Navegue pelos perfis disponíveis abaixo, filtre por preferência e entre em contacto sem intermediários.',
+      'Castelo Branco é a capital da Beira Baixa e um dos centros urbanos mais activos do interior de Portugal. Se está à procura de acompanhantes em Castelo Branco com perfis reais e verificados, a Onesugar é a plataforma com a maior selecção disponível na região. Todos os perfis são revistos antes de serem publicados, e o selo Verificada mostra quem confirmou a identidade. Encontros discretos, comunicação directa e total privacidade. Navegue pelos perfis disponíveis abaixo, filtre por preferência e entre em contacto sem intermediários.',
     editorial: {
       mainHeading: 'Acompanhantes em Castelo Branco: o que encontra na Onesugar',
       sections: [
         {
           paragraphs: [
             'A procura por acompanhantes em Castelo Branco tem crescido de forma consistente nos últimos anos, acompanhando o desenvolvimento da cidade como polo regional da Beira Baixa. Com uma população universitária activa, fluxo constante de profissionais em deslocação e uma posição geográfica central no interior do país, a cidade reúne condições para uma oferta diversificada e de qualidade.',
-            'Na Onesugar, os perfis disponíveis em Castelo Branco são verificados individualmente antes de serem publicados. Isso significa que as fotografias são actuais, a disponibilidade é real e as informações correspondem ao que encontra na prática.',
+            'Na Onesugar, os perfis disponíveis em Castelo Branco são revistos individualmente pela equipa antes de serem publicados. Isso significa que as fotografias são actuais, a disponibilidade é real e as informações correspondem ao que encontra na prática.',
           ],
         },
         {
@@ -431,7 +431,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Castelo Branco são reais?',
-        a: 'Sim. Todos os perfis da Onesugar passam por um processo de verificação de identidade e disponibilidade antes de serem publicados. Perfis com o selo verificado confirmaram os dados na plataforma.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. Perfis com o selo verificado confirmaram os dados na plataforma.',
       },
       {
         q: 'É legal encontrar acompanhantes em Castelo Branco através da Onesugar?',
@@ -457,7 +457,7 @@ const cityMetadata: Record<string, CityData> = {
         {
           paragraphs: [
             'A cidade de Évora tem uma identidade própria que não se encontra em mais nenhum ponto do país. As ruelas medievais, o Templo Romano, o aqueduto da Prata e a atmosfera de uma cidade que vive entre a história e a modernidade criam um cenário que poucos ambientes conseguem igualar. Para quem procura acompanhantes de luxo em Évora, esse contexto é parte da experiência.',
-            'Na Onesugar, os perfis disponíveis em Évora incluem acompanhantes verificadas com experiência em encontros sociais, jantares e momentos mais privados. A verificação da identidade e disponibilidade é feita antes de qualquer perfil ser publicado, garantindo que o que vê corresponde ao que encontra.',
+            'Na Onesugar, os perfis disponíveis em Évora incluem acompanhantes verificadas com experiência em encontros sociais, jantares e momentos mais privados. Cada perfil é revisto pela equipa antes de ser publicado, e o selo Verificada indica os que confirmaram a identidade com documento.',
           ],
         },
         {
@@ -484,7 +484,7 @@ const cityMetadata: Record<string, CityData> = {
     faq: [
       {
         q: 'Como encontrar acompanhantes em Évora com perfis verificados?',
-        a: 'Na Onesugar, todos os perfis listados em Évora passaram por verificação de identidade. Pode filtrar por disponibilidade, tipo de encontro e preferências directamente na página.',
+        a: 'Na Onesugar, todos os perfis listados em Évora foram revistos pela equipa, e o selo Verificada indica os que confirmaram a identidade. Pode filtrar por disponibilidade, tipo de encontro e preferências directamente na página.',
       },
       {
         q: 'Há acompanhantes de luxo disponíveis em Évora?',
@@ -511,7 +511,7 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Vila Real. Perfis reais, discrição total e contacto directo na Onesugar.',
     h1: 'Acompanhantes em Vila Real',
     intro:
-      'Vila Real é a capital do distrito homónimo no norte de Portugal, porta de entrada para a região de Trás-os-Montes e ponto de referência para quem viaja entre o litoral e o interior nortenho. Para quem procura acompanhantes em Vila Real com perfis reais e verificados, a Onesugar disponibiliza uma selecção actualizada de companheiras na cidade e na região duriense. Todos os perfis são verificados antes de serem publicados. Navegue abaixo, filtre por preferência e contacte directamente, com total discrição.',
+      'Vila Real é a capital do distrito homónimo no norte de Portugal, porta de entrada para a região de Trás-os-Montes e ponto de referência para quem viaja entre o litoral e o interior nortenho. Para quem procura acompanhantes em Vila Real com perfis reais e verificados, a Onesugar disponibiliza uma selecção actualizada de companheiras na cidade e na região duriense. Todos os perfis são revistos antes de serem publicados. Navegue abaixo, filtre por preferência e contacte directamente, com total discrição.',
     editorial: {
       mainHeading: 'Acompanhantes em Vila Real: oferta verificada no interior norte',
       sections: [
@@ -524,7 +524,7 @@ const cityMetadata: Record<string, CityData> = {
         {
           heading: 'O que esperar dos perfis de Vila Real na Onesugar',
           paragraphs: [
-            'Os perfis disponíveis em Vila Real na plataforma foram verificados individualmente: fotografia actual, disponibilidade confirmada, dados correspondentes à realidade. Nenhum perfil fica publicado sem passar pelo processo de verificação da Onesugar.',
+            'Os perfis disponíveis em Vila Real na plataforma foram revistos individualmente pela equipa antes de serem publicados. Nenhum perfil fica publicado sem passar pelo processo de verificação da Onesugar.',
             'Para quem procura uma acompanhante de luxo em Vila Real para um jantar, evento social ou encontro privado, os perfis verificados indicam claramente o tipo de companhia disponível e os contactos preferidos.',
           ],
         },
@@ -545,7 +545,7 @@ const cityMetadata: Record<string, CityData> = {
     faq: [
       {
         q: 'Como encontrar acompanhantes verificadas em Vila Real?',
-        a: 'Navegue pelos perfis disponíveis em Vila Real na Onesugar. Todos os perfis listados passaram por verificação. Pode filtrar por tipo de encontro e disponibilidade directamente na página.',
+        a: 'Navegue pelos perfis disponíveis em Vila Real na Onesugar. Todos os perfis listados foram revistos pela equipa. Pode filtrar por tipo de encontro e disponibilidade directamente na página.',
       },
       {
         q: 'Há escorts em Vila Real disponíveis para encontros no próprio dia?',
@@ -557,7 +557,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'É seguro contactar acompanhantes em Vila Real através da Onesugar?',
-        a: 'A plataforma faz verificação de identidade antes de publicar qualquer perfil, reduzindo significativamente o risco de perfis falsos. Os dados pessoais dos utilizadores não são partilhados com terceiros.',
+        a: 'A plataforma revê cada perfil antes de o publicar, e o selo Verificada indica os que confirmaram a identidade com documento, o que reduz o risco de perfis falsos. Os dados pessoais dos utilizadores não são partilhados com terceiros.',
       },
     ],
   },
@@ -568,14 +568,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas na Guarda. Perfis reais, discrição total e contacto directo na Onesugar.',
     h1: 'Acompanhantes na Guarda',
     intro:
-      'A Guarda é a cidade mais alta de Portugal, encostada à Serra da Estrela e conhecida pela sua catedral gótica e pelo carácter marcado do interior beirão. Para quem procura acompanhantes na Guarda com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região. A plataforma verifica todos os perfis antes de os publicar, garantindo que as informações são reais e actuais. Navegue pelos perfis disponíveis e contacte directamente.',
+      'A Guarda é a cidade mais alta de Portugal, encostada à Serra da Estrela e conhecida pela sua catedral gótica e pelo carácter marcado do interior beirão. Para quem procura acompanhantes na Guarda com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região. A plataforma revê todos os perfis antes de os publicar. Navegue pelos perfis disponíveis e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes na Guarda: perfis verificados na cidade mais alta de Portugal',
       sections: [
         {
           paragraphs: [
             'A Guarda tem uma identidade própria no panorama das cidades do interior português. Capital de distrito, ponto de passagem obrigatório entre o litoral e a fronteira com Espanha, a cidade tem um fluxo de população activa e visitantes que sustenta uma procura real por acompanhantes na Guarda.',
-            'Na Onesugar, os perfis disponíveis para a Guarda são verificados antes de qualquer publicação. Isso distingue a plataforma dos portais de classificados genéricos, onde a maioria dos perfis não tem qualquer verificação e onde encontrar uma acompanhante de luxo na Guarda com dados fiáveis é uma questão de sorte.',
+            'Na Onesugar, os perfis disponíveis para a Guarda são revistos pela equipa antes de qualquer publicação. Isso distingue a plataforma dos portais de classificados genéricos, onde a maioria dos perfis não tem qualquer verificação e onde encontrar uma acompanhante de luxo na Guarda com dados fiáveis é uma questão de sorte.',
           ],
         },
         {
@@ -599,7 +599,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes na Guarda são verificados?',
-        a: 'Sim. Todos os perfis publicados na Onesugar passam por verificação de identidade e disponibilidade. O selo de verificação indica que os dados do perfil foram confirmados pela plataforma.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. O selo de verificação indica que os dados do perfil foram confirmados pela plataforma.',
       },
       {
         q: 'Há acompanhantes de luxo disponíveis na Guarda?',
@@ -618,7 +618,7 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Beja. Perfis reais, discrição total e contacto directo no Baixo Alentejo na Onesugar.',
     h1: 'Acompanhantes em Beja',
     intro:
-      'Beja é a capital do Baixo Alentejo, uma cidade de ritmo pausado, céu aberto e calor intenso, conhecida pela sua história romana e pelo cenário típico do interior alentejano. Para quem procura acompanhantes em Beja com perfis verificados, a Onesugar disponibiliza companheiras activas na cidade e na região. Todos os perfis presentes na plataforma foram verificados antes de serem publicados, garantindo autenticidade e disponibilidade real. Filtre por preferência e entre em contacto directamente, com total discrição.',
+      'Beja é a capital do Baixo Alentejo, uma cidade de ritmo pausado, céu aberto e calor intenso, conhecida pela sua história romana e pelo cenário típico do interior alentejano. Para quem procura acompanhantes em Beja com perfis verificados, a Onesugar disponibiliza companheiras activas na cidade e na região. Todos os perfis presentes na plataforma foram revistos antes de serem publicados. Filtre por preferência e entre em contacto directamente, com total discrição.',
     editorial: {
       mainHeading: 'Acompanhantes em Beja: perfis reais no Baixo Alentejo',
       sections: [
@@ -649,7 +649,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Beja são reais?',
-        a: 'Sim. A Onesugar verifica identidade e disponibilidade de todos os perfis antes da publicação. O selo de verificação indica que os dados foram confirmados.',
+        a: 'Sim. A Onesugar revê todos os perfis antes da publicação. O selo de verificação indica que os dados foram confirmados.',
       },
       {
         q: 'É seguro contratar uma acompanhante em Beja através da Onesugar?',
@@ -668,14 +668,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Portalegre. Perfis reais, discrição total e contacto directo no Alto Alentejo na Onesugar.',
     h1: 'Acompanhantes em Portalegre',
     intro:
-      'Portalegre é a capital do Alto Alentejo, encostada à Serra de São Mamede e próxima da fronteira com Espanha. Cidade de escala humana, com um centro histórico bem preservado e uma tradição cultural que inclui a famosa manufactura de tapeçarias, Portalegre reúne condições para encontros discretos e sem pressas. Para quem procura acompanhantes em Portalegre com perfis verificados, a Onesugar disponibiliza companheiras activas na cidade e na região. Todos os perfis são verificados antes de serem publicados. Navegue abaixo e contacte directamente.',
+      'Portalegre é a capital do Alto Alentejo, encostada à Serra de São Mamede e próxima da fronteira com Espanha. Cidade de escala humana, com um centro histórico bem preservado e uma tradição cultural que inclui a famosa manufactura de tapeçarias, Portalegre reúne condições para encontros discretos e sem pressas. Para quem procura acompanhantes em Portalegre com perfis verificados, a Onesugar disponibiliza companheiras activas na cidade e na região. Todos os perfis são revistos antes de serem publicados. Navegue abaixo e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Portalegre: o Alto Alentejo na Onesugar',
       sections: [
         {
           paragraphs: [
             'Portalegre é, entre as capitais de distrito do interior português, uma das que mantém uma identidade mais própria. A proximidade com Espanha, a Serra de São Mamede e o ritmo característico do Alto Alentejo fazem desta cidade um ponto de passagem e permanência para um perfil de visitante diferente do que se encontra nas grandes cidades costeiras.',
-            'Para quem procura acompanhantes de luxo em Portalegre ou escorts na região do Alto Alentejo, a Onesugar centraliza a oferta disponível com uma garantia que outros portais não oferecem: todos os perfis foram verificados antes de serem publicados. Fotografias actuais, disponibilidade confirmada, dados reais.',
+            'Para quem procura acompanhantes de luxo em Portalegre ou escorts na região do Alto Alentejo, a Onesugar centraliza a oferta disponível com uma garantia que outros portais não oferecem: todos os perfis foram revistos antes de serem publicados.',
           ],
         },
         {
@@ -698,7 +698,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Portalegre são verificados?',
-        a: 'Sim. Todos os perfis publicados na Onesugar passam por verificação de identidade e disponibilidade. O selo de verificação indica que os dados foram confirmados pela plataforma.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. O selo de verificação indica que os dados foram confirmados pela plataforma.',
       },
       {
         q: 'A Onesugar tem acompanhantes de luxo em Portalegre?',
@@ -717,14 +717,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Faro e no Algarve. Perfis reais, escorts de luxo e discrição total na região mais turística de Portugal na Onesugar.',
     h1: 'Acompanhantes em Faro',
     intro:
-      'Faro é a capital do Algarve e o principal centro urbano do sul de Portugal. Para quem procura acompanhantes em Faro e na região do Algarve com perfis verificados, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e nas zonas costeiras da região. O Algarve recebe anualmente milhões de visitantes nacionais e internacionais, e a oferta de escorts no Algarve acompanha esse perfil diversificado de quem visita a região. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis, filtre por preferência e entre em contacto directamente.',
+      'Faro é a capital do Algarve e o principal centro urbano do sul de Portugal. Para quem procura acompanhantes em Faro e na região do Algarve com perfis verificados, a Onesugar disponibiliza uma selecção activa de companheiras na cidade e nas zonas costeiras da região. O Algarve recebe anualmente milhões de visitantes nacionais e internacionais, e a oferta de escorts no Algarve acompanha esse perfil diversificado de quem visita a região. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue pelos perfis disponíveis, filtre por preferência e entre em contacto directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Faro e no Algarve: a selecção verificada do sul de Portugal',
       sections: [
         {
           paragraphs: [
             'A região do Algarve é, de longe, o destino turístico mais procurado de Portugal. A concentração de visitantes ao longo do ano, com pico nos meses de verão mas com fluxo constante mesmo fora de época, cria uma procura real e diversificada por acompanhantes no Algarve. Faro, como capital da região e sede do único aeroporto internacional do sul, é o ponto de entrada natural para a maioria desses visitantes.',
-            'Na Onesugar, os perfis disponíveis em Faro e no Algarve são verificados individualmente antes de serem publicados. Fotografia actual, disponibilidade confirmada e dados reais. A diferença em relação a portais sem moderação é concreta e percebida desde o primeiro contacto.',
+            'Na Onesugar, os perfis disponíveis em Faro e no Algarve são revistos individualmente pela equipa antes de serem publicados. Fotografia actual, disponibilidade confirmada e dados reais. A diferença em relação a portais sem moderação é concreta e percebida desde o primeiro contacto.',
           ],
         },
         {
@@ -750,7 +750,7 @@ const cityMetadata: Record<string, CityData> = {
     faq: [
       {
         q: 'Como encontrar acompanhantes no Algarve com perfis verificados?',
-        a: 'Na Onesugar, navegue pelos perfis disponíveis em Faro, que cobre toda a região do Algarve. Todos os perfis passaram por verificação. Filtre por disponibilidade e preferência directamente na página.',
+        a: 'Na Onesugar, navegue pelos perfis disponíveis em Faro, que cobre toda a região do Algarve. Todos os perfis foram revistos pela equipa, e o selo Verificada indica os que confirmaram a identidade. Filtre por disponibilidade e preferência directamente na página.',
       },
       {
         q: 'Há escorts no Algarve disponíveis fora da época de verão?',
@@ -777,14 +777,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Viseu. Perfis reais, discrição total e escorts de luxo na Beira Alta na Onesugar.',
     h1: 'Acompanhantes em Viseu',
     intro:
-      'Viseu é a capital do distrito homónimo no coração do país, uma cidade que combina uma identidade cultural rica, um centro histórico bem preservado e uma posição geográfica central entre o litoral e o interior. Para quem procura acompanhantes em Viseu com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região da Beira Alta. A plataforma verifica todos os perfis antes de os publicar. Navegue pelos perfis disponíveis, filtre por preferência e contacte directamente.',
+      'Viseu é a capital do distrito homónimo no coração do país, uma cidade que combina uma identidade cultural rica, um centro histórico bem preservado e uma posição geográfica central entre o litoral e o interior. Para quem procura acompanhantes em Viseu com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região da Beira Alta. A plataforma revê todos os perfis antes de os publicar. Navegue pelos perfis disponíveis, filtre por preferência e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Viseu: perfis verificados na Beira Alta',
       sections: [
         {
           paragraphs: [
             'Viseu é frequentemente referida como uma das cidades portuguesas com melhor qualidade de vida. O seu centro histórico, os museus, a proximidade com a região do Dão e a sua escala humana criam um ambiente que atrai residentes, visitantes e profissionais em deslocação. Essa combinação sustenta uma procura real por acompanhantes em Viseu com disponibilidade para diferentes tipos de encontro.',
-            'Na Onesugar, os perfis disponíveis em Viseu foram verificados antes de qualquer publicação. Fotografia actual, dados reais, disponibilidade confirmada. Para quem procura escorts em Viseu ou acompanhantes de luxo na região da Beira Alta, este nível de verificação distingue a plataforma de portais sem qualquer triagem.',
+            'Na Onesugar, os perfis disponíveis em Viseu foram revistos pela equipa antes de qualquer publicação. Para quem procura escorts em Viseu ou acompanhantes de luxo na região da Beira Alta, esta revisão distingue a plataforma de portais sem qualquer triagem.',
           ],
         },
         {
@@ -833,14 +833,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Leiria e nos concelhos do distrito. Perfis reais, acompanhantes de luxo e escorts verificadas no centro de Portugal na Onesugar.',
     h1: 'Acompanhantes em Leiria',
     intro:
-      'Leiria é a capital do distrito homónimo e um dos centros urbanos com crescimento mais consistente do centro de Portugal nos últimos anos. Bem posicionada entre Lisboa e Coimbra, com boa ligação rodoviária e ferroviária, a cidade atrai profissionais, estudantes do Politécnico de Leiria e visitantes que passam pelo litoral centro. Para quem procura acompanhantes em Leiria com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e em todo o distrito, de Pombal à Nazaré, da Marinha Grande às Caldas da Rainha. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis e contacte directamente.',
+      'Leiria é a capital do distrito homónimo e um dos centros urbanos com crescimento mais consistente do centro de Portugal nos últimos anos. Bem posicionada entre Lisboa e Coimbra, com boa ligação rodoviária e ferroviária, a cidade atrai profissionais, estudantes do Politécnico de Leiria e visitantes que passam pelo litoral centro. Para quem procura acompanhantes em Leiria com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e em todo o distrito, de Pombal à Nazaré, da Marinha Grande às Caldas da Rainha. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue pelos perfis disponíveis e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Leiria: oferta verificada no centro do país',
       sections: [
         {
           paragraphs: [
             'A posição geográfica de Leiria torna-a num ponto de passagem natural entre o norte e o sul, entre o litoral e o interior. A cidade é sede de distrito, tem uma comunidade académica activa em torno do Politécnico de Leiria e recebe um fluxo constante de profissionais e visitantes que se deslocam na região Centro. Esse perfil sustenta uma procura real por acompanhantes em Leiria com disponibilidade para diferentes tipos de encontro.',
-            'Na Onesugar, os perfis disponíveis em Leiria passaram por verificação antes de qualquer publicação. Numa cidade de dimensão intermédia, a ausência de verificação noutros portais é especialmente problemática, com muitos perfis abandonados ou falsos. A Onesugar resolve esse problema à entrada, com identidade confirmada, fotografia actual e disponibilidade real em cada perfil.',
+            'Na Onesugar, os perfis disponíveis em Leiria são revistos pela equipa antes de qualquer publicação. Numa cidade de dimensão intermédia, a ausência de moderação noutros portais é especialmente problemática, com muitos perfis abandonados ou falsos. A Onesugar trata disso à entrada, e o selo Verificada indica os perfis com a identidade confirmada por documento.',
           ],
         },
         {
@@ -859,7 +859,7 @@ const cityMetadata: Record<string, CityData> = {
         {
           heading: 'Massagens e experiências sensoriais em Leiria',
           paragraphs: [
-            'Para além da companhia tradicional, a plataforma reúne perfis especializados em massagem sensorial e experiências de relaxamento em Leiria. Cada perfil descreve o tipo de serviço que oferece, pelo que vale a pena consultar a apresentação antes de decidir. A verificação aplica-se a todos os perfis, independentemente do tipo de encontro.',
+            'Para além da companhia tradicional, a plataforma reúne perfis especializados em massagem sensorial e experiências de relaxamento em Leiria. Cada perfil descreve o tipo de serviço que oferece, pelo que vale a pena consultar a apresentação antes de decidir. A revisão aplica-se a todos os perfis, independentemente do tipo de encontro.',
           ],
         },
         {
@@ -939,14 +939,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Setúbal, na Margem Sul e na Península de Setúbal. Perfis reais, discrição total e escorts verificadas na Onesugar.',
     h1: 'Acompanhantes em Setúbal',
     intro:
-      'O distrito de Setúbal é um dos mais populosos do país e engloba a Margem Sul de Lisboa, a Península de Setúbal e a região da Arrábida. Cidades como Almada, Barreiro, Seixal, Palmela, Sesimbra e a própria Setúbal fazem parte de um território com identidade própria, a poucos minutos da capital por ponte ou ferry. Para quem procura acompanhantes em Setúbal com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas em toda a região. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis e contacte directamente.',
+      'O distrito de Setúbal é um dos mais populosos do país e engloba a Margem Sul de Lisboa, a Península de Setúbal e a região da Arrábida. Cidades como Almada, Barreiro, Seixal, Palmela, Sesimbra e a própria Setúbal fazem parte de um território com identidade própria, a poucos minutos da capital por ponte ou ferry. Para quem procura acompanhantes em Setúbal com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas em toda a região. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue pelos perfis disponíveis e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Setúbal: perfis verificados na Margem Sul e Península de Setúbal',
       sections: [
         {
           paragraphs: [
             'O distrito de Setúbal é muitas vezes subvalorizado como destino para encontros discretos, mas a sua realidade é diferente. Com uma população que ultrapassa os 800 mil habitantes, uma localização privilegiada junto ao estuário do Sado e a presença de zonas residenciais de qualidade em toda a Península de Setúbal, a região tem uma procura por acompanhantes verificadas que se mantém consistente ao longo do ano.',
-            'Na Onesugar, os perfis disponíveis em Setúbal cobrem toda a região, desde Almada e Seixal na Margem Sul até Palmela, Sesimbra e Setúbal cidade. Todos os perfis foram verificados antes de serem publicados, com fotografia actual e disponibilidade confirmada.',
+            'Na Onesugar, os perfis disponíveis em Setúbal cobrem toda a região, desde Almada e Seixal na Margem Sul até Palmela, Sesimbra e Setúbal cidade. Todos os perfis foram revistos antes de serem publicados.',
           ],
         },
         {
@@ -978,7 +978,7 @@ const cityMetadata: Record<string, CityData> = {
         {
           heading: 'Acompanhantes trans e diversidade de perfis em Setúbal',
           paragraphs: [
-            'A Onesugar reúne em Setúbal perfis para diferentes preferências, incluindo acompanhantes trans com disponibilidade activa na região. Os filtros da plataforma permitem encontrar rapidamente o perfil mais adequado, por zona do distrito ou por tipo de companhia. Todos os perfis, sem excepção, passam pela mesma verificação antes de serem publicados.',
+            'A Onesugar reúne em Setúbal perfis para diferentes preferências, incluindo acompanhantes trans com disponibilidade activa na região. Os filtros da plataforma permitem encontrar rapidamente o perfil mais adequado, por zona do distrito ou por tipo de companhia. Todos os perfis, sem excepção, passam pela mesma revisão antes de serem publicados.',
           ],
         },
       ],
@@ -1045,14 +1045,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Santarém. Perfis reais, discrição total e contacto directo no Ribatejo na Onesugar.',
     h1: 'Acompanhantes em Santarém',
     intro:
-      'Santarém é a capital do Ribatejo e uma das cidades históricas mais marcantes do centro de Portugal, conhecida pelos seus miradouros sobre o Tejo, pela sua arquitectura medieval e pela tradição equestre que define a identidade da região. Para quem procura acompanhantes em Santarém com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região do Ribatejo. A plataforma verifica todos os perfis antes de os publicar, garantindo informações reais e actuais. Navegue pelos perfis disponíveis e contacte directamente.',
+      'Santarém é a capital do Ribatejo e uma das cidades históricas mais marcantes do centro de Portugal, conhecida pelos seus miradouros sobre o Tejo, pela sua arquitectura medieval e pela tradição equestre que define a identidade da região. Para quem procura acompanhantes em Santarém com perfis verificados e encontros discretos, a Onesugar disponibiliza companheiras activas na cidade e na região do Ribatejo. A plataforma revê todos os perfis antes de os publicar. Navegue pelos perfis disponíveis e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Santarém: perfis verificados no Ribatejo',
       sections: [
         {
           paragraphs: [
             'Santarém tem uma posição geográfica central que a torna num ponto de referência para quem se desloca entre Lisboa e Coimbra, ou entre o litoral e o interior do país. A cidade tem uma dimensão que combina a tranquilidade do interior com a acessibilidade de uma capital de distrito bem ligada às principais artérias do país.',
-            'Para quem procura acompanhantes em Santarém ou escorts na região do Ribatejo, a Onesugar centraliza a oferta verificada num único ponto. Todos os perfis foram verificados antes de serem publicados, com fotografia actual, disponibilidade confirmada e dados que correspondem ao que encontra na prática.',
+            'Para quem procura acompanhantes em Santarém ou escorts na região do Ribatejo, a Onesugar centraliza a oferta verificada num único ponto. Todos os perfis foram revistos antes de serem publicados.',
           ],
         },
         {
@@ -1080,7 +1080,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Santarém são reais?',
-        a: 'Sim. Todos os perfis publicados na Onesugar passam por verificação de identidade e disponibilidade antes de serem publicados.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados.',
       },
       {
         q: 'É seguro contactar acompanhantes em Santarém pela Onesugar?',
@@ -1095,14 +1095,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas em Bragança. Perfis reais, discrição total e contacto directo em Trás-os-Montes na Onesugar.',
     h1: 'Acompanhantes em Bragança',
     intro:
-      'Bragança é a capital do distrito mais a nordeste de Portugal, conhecida pelo seu castelo medieval, pela Terra Fria transmontana e pela proximidade com Espanha. A cidade tem uma identidade rural e histórica muito própria, num contexto de baixa densidade urbana que oferece privacidade natural. Para quem procura acompanhantes em Bragança com perfis verificados, a Onesugar disponibiliza companheiras activas na cidade e na região de Trás-os-Montes. Todos os perfis são verificados antes de qualquer publicação. Navegue abaixo e contacte directamente.',
+      'Bragança é a capital do distrito mais a nordeste de Portugal, conhecida pelo seu castelo medieval, pela Terra Fria transmontana e pela proximidade com Espanha. A cidade tem uma identidade rural e histórica muito própria, num contexto de baixa densidade urbana que oferece privacidade natural. Para quem procura acompanhantes em Bragança com perfis verificados, a Onesugar disponibiliza companheiras activas na cidade e na região de Trás-os-Montes. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue abaixo e contacte directamente.',
     editorial: {
       mainHeading: 'Acompanhantes em Bragança: perfis verificados no nordeste de Portugal',
       sections: [
         {
           paragraphs: [
             'Bragança é uma das capitais de distrito mais remotas do país, encostada à fronteira com Espanha e rodeada pelo Parque Natural de Montesinho. Essa condição geográfica confere à cidade uma identidade única: baixa densidade urbana, privacidade natural elevada e um ritmo de vida tranquilo que valoriza a discrição por defeito.',
-            'Para quem procura acompanhantes em Bragança, a principal dificuldade nos portais tradicionais é a escassez de perfis activos com informação fiável. Na Onesugar, os perfis disponíveis foram verificados antes de qualquer publicação, garantindo que as informações são reais e a disponibilidade é confirmada.',
+            'Para quem procura acompanhantes em Bragança, a principal dificuldade nos portais tradicionais é a escassez de perfis activos com informação fiável. Na Onesugar, os perfis disponíveis foram revistos pela equipa antes de qualquer publicação, e o selo Verificada indica os que confirmaram a identidade com documento.',
           ],
         },
         {
@@ -1125,7 +1125,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes em Bragança são reais?',
-        a: 'Sim. Todos os perfis publicados na Onesugar passam por verificação de identidade e disponibilidade antes de serem publicados. O selo verificado confirma que os dados foram validados.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. O selo verificado confirma que os dados foram validados.',
       },
       {
         q: 'Há escorts disponíveis em Bragança com disponibilidade imediata?',
@@ -1146,14 +1146,14 @@ const cityMetadata: Record<string, CityData> = {
       'Encontre acompanhantes verificadas na Madeira. Perfis reais, discrição total e escorts de luxo na ilha mais visitada do Atlântico na Onesugar.',
     h1: 'Acompanhantes na Madeira',
     intro:
-      'A Madeira é um dos destinos turísticos mais procurados do mundo, conhecida pelo seu clima ameno durante todo o ano, pelas levadas, pelos picos e pela hospitalidade particular da sua gente. Para quem procura acompanhantes na Madeira com perfis verificados e encontros discretos, a Onesugar disponibiliza uma selecção de companheiras com presença activa na ilha. O Funchal, como capital e maior centro urbano, concentra a maioria dos perfis activos, com disponibilidade para encontros na cidade e em toda a ilha. Todos os perfis são verificados antes de qualquer publicação. Navegue pelos perfis disponíveis, filtre por preferência e entre em contacto directamente, sem intermediários.',
+      'A Madeira é um dos destinos turísticos mais procurados do mundo, conhecida pelo seu clima ameno durante todo o ano, pelas levadas, pelos picos e pela hospitalidade particular da sua gente. Para quem procura acompanhantes na Madeira com perfis verificados e encontros discretos, a Onesugar disponibiliza uma selecção de companheiras com presença activa na ilha. O Funchal, como capital e maior centro urbano, concentra a maioria dos perfis activos, com disponibilidade para encontros na cidade e em toda a ilha. Cada perfil é revisto antes de ser publicado, e o selo Verificada mostra quem já confirmou a identidade. Navegue pelos perfis disponíveis, filtre por preferência e entre em contacto directamente, sem intermediários.',
     editorial: {
       mainHeading: 'Acompanhantes na Madeira: perfis verificados na pérola do Atlântico',
       sections: [
         {
           paragraphs: [
             'A Madeira recebe anualmente mais de um milhão de visitantes, um número expressivo para uma ilha com cerca de 250 mil habitantes. Esse fluxo constante de turistas nacionais e internacionais, combinado com uma comunidade residente activa e uma vida nocturna centrada no Funchal, cria uma procura real e diversificada por acompanhantes na Madeira ao longo de todo o ano.',
-            'Na Onesugar, os perfis disponíveis para a Madeira foram verificados individualmente antes de serem publicados. Fotografia actual, disponibilidade confirmada e dados que correspondem ao que encontra na prática. Numa ilha onde a oferta verificada é ainda mais escassa do que no continente, esta diferença tem um impacto directo na qualidade da experiência.',
+            'Na Onesugar, os perfis disponíveis para a Madeira foram revistos individualmente pela equipa antes de serem publicados. Fotografia actual, disponibilidade confirmada e dados que correspondem ao que encontra na prática. Numa ilha onde a oferta verificada é ainda mais escassa do que no continente, esta diferença tem um impacto directo na qualidade da experiência.',
           ],
         },
         {
@@ -1200,7 +1200,7 @@ const cityMetadata: Record<string, CityData> = {
       },
       {
         q: 'Os perfis de acompanhantes na Madeira são reais?',
-        a: 'Sim. Todos os perfis publicados na Onesugar passam por verificação de identidade e disponibilidade antes de serem publicados. O selo verificado confirma que os dados foram validados pela plataforma.',
+        a: 'Sim. Todos os perfis são revistos pela equipa antes de serem publicados. O selo verificado confirma que os dados foram validados pela plataforma.',
       },
     ],
   },
