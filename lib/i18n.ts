@@ -23,9 +23,21 @@ export const LOCALE_HEADER = 'x-onesugar-locale';
 /** Cabeçalho interno com o caminho sem prefixo de idioma. */
 export const PATH_HEADER = 'x-onesugar-path';
 
+/**
+ * Distritos com página em inglês. São os mesmos de cityMetadata em
+ * app/location/[city]/page.tsx: um distrito novo só entra aqui quando tiver
+ * também o texto em inglês (app/location/[city]/en).
+ */
+export const EN_DISTRICTS = [
+  'aveiro', 'beja', 'braga', 'braganca', 'castelo-branco', 'coimbra',
+  'evora', 'faro', 'guarda', 'leiria', 'lisboa', 'madeira', 'portalegre',
+  'porto', 'santarem', 'setubal', 'viana-do-castelo', 'vila-real', 'viseu',
+] as const;
+
 const EN_ROUTES: RegExp[] = [
   /^\/$/,
   /^\/location$/,
+  new RegExp(`^/location/(${EN_DISTRICTS.join('|')})$`),
   /^\/companions$/,
   /^\/companions\/\d+$/,
   /^\/sobre$/,
