@@ -23,6 +23,68 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as SliderPrimitive from "@radix-ui/react-slider";
+import { useLocale } from "@/components/locale-provider";
+
+const TEXT = {
+  pt: {
+    sort: "Ordenar por preço",
+    noSort: "Sem ordenar",
+    asc: "Preço: Menor para Maior",
+    desc: "Preço: Maior para menor",
+    search: "Procure sugars...",
+    filters: "Filtros",
+    gender: "Género",
+    selectGender: "Selecione o género",
+    all: "Todos",
+    female: "Feminino",
+    male: "Masculino",
+    trans: "Trans",
+    age: "Idade",
+    height: "Altura (cm)",
+    weight: "Peso (kg)",
+    features: "Características",
+    hair: "Cor do Cabelo",
+    show: "Ver resultados",
+  },
+  en: {
+    sort: "Sort by price",
+    noSort: "No sorting",
+    asc: "Price: low to high",
+    desc: "Price: high to low",
+    search: "Search escorts...",
+    filters: "Filters",
+    gender: "Gender",
+    selectGender: "Select gender",
+    all: "All",
+    female: "Female",
+    male: "Male",
+    trans: "Trans",
+    age: "Age",
+    height: "Height (cm)",
+    weight: "Weight (kg)",
+    features: "Features",
+    hair: "Hair colour",
+    show: "Show results",
+  },
+} as const;
+
+/** Rótulos das características; o valor gravado no endereço não muda. */
+const CARACTERISTICAS: Record<string, { pt: string; en: string }> = {
+  Silicone: { pt: "Silicone", en: "Silicone" },
+  Tattoos: { pt: "Tatuagens", en: "Tattoos" },
+  Smoker: { pt: "Fumadora", en: "Smoker" },
+};
+
+/** Cores do cabelo: o filtro grava o nome português em minúsculas. */
+const CORES_EN: Record<string, string> = {
+  Preto: "Black",
+  Loiro: "Blonde",
+  Castanho: "Brown",
+  Vermelho: "Red",
+  Branco: "White",
+  Cinza: "Grey",
+  Colorido: "Dyed",
+};
 
 const DualSlider = ({
   value,
@@ -59,6 +121,8 @@ export function CompanionFilters({
   initialFilters: FilterTypesCompanions;
 }) {
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = TEXT[locale];
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -186,18 +250,18 @@ export function CompanionFilters({
           onValueChange={(value) => handleSort(value || null)}
         >
           <SelectTrigger className="w-[180px] rounded-full">
-            <SelectValue placeholder="Ordenar por preço" />
+            <SelectValue placeholder={t.sort} />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="none">Sem ordenar</SelectItem>
-            <SelectItem value="asc">Preço: Menor para Maior</SelectItem>
-            <SelectItem value="desc">Preço: Maior para menor</SelectItem>
+            <SelectItem value="none">{t.noSort}</SelectItem>
+            <SelectItem value="asc">{t.asc}</SelectItem>
+            <SelectItem value="desc">{t.desc}</SelectItem>
           </SelectContent>
         </Select>
 
         <input
           type="text"
-          placeholder="Procure sugars..."
+          placeholder={t.search}
           className="w-3/12 rounded-full border-primary border px-4 p-2 bg-background hidden md:block"
           value={searchValue}
           onChange={handleSearch}
@@ -206,7 +270,7 @@ export function CompanionFilters({
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" className="rounded-full">
-              Filtros
+              {t.filters}
               <Filter className="mr-2 h-4 w-4" />
               {activeFiltersCount > 0 && (
                 <Badge variant="secondary" className="ml-2">
@@ -218,14 +282,14 @@ export function CompanionFilters({
           <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl">
             <DialogHeader className="px-6 py-4 border-b">
               <DialogTitle className="text-lg font-semibold">
-                Filtros
+                {t.filters}
               </DialogTitle>
             </DialogHeader>
             <ScrollArea className="max-h-[80vh]">
               <div className="space-y-6 p-6">
                 {/* gender */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Gênero</h4>
+                  <h4 className="font-medium text-sm">{t.gender}</h4>
                   {/* Sem parâmetro no endereço, a página abre em feminino, por
                       isso é esse que o selector mostra. E "Todos" grava o
                       valor `todos` em vez de apagar o parâmetro: apagá-lo
@@ -238,19 +302,19 @@ export function CompanionFilters({
                     }
                   >
                     <SelectTrigger className="w-full rounded-xl">
-                      <SelectValue placeholder="Selecione o gênero" />
+                      <SelectValue placeholder={t.selectGender} />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      <SelectItem value="todos">Todos</SelectItem>
-                      <SelectItem value="feminino">Feminino</SelectItem>
-                      <SelectItem value="masculino">Masculino</SelectItem>
-                      <SelectItem value="trans">Trans</SelectItem>
+                      <SelectItem value="todos">{t.all}</SelectItem>
+                      <SelectItem value="feminino">{t.female}</SelectItem>
+                      <SelectItem value="masculino">{t.male}</SelectItem>
+                      <SelectItem value="trans">{t.trans}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 {/* Age Range */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Idade</h4>
+                  <h4 className="font-medium text-sm">{t.age}</h4>
                   <DualSlider
                     value={
                       (pendingFilters.age as number[] | undefined) ?? [18, 60]
@@ -271,7 +335,7 @@ export function CompanionFilters({
 
                 {/* Height Range */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Altura (cm)</h4>
+                  <h4 className="font-medium text-sm">{t.height}</h4>
                   <DualSlider
                     value={
                       (pendingFilters.height as number[] | undefined) ?? [
@@ -300,7 +364,7 @@ export function CompanionFilters({
 
                 {/* Weight Range */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Peso (kg)</h4>
+                  <h4 className="font-medium text-sm">{t.weight}</h4>
                   <DualSlider
                     value={
                       (pendingFilters.weight as number[] | undefined) ?? [
@@ -328,7 +392,7 @@ export function CompanionFilters({
                 </div>
                 {/* Characteristics */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Características</h4>
+                  <h4 className="font-medium text-sm">{t.features}</h4>
                   <div className="flex flex-wrap gap-2">
                     {["Silicone", "Tattoos", "Smoker"].map((char) => (
                       <Badge
@@ -352,7 +416,7 @@ export function CompanionFilters({
                           )
                         }
                       >
-                        {char}
+                        {CARACTERISTICAS[char][locale]}
                       </Badge>
                     ))}
                   </div>
@@ -360,7 +424,7 @@ export function CompanionFilters({
 
                 {/* Hair Color */}
                 <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Cor do Cabelo</h4>
+                  <h4 className="font-medium text-sm">{t.hair}</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       "Preto",
@@ -394,7 +458,7 @@ export function CompanionFilters({
                             )
                           }
                         >
-                          {color}
+                          {locale === "en" ? CORES_EN[color] : color}
                         </Badge>
                       );
                     })}
@@ -404,7 +468,7 @@ export function CompanionFilters({
             </ScrollArea>
             <div className="p-6 border-t">
               <Button onClick={applyFilters} className="w-full">
-                Show results
+                {t.show}
               </Button>
             </div>
           </DialogContent>
