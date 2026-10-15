@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import type { PausedCompanion } from '@/db/queries/paused';
 import { sendCompanionToReview, setCompanionPausedAsAdmin } from '@/db/queries/companions';
+import { ImportedShareButtons } from '@/components/imported-share-buttons';
 
 /**
  * Separador "Em pausa" do /verify.
@@ -29,7 +30,7 @@ export function PausedCompanions({ companions }: { companions: PausedCompanion[]
     <div className="space-y-8">
       <Secao
         titulo="Importadas por publicar"
-        nota="Criadas a partir das candidatas e ainda escondidas. Veja o perfil e ponha-o no ar quando estiver bem."
+        nota="Criadas a partir das candidatas e ainda escondidas. Pôr no ar regista que ela autorizou por WhatsApp."
         lista={importadas}
         geridaPeloAdmin
       />
@@ -92,7 +93,8 @@ function Linha({ companion: c, geridaPeloAdmin }: { companion: PausedCompanion; 
     });
 
   return (
-    <li className="flex items-center gap-3 rounded-lg border p-3">
+    <li className="space-y-3 rounded-lg border p-3">
+      <div className="flex items-center gap-3">
       {c.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- miniatura simples
         <img src={c.coverUrl} alt="" className="h-16 w-12 shrink-0 rounded object-cover" />
@@ -132,11 +134,14 @@ function Linha({ companion: c, geridaPeloAdmin }: { companion: PausedCompanion; 
               disabled={isPending}
               onClick={() => correr(() => setCompanionPausedAsAdmin(c.id, false), 'Perfil no ar')}
             >
-              Pôr no ar
+              {/* Regista que ela autorizou por WhatsApp, se ainda não houver registo. */}
+              Pôr no ar · autorizou por WhatsApp
             </Button>
           </>
         )}
       </div>
+      </div>
+      {c.previewPath && <ImportedShareButtons companionId={c.id} previewPath={c.previewPath} />}
     </li>
   );
 }

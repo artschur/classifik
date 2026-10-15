@@ -10,6 +10,7 @@ import {
   setCompanionPausedAsAdmin,
   setSugarOfDay,
 } from '@/db/queries/companions';
+import { ImportedShareButtons } from '@/components/imported-share-buttons';
 
 /**
  * Controlos de admin na página do próprio perfil. Antes disto, tirar um
@@ -22,7 +23,10 @@ export function AdminProfileControls({
   verified,
   vipActive,
   isSugarOfDay,
+  previewPath = null,
 }: {
+  /** Só em perfis criados pelo admin ainda sem conta dela: links para lhe enviar. */
+  previewPath?: string | null;
   companionId: number;
   name: string;
   paused: boolean;
@@ -203,6 +207,16 @@ export function AdminProfileControls({
           </Button>
         )}
       </div>
+
+      {previewPath && (
+        <div className="mt-3 space-y-1">
+          <p className="text-sm text-muted-foreground">
+            Perfil criado pela equipa, ainda sem conta dela. Envie-lhe a pré-visualização e o convite para o
+            registo. Reactivar o anúncio regista que ela autorizou por WhatsApp.
+          </p>
+          <ImportedShareButtons companionId={companionId} previewPath={previewPath} />
+        </div>
+      )}
 
       {isDoDia && (
         <p className="mt-2 text-sm text-rose-700 dark:text-rose-300">

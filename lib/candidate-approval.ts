@@ -14,24 +14,48 @@ export const CORES_CABELO = ['Loiro', 'Castanho', 'Preto', 'Vermelho', 'Cinza', 
 export const IDIOMAS = ['Português', 'Inglês', 'Espanhol', 'Francês', 'Alemão', 'Italiano'] as const;
 export const CANAIS_CONSENTIMENTO = ['whatsapp', 'chamada', 'sms', 'email', 'outro'] as const;
 
+/** +351 seguido dos 9 dígitos de um telemóvel português, ou null. */
+export function telefonePT(valor: string | null | undefined): string | null {
+  let d = String(valor ?? '').replace(/\D/g, '');
+  if (d.length === 9) d = `351${d}`;
+  return d.length === 12 && d.startsWith('3519') ? `+${d}` : null;
+}
+
+// Campos opcionais: vazio no formulário quer dizer "não preenchido", não 0.
+const vazio = (v: unknown) => (v === '' || v === null || v === undefined ? undefined : v);
+const numeroOpcional = (min: number, max: number, mensagem: string) =>
+  z.preprocess(vazio, z.coerce.number().min(min, mensagem).max(max, mensagem).optional());
+const opcaoOpcional = <T extends readonly [string, ...string[]]>(valores: T) =>
+  z.preprocess(vazio, z.enum(valores).optional());
+
+/**
+ * Só o essencial é obrigatório: descrição, fotos e WhatsApp. O nome, se ficar
+ * vazio, passa a ser o título do anúncio; a idade e o distrito, se ficarem
+ * vazios, vêm do que já se sabe da candidata. O resto pode faltar até ela
+ * completar o registo.
+ */
 export const approvalSchema = z.object({
-  name: z.string().trim().min(2, 'Nome obrigatório').max(100),
-  age: z.coerce.number().int().min(18, 'Tem de ter 18 anos ou mais').max(99),
-  cityId: z.coerce.number().int().positive('Escolha o distrito'),
-  price: z.coerce.number().int().min(1, 'Preço obrigatório').max(10000),
-  ethnicity: z.enum(ETNIAS, { message: 'Escolha a etnia' }),
-  hairColor: z.enum(CORES_CABELO, { message: 'Escolha a cor do cabelo' }),
-  eyeColor: z.enum(CORES_OLHOS).nullable(),
-  height: z.coerce.number().min(1.3, 'Altura entre 1,30 e 2,20 m').max(2.2, 'Altura entre 1,30 e 2,20 m'),
-  weight: z.coerce.number().min(35, 'Peso entre 35 e 200 kg').max(200, 'Peso entre 35 e 200 kg'),
-  languages: z.array(z.enum(IDIOMAS)).min(1, 'Escolha pelo menos um idioma'),
+  name: z.string().trim().max(100).optional().default(''),
+  phone: z.string().trim().refine((v) => telefonePT(v) !== null, 'WhatsApp inválido: use um telemóvel português'),
+  description: z.string().trim().min(10, 'A descrição é obrigatória').max(5000),
+  photos: z.array(z.string().min(1)).min(1, 'Escolha pelo menos uma foto'),
+  age: z.preprocess(vazio, z.coerce.number().int().min(18, 'Tem de ter 18 anos ou mais').max(99).optional()),
+  cityId: z.preprocess(vazio, z.coerce.number().int().positive().optional()),
+  price: z.preprocess(vazio, z.coerce.number().int().min(1, 'Preço inválido').max(10000).optional()),
+  ethnicity: opcaoOpcional(ETNIAS),
+  hairColor: opcaoOpcional(CORES_CABELO),
+  eyeColor: opcaoOpcional(CORES_OLHOS),
+  height: z.preprocess(
+    (v) => vazio(typeof v === 'string' ? v.replace(',', '.') : v),
+    z.coerce.number().min(1.3, 'Altura entre 1,30 e 2,20 m').max(2.2, 'Altura entre 1,30 e 2,20 m').optional(),
+  ),
+  weight: numeroOpcional(35, 200, 'Peso entre 35 e 200 kg'),
+  languages: z.array(z.enum(IDIOMAS)).default([]),
   shortDescription: z.string().trim().max(150).optional().default(''),
-  description: z.string().trim().min(10, 'Descrição obrigatória').max(5000),
   meetsAtHotel: z.boolean().default(false),
   meetsAtOwnPlace: z.boolean().default(false),
-  photos: z.array(z.string().min(1)).min(1, 'Escolha pelo menos uma foto'),
-  // Criado escondido: o admin vê o perfil como vai ficar e só o põe no ar
-  // quando reactivar no separador "Em pausa" do /verify.
+  // Em pausa não precisa de consentimento: só ela vê, pelo link de
+  // pré-visualização. Pôr no ar já precisa.
   publishPaused: z.boolean().default(true),
 });
 
@@ -43,6 +67,7 @@ export type ApprovalInput = z.infer<typeof approvalSchema>;
  */
 export const draftSchema = z.object({
   name: z.string().trim().max(100).optional(),
+  phone: z.string().trim().max(20).optional(),
   age: z.string().max(3).optional(),
   cityId: z.string().max(6).optional(),
   price: z.string().max(6).optional(),

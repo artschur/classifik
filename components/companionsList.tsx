@@ -310,7 +310,12 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
-          <span className="text-lg font-bold">€ {companion.price.toFixed(2)}</span>
+          {/* Perfis criados pelo admin podem ainda não ter preço. */}
+          <span className="text-lg font-bold">
+            {companion.price != null
+              ? `€ ${companion.price.toFixed(2)}`
+              : en ? 'Price on request' : 'Preço sob consulta'}
+          </span>
         </CardFooter>
       </Card>
     </LocaleLink>

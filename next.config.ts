@@ -61,18 +61,27 @@ const nextConfig: NextConfig = {
   // ── Cache headers ────────────────────────────────────────────────────────
   async headers() {
     return [
-      {
-        // Chunks JS e CSS gerados pelo Next.js build — nomes com hash imutável.
-        // Safe para cache de 1 ano + immutable: o nome do ficheiro muda a cada
-        // build, tornando impossível servir versão antiga ao utilizador.
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
+      // Chunks JS e CSS gerados pelo Next.js build — nomes com hash imutável.
+      // Safe para cache de 1 ano + immutable: o nome do ficheiro muda a cada
+      // build, tornando impossível servir versão antiga ao utilizador.
+      //
+      // Só em produção. Em desenvolvimento o Turbopack reutiliza o mesmo nome
+      // de ficheiro entre compilações, e com "immutable" o navegador nunca o
+      // voltava a pedir: corria código antigo mesmo depois de apagar a cache
+      // do Next e reiniciar o servidor.
+      ...(process.env.NODE_ENV === 'production'
+        ? [
+            {
+              source: '/_next/static/:path*',
+              headers: [
+                {
+                  key: 'Cache-Control',
+                  value: 'public, max-age=31536000, immutable',
+                },
+              ],
+            },
+          ]
+        : []),
       {
         // Imagens, fontes e ficheiros estáticos em /public.
         // Cache de 1h conforme solicitado: perfis têm fotos actualizáveis.

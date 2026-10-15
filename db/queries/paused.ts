@@ -6,6 +6,7 @@ import { db } from '..';
 import { citiesTable, companionsTable, imagesTable } from '../schema';
 import { isAdmin } from '@/components/header';
 import { isImportedAuthId } from '@/lib/imported-profiles';
+import { previewToken } from '@/lib/preview-token';
 
 export type PausedCompanion = {
   id: number;
@@ -16,6 +17,8 @@ export type PausedCompanion = {
   identityVerified: boolean;
   /** Perfil importado ainda sem conta dela: quem decide pô-lo no ar é o admin. */
   imported: boolean;
+  /** Só nos importados: link que abre o perfil mesmo em pausa. */
+  previewPath: string | null;
 };
 
 /**
@@ -49,5 +52,12 @@ export async function getPausedCompanions(): Promise<PausedCompanion[]> {
     .where(and(eq(companionsTable.verified, true), eq(companionsTable.paused, true)))
     .orderBy(desc(companionsTable.updated_at), asc(companionsTable.id));
 
-  return rows.map(({ authId, ...row }) => ({ ...row, imported: isImportedAuthId(authId) }));
+  return rows.map(({ authId, ...row }) => {
+    const imported = isImportedAuthId(authId);
+    return {
+      ...row,
+      imported,
+      previewPath: imported ? `/companions/${row.id}?ver=${previewToken(row.id)}` : null,
+    };
+  });
 }

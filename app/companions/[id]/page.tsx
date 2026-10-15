@@ -18,6 +18,7 @@ import { distritoPorSlug, inDistrict } from '@/lib/districts';
 import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, absoluteUrl, pageAlternates } from '@/lib/i18n';
 import type { Metadata } from 'next';
+import { isValidPreviewToken } from '@/lib/preview-token';
 
 export async function generateMetadata({
   params,
@@ -78,12 +79,17 @@ export async function generateMetadata({
         companionId === 254
           ? `Sophia | Erotic Massage Specialist${onde}`
           : `${nome}, escort${onde}`;
-      description = `${nome}, verified escort${onde}, Portugal. See her photos and details and contact her directly on OneSugar, with full discretion.`;
+      description = `${nome}, escort${onde}, Portugal. See her photos and details and contact her directly on OneSugar, with full discretion.`;
     }
+
+    // Em pausa ou por aprovar: só abre para o admin ou pelo link de
+    // pré-visualização, e não pode ir parar ao Google se o link circular.
+    const escondido = companion.paused || !companion.verified;
 
     return {
       title,
       description,
+      ...(escondido ? { robots: { index: false, follow: false } } : {}),
       alternates: pageAlternates(path, locale),
       openGraph: {
         title: `${title} | OneSugar`,
@@ -101,11 +107,15 @@ export async function generateMetadata({
 
 export default async function CompanionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ ver?: string }>;
 }) {
-  const { id } = await params;
+  const [{ id }, { ver }] = await Promise.all([params, searchParams]);
   const companionId = parseInt(id);
+  // Link de pré-visualização enviado pelo admin a quem ainda não autorizou.
+  const preview = isValidPreviewToken(companionId, ver);
 
   // Check if user is blocked
   const { userId } = await auth();
@@ -132,7 +142,7 @@ export default async function CompanionPage({
     <div className="flex flex-col gap-4">
       <PageViewTracker companionId={companionId} />
       <Suspense fallback={<CompanionSkeleton />}>
-        <CompanionProfile id={companionId} reviewsRating={reviewsRating} />
+        <CompanionProfile id={companionId} reviewsRating={reviewsRating} preview={preview} />
       </Suspense>
       <Suspense fallback={<ReviewsSkeleton />}>
         <CompanionReviews id={companionId} initialReviews={reviews} />

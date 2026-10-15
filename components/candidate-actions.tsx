@@ -105,13 +105,8 @@ export function CandidateActions({ candidate: c, cities }: { candidate: Candidat
             Registar consentimento
           </Button>
         )}
-        <Button
-          size="sm"
-          disabled={isPending || !autorizou}
-          title={autorizou ? undefined : 'Primeiro registe o consentimento dela'}
-          onClick={() => setAberto('aprovar')}
-        >
-          Aprovar e publicar
+        <Button size="sm" disabled={isPending} onClick={() => setAberto('aprovar')}>
+          Publicar
         </Button>
         <Button variant="destructive" size="sm" disabled={isPending} onClick={() => setAberto('recusar')}>
           Recusar
@@ -135,11 +130,12 @@ export function CandidateActions({ candidate: c, cities }: { candidate: Candidat
           isPending={isPending}
           onFechar={() => setAberto(null)}
           onGuardar={(dados) => correr(() => saveCandidateDraft(c.id, dados), 'Rascunho guardado')}
+          podePorNoAr={autorizou}
           onPublicar={(dados) =>
             correr(
               () => approveCandidate(c.id, dados),
               (dados as { publishPaused?: boolean }).publishPaused
-                ? 'Perfil criado em pausa: está no separador "Em pausa"'
+                ? 'Perfil criado em pausa: está em "Publicadas", com o link para lhe enviar'
                 : 'Perfil publicado',
             )
           }
@@ -172,7 +168,7 @@ export function CandidateActions({ candidate: c, cities }: { candidate: Candidat
   );
 }
 
-function ConsentDialog({
+export function ConsentDialog({
   aberto,
   onFechar,
   onConfirmar,
@@ -235,6 +231,8 @@ type ProfileProps = {
   candidate: Candidate;
   cities: City[];
   isPending: boolean;
+  /** Consentimento já registado: o botão "no ar" não precisa de o confirmar. */
+  podePorNoAr: boolean;
   onFechar: () => void;
   onGuardar: (dados: unknown) => void;
   onPublicar: (dados: unknown) => void;
@@ -262,6 +260,7 @@ function ProfileForm({
   candidate: c,
   cities,
   isPending,
+  podePorNoAr,
   onFechar,
   onGuardar,
   onPublicar,
@@ -273,6 +272,7 @@ function ProfileForm({
 
   const [form, setForm] = useState({
     name: r.name ?? '',
+    phone: r.phone ?? c.telefone,
     age: r.age ?? p.age?.toString() ?? '',
     cityId: r.cityId ?? p.cityId?.toString() ?? '',
     price: r.price ?? '',
@@ -288,7 +288,6 @@ function ProfileForm({
     meetsAtOwnPlace: r.meetsAtOwnPlace ?? false,
     // Ordem escolhida: a primeira é a capa. Sem rascunho, todas pela ordem do anúncio.
     photos: (r.photos?.filter((path) => urlDe.has(path)) ?? todas) as string[],
-    publishPaused: true,
   });
   const [erro, setErro] = useState<string | null>(null);
 
@@ -304,17 +303,12 @@ function ProfileForm({
   };
   const deFora = todas.filter((path) => !form.photos.includes(path));
 
-  const guardar = () => {
-    const { publishPaused: _ignorado, ...rascunho } = form;
-    onGuardar(rascunho);
-  };
+  const guardar = () => onGuardar(form);
 
-  const publicar = () => {
-    const parsed = approvalSchema.safeParse({
-      ...form,
-      height: form.height.replace(',', '.'),
-      eyeColor: form.eyeColor || null,
-    });
+  // Só se valida o obrigatório (descrição, fotos, WhatsApp) e o que estiver
+  // preenchido; o que ficar vazio fica por completar.
+  const publicar = (emPausa: boolean) => {
+    const parsed = approvalSchema.safeParse({ ...form, publishPaused: emPausa });
     if (!parsed.success) {
       setErro(parsed.error.issues[0]?.message ?? 'Verifique os campos');
       return;
@@ -326,18 +320,24 @@ function ProfileForm({
   return (
     <>
         <DialogHeader>
-          <DialogTitle>{modo === 'aprovar' ? 'Aprovar e publicar' : 'Editar perfil'}</DialogTitle>
+          <DialogTitle>{modo === 'aprovar' ? 'Publicar perfil' : 'Editar perfil'}</DialogTitle>
           <DialogDescription>
-            {modo === 'aprovar'
-              ? 'O perfil fica sem o selo "Verificada", que só chega com o documento.'
-              : 'Guarde as alterações sem publicar. Ficam à espera da aprovação.'}
+            Obrigatórios: descrição, fotos e WhatsApp (*). O resto pode ficar vazio até ela completar o
+            registo. O perfil fica sem o selo &quot;Verificada&quot;, que só chega com o documento.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Campo label="Nome a mostrar" className="sm:col-span-2">
-            <Input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ex.: Sofia" />
-            <p className="text-xs text-muted-foreground">Título do anúncio: {c.nomeAnuncio}</p>
+          <Campo label="Nome a mostrar">
+            <Input
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder={c.nomeAnuncio.slice(0, 60)}
+            />
+            <p className="text-xs text-muted-foreground">Se ficar vazio, usa o título do anúncio.</p>
+          </Campo>
+          <Campo label="WhatsApp *">
+            <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+351 9…" />
           </Campo>
           <Campo label="Idade">
             <Input type="number" min={18} value={form.age} onChange={(e) => set('age', e.target.value)} />
@@ -398,7 +398,7 @@ function ProfileForm({
               onChange={(e) => set('shortDescription', e.target.value)}
             />
           </Campo>
-          <Campo label="Descrição" className="sm:col-span-2">
+          <Campo label="Descrição *" className="sm:col-span-2">
             <Textarea rows={5} value={form.description} onChange={(e) => set('description', e.target.value)} />
           </Campo>
           <div className="flex flex-wrap gap-6 sm:col-span-2">
@@ -412,7 +412,7 @@ function ProfileForm({
             </label>
           </div>
 
-          <Campo label={`Fotos no perfil (${form.photos.length})`} className="sm:col-span-2">
+          <Campo label={`Fotos no perfil * (${form.photos.length})`} className="sm:col-span-2">
             <p className="text-xs text-muted-foreground">
               A primeira é a capa. Use as setas para mudar a ordem; toque numa foto para a tirar.
             </p>
@@ -473,20 +473,12 @@ function ProfileForm({
           </Campo>
 
           {modo === 'aprovar' && (
-            <label className="flex items-start gap-2 rounded-md border p-3 text-sm sm:col-span-2">
-              <Checkbox
-                checked={form.publishPaused}
-                onCheckedChange={(v) => set('publishPaused', v === true)}
-                className="mt-0.5"
-              />
-              <span>
-                <span className="font-medium">Publicar em pausa</span>
-                <span className="block text-xs text-muted-foreground">
-                  O perfil é criado escondido. Veja-o no site como admin e ponha-o no ar no separador
-                  &quot;Em pausa&quot;.
-                </span>
-              </span>
-            </label>
+            <p className="rounded-md border p-3 text-xs text-muted-foreground sm:col-span-2">
+              <span className="font-medium text-foreground">Em pausa</span>: ninguém o encontra no site;
+              depois de publicar tem o link de pré-visualização e o convite para lhe enviar.{' '}
+              <span className="font-medium text-foreground">No ar</span>: visível para todos. Ao publicar
+              assim, confirma que ela autorizou por WhatsApp, e isso fica registado com a data e o seu nome.
+            </p>
           )}
         </div>
 
@@ -500,9 +492,16 @@ function ProfileForm({
             Guardar
           </Button>
           {modo === 'aprovar' && (
-            <Button onClick={publicar} disabled={isPending}>
-              {isPending ? 'A publicar…' : form.publishPaused ? 'Criar em pausa' : 'Publicar já'}
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => publicar(true)} disabled={isPending}>
+                {isPending ? 'A publicar…' : 'Publicar em pausa'}
+              </Button>
+              {/* O texto do botão é a confirmação: carregar regista que ela
+                  autorizou por WhatsApp, se ainda não houver registo. */}
+              <Button onClick={() => publicar(false)} disabled={isPending}>
+                {podePorNoAr ? 'Publicar no ar' : 'Publicar no ar · autorizou por WhatsApp'}
+              </Button>
+            </>
           )}
         </DialogFooter>
     </>

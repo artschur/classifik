@@ -18,19 +18,28 @@ import { CandidateCard } from '@/components/candidate-card';
 import { getAvailableCities } from '@/db/queries';
 import { getPausedCompanions } from '@/db/queries/paused';
 import { PausedCompanions } from '@/components/paused-companions';
+import { getPublishedImported } from '@/db/queries/candidates';
+import { PublishedImportedList } from '@/components/published-imported';
 
 /** Candidatas a anunciante à espera de contacto, ainda sem perfil na OneSugar. */
 async function FetchCandidates() {
-  const [candidates, cidades] = await Promise.all([getCandidates(), getAvailableCities()]);
+  const [candidates, cidades, publicadas] = await Promise.all([
+    getCandidates(),
+    getAvailableCities(),
+    getPublishedImported(),
+  ]);
   const cities = cidades
     .map((c) => ({ id: c.id, city: c.city }))
     .sort((a, b) => a.city.localeCompare(b.city, 'pt'));
 
   if (candidates.length === 0) {
     return (
-      <p className="text-lg text-center text-gray-500">
-        Não há candidatas importadas por rever.
-      </p>
+      <div className="w-full space-y-8">
+        <PublishedImportedList perfis={publicadas} />
+        <p className="text-lg text-center text-gray-500">
+          Não há candidatas importadas por rever.
+        </p>
+      </div>
     );
   }
 
@@ -46,6 +55,7 @@ async function FetchCandidates() {
 
   return (
     <div className="w-full space-y-8">
+      <PublishedImportedList perfis={publicadas} />
       <nav aria-label="Distritos" className="flex flex-wrap gap-2">
         {[...porDistrito].map(([slug, { nome, lista }]) => (
           <a
@@ -122,13 +132,17 @@ export default async function VerifyCompanionPage() {
         <AlertDialog>
           <ShieldAlert className="h-4 w-4" />
           <AlertDialogTitle>Requisitos de Verificação</AlertDialogTitle>
-          <AlertDialogDescription>
-            <ul className="list-disc pl-5 mt-1 space-y-1">
-              <li>Verifique se o vídeo de verificação mostra claramente o rosto do sugar</li>
-              <li>Verifique se eles seguram um papel com a data e "onesugar" escrito nele</li>
-              <li>Garanta que o documento de identificação corresponde às informações do perfil</li>
-              <li>Todos os sugars devem ter 18+ anos para serem verificados</li>
-            </ul>
+          {/* asChild com div: a descrição é um <p>, e uma lista dentro de um
+              parágrafo é HTML inválido (dava erro de hidratação). */}
+          <AlertDialogDescription asChild>
+            <div>
+              <ul className="list-disc pl-5 mt-1 space-y-1">
+                <li>Verifique se o vídeo de verificação mostra claramente o rosto do sugar</li>
+                <li>Verifique se eles seguram um papel com a data e "onesugar" escrito nele</li>
+                <li>Garanta que o documento de identificação corresponde às informações do perfil</li>
+                <li>Todos os sugars devem ter 18+ anos para serem verificados</li>
+              </ul>
+            </div>
           </AlertDialogDescription>
         </AlertDialog>
       </div>

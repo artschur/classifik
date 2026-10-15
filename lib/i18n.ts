@@ -31,6 +31,9 @@ const EN_ROUTES: RegExp[] = [
   /^\/sobre$/,
   /^\/ajuda-anunciantes$/,
   /^\/quanto-ganha-acompanhante$/,
+  // Convite para reclamar um perfil: trocar de idioma tem de manter o mesmo
+  // convite, senão a candidata perdia o link e ia parar à home.
+  /^\/convite\/[A-Za-z0-9_-]+$/,
 ];
 
 /** A página tem versão em inglês? Recebe o caminho sem /en e sem query. */

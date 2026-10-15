@@ -13,6 +13,7 @@ import { X, Heart, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useEngagement } from '@/hooks/use-engagement';
+import { useFocusedFlow } from '@/hooks/use-focused-flow';
 import { useLocale } from '@/components/locale-provider';
 import { LocaleLink } from '@/components/locale-link';
 
@@ -62,6 +63,10 @@ export function TwoStepModal() {
   const { isSignedIn, isLoaded } = useAuth();
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<1 | 2>(1);
+  // No convite não há conteúdo adulto e a candidata vem só ligar a conta; na
+  // pré-visualização do perfil fica a verificação de idade, mas não a
+  // pergunta Sugar/Cliente, que a tirava do caminho.
+  const { convite, preview } = useFocusedFlow();
 
   // A escolha Sugar/Cliente espera que a pessoa mostre interesse. A
   // verificação de idade não espera por nada: é obrigação legal e tem de vir
@@ -69,7 +74,7 @@ export function TwoStepModal() {
   const engaged = useEngagement({ afterMs: 8000, afterScrollPx: 300 });
 
   React.useEffect(() => {
-    if (!isLoaded || isSignedIn) {
+    if (!isLoaded || isSignedIn || convite) {
       return;
     }
 
@@ -90,11 +95,11 @@ export function TwoStepModal() {
     // A escolha Sugar/Cliente é mostrada uma vez só, e só depois de a pessoa
     // ter começado a explorar. Antes reabria a cada carregamento de página e
     // saltava à frente antes de se ver seja o que for.
-    if (engaged && localStorage.getItem(LEAD_CHOICE_KEY) !== "true") {
+    if (engaged && !preview && localStorage.getItem(LEAD_CHOICE_KEY) !== "true") {
       setStep(2);
       setOpen(true);
     }
-  }, [isSignedIn, isLoaded, engaged]); // Re-run when auth state changes
+  }, [isSignedIn, isLoaded, engaged, convite, preview]); // Re-run when auth state changes
 
   // Marca no momento em que a escolha chega ao ecrã, e não apenas quando é
   // clicada, para que fechar no X ou recarregar a página também não a repita.
@@ -110,9 +115,9 @@ export function TwoStepModal() {
   const handleAgeConfirm = () => {
     localStorage.setItem('age-verified', 'true');
 
-    // Quem já tinha visto a escolha antes não a leva outra vez: confirmada a
-    // idade, o modal fecha.
-    if (localStorage.getItem(LEAD_CHOICE_KEY) === 'true') {
+    // Quem já tinha visto a escolha antes não a leva outra vez, e na
+    // pré-visualização nunca a leva: confirmada a idade, o modal fecha.
+    if (preview || localStorage.getItem(LEAD_CHOICE_KEY) === 'true') {
       setOpen(false);
       return;
     }

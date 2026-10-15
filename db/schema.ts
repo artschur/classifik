@@ -109,7 +109,7 @@ export const companionsTable = pgTable(
     phone: varchar('phone', { length: 20 }).notNull(),
     shortDescription: varchar('short_description', { length: 150 }),
     description: text('description').notNull(),
-    price: integer('price').notNull(),
+    price: integer('price'), // opcional: perfis criados pelo admin podem não ter (drizzle/0037)
     age: integer('age').notNull(),
     gender: varchar('gender', { length: 50 }).notNull(),
     gender_identity: varchar('gender_identity', { length: 100 }),
@@ -185,11 +185,11 @@ export const characteristicsTable = pgTable(
     companion_id: integer('companion_id')
       .references(() => companionsTable.id, { onDelete: 'cascade' })
       .notNull(),
-    weight: decimal('weight', { precision: 5, scale: 2 }).notNull(),
-    height: decimal('height', { precision: 3, scale: 2 }).notNull(),
-    ethnicity: varchar('ethnicity', { length: 50 }).notNull(),
+    weight: decimal('weight', { precision: 5, scale: 2 }),
+    height: decimal('height', { precision: 3, scale: 2 }),
+    ethnicity: varchar('ethnicity', { length: 50 }),
     eye_color: varchar('eye_color', { length: 30 }),
-    hair_color: varchar('hair_color', { length: 30 }).notNull(),
+    hair_color: varchar('hair_color', { length: 30 }),
     hair_length: varchar('hair_length', { length: 30 }),
     shoe_size: integer('shoe_size'),
     silicone: boolean('silicone').default(false),

@@ -22,7 +22,7 @@ export interface Media {
 }
 
 export type CompanionPreview = Pick<Companion, "id" | "name" | "age"> & {
-  price: number | string;
+  price: number | string | null;
   city: string;
   images: (string | Media)[];
   planType?: string | null;
@@ -32,13 +32,13 @@ export type CompanionFiltered = Pick<
   Companion,
   "id" | "name" | "shortDescription" | "price" | "age" | "verified"
 > & {
-  weight: string;
-  height: string;
+  weight: string | null;
+  height: string | null;
   eyeColor?: string | null;
-  hairColor: string;
+  hairColor: string | null;
   silicone: boolean | null;
   tattoos: boolean | null;
-  ethinicity: string;
+  ethinicity: string | null;
   piercings: boolean | null;
   smoker: boolean | null;
   images: (string | Media)[];

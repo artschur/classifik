@@ -118,7 +118,9 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
                         </div>
                         <div className="mt-2">
                           <span className="text-lg font-bold">
-                            {typeof companion.price === "number" ? `€${companion.price}` : companion.price}
+                            {typeof companion.price === "number"
+                              ? `€${companion.price}`
+                              : companion.price ?? (locale === "en" ? "Price on request" : "Preço sob consulta")}
                           </span>
                         </div>
                       </div>

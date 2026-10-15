@@ -60,7 +60,11 @@ async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
   // This also handles users who arrive directly (e.g. from the "Registar como Sugar" CTA)
   // without going through /onboarding — we auto-mark them as companions.
   const currentHasDocs = sessionClaims?.metadata?.hasUploadedDocs;
-  const hasDocsNow = allVerificationStatus.isVerificationVideoUploaded;
+  // Um perfil já publicado não volta aos passos de verificação: é o caso de
+  // quem reclamou um perfil criado pelo admin, para quem o documento só dá o
+  // selo. Sem isto, a marca passava a false e o proxy prendia-a na
+  // verificação em todas as páginas.
+  const hasDocsNow = allVerificationStatus.isVerificationVideoUploaded || isVerified;
   const needsOnboarding = !sessionClaims?.metadata?.onboardingComplete;
 
   if (currentHasDocs !== hasDocsNow || needsOnboarding) {
@@ -70,7 +74,7 @@ async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
         ...sessionClaims?.metadata,
         onboardingComplete: true,
         isCompanion: true,
-        isRegistrationComplete: sessionClaims?.metadata?.isRegistrationComplete ?? false,
+        isRegistrationComplete: sessionClaims?.metadata?.isRegistrationComplete ?? isVerified,
         hasUploadedDocs: hasDocsNow,
       },
     });

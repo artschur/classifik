@@ -57,6 +57,8 @@ import { PlanType } from "./kv";
 import { signDocumentUrl } from "@/lib/supabase-admin";
 import { approvePendingAudio, discardPendingAudio } from "./audio";
 import { resolveNeighborhoodId } from "./neighborhoods";
+import { isImportedAuthId } from "@/lib/imported-profiles";
+import { registarConsentimentoAoPublicar } from "./consent";
 
 function buildCompanionConditions(
   cityId: number,
@@ -165,11 +167,13 @@ function buildSortConditions(filters?: FilterTypesCompanions): SQL[] {
 
   if (filters?.sort) {
     switch (filters.sort) {
+      // Sem preço (perfis por completar) vão sempre para o fim: por omissão o
+      // Postgres põe os vazios primeiro na ordem descendente.
       case "price-asc":
-        sortConditions.push(asc(companionsTable.price));
+        sortConditions.push(sql`${companionsTable.price} asc nulls last`);
         break;
       case "price-desc":
-        sortConditions.push(desc(companionsTable.price));
+        sortConditions.push(sql`${companionsTable.price} desc nulls last`);
         break;
     }
   }
@@ -968,8 +972,10 @@ export async function getCompanionToEdit(
     gender: row.gender ?? "",
     gender_identity: row.gender_identity ?? "",
     languages: row.languages ?? [],
-    weight: parseInt(row.weight) ?? 60,
-    height: parseFloat(row.height) ?? 1.6,
+    // Perfis criados pelo admin podem não ter estes valores: ficam a zero e
+    // o formulário pede-os quando ela completar o registo.
+    weight: row.weight ? parseInt(row.weight) : 0,
+    height: row.height ? parseFloat(row.height) : 0,
     ethnicity: row.ethnicity ?? "",
     eye_color: row.eye_color ?? "",
     hair_color: row.hair_color ?? "",
@@ -1681,6 +1687,19 @@ export async function setCompanionPausedAsAdmin(
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
     return { success: false, error: "Não autorizado" };
+  }
+
+  // Perfil criado pelo admin e ainda sem conta dela: pôr no ar é o admin a
+  // confirmar que ela autorizou por WhatsApp, e fica registado como tal.
+  if (!paused) {
+    const [alvo] = await db
+      .select({ authId: companionsTable.auth_id })
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companionId))
+      .limit(1);
+    if (alvo && isImportedAuthId(alvo.authId)) {
+      await registarConsentimentoAoPublicar(db, companionId, userId);
+    }
   }
 
   const [companion] = await db

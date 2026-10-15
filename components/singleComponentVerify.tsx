@@ -713,18 +713,18 @@ export default function SingleCompanionVerify({
               </div>
               <div className="flex items-center space-x-2">
                 <Scissors className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{companion.hairColor}</span>
+                <span className="text-sm">{companion.hairColor ?? '—'}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="flex items-center space-x-2">
                 <Ruler className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{companion.height}m</span>
+                <span className="text-sm">{companion.height ? `${companion.height}m` : '—'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Weight className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{companion.weight}kg</span>
+                <span className="text-sm">{companion.weight ? `${companion.weight}kg` : '—'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Eye className="w-4 h-4 text-muted-foreground" />

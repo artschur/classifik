@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEngagement } from '@/hooks/use-engagement';
+import { useFocusedFlow } from '@/hooks/use-focused-flow';
 
 /**
  * A chave antiga era um cookie com o mesmo nome. Usar um nome diferente no
@@ -53,9 +54,12 @@ export function CustomToaster({
   // idade: dois avisos sobrepostos à chegada eram a terceira interrupção
   // seguida, antes de se ver uma única fotografia.
   const engaged = useEngagement({ afterMs: autoShowDelay, afterScrollPx: 600 });
+  // No convite e na pré-visualização do perfil a candidata vem fazer uma
+  // coisa concreta; o aviso promocional levava-a para outra página.
+  const { convite, preview } = useFocusedFlow();
 
   useEffect(() => {
-    if (!isEnabled || !autoShow) return;
+    if (!isEnabled || !autoShow || convite || preview) return;
 
     // Guardado no armazenamento local e sem prazo. Antes era um cookie de 30
     // dias, que voltava a aparecer passado um mês a quem já tinha dito que
@@ -93,6 +97,8 @@ export function CustomToaster({
     isEnabled,
     autoShow,
     engaged,
+    convite,
+    preview,
     title,
     description,
     type,

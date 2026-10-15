@@ -146,7 +146,7 @@ export default function SingleCompanionComponent({
             <CharacteristicItem
               label="Etnia"
               icon={<Globe className="w-5 h-5" />}
-              value={companion.ethnicity}
+              value={companion.ethnicity ?? 'N/A'}
             />
             <CharacteristicItem
               label="Cor dos olhos"
@@ -156,7 +156,7 @@ export default function SingleCompanionComponent({
             <CharacteristicItem
               label="Cor do cabelo"
               icon={<User className="w-5 h-5" />}
-              value={companion.hairColor}
+              value={companion.hairColor ?? 'N/A'}
             />
             <CharacteristicItem
               label="Silicone"

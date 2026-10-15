@@ -52,6 +52,7 @@ import { isAdmin } from '@/components/header';
 import { AdminProfileControls } from './admin-profile-controls';
 import { getCompanionDistrict } from '@/db/queries/companions';
 import { isImportedAuthId } from '@/lib/imported-profiles';
+import { previewToken } from '@/lib/preview-token';
 import { distritoPorSlug, inDistrict, nomeDistrito, type Distrito } from '@/lib/districts';
 import { getLocale } from '@/lib/locale.server';
 import { absoluteUrl, localizeHref, type Locale } from '@/lib/i18n';
@@ -81,6 +82,7 @@ const TEXT = {
     yes: 'Sim',
     no: 'Não',
     perHour: '/hora',
+    priceOnRequest: 'Preço sob consulta',
     languages: 'Idiomas',
   },
   en: {
@@ -105,6 +107,7 @@ const TEXT = {
     yes: 'Yes',
     no: 'No',
     perHour: '/hour',
+    priceOnRequest: 'Price on request',
     languages: 'Languages',
   },
 } as const;
@@ -233,7 +236,10 @@ async function LastSignIn({ clerkId, locale }: { clerkId: string; locale: Locale
 export async function CompanionProfile({
   id,
   reviewsRating,
+  preview = false,
 }: {
+  /** Aberto pelo link de pré-visualização (lib/preview-token). */
+  preview?: boolean;
   id: number;
   reviewsRating: number | 'Sem avaliações';
 }) {
@@ -256,7 +262,7 @@ export async function CompanionProfile({
   // excepção, senão perdia o acesso à página onde estão os próprios
   // controlos e não tinha como reverter o que acabou de fazer.
   const hiddenFromPublic = companion.paused || !companion.verified;
-  if (hiddenFromPublic && !viewerIsAdmin) notFound();
+  if (hiddenFromPublic && !viewerIsAdmin && !preview) notFound();
 
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -321,6 +327,13 @@ export async function CompanionProfile({
           </li>
         </ol>
       </nav>
+      {hiddenFromPublic && (
+        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+          {en
+            ? 'Preview: this profile is not public yet. Only people with this link can see it.'
+            : 'Pré-visualização: este perfil ainda não está público. Só quem tem este link o consegue ver.'}
+        </div>
+      )}
       {viewerIsAdmin && (
         <AdminProfileControls
           companionId={id}
@@ -335,6 +348,9 @@ export async function CompanionProfile({
             new Date(companion.ad_expiration_date) > new Date()
           }
           isSugarOfDay={companion.is_sugar_of_day}
+          previewPath={
+            isImportedAuthId(companion.auth_id) ? `/companions/${id}?ver=${previewToken(id)}` : null
+          }
         />
       )}
       <div className="mb-6">
@@ -400,11 +416,12 @@ export async function CompanionProfile({
                   label={t.height}
                   // O formulário grava a altura em metros (1,70), por isso
                   // mostrá-la como está dava "1.7 cm".
-                  value={`${Math.round(Number(companion.height) * 100)} cm`}
+                  // Perfis criados pelo admin podem ainda não ter altura ou peso.
+                  value={companion.height ? `${Math.round(Number(companion.height) * 100)} cm` : 'N/A'}
                 />
                 <CharacteristicItem
                   label={t.weight}
-                  value={`${companion.weight} kg`}
+                  value={companion.weight ? `${Math.round(Number(companion.weight))} kg` : 'N/A'}
                 />
                 <CharacteristicItem label={t.ethnicity} value={traduzirValor(companion.ethnicity, locale)} />
                 <CharacteristicItem
@@ -503,10 +520,14 @@ export async function CompanionProfile({
               </div>
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <span className="text-2xl font-bold">
-                    € {companion.price}
-                  </span>
-                  <span className="text-muted-foreground">{t.perHour}</span>
+                  {companion.price != null ? (
+                    <>
+                      <span className="text-2xl font-bold">€ {companion.price}</span>
+                      <span className="text-muted-foreground">{t.perHour}</span>
+                    </>
+                  ) : (
+                    <span className="text-xl font-bold">{t.priceOnRequest}</span>
+                  )}
                 </div>
                 <div className="flex space-x-2">
                   <Button size="icon" variant="outline">

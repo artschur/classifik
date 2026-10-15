@@ -25,6 +25,9 @@ const isPublicRoute = createRouteMatcher([
   "/contos/(.*)",
   "/ajuda-anunciantes",
   "/quanto-ganha-acompanhante",
+  // Convite para reclamar um perfil: quem o abre ainda pode não ter conta, e
+  // a página explica antes de pedir para entrar.
+  "/convite/(.*)",
 ]);
 
 // Define public API routes that should bypass auth

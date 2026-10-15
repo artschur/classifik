@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '..';
 import { isAdmin } from '@/components/header';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { previewToken } from '@/lib/preview-token';
 import { buildPrefill, draftSchema, type ApprovalPrefill, type Draft } from '@/lib/candidate-approval';
 
 /**
@@ -53,6 +54,66 @@ const hostDe = (url: string) => {
     return null;
   }
 };
+
+export type PublishedImported = {
+  companionId: number;
+  candidateId: string;
+  name: string;
+  city: string;
+  paused: boolean;
+  identityVerified: boolean;
+  coverUrl: string | null;
+  consentimentoEm: Date | null;
+  conviteExpiraEm: Date | null;
+  /** /companions/<id>?ver=<código>: abre o perfil mesmo em pausa. */
+  previewPath: string;
+};
+
+/**
+ * Perfis já criados a partir das candidatas e ainda sem conta delas, em
+ * pausa ou no ar. É daqui que o admin envia a pré-visualização e o convite.
+ */
+export async function getPublishedImported(): Promise<PublishedImported[]> {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error('Não autorizado');
+  }
+
+  const rows = await db.execute<{
+    companion_id: number;
+    candidate_id: string;
+    name: string;
+    city: string;
+    paused: boolean;
+    identity_verified: boolean;
+    cover_url: string | null;
+    consentimento_em: Date | null;
+    convite_expira_em: Date | null;
+  }>(sql`
+    select p.id as companion_id, c.id as candidate_id, p.name, ci.city, p.paused, p.identity_verified,
+      c.consentimento_em, c.convite_expira_em,
+      (select i.public_url from public.images i
+        where i.companion_id = p.id and i.is_verification_video = false
+        order by i.position, i.id limit 1) as cover_url
+    from staging.candidatos c
+    join public.companions p on p.id = c.companion_id
+    join public.cities ci on ci.id = p.location_id
+    where p.auth_id like 'import\\_%'
+    order by p.paused desc, p.updated_at desc`);
+
+  return Array.from(rows).map((r) => ({
+    companionId: r.companion_id,
+    candidateId: r.candidate_id,
+    name: r.name,
+    city: r.city,
+    paused: r.paused,
+    identityVerified: r.identity_verified,
+    coverUrl: r.cover_url,
+    consentimentoEm: r.consentimento_em,
+    conviteExpiraEm: r.convite_expira_em,
+    previewPath: `/companions/${r.companion_id}?ver=${previewToken(r.companion_id)}`,
+  }));
+}
 
 /** Endereços assinados, mantendo cada um junto do caminho a que pertence. */
 async function fotosAssinadas(paths: string[]) {
