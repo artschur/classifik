@@ -639,11 +639,7 @@ export function RegisterCompanionForm({
       return;
     }
     try {
-      const clerkId = user?.id;
-      if (!clerkId) {
-        throw new Error("User ID not found");
-      }
-      const { pendingReview } = await updateCompanionFromForm(clerkId, data);
+      const { pendingReview } = await updateCompanionFromForm(data);
       await user?.reload();
       toast({
         variant: "success",

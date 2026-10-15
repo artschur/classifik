@@ -1082,9 +1082,16 @@ async function applyCompanionFormValues(
  * versão publicada nenhuma para proteger.
  */
 export async function updateCompanionFromForm(
-  clerkId: string,
   data: RegisterCompanionFormValues,
 ): Promise<{ pendingReview: boolean; }> {
+  // A conta sai da sessão, nunca do pedido: o id da conta aparece no
+  // endereço das fotos públicas, e com ele qualquer pessoa alterava o perfil
+  // de outra (o telefone de um registo por aprovar, por exemplo).
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    throw new Error("Sessão expirada. Entre outra vez.");
+  }
+
   const [companion] = await db
     .select({
       id: companionsTable.id,
