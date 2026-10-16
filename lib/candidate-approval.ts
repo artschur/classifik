@@ -62,6 +62,26 @@ export const approvalSchema = z.object({
 export type ApprovalInput = z.infer<typeof approvalSchema>;
 
 /**
+ * Edição de um perfil importado já criado (ainda sem conta dela). Os mesmos
+ * campos da publicação, mas o nome, a idade e o distrito já existem no perfil
+ * e não podem ficar vazios. As fotos vêm como chaves: "atual:<caminho>" para
+ * as que estão no perfil e "arquivo:<caminho>" para as guardadas à parte.
+ */
+export const importedEditSchema = approvalSchema
+  .omit({ photos: true, publishPaused: true, name: true, age: true, cityId: true })
+  .extend({
+    name: z.string().trim().min(2, 'O nome é obrigatório').max(100),
+    age: z.coerce.number().int().min(18, 'Tem de ter 18 anos ou mais').max(99),
+    cityId: z.coerce.number().int().positive('Escolha o distrito'),
+    photos: z
+      .array(z.string().regex(/^(atual|arquivo):[^\s]+$/))
+      .min(1, 'O perfil precisa de pelo menos uma foto')
+      .max(50),
+  });
+
+export type ImportedEditInput = z.infer<typeof importedEditSchema>;
+
+/**
  * Rascunho guardado sem publicar: os mesmos campos, todos opcionais, e sem as
  * regras de mínimo (um nome ainda por escrever não impede guardar o resto).
  */

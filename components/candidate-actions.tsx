@@ -47,7 +47,7 @@ import {
 type City = { id: number; city: string };
 type Resultado = { success: boolean; error?: string };
 
-const selectClass =
+export const selectClass =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm';
 
 /**
@@ -508,7 +508,7 @@ function ProfileForm({
   );
 }
 
-function Campo({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+export function Campo({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <div className={`space-y-1 ${className ?? ''}`}>
       <Label>{label}</Label>
@@ -517,7 +517,7 @@ function Campo({ label, className, children }: { label: string; className?: stri
   );
 }
 
-function Opcoes({
+export function Opcoes({
   valor,
   opcoes,
   onChange,

@@ -11,6 +11,7 @@ import {
   setSugarOfDay,
 } from '@/db/queries/companions';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
+import { ImportedEditButton } from '@/components/imported-edit-button';
 
 /**
  * Controlos de admin na página do próprio perfil. Antes disto, tirar um
@@ -139,6 +140,9 @@ export function AdminProfileControls({
       </p>
 
       <div className="flex flex-col sm:flex-row gap-2">
+        {/* Só perfis criados pela equipa e ainda sem conta: os outros são
+            editados pela própria anunciante. */}
+        {previewPath && <ImportedEditButton companionId={companionId} />}
         <Button
           variant="outline"
           size="sm"

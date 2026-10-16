@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { PausedCompanion } from '@/db/queries/paused';
 import { sendCompanionToReview, setCompanionPausedAsAdmin } from '@/db/queries/companions';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
+import { ImportedEditButton } from '@/components/imported-edit-button';
 
 /**
  * Separador "Em pausa" do /verify.
@@ -121,6 +122,7 @@ function Linha({ companion: c, geridaPeloAdmin }: { companion: PausedCompanion; 
         </Button>
         {geridaPeloAdmin && (
           <>
+            {c.previewPath && <ImportedEditButton companionId={c.id} />}
             <Button
               variant="outline"
               size="sm"

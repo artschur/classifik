@@ -11,6 +11,7 @@ import { registerCandidateConsent } from '@/app/actions/candidates';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
 import { setCompanionPausedAsAdmin } from '@/db/queries/companions';
 import { ConsentDialog } from '@/components/candidate-actions';
+import { ImportedEditButton } from '@/components/imported-edit-button';
 
 /**
  * Perfis já criados a partir das candidatas, ainda sem conta delas. É daqui
@@ -89,6 +90,7 @@ function Linha({ perfil: p }: { perfil: PublishedImported }) {
             <ExternalLink className="h-4 w-4" /> Ver
           </a>
         </Button>
+        <ImportedEditButton companionId={p.companionId} />
         {!p.consentimentoEm && (
           <Button variant="outline" size="sm" disabled={isPending} onClick={() => setConsentimentoAberto(true)}>
             Registar consentimento
