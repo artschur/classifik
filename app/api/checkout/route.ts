@@ -5,6 +5,7 @@ import { priceIdToPlan } from '@/db/queries/kv';
 import { isUserACompanion } from '@/db/queries/companions';
 import { companionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { isAdmin } from '@/components/header';
 
 export async function GET(req: Request) {
     try {
@@ -24,6 +25,11 @@ export async function GET(req: Request) {
 
         const url = new URL(req.url);
         const priceId = url.searchParams.get('priceId');
+
+        // Compra de teste: só um admin pode pedir o checkout sem o mês grátis,
+        // para ver uma cobrança real e o plano a activar logo. Para qualquer
+        // outra conta o parâmetro é ignorado.
+        const semTrial = url.searchParams.get('semTrial') === '1' && isAdmin(userId);
 
         if (!priceId) {
             return new Response('Missing price ID', { status: 400 });
@@ -62,7 +68,9 @@ export async function GET(req: Request) {
         const checkout = await stripe.checkout.sessions.create({
             customer: stripeCustomerId as string,
             success_url: 'https://onesugar.pt/success',
-            cancel_url: 'https://onesugar.pt/cancelled',
+            // "Voltar" na página da Stripe regressa aos planos. Antes apontava
+            // para /cancelled, uma página que nunca existiu, e dava 404.
+            cancel_url: `${url.origin}/checkout`,
             mode: 'subscription',
             line_items: [
                 {
@@ -70,21 +78,26 @@ export async function GET(req: Request) {
                     quantity: 1,
                 },
             ],
-            subscription_data: {
-                // Um mês. Quem já estiver a meio de um período de dois meses
-                // mantém-no: a Stripe fixa a duração no momento da assinatura.
-                trial_period_days: 30,
-                trial_settings: {
-                    end_behavior: {
-                        missing_payment_method: 'cancel', // Cancel if no payment method at trial end
-                    },
-                },
-            },
+            ...(semTrial
+                ? {}
+                : {
+                      subscription_data: {
+                          // Um mês. Quem já estiver a meio de um período de dois meses
+                          // mantém-no: a Stripe fixa a duração no momento da assinatura.
+                          trial_period_days: 30,
+                          trial_settings: {
+                              end_behavior: {
+                                  missing_payment_method: 'cancel' as const, // Cancel if no payment method at trial end
+                              },
+                          },
+                      },
+                  }),
             payment_method_collection: 'always',
             metadata: {
                 userId: userId,
                 stripeCustomerId: stripeCustomerId as string,
                 planType: planInfo.name,
+                ...(semTrial ? { testeAdminSemTrial: 'sim' } : {}),
             },
             allow_promotion_codes: true,
         });

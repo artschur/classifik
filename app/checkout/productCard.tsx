@@ -17,9 +17,12 @@ const buttonClasses =
 export function ProductCard({
   product,
   hasProfile,
+  adminTest = false,
 }: {
   product: Product;
   hasProfile: boolean;
+  /** Admin com perfil: mostra a compra de teste sem o mês grátis. */
+  adminTest?: boolean;
 }) {
   const handleCheckout = async () => {
     try {
@@ -54,7 +57,7 @@ export function ProductCard({
       <CardContent className="flex flex-col flex-grow justify-end">
         <p className="text-3xl font-bold mt-auto">{product.price}</p>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col gap-2">
         {/* Sem perfil o botão não finge que compra: leva ao registo, que é o
             passo que falta mesmo. */}
         {hasProfile ? (
@@ -65,6 +68,15 @@ export function ProductCard({
           <Link href="/companions/register" className={buttonClasses}>
             Criar perfil primeiro
           </Link>
+        )}
+        {adminTest && (
+          // Vai directo ao checkout: o servidor só tira o mês grátis a admins.
+          <a
+            href={`/api/checkout?priceId=${product.id}&semTrial=1`}
+            className="w-full text-center text-xs text-amber-600 underline underline-offset-2"
+          >
+            Teste admin: comprar sem o mês grátis (cobra já)
+          </a>
         )}
       </CardFooter>
     </Card>

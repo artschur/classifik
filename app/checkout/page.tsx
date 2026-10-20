@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { isUserACompanion } from '@/db/queries/companions';
+import { isAdmin } from '@/components/header';
 import { ProductCard } from './productCard';
 import {
   BASIC_PRICE_ID,
@@ -96,6 +97,8 @@ export default async function CheckoutPage() {
   // acontecer é assinar sem ter anúncio, e isso é travado no botão e nas
   // rotas que iniciam o pagamento.
   const hasProfile = userId ? await isUserACompanion(userId) : false;
+  // Botão de compra de teste sem o mês grátis, só para admin com perfil.
+  const adminTest = Boolean(userId && isAdmin(userId) && hasProfile);
 
   return (
     <div className="container mx-auto py-10">
@@ -136,6 +139,7 @@ export default async function CheckoutPage() {
             key={product.id}
             product={product}
             hasProfile={hasProfile}
+            adminTest={adminTest}
           />
         ))}
       </div>
