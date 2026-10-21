@@ -10,36 +10,12 @@ import { CompanionFilters } from '@/components/companionFilters';
 import { getCompanionsToFilter } from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { PlanType } from '@/db/queries/kv';
+import { LocaleLink } from '@/components/locale-link';
+import { getLocale } from '@/lib/locale.server';
+import { OG_LOCALE, absoluteUrl, pageAlternates, type Locale } from '@/lib/i18n';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface EditorialSection {
-  heading?: string;
-  paragraphs: string[];
-}
-
-interface NearbyLink {
-  city: string;
-  slug: string;
-}
-
-interface CityFAQItem {
-  q: string;
-  a: string;
-}
-
-interface CityData {
-  title: string;
-  description: string;
-  h1: string;
-  intro?: string;
-  editorial?: {
-    mainHeading: string;
-    sections: EditorialSection[];
-    nearbyLinks: NearbyLink[];
-  };
-  faq?: CityFAQItem[];
-}
+import type { CityData } from './types';
+import { cityMetadataEn } from './en';
 
 // ── Content ───────────────────────────────────────────────────────────────────
 // Nota: os títulos NÃO terminam com "| Onesugar".
@@ -1216,6 +1192,15 @@ export function generateStaticParams() {
   return Object.keys(cityMetadata).map((city) => ({ city }));
 }
 
+/**
+ * Texto do distrito no idioma do pedido. Em inglês só existe para os
+ * distritos de EN_DISTRICTS; os outros endereços /en/ já foram
+ * redireccionados para o português pelo proxy.
+ */
+function cityData(cityKey: string, locale: Locale): CityData | undefined {
+  return locale === 'en' ? cityMetadataEn[cityKey] : cityMetadata[cityKey];
+}
+
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
@@ -1223,16 +1208,17 @@ export async function generateMetadata({
 }: {
   params: Promise<{ city: string }>;
 }): Promise<Metadata> {
-  const { city } = await params;
+  const [{ city }, locale] = await Promise.all([params, getLocale()]);
   const cityKey = city.toLowerCase();
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
 
-  const current = cityMetadata[cityKey] ?? {
+  const current = cityData(cityKey, locale) ?? {
     title: `Acompanhantes em ${capitalizedCity} | Perfis Verificados`,
     description: `Encontre as melhores acompanhantes em ${capitalizedCity}. Perfis verificados, total discrição e segurança na Onesugar.`,
     h1: `Acompanhantes em ${capitalizedCity}`,
   };
+  const path = `/location/${cityKey}`;
 
   return {
     title: current.title,
@@ -1247,15 +1233,15 @@ export async function generateMetadata({
         'max-snippet': -1,
       },
     },
-    alternates: {
-      canonical: `https://www.onesugar.pt/location/${cityKey}`,
-    },
+    // canonical próprio por idioma e hreflang PT/EN nos distritos com texto
+    // inglês (EN_DISTRICTS em lib/i18n.ts).
+    alternates: pageAlternates(path, locale),
     openGraph: {
       title: current.title,
       description: current.description,
-      url: `https://www.onesugar.pt/location/${cityKey}`,
+      url: absoluteUrl(path, locale),
       siteName: 'OneSugar',
-      locale: 'pt_PT',
+      locale: OG_LOCALE[locale],
       type: 'website',
     },
   };
@@ -1263,17 +1249,17 @@ export async function generateMetadata({
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function LocationH1({ citySlug }: { citySlug: string }) {
+function LocationH1({ citySlug, locale }: { citySlug: string; locale: Locale }) {
   const cityKey = citySlug.toLowerCase();
   const capitalizedCity =
     citySlug.charAt(0).toUpperCase() + citySlug.slice(1).replaceAll('-', ' ');
   const h1Text =
-    cityMetadata[cityKey]?.h1 ?? `Acompanhantes em ${capitalizedCity}`;
+    cityData(cityKey, locale)?.h1 ?? `Acompanhantes em ${capitalizedCity}`;
   return <h1 className="text-3xl font-bold mb-6">{h1Text}</h1>;
 }
 
-function CityIntro({ citySlug }: { citySlug: string }) {
-  const data = cityMetadata[citySlug.toLowerCase()];
+function CityIntro({ citySlug, locale }: { citySlug: string; locale: Locale }) {
+  const data = cityData(citySlug.toLowerCase(), locale);
   if (!data?.intro) return null;
   return (
     <p className="mb-8 text-sm text-muted-foreground leading-relaxed max-w-3xl">
@@ -1282,14 +1268,16 @@ function CityIntro({ citySlug }: { citySlug: string }) {
   );
 }
 
-function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
-  const data = cityMetadata[citySlug.toLowerCase()];
+function CityEditorialAndFAQ({ citySlug, locale }: { citySlug: string; locale: Locale }) {
+  const data = cityData(citySlug.toLowerCase(), locale);
+  const en = locale === 'en';
   if (!data?.editorial && !data?.faq) return null;
 
   const faqSchema = data.faq
     ? {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
+      inLanguage: en ? 'en' : 'pt-PT',
       mainEntity: data.faq.map((item) => ({
         '@type': 'Question',
         name: item.q,
@@ -1327,20 +1315,22 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
           ))}
           {data.editorial.nearbyLinks.length > 0 && (
             <p className="text-sm text-muted-foreground leading-relaxed mt-4">
-              Se está a explorar outras opções em Portugal, encontra também
-              perfis activos em{' '}
+              {en
+                ? 'If you are travelling around Portugal, you will also find active profiles in '
+                : 'Se está a explorar outras opções em Portugal, encontra também perfis activos em '}
               {data.editorial.nearbyLinks.map((link, idx) => (
                 <span key={link.slug}>
-                  <Link
+                  <LocaleLink
+                    locale={locale}
                     href={`/location/${link.slug}`}
                     className="text-rose-500 hover:underline"
                   >
                     {link.city}
-                  </Link>
+                  </LocaleLink>
                   {idx < data.editorial!.nearbyLinks.length - 2
                     ? ', '
                     : idx === data.editorial!.nearbyLinks.length - 2
-                    ? ' e '
+                    ? en ? ' and ' : ' e '
                     : '.'}
                 </span>
               ))}
@@ -1350,7 +1340,9 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
       )}
       {data.faq && data.faq.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-xl font-bold mb-5">Perguntas frequentes</h2>
+          <h2 className="text-xl font-bold mb-5">
+            {en ? 'Frequently asked questions' : 'Perguntas frequentes'}
+          </h2>
           <div className="space-y-5">
             {data.faq.map((item, idx) => (
               <div key={idx}>
@@ -1380,10 +1372,11 @@ function CityEditorialAndFAQ({ citySlug }: { citySlug: string }) {
 // Retorna a preposição + nome da cidade exactamente como aparece no H1,
 // sem o prefixo "Acompanhantes". Ex.: "na Madeira", "no Porto", "em Lisboa".
 // Usado nos CTAs para evitar "em Madeira" ou "em Guarda" gramaticalmente errados.
-function getCityLabel(citySlug: string): string {
-  const data = cityMetadata[citySlug.toLowerCase()];
+function getCityLabel(citySlug: string, locale: Locale = 'pt'): string {
+  const data = cityData(citySlug.toLowerCase(), locale);
   if (data?.h1) {
-    return data.h1.replace(/^Acompanhantes\s+/i, '').trim();
+    // "Escorts in Lisbon" vira "in Lisbon"; "Acompanhantes no Porto", "no Porto".
+    return data.h1.replace(/^(Acompanhantes|Escorts)\s+/i, '').trim();
   }
   return (
     citySlug.charAt(0).toUpperCase() + citySlug.slice(1).replaceAll('-', ' ')
@@ -1391,8 +1384,36 @@ function getCityLabel(citySlug: string): string {
 }
 
 // CTA Posicao 1 - entre os perfis e o bloco editorial
-function RegistrationCTAInline({ citySlug }: { citySlug: string }) {
-  const cityLabel = getCityLabel(citySlug);
+function RegistrationCTAInline({ citySlug, locale }: { citySlug: string; locale: Locale }) {
+  const cityLabel = getCityLabel(citySlug, locale);
+  if (locale === 'en') {
+    return (
+      <div className="my-10 rounded-2xl border-2 border-dashed border-rose-300 bg-rose-50/10 dark:bg-rose-950/20 dark:border-rose-900/60 px-6 py-5">
+        <p className="font-semibold text-sm mb-1">
+          Do you work as an escort {cityLabel}?
+        </p>
+        <p className="text-xs text-muted-foreground mb-4">
+          Create your profile for free and reach visitors from Portugal and abroad.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <LocaleLink
+            locale={locale}
+            href="/quanto-ganha-acompanhante"
+            className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-5 py-2.5 rounded-full transition-colors"
+          >
+            Create a free profile
+          </LocaleLink>
+          <LocaleLink
+            locale={locale}
+            href="/checkout"
+            className="border border-rose-600 text-rose-500 hover:bg-rose-600 hover:text-white text-xs font-semibold px-5 py-2.5 rounded-full transition-colors"
+          >
+            See plans (in Portuguese)
+          </LocaleLink>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="my-10 rounded-2xl border-2 border-dashed border-rose-300 bg-rose-50/10 dark:bg-rose-950/20 dark:border-rose-900/60 px-6 py-5">
       <p className="font-semibold text-sm mb-1">
@@ -1410,7 +1431,8 @@ function RegistrationCTAInline({ citySlug }: { citySlug: string }) {
           Registar perfil gratuito
         </Link>
         <Link
-          href="/plans"
+          // /plans não existe (dava 404 nos 19 distritos); os planos estão no /checkout.
+          href="/checkout"
           className="border border-rose-600 text-rose-500 hover:bg-rose-600 hover:text-white text-xs font-semibold px-5 py-2.5 rounded-full transition-colors"
         >
           Ver planos
@@ -1421,8 +1443,27 @@ function RegistrationCTAInline({ citySlug }: { citySlug: string }) {
 }
 
 // CTA Posicao 2 - apos o FAQ
-function RegistrationCTABottom({ citySlug }: { citySlug: string }) {
-  const cityLabel = getCityLabel(citySlug);
+function RegistrationCTABottom({ citySlug, locale }: { citySlug: string; locale: Locale }) {
+  const cityLabel = getCityLabel(citySlug, locale);
+  if (locale === 'en') {
+    return (
+      <div className="my-10 rounded-2xl border-2 border-dashed border-rose-500 bg-rose-50/10 dark:bg-rose-950/20 px-6 py-7 text-center">
+        <p className="font-semibold mb-1">
+          Want to advertise {cityLabel}? Join OneSugar.
+        </p>
+        <p className="text-sm text-muted-foreground mb-5">
+          Free listing, reviewed by our team, with paid plans for extra visibility.
+        </p>
+        <LocaleLink
+          locale={locale}
+          href="/quanto-ganha-acompanhante"
+          className="inline-block bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
+        >
+          Sign up as a companion
+        </LocaleLink>
+      </div>
+    );
+  }
   return (
     <div className="my-10 rounded-2xl border-2 border-dashed border-rose-500 bg-rose-50/10 dark:bg-rose-950/20 px-6 py-7 text-center">
       <p className="font-semibold mb-1">
@@ -1490,7 +1531,11 @@ export default async function CompanionsPage({
   params: Promise<{ city: string }>;
   searchParams: Promise<FilterTypesCompanions>;
 }) {
-  const [{ city }, rawParams] = await Promise.all([params, searchParams]);
+  const [{ city }, rawParams, locale] = await Promise.all([
+    params,
+    searchParams,
+    getLocale(),
+  ]);
   // Um número de página que não seja inteiro positivo passa a valer como 1:
   // parseInt('abc') devolve NaN, que ia parar à base de dados como deslocamento.
   const page = Math.max(1, parseInt(rawParams.page ?? '1', 10) || 1);
@@ -1512,25 +1557,25 @@ export default async function CompanionsPage({
 
   return (
     <div className="container mx-auto px-10 py-8">
-      <LocationH1 citySlug={city} />
+      <LocationH1 citySlug={city} locale={locale} />
 
       <div className="mb-4 text-sm text-muted-foreground flex gap-2">
-        Explorar:
-        <Link href="/location/lisboa" className="hover:underline text-rose-500">
-          Lisboa
-        </Link>{' '}
+        {locale === 'en' ? 'Explore:' : 'Explorar:'}
+        <LocaleLink locale={locale} href="/location/lisboa" className="hover:underline text-rose-500">
+          {locale === 'en' ? 'Lisbon' : 'Lisboa'}
+        </LocaleLink>{' '}
         |
-        <Link href="/location/porto" className="hover:underline text-rose-500">
+        <LocaleLink locale={locale} href="/location/porto" className="hover:underline text-rose-500">
           Porto
-        </Link>{' '}
+        </LocaleLink>{' '}
         |
-        <Link href="/location/braga" className="hover:underline text-rose-500">
+        <LocaleLink locale={locale} href="/location/braga" className="hover:underline text-rose-500">
           Braga
-        </Link>
+        </LocaleLink>
       </div>
 
       {/* Posicao 1: Intro - acima do carrossel */}
-      <CityIntro citySlug={city} />
+      <CityIntro citySlug={city} locale={locale} />
 
       <div className="mb-8">
         <HeroCarouselWrapper citySlug={city} plans={[PlanType.VIP]} />
@@ -1550,13 +1595,13 @@ export default async function CompanionsPage({
       </Suspense>
 
       {/* CTA 1 - entre perfis e editorial */}
-      <RegistrationCTAInline citySlug={city} />
+      <RegistrationCTAInline citySlug={city} locale={locale} />
 
       {/* Posicao 2: Editorial + FAQ - abaixo dos perfis */}
-      <CityEditorialAndFAQ citySlug={city} />
+      <CityEditorialAndFAQ citySlug={city} locale={locale} />
 
       {/* CTA 2 - apos FAQ */}
-      <RegistrationCTABottom citySlug={city} />
+      <RegistrationCTABottom citySlug={city} locale={locale} />
     </div>
   );
 }
