@@ -47,7 +47,7 @@ export default async function Footer() {
   const navigationLinks = t.links
 
   return (
-    <footer className="bg-neutral-900 text-neutral-100 py-10 px-6 md:px-12 lg:px-20">
+    <footer className="border-t border-neutral-200 bg-neutral-100 text-neutral-900 py-10 px-6 md:px-12 lg:px-20 dark:border-transparent dark:bg-neutral-900 dark:text-neutral-100">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Left section - About onesugar */}
@@ -58,13 +58,13 @@ export default async function Footer() {
                 width={32}
                 height={32}
                 alt="onesugar logo"
-                className="invert"
+                className="dark:invert"
               />
               <h3 className="text-lg font-normal">
                 {t.about} <span className="font-bold">onesugar</span>
               </h3>
             </div>
-            <div className="text-neutral-400 text-sm leading-relaxed space-y-3">
+            <div className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed space-y-3">
               <p>a sweet hotter than usual</p>
               <p>
                 <strong>{t.name}:</strong> OneSugar
@@ -87,14 +87,14 @@ export default async function Footer() {
                   locale={locale}
                   key={link.href}
                   href={link.href}
-                  className="text-neutral-100 hover:text-white font-medium transition-colors"
+                  className="text-neutral-800 hover:text-rose-600 dark:text-neutral-100 dark:hover:text-white font-medium transition-colors"
                 >
                   {link.label}
                 </LocaleLink>
               ))}
               <Button
                 variant="outline"
-                className="mt-4 border-neutral-600 bg-transparent text-neutral-100 hover:bg-neutral-800 hover:text-white gap-2"
+                className="mt-4 border-neutral-300 bg-transparent text-neutral-900 hover:bg-neutral-200 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-white gap-2"
                 asChild
               >
                 <LocaleLink locale={locale} href="/checkout">

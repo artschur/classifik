@@ -28,6 +28,9 @@ const isPublicRoute = createRouteMatcher([
   // Convite para reclamar um perfil: quem o abre ainda pode não ter conta, e
   // a página explica antes de pedir para entrar.
   "/convite/(.*)",
+  // Nova página principal em construção (noindex), aberta para se poder ver
+  // sem sessão antes de substituir a actual.
+  "/nova-home",
 ]);
 
 // Define public API routes that should bypass auth
