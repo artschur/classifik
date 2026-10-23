@@ -142,7 +142,10 @@ const nextConfig: NextConfig = {
               // Scripts: Next.js chunks (self), inline scripts do ThemeProvider
               // e Schema.org (unsafe-inline), Clerk SDK, GA4, Vercel Analytics.
               // unsafe-eval: necessário para Next.js dev HMR e algumas libs.
-              `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${clerkOrigins} https://*.googletagmanager.com https://va.vercel-scripts.com`,
+              // challenges.cloudflare.com: o CAPTCHA (Cloudflare Turnstile) que o
+              // Clerk usa na protecção contra bots no registo. Sem ele, o widget
+              // é bloqueado e o registo mostra "The CAPTCHA failed to load".
+              `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${clerkOrigins} https://challenges.cloudflare.com https://*.googletagmanager.com https://va.vercel-scripts.com`,
 
               // Estilos: Tailwind injeta <style> tags dinâmicas (unsafe-inline obrigatório)
               "style-src 'self' 'unsafe-inline'",
@@ -163,11 +166,12 @@ const nextConfig: NextConfig = {
               // próprio navegador (aviso "configurações de segurança bloqueando a
               // medição" no diagnóstico da tag). Domínios conforme a documentação
               // do Google para CSP com o GA4.
-              `connect-src 'self' ${clerkOrigins} https://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://vitals.vercel-insights.com`,
+              `connect-src 'self' ${clerkOrigins} https://challenges.cloudflare.com https://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://vitals.vercel-insights.com`,
 
               // Iframes: YouTube embeds + Clerk OAuth (popups de login social
-              // podem abrir iframes de clerk.onesugar.pt)
-              `frame-src https://www.youtube-nocookie.com ${clerkOrigins}`,
+              // podem abrir iframes de clerk.onesugar.pt) + o CAPTCHA Turnstile,
+              // que o Clerk mostra dentro de um iframe de challenges.cloudflare.com.
+              `frame-src https://www.youtube-nocookie.com https://challenges.cloudflare.com ${clerkOrigins}`,
 
               // Media: self + Supabase storage (vídeos de verificação das companions)
               // blob: para ouvir o áudio acabado de gravar, antes de ser enviado.
