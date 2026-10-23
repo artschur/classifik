@@ -7,6 +7,12 @@
  * não muda. Um distrito que não esteja na lista cai no nome da base de dados
  * com "em", sem partir nada.
  */
+/**
+ * "Distrito" da listagem geral (/companions): a lista e os filtros dos
+ * distritos, sem limitar a nenhum. Não há distrito com este slug.
+ */
+export const TODOS_OS_DISTRITOS = 'portugal';
+
 const DISTRITOS: Record<string, { nome: string; prep: 'em' | 'no' | 'na' | 'nos' }> = {
   lisboa: { nome: 'Lisboa', prep: 'em' },
   porto: { nome: 'Porto', prep: 'no' },

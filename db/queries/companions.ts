@@ -58,17 +58,19 @@ import { signDocumentUrl } from "@/lib/supabase-admin";
 import { approvePendingAudio, discardPendingAudio } from "./audio";
 import { resolveNeighborhoodId } from "./neighborhoods";
 import { isImportedAuthId } from "@/lib/imported-profiles";
+import { TODOS_OS_DISTRITOS } from "@/lib/districts";
 import { registarConsentimentoAoPublicar } from "./consent";
 
+/** Sem distrito (null), serve a listagem geral em /companions. */
 function buildCompanionConditions(
-  cityId: number,
+  cityId: number | null,
   filters?: FilterTypesCompanions,
 ): SQL[] {
   const conditions: SQL[] = [
-    eq(companionsTable.city_id, cityId),
     eq(companionsTable.verified, true),
     eq(companionsTable.paused, false),
   ];
+  if (cityId !== null) conditions.push(eq(companionsTable.city_id, cityId));
 
   if (filters?.search) {
     conditions.push(
@@ -232,7 +234,7 @@ async function getCompanionImages(
 
 // Function to build the base companions query
 function buildCompanionsQuery(
-  cityId: number,
+  cityId: number | null,
   companionConditions: SQL[],
   characteristicConditions: SQL[],
   sortConditions: SQL[],
@@ -506,18 +508,31 @@ export const getAllActiveCompanions = unstable_cache(
   async (
     page: number,
     pageSize: number,
+    // Os mesmos filtros, ordenação e procura por nome das páginas de distrito.
+    filters?: FilterTypesCompanions,
   ): Promise<{ companions: CompanionPreview[]; total: number; }> => {
+    // Até ao limite que a página usa: o tamanho vem também do navegador.
+    pageSize = Math.min(Math.max(1, Math.floor(pageSize) || 24), 48);
     const offset = (page - 1) * pageSize;
+
+    // left join: um perfil sem linha de características continua na lista
+    // enquanto não houver filtro de características.
+    const onde = and(
+      ...buildCompanionConditions(null, filters),
+      ...buildCharacteristicConditions(filters),
+    );
+    const ordemPreco =
+      filters?.sort === "price-asc"
+        ? [sql`${companionsTable.price} asc nulls last`]
+        : filters?.sort === "price-desc"
+          ? [sql`${companionsTable.price} desc nulls last`]
+          : [];
 
     const [{ total }] = await db
       .select({ total: sql<number>`count(*)::int` })
       .from(companionsTable)
-      .where(
-        and(
-          eq(companionsTable.verified, true),
-          eq(companionsTable.paused, false),
-        ),
-      );
+      .leftJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+      .where(onde);
 
     if (total === 0) return { companions: [], total: 0 };
 
@@ -541,13 +556,9 @@ export const getAllActiveCompanions = unstable_cache(
       })
       .from(companionsTable)
       .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-      .where(
-        and(
-          eq(companionsTable.verified, true),
-          eq(companionsTable.paused, false),
-        ),
-      )
-      .orderBy(sql`"planRank" asc`, asc(companionsTable.id))
+      .leftJoin(characteristicsTable, eq(characteristicsTable.companion_id, companionsTable.id))
+      .where(onde)
+      .orderBy(sql`"planRank" asc`, ...ordemPreco, asc(companionsTable.id))
       .limit(pageSize)
       .offset(offset);
 
@@ -582,9 +593,11 @@ export const getCompanionsToFilter = unstable_cache(
     const pageSize = 9;
     const offset = (page - 1) * pageSize;
 
-    // Get city ID
-    const cityId = await getCityIdFromSlug(citySlug);
-    if (!cityId) return [];
+    // "portugal" é a listagem geral (/companions): todos os distritos.
+    const cityId =
+      citySlug === TODOS_OS_DISTRITOS ? null : await getCityIdFromSlug(citySlug);
+    // Slug que não é distrito nenhum: lista vazia, como antes.
+    if (cityId === null && citySlug !== TODOS_OS_DISTRITOS) return [];
 
     // Build query conditions
     const companionConditions = buildCompanionConditions(cityId, filters);
