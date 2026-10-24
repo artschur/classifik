@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   BadgeCheck,
   Calculator,
@@ -8,6 +7,7 @@ import {
   Heart,
   MapPin,
   ScrollText,
+  ShieldCheck,
   ShoppingBag,
   Star,
   UserCheck,
@@ -21,9 +21,11 @@ import { DistrictSearch } from '@/components/home/district-search';
 import { CatalogPagination } from '@/components/home/catalog-pagination';
 import { ScrollToCatalog } from '@/components/home/scroll-to-catalog';
 import { HomeRest } from '@/components/home/home-rest';
+import { HomeRestEn } from '@/components/home/home-rest-en';
+import { LocaleLink } from '@/components/locale-link';
 import { framingStyle } from '@/lib/image-framing';
+import { nomeDistrito } from '@/lib/districts';
 import { kv } from '@/db/index';
-import { HomeEn } from '@/components/en/home-en';
 import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, pageAlternates } from '@/lib/i18n';
 import type { FilterTypesCompanions } from '@/types/types';
@@ -148,14 +150,79 @@ const T = BANNER_IMAGE
         'border-neutral-200 bg-white/70 text-neutral-800 hover:bg-white hover:text-rose-600 dark:border-white/15 dark:bg-white/[0.07] dark:text-white/90 dark:hover:bg-white/15 dark:hover:text-white',
     };
 
-/** Atalhos do menu do hero — cobrem os dois públicos e as landings de topo de funil. */
-const popularLinks = [
-  { href: '/location', label: 'Ver acompanhantes', icon: Heart },
-  { href: '/quanto-ganha-acompanhante', label: 'Calculadora de ganhos', icon: Calculator },
-  { href: '/ajuda-anunciantes', label: 'Como ser acompanhante', icon: UserCheck },
-  { href: '/contos', label: 'Contos', icon: ScrollText },
-  { href: '/checkout', label: 'Planos de destaque', icon: ShoppingBag },
-];
+
+/** Textos do banner, dos destaques e do catálogo, em cada idioma. */
+const TEXT = {
+  pt: {
+    h1: (
+      <>
+        A plataforma de <Destaque>acompanhantes</Destaque> verificadas de Portugal
+      </>
+    ),
+    provas: [
+      { valor: '18', texto: 'distritos cobertos' },
+      { valor: '100%', texto: 'perfis revistos pela equipa' },
+      { valor: '0 €', texto: 'para anunciar' },
+    ],
+    anunciar: 'Anunciar como acompanhante',
+    procurar: 'Procurar acompanhante por distrito',
+    links: 'Links populares',
+    popular: [
+      { href: '/location', label: 'Ver acompanhantes', icon: Heart },
+      { href: '/quanto-ganha-acompanhante', label: 'Calculadora de ganhos', icon: Calculator },
+      { href: '/ajuda-anunciantes', label: 'Como ser acompanhante', icon: UserCheck },
+      { href: '/contos', label: 'Contos', icon: ScrollText },
+      { href: '/checkout', label: 'Planos de destaque', icon: ShoppingBag },
+    ],
+    doDia: 'Sugar do dia',
+    anos: 'anos',
+    verPerfil: 'Ver perfil',
+    altDoDia: (nome: string) => `${nome}, sugar do dia`,
+    altSemDoDia: 'OneSugar',
+    destaques: 'Sugars em destaque',
+    verTodos: 'Ver todos',
+    total: (n: number) => `${n.toLocaleString('pt-PT')} ${n === 1 ? 'acompanhante' : 'acompanhantes'}`,
+    verTudo: 'Ver tudo',
+    vazio: 'Nenhuma acompanhante corresponde a estes filtros.',
+  },
+  en: {
+    h1: (
+      <>
+        Verified <Destaque>escorts</Destaque> in Portugal, all in one place
+      </>
+    ),
+    provas: [
+      { valor: '18', texto: 'districts covered' },
+      { valor: '100%', texto: 'reviewed by our team' },
+      { valor: '€0', texto: 'to advertise' },
+    ],
+    anunciar: 'Advertise as a companion',
+    procurar: 'Find an escort by district',
+    links: 'Popular links',
+    popular: [
+      { href: '/location', label: 'Browse escorts', icon: Heart },
+      { href: '/companions', label: 'All verified profiles', icon: ShieldCheck },
+      { href: '/quanto-ganha-acompanhante', label: 'Earnings calculator', icon: Calculator },
+      { href: '/ajuda-anunciantes', label: 'How to advertise', icon: UserCheck },
+      { href: '/checkout', label: 'Featured plans (in Portuguese)', icon: ShoppingBag },
+    ],
+    doDia: "Today's featured companion",
+    anos: 'years old',
+    verPerfil: 'View profile',
+    altDoDia: (nome: string) => `${nome}, featured companion on OneSugar`,
+    altSemDoDia: 'OneSugar, verified escorts in Portugal',
+    destaques: 'Featured companions',
+    verTodos: 'See all',
+    total: (n: number) => `${n.toLocaleString('en-GB')} ${n === 1 ? 'escort' : 'escorts'}`,
+    verTudo: 'See all',
+    vazio: 'No escorts match these filters.',
+  },
+} as const;
+
+/** A palavra em destaque no título, com a cor do banner. */
+function Destaque({ children }: { children: React.ReactNode }) {
+  return <span className={T.destaque}>{children}</span>;
+}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -173,10 +240,8 @@ export default async function HomePage({
     getDoDiaCompanion(),
     getLocale(),
   ]);
-
-  // A versão inglesa continua com o design próprio (components/en/home-en):
-  // o redesenho em inglês fica para depois, à parte.
-  if (locale === 'en') return <HomeEn doDia={doDia} />;
+  const t = TEXT[locale];
+  const en = locale === 'en';
 
   const page = Math.max(1, parseInt(rawParams.page ?? '1', 10) || 1);
 
@@ -216,15 +281,11 @@ export default async function HomePage({
           {/* Esquerda: título, provas, botões, pesquisa e links */}
           <div className={`space-y-6 ${T.texto}`}>
             <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl xl:text-6xl">
-              A plataforma de <span className={T.destaque}>acompanhantes</span> verificadas de Portugal
+              {t.h1}
             </h1>
 
             <ul className="flex flex-wrap gap-x-8 gap-y-3">
-              {[
-                { valor: '18', texto: 'distritos cobertos' },
-                { valor: '100%', texto: 'perfis revistos pela equipa' },
-                { valor: '0 €', texto: 'para anunciar' },
-              ].map((p) => (
+              {t.provas.map((p) => (
                 <li key={p.texto}>
                   <span className="block text-2xl font-bold lg:text-3xl">{p.valor}</span>
                   <span className={`text-sm lg:text-base ${T.sub}`}>{p.texto}</span>
@@ -233,34 +294,37 @@ export default async function HomePage({
             </ul>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
+              <LocaleLink
+                locale={locale}
                 href="/quanto-ganha-acompanhante"
                 className="inline-flex items-center justify-center rounded-xl bg-rose-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-rose-950/40 transition-colors hover:bg-rose-500 sm:text-base"
               >
-                Anunciar como acompanhante
-              </Link>
-              <Link
+                {t.anunciar}
+              </LocaleLink>
+              <LocaleLink
+                locale={locale}
                 href="/location"
                 className={`inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold backdrop-blur-sm transition-colors sm:text-base ${T.botao}`}
               >
-                Procurar acompanhante por distrito
-              </Link>
+                {t.procurar}
+              </LocaleLink>
             </div>
 
-            <DistrictSearch />
+            <DistrictSearch locale={locale} />
 
             <div>
-              <p className={`mb-2 text-xs font-bold uppercase tracking-widest ${T.rotulo}`}>Links populares</p>
+              <p className={`mb-2 text-xs font-bold uppercase tracking-widest ${T.rotulo}`}>{t.links}</p>
               <div className="flex flex-wrap gap-2">
-                {popularLinks.map(({ href, label, icon: Icon }) => (
-                  <Link
+                {t.popular.map(({ href, label, icon: Icon }) => (
+                  <LocaleLink
                     key={href}
+                    locale={locale}
                     href={href}
                     className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm backdrop-blur-sm transition-colors ${T.atalho}`}
                   >
                     <Icon className="h-4 w-4 text-rose-500 dark:text-rose-400" />
                     {label}
-                  </Link>
+                  </LocaleLink>
                 ))}
               </div>
             </div>
@@ -268,13 +332,14 @@ export default async function HomePage({
 
           {/* Direita: sugar do dia, num cartão como os do oje.pt */}
           <div className="flex justify-center lg:justify-end">
-            <Link
+            <LocaleLink
+              locale={locale}
               href={doDia ? `/companions/${doDia.id}` : '/location'}
               className={`group relative block ${doDia ? 'aspect-[3/4]' : 'aspect-square'} w-full max-w-[19rem] overflow-hidden rounded-2xl shadow-[0_0_50px_-8px_rgba(244,63,94,0.55)] ring-1 ring-rose-500/40 lg:max-w-sm`}
             >
               <Image
                 src={doDia?.imageUrl ?? '/banner-square.jpeg'}
-                alt={doDia ? `${doDia.name}, sugar do dia` : 'OneSugar'}
+                alt={doDia ? t.altDoDia(doDia.name) : t.altSemDoDia}
                 fill
                 priority
                 sizes="(max-width: 1024px) 80vw, 384px"
@@ -294,27 +359,30 @@ export default async function HomePage({
                   <span className="mb-2 block h-0.5 w-8 bg-rose-500" />
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-rose-300">
                     <Star className="h-3 w-3 fill-rose-400 text-rose-400" />
-                    Sugar do dia
+                    {t.doDia}
                   </span>
                   <span className="mt-1 flex items-center gap-2 text-xl font-bold">
                     {doDia.name}
                     {doDia.identityVerified && <BadgeCheck className="h-5 w-5 text-emerald-400" />}
                   </span>
                   <span className="flex items-center gap-2 text-sm text-white/80">
-                    {doDia.age} anos
+                    {doDia.age} {t.anos}
                     <span className="text-white/30">·</span>
                     <MapPin className="h-3.5 w-3.5" />
-                    {doDia.city}
+                    {nomeDistrito(doDia.city, locale)}
                   </span>
+                  {/* A descrição curta é escrita pela anunciante, em português. */}
                   {doDia.shortDescription && (
-                    <p className="mt-1 line-clamp-2 text-sm italic text-white/70">“{doDia.shortDescription}”</p>
+                    <p lang={en ? 'pt-PT' : undefined} className="mt-1 line-clamp-2 text-sm italic text-white/70">
+                      “{doDia.shortDescription}”
+                    </p>
                   )}
                   <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-rose-300 group-hover:text-rose-200">
-                    Ver perfil <ChevronRight className="h-4 w-4" />
+                    {t.verPerfil} <ChevronRight className="h-4 w-4" />
                   </span>
                 </div>
               )}
-            </Link>
+            </LocaleLink>
           </div>
         </div>
       </section>
@@ -323,15 +391,15 @@ export default async function HomePage({
       {destaques.length > 0 && (
         <section className="mx-auto w-full max-w-screen-xl px-4 pt-10 md:px-8">
           <div className="mb-4 flex items-center justify-between gap-4 sm:pr-24">
-            <h2 className="text-xl font-bold sm:text-2xl">Sugars em destaque</h2>
-            <Link href="/companions" className="text-sm font-semibold text-rose-500 hover:underline">
-              Ver todos
-            </Link>
+            <h2 className="text-xl font-bold sm:text-2xl">{t.destaques}</h2>
+            <LocaleLink locale={locale} href="/companions" className="text-sm font-semibold text-rose-500 hover:underline">
+              {t.verTodos}
+            </LocaleLink>
           </div>
-          <FeaturedRow>
+          <FeaturedRow locale={locale}>
             {destaques.map((s, i) => (
               <div key={s.id} className="w-[46%] shrink-0 snap-start sm:w-[31%] lg:w-[19%]">
-                <ProfileCard sugar={s} priority={i < 5} />
+                <ProfileCard sugar={s} priority={i < 5} locale={locale} />
               </div>
             ))}
           </FeaturedRow>
@@ -341,39 +409,36 @@ export default async function HomePage({
       {/* ── CATÁLOGO ── */}
       <section id="catalogo" className="mx-auto w-full max-w-screen-xl scroll-mt-20 px-4 pb-16 pt-10 md:px-8">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <h2 className="text-xl font-bold sm:text-2xl">
-            {catalogo.total.toLocaleString('pt-PT')} {catalogo.total === 1 ? 'acompanhante' : 'acompanhantes'}
-          </h2>
-          <DistrictSearch variant="inline" />
-          <Link
+          <h2 className="text-xl font-bold sm:text-2xl">{t.total(catalogo.total)}</h2>
+          <DistrictSearch variant="inline" locale={locale} />
+          <LocaleLink
+            locale={locale}
             href="/companions"
             className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-rose-600/30 transition-colors hover:bg-rose-500"
           >
-            Ver tudo
+            {t.verTudo}
             <ChevronRight className="h-4 w-4" />
-          </Link>
+          </LocaleLink>
         </div>
 
-        {/* Os mesmos filtros da página de distrito. */}
+        {/* Os mesmos filtros da página de distrito (já traduzidos). */}
         <CompanionFilters initialFilters={filtros} />
 
         {catalogo.companions.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {catalogo.companions.map((s) => (
-              <ProfileCard key={s.id} sugar={s} />
+              <ProfileCard key={s.id} sugar={s} locale={locale} />
             ))}
           </div>
         ) : (
-          <p className="py-16 text-center text-muted-foreground">
-            Nenhuma acompanhante corresponde a estes filtros.
-          </p>
+          <p className="py-16 text-center text-muted-foreground">{t.vazio}</p>
         )}
 
-        <CatalogPagination page={page} totalPages={totalPaginas} params={rawParams} />
+        <CatalogPagination page={page} totalPages={totalPaginas} params={rawParams} locale={locale} />
       </section>
 
       {/* ── RESTO: vídeo, recursos, como funciona, distritos, FAQ, CTAs ── */}
-      <HomeRest />
+      {en ? <HomeRestEn /> : <HomeRest />}
     </main>
   );
 }

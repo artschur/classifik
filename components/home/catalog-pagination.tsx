@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Locale } from '@/lib/i18n';
+
+const TEXT = {
+  pt: { nav: 'Páginas do catálogo', anterior: 'Página anterior', seguinte: 'Página seguinte', de: (p: number, t: number) => `Página ${p} de ${t}` },
+  en: { nav: 'Catalogue pages', anterior: 'Previous page', seguinte: 'Next page', de: (p: number, t: number) => `Page ${p} of ${t}` },
+} as const;
 
 /**
  * Paginação numerada do catálogo. Cada número é uma ligação verdadeira, com os
@@ -10,11 +16,14 @@ export function CatalogPagination({
   page,
   totalPages,
   params,
+  locale = 'pt',
 }: {
   page: number;
   totalPages: number;
   params: Record<string, string | undefined>;
+  locale?: Locale;
 }) {
+  const t = TEXT[locale];
   if (totalPages <= 1) return null;
 
   const href = (n: number) => {
@@ -35,10 +44,10 @@ export function CatalogPagination({
   const outra = 'border-rose-200 bg-white text-neutral-900 shadow-sm hover:border-rose-500 hover:text-rose-600 dark:border-rose-900/60 dark:bg-neutral-900 dark:text-white dark:hover:border-rose-500';
 
   return (
-    <nav aria-label="Páginas do catálogo" className="mt-10 flex flex-col items-center gap-3">
+    <nav aria-label={t.nav} className="mt-10 flex flex-col items-center gap-3">
       <div className="flex flex-wrap items-center justify-center gap-2">
         {page > 1 && (
-          <Link href={href(page - 1)} className={`${base} ${outra}`} aria-label="Página anterior">
+          <Link href={href(page - 1)} className={`${base} ${outra}`} aria-label={t.anterior}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         )}
@@ -69,13 +78,13 @@ export function CatalogPagination({
           </>
         )}
         {page < totalPages && (
-          <Link href={href(page + 1)} className={`${base} ${outra}`} aria-label="Página seguinte">
+          <Link href={href(page + 1)} className={`${base} ${outra}`} aria-label={t.seguinte}>
             <ChevronRight className="h-4 w-4" />
           </Link>
         )}
       </div>
       <p className="text-sm text-muted-foreground">
-        Página {page} de {totalPages}
+        {t.de(page, totalPages)}
       </p>
     </nav>
   );

@@ -2,12 +2,14 @@
 
 import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Locale } from '@/lib/i18n';
 
 /**
  * Fila horizontal dos destaques, com setas no desktop e deslizar no
  * telemóvel. Os cartões chegam já desenhados pelo servidor.
  */
-export function FeaturedRow({ children }: { children: React.ReactNode }) {
+export function FeaturedRow({ children, locale = 'pt' }: { children: React.ReactNode; locale?: Locale }) {
+  const en = locale === 'en';
   const faixa = useRef<HTMLDivElement>(null);
 
   const mover = (sentido: 1 | -1) => {
@@ -22,7 +24,7 @@ export function FeaturedRow({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={() => mover(-1)}
-          aria-label="Anteriores"
+          aria-label={en ? 'Previous' : 'Anteriores'}
           className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-accent"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -30,7 +32,7 @@ export function FeaturedRow({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={() => mover(1)}
-          aria-label="Seguintes"
+          aria-label={en ? 'Next' : 'Seguintes'}
           className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-accent"
         >
           <ChevronRight className="h-4 w-4" />
