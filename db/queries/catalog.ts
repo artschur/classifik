@@ -7,7 +7,7 @@ import { characteristicsTable, citiesTable, companionsTable, imagesTable, review
 import type { FilterTypesCompanions } from '@/types/types';
 
 /**
- * Catálogo da nova página principal (/nova-home): todas as sugars no ar, de
+ * Catálogo da página principal (/): todas as sugars no ar, de
  * todos os distritos, com os mesmos filtros da página de distrito
  * (getCompanionsToFilter) e o total, para a paginação numerada.
  *
@@ -114,7 +114,7 @@ export const getCatalogCompanions = unstable_cache(
 
     return { total, companions: await completar(linhas) };
   },
-  ['catalogo-nova-home'],
+  ['catalogo-home'],
   { revalidate: 1800, tags: ['companions', 'companions-filter'] },
 );
 
@@ -137,7 +137,7 @@ export const getFeaturedCompanions = unstable_cache(
       .limit(limite);
     return completar(linhas);
   },
-  ['destaques-nova-home'],
+  ['destaques-home'],
   { revalidate: 300, tags: ['companions'] },
 );
 
