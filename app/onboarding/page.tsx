@@ -10,10 +10,11 @@ import { redirect } from "next/navigation";
 import { isUserACompanion } from "@/db/queries/companions";
 
 export default async function OnboardPage() {
-  const { userId, sessionClaims } = await auth();
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
 
+  // A entrada é a página do Clerk: /sign-in não existe no site.
   if (!userId) {
-    return redirect("/sign-in");
+    return redirectToSignIn();
   }
 
   const clerk = await clerkClient();

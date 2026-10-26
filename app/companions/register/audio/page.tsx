@@ -7,10 +7,11 @@ import { isVerificationPending } from '@/app/actions/document-verification';
 import { canRecordAudio } from '@/lib/audio-access';
 
 export default async function AudioPage() {
-  const { userId } = await auth();
+  const { userId, redirectToSignIn } = await auth();
 
+  // A entrada é a página do Clerk: /sign-in não existe no site.
   if (!userId) {
-    redirect('/sign-in');
+    return redirectToSignIn();
   }
 
   const [isUserVerified, companion] = await Promise.all([

@@ -19,8 +19,9 @@ export const metadata: Metadata = {
  * registo" do painel.
  */
 export default async function CompletarPerfilPage() {
-  const { userId } = await auth();
-  if (!userId) redirect('/sign-in');
+  // A entrada é a página do Clerk: /sign-in não existe no site.
+  const { userId, redirectToSignIn } = await auth();
+  if (!userId) return redirectToSignIn();
 
   // Já com a edição pendente por cima, se houver: é o que ela escreveu por último.
   const atual = await getCompanionToEdit(userId);

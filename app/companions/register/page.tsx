@@ -6,7 +6,6 @@ import { getCompanionToEdit } from "@/db/queries/companions";
 import { getUserPlan } from "@/db/queries/plan";
 import { acessoAPlanos } from "@/db/queries/verificacao";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
@@ -21,10 +20,13 @@ export const metadata: Metadata = {
 type Prefill = { phoneNumber?: string; price?: number };
 
 async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
-  const { userId, sessionClaims } = await auth();
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
 
+  // Não há /sign-up nem /sign-in no site (as páginas de entrada são as do
+  // Clerk), e mandar para lá dava 404. A página de entrada do Clerk tem a
+  // opção de criar conta e volta a esta página no fim.
   if (!userId) {
-    redirect("/sign-up?redirect_url=/companions/register");
+    return redirectToSignIn();
   }
 
   const [cities, companion, userPlan, acesso] = await Promise.all([

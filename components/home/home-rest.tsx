@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { SignedIn, SignedOut, SignUpButton } from '@clerk/nextjs';
 import {
   Shield,
   MapPin,
@@ -139,6 +140,35 @@ const districts = {
   ],
 };
 
+const CLASSE_CLIENTE =
+  'border border-rose-500/60 text-rose-600 hover:bg-rose-600/10 dark:text-rose-300 font-semibold px-7 py-3 rounded-full transition-colors text-sm';
+
+/**
+ * "Registar como Cliente" abre o registo do Clerk numa janela, como na versão
+ * inglesa. Antes ligava a /sign-up, uma página que não existe no site (o
+ * Clerk usa as páginas dele), e dava 404. Depois de criar conta, o Clerk leva
+ * a pessoa ao /onboarding, onde escolhe Cliente. Quem já tem sessão não tem
+ * conta para criar, e a janela nem abriria: segue para as acompanhantes.
+ */
+function RegistarCliente() {
+  return (
+    <>
+      <SignedOut>
+        <SignUpButton mode="modal">
+          <button type="button" className={CLASSE_CLIENTE}>
+            Registar como Cliente
+          </button>
+        </SignUpButton>
+      </SignedOut>
+      <SignedIn>
+        <Link href="/location" className={CLASSE_CLIENTE}>
+          Ver acompanhantes
+        </Link>
+      </SignedIn>
+    </>
+  );
+}
+
 export function HomeRest() {
   return (
     <>
@@ -156,12 +186,7 @@ export function HomeRest() {
             >
               Registar como Sugar
             </Link>
-            <Link
-              href="/sign-up"
-              className="border border-rose-500/60 text-rose-600 hover:bg-rose-600/10 dark:text-rose-300 font-semibold px-7 py-3 rounded-full transition-colors text-sm"
-            >
-              Registar como Cliente
-            </Link>
+            <RegistarCliente />
           </div>
         </div>
       </section>
@@ -376,12 +401,7 @@ export function HomeRest() {
             >
               Registar como Sugar
             </Link>
-            <Link
-              href="/sign-up"
-              className="border border-rose-500/60 text-rose-600 hover:bg-rose-600/10 dark:text-rose-300 font-semibold px-7 py-3 rounded-full transition-colors text-sm"
-            >
-              Registar como Cliente
-            </Link>
+            <RegistarCliente />
           </div>
         </div>
       </section>

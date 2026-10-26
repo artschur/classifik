@@ -18,10 +18,11 @@ import { PlanType } from '@/db/queries/kv';
  * o cliente em causa. Fica só a lista de quem já está bloqueado.
  */
 export default async function BlockPage() {
-  const { userId, sessionClaims } = await auth();
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
 
+  // A entrada é a página do Clerk: /sign-in não existe no site.
   if (!userId) {
-    redirect('/sign-in');
+    return redirectToSignIn();
   }
 
   if (!sessionClaims?.metadata?.isCompanion) {

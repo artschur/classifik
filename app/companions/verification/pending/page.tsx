@@ -12,8 +12,9 @@ export const dynamic = 'force-dynamic';
  * (verificação, características) com o caminho para cada coisa.
  */
 export default async function PendingVerificationPage() {
-  const { userId } = await auth();
-  if (!userId) redirect('/sign-in');
+  // A entrada é a página do Clerk: /sign-in não existe no site.
+  const { userId, redirectToSignIn } = await auth();
+  if (!userId) return redirectToSignIn();
 
   const companion = await getCompanionNameByClerkId(userId).catch(() => null);
   if (!companion) redirect('/companions/register');
