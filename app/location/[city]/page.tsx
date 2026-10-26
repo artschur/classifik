@@ -1581,18 +1581,25 @@ export default async function CompanionsPage({
         <HeroCarouselWrapper citySlug={city} plans={[PlanType.VIP]} />
       </div>
 
-      <CompanionFilters initialFilters={sParams} />
-      <Suspense
-        key={JSON.stringify(sParams)}
-        fallback={<CompanionsListSkeleton />}
-      >
-        <DistrictCompanionsList
-          location={city}
-          page={page}
-          filters={sParams}
-          pageSize={COMPANIONS_PAGE_SIZE}
-        />
-      </Suspense>
+      {/* Filtros abertos num painel à esquerda da lista, em ecrãs largos. O
+          componente devolve o painel e a barra de ordenação; a lista fica por
+          baixo da barra, na segunda coluna. */}
+      <div className="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8">
+        <CompanionFilters initialFilters={sParams} layout="sidebar" />
+        <div className="lg:col-start-2 lg:row-start-2">
+          <Suspense
+            key={JSON.stringify(sParams)}
+            fallback={<CompanionsListSkeleton />}
+          >
+            <DistrictCompanionsList
+              location={city}
+              page={page}
+              filters={sParams}
+              pageSize={COMPANIONS_PAGE_SIZE}
+            />
+          </Suspense>
+        </div>
+      </div>
 
       {/* CTA 1 - entre perfis e editorial */}
       <RegistrationCTAInline citySlug={city} locale={locale} />

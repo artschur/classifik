@@ -523,10 +523,15 @@ export default async function CompanionsIndexPage({
         <HeroCarouselWrapper plans={[PlanType.VIP]} />
       </div>
 
-      <CompanionFilters initialFilters={filtros} />
-      <Suspense key={JSON.stringify(filtros)} fallback={<CompanionsListSkeleton />}>
-        <PortugalCompanionsList page={page} filters={filtros} locale={locale} title={t.title} />
-      </Suspense>
+      {/* Filtros abertos ao lado da lista, como nos distritos. */}
+      <div className="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8">
+        <CompanionFilters initialFilters={filtros} layout="sidebar" />
+        <div className="lg:col-start-2 lg:row-start-2">
+          <Suspense key={JSON.stringify(filtros)} fallback={<CompanionsListSkeleton />}>
+            <PortugalCompanionsList page={page} filters={filtros} locale={locale} title={t.title} />
+          </Suspense>
+        </div>
+      </div>
 
       {/* CTA 1 - entre perfis e editorial */}
       <RegistrationCTAInline locale={locale} />

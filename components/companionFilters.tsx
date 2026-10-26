@@ -2,7 +2,7 @@
 
 import { useDebouncedCallback } from "use-debounce";
 import { useEffect, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
+import { Filter, SlidersHorizontal } from "lucide-react";
 import type { FilterTypesCompanions } from "@/types/types";
 import {
   Dialog,
@@ -24,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { useLocale } from "@/components/locale-provider";
+import type { Locale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 const TEXT = {
   pt: {
@@ -33,18 +35,18 @@ const TEXT = {
     desc: "Preço: Maior para menor",
     search: "Procure sugars pelo nome...",
     filters: "Filtros",
+    panelTitle: "Filtros de pesquisa",
+    clear: "Limpar filtros",
+    apply: "Aplicar filtros",
     gender: "Género",
-    selectGender: "Selecione o género",
-    all: "Todos",
-    female: "Feminino",
-    male: "Masculino",
-    trans: "Trans",
     age: "Idade",
-    height: "Altura (cm)",
-    weight: "Peso (kg)",
+    height: "Altura",
+    weight: "Peso",
     features: "Características",
     hair: "Cor do Cabelo",
     show: "Ver resultados",
+    min: "Mínimo",
+    max: "Máximo",
   },
   en: {
     sort: "Sort by price",
@@ -53,85 +55,268 @@ const TEXT = {
     desc: "Price: high to low",
     search: "Search escorts by name...",
     filters: "Filters",
+    panelTitle: "Search filters",
+    clear: "Clear filters",
+    apply: "Apply filters",
     gender: "Gender",
-    selectGender: "Select gender",
-    all: "All",
-    female: "Female",
-    male: "Male",
-    trans: "Trans",
     age: "Age",
-    height: "Height (cm)",
-    weight: "Weight (kg)",
+    height: "Height",
+    weight: "Weight",
     features: "Features",
     hair: "Hair colour",
     show: "Show results",
+    min: "Minimum",
+    max: "Maximum",
   },
 } as const;
 
+/**
+ * Sem parâmetro no endereço, a página abre em feminino, por isso é esse que
+ * aparece escolhido. "Todos" grava o valor `todos` em vez de apagar o
+ * parâmetro: apagá-lo voltaria a cair no feminino, e a opção ficava sem efeito.
+ */
+const GENEROS = [
+  { valor: "feminino", pt: "Mulheres", en: "Women" },
+  { valor: "trans", pt: "Trans", en: "Trans" },
+  { valor: "masculino", pt: "Homens", en: "Men" },
+  { valor: "todos", pt: "Todos", en: "All" },
+] as const;
+
+/** Faixas dos deslizadores; o endereço guarda "min-max" (por exemplo, age=20-30). */
+const FAIXAS = {
+  age: { min: 18, max: 60, unidade: { pt: "anos", en: "years" } },
+  height: { min: 150, max: 190, unidade: { pt: "cm", en: "cm" } },
+  weight: { min: 45, max: 100, unidade: { pt: "kg", en: "kg" } },
+} as const;
+
 /** Rótulos das características; o valor gravado no endereço não muda. */
-const CARACTERISTICAS: Record<string, { pt: string; en: string }> = {
-  Silicone: { pt: "Silicone", en: "Silicone" },
-  Tattoos: { pt: "Tatuagens", en: "Tattoos" },
-  Smoker: { pt: "Fumadora", en: "Smoker" },
-};
+const CARACTERISTICAS = [
+  { chave: "silicone", pt: "Silicone", en: "Silicone" },
+  { chave: "tattoos", pt: "Tatuagens", en: "Tattoos" },
+  { chave: "smoker", pt: "Fumadora", en: "Smoker" },
+] as const;
 
 /** Cores do cabelo: o filtro grava o nome português em minúsculas. */
-const CORES_EN: Record<string, string> = {
-  Preto: "Black",
-  Loiro: "Blonde",
-  Castanho: "Brown",
-  Vermelho: "Red",
-  Branco: "White",
-  Cinza: "Grey",
-  Colorido: "Dyed",
-};
+const CORES = [
+  { nome: "Preto", en: "Black" },
+  { nome: "Loiro", en: "Blonde" },
+  { nome: "Castanho", en: "Brown" },
+  { nome: "Vermelho", en: "Red" },
+  { nome: "Branco", en: "White" },
+  { nome: "Cinza", en: "Grey" },
+  { nome: "Colorido", en: "Dyed" },
+] as const;
+
+/** Filtros por aplicar. As faixas podem vir do endereço como texto ou do deslizador como par. */
+type Pendentes = Record<string, string | number[] | null | undefined>;
+
+/** Contam para o número no botão "Filtros". O género só conta fora do feminino, que é o de omissão. */
+const FILTROS_CONTADOS = ["age", "height", "weight", "silicone", "tattoos", "smoker", "hairColor"];
+
+/**
+ * "20-30" (do endereço) ou [20, 30] (do deslizador) passa a [20, 30]; sem
+ * valor, a faixa inteira. Antes o texto do endereço ia direito para o
+ * deslizador, que espera dois números, e a janela de filtros partia depois de
+ * aplicar uma faixa.
+ */
+function faixa(valor: unknown, padrao: readonly [number, number]): [number, number] {
+  if (Array.isArray(valor) && valor.length === 2) {
+    return [Number(valor[0]), Number(valor[1])];
+  }
+  if (typeof valor === "string") {
+    const [a, b] = valor.split("-").map(Number);
+    if (Number.isFinite(a) && Number.isFinite(b)) return [a, b];
+  }
+  return [padrao[0], padrao[1]];
+}
 
 const DualSlider = ({
   value,
   onValueChange,
   min,
   max,
+  rotulos,
 }: {
   value: number[];
   onValueChange: (value: number[]) => void;
   min: number;
   max: number;
+  rotulos: { min: string; max: string };
 }) => {
+  const thumb =
+    "block h-5 w-5 rounded-full border-2 border-rose-600 bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
   return (
     <SliderPrimitive.Root
-      className="relative flex w-full touch-none select-none items-center"
+      className="relative flex w-full touch-none select-none items-center py-1"
       value={value}
       onValueChange={onValueChange}
       max={max}
       min={min}
       step={1}
     >
-      <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
-        <SliderPrimitive.Range className="absolute h-full bg-primary" />
+      <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted">
+        <SliderPrimitive.Range className="absolute h-full bg-rose-600" />
       </SliderPrimitive.Track>
-      <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
-      <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+      <SliderPrimitive.Thumb className={thumb} aria-label={rotulos.min} />
+      <SliderPrimitive.Thumb className={thumb} aria-label={rotulos.max} />
     </SliderPrimitive.Root>
   );
 };
 
+/** Botão de escolha, em vez de uma lista que é preciso abrir. */
+function Pilula({
+  ativa,
+  onClick,
+  children,
+}: {
+  ativa: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={ativa}
+      onClick={onClick}
+      className={cn(
+        "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+        ativa
+          ? "border-rose-600 bg-rose-600 text-white"
+          : "border-input bg-background text-foreground hover:border-rose-400",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Secao({
+  titulo,
+  valor,
+  children,
+}: {
+  titulo: string;
+  valor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-sm font-semibold">{titulo}</p>
+        {valor && <span className="text-sm text-muted-foreground">{valor}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** Os campos dos filtros, iguais no painel aberto e na janela. */
+function CamposFiltro({
+  pendentes,
+  alterar,
+  locale,
+}: {
+  pendentes: Pendentes;
+  alterar: (chave: string, valor: string | number[] | null) => void;
+  locale: Locale;
+}) {
+  const t = TEXT[locale];
+  const genero = String(pendentes.gender || "feminino").toLowerCase();
+  const cores = String(pendentes.hairColor || "").split(",");
+
+  return (
+    <div className="space-y-6">
+      <Secao titulo={t.gender}>
+        <div className="grid grid-cols-2 gap-2">
+          {GENEROS.map((g) => (
+            <Pilula key={g.valor} ativa={genero === g.valor} onClick={() => alterar("gender", g.valor)}>
+              {g[locale]}
+            </Pilula>
+          ))}
+        </div>
+      </Secao>
+
+      {(["age", "height", "weight"] as const).map((chave) => {
+        const limites = FAIXAS[chave];
+        const valor = faixa(pendentes[chave], [limites.min, limites.max]);
+        return (
+          <Secao
+            key={chave}
+            titulo={t[chave]}
+            valor={`${valor[0]} – ${valor[1]} ${limites.unidade[locale]}`}
+          >
+            <DualSlider
+              value={valor}
+              onValueChange={(novo) => alterar(chave, novo)}
+              min={limites.min}
+              max={limites.max}
+              rotulos={{ min: `${t[chave]}: ${t.min}`, max: `${t[chave]}: ${t.max}` }}
+            />
+          </Secao>
+        );
+      })}
+
+      <Secao titulo={t.features}>
+        <div className="flex flex-wrap gap-2">
+          {CARACTERISTICAS.map((c) => {
+            const ativa = pendentes[c.chave] === "true";
+            return (
+              <Pilula key={c.chave} ativa={ativa} onClick={() => alterar(c.chave, ativa ? null : "true")}>
+                {c[locale]}
+              </Pilula>
+            );
+          })}
+        </div>
+      </Secao>
+
+      <Secao titulo={t.hair}>
+        <div className="flex flex-wrap gap-2">
+          {CORES.map((cor) => (
+            <Pilula
+              key={cor.nome}
+              ativa={cores.includes(cor.nome.toLowerCase())}
+              onClick={() => alterar("hairColor", cor.nome.toLowerCase())}
+            >
+              {locale === "en" ? cor.en : cor.nome}
+            </Pilula>
+          ))}
+        </div>
+      </Secao>
+    </div>
+  );
+}
+
+/**
+ * Filtros da lista de acompanhantes.
+ *
+ * - `dialog` (página inicial): ordenação, pesquisa e o botão "Filtros", que
+ *   abre os campos numa janela.
+ * - `sidebar` (distritos e /companions): os campos ficam abertos num painel
+ *   ao lado da lista, a partir de ecrãs largos. Devolve o painel e a barra de
+ *   ordenação e pesquisa como irmãos, para a página os pôr na grelha (painel à
+ *   esquerda, barra por cima da lista). Em ecrãs estreitos o painel não cabe
+ *   ao lado, e fica o botão "Filtros" com a janela.
+ */
 export function CompanionFilters({
   initialFilters,
+  layout = "dialog",
 }: {
   initialFilters: FilterTypesCompanions;
+  layout?: "dialog" | "sidebar";
 }) {
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = TEXT[locale];
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
 
   const [searchValue, setSearchValue] = useState(
     searchParams?.get("search") || "",
   );
 
-  const [pendingFilters, setPendingFilters] =
-    useState<FilterTypesCompanions>(initialFilters);
+  const [pendingFilters, setPendingFilters] = useState<Pendentes>(
+    initialFilters as Pendentes,
+  );
 
   useEffect(() => {
     setSearchValue(searchParams?.get("search") || "");
@@ -156,22 +341,20 @@ export function CompanionFilters({
       updateFilters({
         ...pendingFilters,
         search: searchParam,
-        silicone: pendingFilters.silicone?.toString() || null,
-        tattoos: pendingFilters.tattoos?.toString() || null,
-        smoker: pendingFilters.smoker?.toString() || null,
       });
     });
   }, 300);
 
-  const createQueryString = (
-    params: Record<string, string | number | number[] | null>,
-  ) => {
+  const createQueryString = (params: Pendentes) => {
     const current = new URLSearchParams(searchParams?.toString());
 
     current.set("page", "1");
 
     Object.entries(params).forEach(([key, value]) => {
-      if (value === null || value === "") {
+      // Filtros novos começam na primeira página: a página que vinha nos
+      // filtros iniciais não pode voltar a escrever por cima.
+      if (key === "page") return;
+      if (value === null || value === undefined || value === "") {
         current.delete(key);
       } else if (Array.isArray(value)) {
         current.set(key, `${value[0]}-${value[1]}`);
@@ -183,9 +366,7 @@ export function CompanionFilters({
     return current.toString();
   };
 
-  const updateFilters = (
-    filters: Record<string, string | number | number[] | null>,
-  ) => {
+  const updateFilters = (filters: Pendentes) => {
     const queryString = createQueryString(filters);
     window.location.href = `?${queryString}`;
     setIsOpen(false);
@@ -195,19 +376,13 @@ export function CompanionFilters({
     updateFilters({
       ...pendingFilters,
       sort: value ? `price-${value}` : null,
-      silicone: pendingFilters.silicone?.toString() || null,
-      tattoos: pendingFilters.tattoos?.toString() || null,
-      smoker: pendingFilters.smoker?.toString() || null,
     });
   };
 
-  const handlePendingFilter = (
-    key: string,
-    value: string | number | number[] | null,
-  ) => {
+  const handlePendingFilter = (key: string, value: string | number[] | null) => {
     setPendingFilters((prev) => {
       if (key === "hairColor") {
-        const currentColors = ((prev.hairColor as string) || "")
+        const currentColors = String(prev.hairColor || "")
           .split(",")
           .filter(Boolean);
         if (!value) {
@@ -219,261 +394,122 @@ export function CompanionFilters({
             ...prev,
             [key]: newColors.length ? newColors.join(",") : null,
           };
-        } else {
-          currentColors.push(value as string);
-          return { ...prev, [key]: currentColors.join(",") };
         }
+        currentColors.push(value as string);
+        return { ...prev, [key]: currentColors.join(",") };
       }
       return { ...prev, [key]: value };
     });
   };
 
   const applyFilters = () => {
-    const filtersWithStrings = Object.fromEntries(
-      Object.entries(pendingFilters).map(([key, value]) => [
-        key,
-        typeof value === "boolean" ? value.toString() : value,
-      ]),
-    );
-    updateFilters(filtersWithStrings);
+    updateFilters(pendingFilters);
   };
 
-  const activeFiltersCount = Object.values(pendingFilters).filter(
-    (value) => value !== null && value !== undefined && value !== "",
-  ).length;
+  /** Volta à lista sem filtros nenhuns (no distrito, isso é o feminino). */
+  const clearFilters = () => {
+    window.location.href = window.location.pathname;
+  };
+
+  const activeFiltersCount =
+    FILTROS_CONTADOS.filter((chave) => {
+      const valor = pendingFilters[chave];
+      return valor !== null && valor !== undefined && valor !== "";
+    }).length +
+    (pendingFilters.gender && pendingFilters.gender !== "feminino" ? 1 : 0);
+
+  const campos = (
+    <CamposFiltro pendentes={pendingFilters} alterar={handlePendingFilter} locale={locale} />
+  );
+
+  const barra = (
+    <div className="mb-6 flex items-center justify-between gap-3">
+      <Select
+        value={searchParams?.get("sort")?.split("-")[1] || undefined}
+        onValueChange={(value) => handleSort(value || null)}
+      >
+        <SelectTrigger className="w-[180px] rounded-full">
+          <SelectValue placeholder={t.sort} />
+        </SelectTrigger>
+        <SelectContent className="rounded-xl">
+          <SelectItem value="none">{t.noSort}</SelectItem>
+          <SelectItem value="asc">{t.asc}</SelectItem>
+          <SelectItem value="desc">{t.desc}</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <input
+        type="text"
+        placeholder={t.search}
+        className="hidden w-full max-w-xs rounded-full border border-primary bg-background p-2 px-4 md:block"
+        value={searchValue}
+        onChange={handleSearch}
+      />
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn("rounded-full", layout === "sidebar" && "lg:hidden")}
+          >
+            {t.filters}
+            <Filter className="mr-2 h-4 w-4" />
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {activeFiltersCount}
+              </Badge>
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="text-lg font-semibold">{t.filters}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh]">
+            <div className="p-6">{campos}</div>
+          </ScrollArea>
+          <div className="flex items-center gap-3 p-6 border-t">
+            <Button variant="ghost" onClick={clearFilters}>
+              {t.clear}
+            </Button>
+            <Button onClick={applyFilters} className="flex-1 bg-rose-600 text-white hover:bg-rose-700">
+              {t.show}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+
+  if (layout === "dialog") return barra;
 
   return (
-    <div className="mb-6 space-y-4">
-      <div className="flex justify-between items-center">
-        <Select
-          value={searchParams?.get("sort")?.split("-")[1] || undefined}
-          onValueChange={(value) => handleSort(value || null)}
-        >
-          <SelectTrigger className="w-[180px] rounded-full">
-            <SelectValue placeholder={t.sort} />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="none">{t.noSort}</SelectItem>
-            <SelectItem value="asc">{t.asc}</SelectItem>
-            <SelectItem value="desc">{t.desc}</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <input
-          type="text"
-          placeholder={t.search}
-          className="w-3/12 rounded-full border-primary border px-4 p-2 bg-background hidden md:block"
-          value={searchValue}
-          onChange={handleSearch}
-        />
-
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="rounded-full">
-              {t.filters}
-              <Filter className="mr-2 h-4 w-4" />
-              {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl">
-            <DialogHeader className="px-6 py-4 border-b">
-              <DialogTitle className="text-lg font-semibold">
-                {t.filters}
-              </DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[80vh]">
-              <div className="space-y-6 p-6">
-                {/* gender */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-sm">{t.gender}</h4>
-                  {/* Sem parâmetro no endereço, a página abre em feminino, por
-                      isso é esse que o selector mostra. E "Todos" grava o
-                      valor `todos` em vez de apagar o parâmetro: apagá-lo
-                      voltaria a cair no feminino por omissão, e a opção ficava
-                      sem efeito. */}
-                  <Select
-                    value={(pendingFilters.gender as string) || "feminino"}
-                    onValueChange={(value) =>
-                      handlePendingFilter("gender", value)
-                    }
-                  >
-                    <SelectTrigger className="w-full rounded-xl">
-                      <SelectValue placeholder={t.selectGender} />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="todos">{t.all}</SelectItem>
-                      <SelectItem value="feminino">{t.female}</SelectItem>
-                      <SelectItem value="masculino">{t.male}</SelectItem>
-                      <SelectItem value="trans">{t.trans}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Age Range */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-sm">{t.age}</h4>
-                  <DualSlider
-                    value={
-                      (pendingFilters.age as number[] | undefined) ?? [18, 60]
-                    }
-                    onValueChange={(value) => handlePendingFilter("age", value)}
-                    min={18}
-                    max={60}
-                  />
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>
-                      {(pendingFilters.age as number[] | undefined)?.[0] ?? 18}
-                    </span>
-                    <span>
-                      {(pendingFilters.age as number[] | undefined)?.[1] ?? 60}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Height Range */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-sm">{t.height}</h4>
-                  <DualSlider
-                    value={
-                      (pendingFilters.height as number[] | undefined) ?? [
-                        150, 190,
-                      ]
-                    }
-                    onValueChange={(value) =>
-                      handlePendingFilter("height", value)
-                    }
-                    min={150}
-                    max={190}
-                  />
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>
-                      {(pendingFilters.height as number[] | undefined)?.[0] ??
-                        150}
-                      cm
-                    </span>
-                    <span>
-                      {(pendingFilters.height as number[] | undefined)?.[1] ??
-                        190}
-                      cm
-                    </span>
-                  </div>
-                </div>
-
-                {/* Weight Range */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-sm">{t.weight}</h4>
-                  <DualSlider
-                    value={
-                      (pendingFilters.weight as number[] | undefined) ?? [
-                        45, 100,
-                      ]
-                    }
-                    onValueChange={(value) =>
-                      handlePendingFilter("weight", value)
-                    }
-                    min={45}
-                    max={100}
-                  />
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>
-                      {(pendingFilters.weight as number[] | undefined)?.[0] ??
-                        45}
-                      kg
-                    </span>
-                    <span>
-                      {(pendingFilters.weight as number[] | undefined)?.[1] ??
-                        100}
-                      kg
-                    </span>
-                  </div>
-                </div>
-                {/* Characteristics */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-sm">{t.features}</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {["Silicone", "Tattoos", "Smoker"].map((char) => (
-                      <Badge
-                        key={char}
-                        variant="outline"
-                        className={`cursor-pointer ${
-                          pendingFilters[
-                            char.toLowerCase() as keyof FilterTypesCompanions
-                          ] === "true"
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          handlePendingFilter(
-                            char.toLowerCase(),
-                            pendingFilters[
-                              char.toLowerCase() as keyof FilterTypesCompanions
-                            ] === "true"
-                              ? null
-                              : "true",
-                          )
-                        }
-                      >
-                        {CARACTERISTICAS[char][locale]}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Hair Color */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-sm">{t.hair}</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      "Preto",
-                      "Loiro",
-                      "Castanho",
-                      "Vermelho",
-                      "Branco",
-                      "Cinza",
-                      "Colorido",
-                    ].map((color) => {
-                      const selectedColors = (
-                        (pendingFilters.hairColor as string) || ""
-                      ).split(",");
-                      const isSelected = selectedColors.includes(
-                        color.toLowerCase(),
-                      );
-
-                      return (
-                        <Badge
-                          key={color}
-                          variant="outline"
-                          className={`cursor-pointer ${
-                            isSelected
-                              ? "bg-primary text-primary-foreground"
-                              : ""
-                          }`}
-                          onClick={() =>
-                            handlePendingFilter(
-                              "hairColor",
-                              color.toLowerCase(),
-                            )
-                          }
-                        >
-                          {locale === "en" ? CORES_EN[color] : color}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
-            <div className="p-6 border-t">
-              <Button onClick={applyFilters} className="w-full">
-                {t.show}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
+    <>
+      <aside className="hidden lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:block lg:self-start lg:sticky lg:top-24">
+        <div className="rounded-2xl border bg-card p-5 shadow-sm lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+          <div className="mb-5 flex items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-base font-bold">
+              <SlidersHorizontal className="h-5 w-5 text-rose-600" />
+              {t.panelTitle}
+            </p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-sm font-medium text-rose-600 underline underline-offset-2 hover:text-rose-700"
+            >
+              {t.clear}
+            </button>
+          </div>
+          {campos}
+          <Button
+            onClick={applyFilters}
+            className="mt-6 h-11 w-full rounded-xl bg-rose-600 text-base font-semibold text-white hover:bg-rose-700"
+          >
+            {t.apply}
+          </Button>
+        </div>
+      </aside>
+      <div className="lg:col-start-2 lg:row-start-1">{barra}</div>
+    </>
   );
 }

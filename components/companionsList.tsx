@@ -131,7 +131,9 @@ export function CompanionsList({
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Com o painel de filtros ao lado (ecrãs largos), três colunas só
+          cabem a partir de xl; entre lg e xl ficam duas. */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {companions.map((companion: CompanionFiltered) => (
           <CompanionCard key={companion.id} companion={companion} />
         ))}
@@ -140,7 +142,7 @@ export function CompanionsList({
       {hasMore && (
         <div ref={sentinela} className="flex justify-center py-10">
           {loadingMore ? (
-            <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-[420px] w-full rounded-xl" />
               ))}
@@ -331,7 +333,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
 
 export function CompanionsListSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {[...Array(6)].map((_, index) => (
         <Card key={index} className="h-full">
           <Skeleton className="w-full aspect-[4/3]" />
