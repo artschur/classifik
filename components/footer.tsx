@@ -3,6 +3,19 @@ import { SquarePlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LocaleLink } from "@/components/locale-link"
 import { getLocale } from "@/lib/locale.server"
+import { nomeDistrito } from "@/lib/districts"
+
+/**
+ * Distritos no rodapé: uma ligação de todas as páginas do site para cada
+ * página de distrito. Ajuda o Google a tratá-las como as páginas principais
+ * (e a mostrá-las como sitelinks). Primeiro os de maior procura, depois os
+ * restantes por ordem alfabética.
+ */
+const DISTRITOS_RODAPE = [
+  "lisboa", "porto", "faro", "setubal", "braga", "coimbra", "leiria", "aveiro", "madeira",
+  "beja", "braganca", "castelo-branco", "evora", "guarda", "portalegre", "santarem",
+  "viana-do-castelo", "vila-real", "viseu",
+] as const
 
 // Termos, Privacidade e Cookies ainda só existem em português: no rodapé
 // inglês o nome vem em inglês, com a indicação do idioma da página.
@@ -22,6 +35,7 @@ const FOOTER_TEXT = {
     city: "Lisboa, Portugal",
     createAd: "CRIAR ANÚNCIO",
     rights: "Todos os direitos reservados.",
+    districts: "Acompanhantes por distrito",
   },
   en: {
     links: [
@@ -38,6 +52,7 @@ const FOOTER_TEXT = {
     city: "Lisbon, Portugal",
     createAd: "CREATE A LISTING",
     rights: "All rights reserved.",
+    districts: "Escorts by district",
   },
 } as const
 
@@ -114,6 +129,29 @@ export default async function Footer() {
             </div>
           </div>
         </div>
+
+        {/* Distritos */}
+        <nav
+          aria-label={t.districts}
+          className="mt-10 border-t border-neutral-200 pt-6 dark:border-neutral-800"
+        >
+          <p className="mb-3 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+            {t.districts}
+          </p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+            {DISTRITOS_RODAPE.map((slug) => (
+              <li key={slug}>
+                <LocaleLink
+                  locale={locale}
+                  href={`/location/${slug}`}
+                  className="text-neutral-600 hover:text-rose-600 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                >
+                  {nomeDistrito(slug, locale)}
+                </LocaleLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </footer>
   )

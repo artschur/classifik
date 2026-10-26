@@ -237,6 +237,9 @@ export function ImageGrid({ initialImages, companionId, totalImages }: ImageGrid
                       src={mediaUrl || '/placeholder.svg'}
                       alt={`Media ${index + 1}`}
                       fill
+                      // A primeira foto é a imagem principal do perfil no
+                      // telemóvel: carrega com prioridade (melhora o LCP).
+                      priority={index === 0}
                       className="object-cover"
                       style={framingStyle(mediaFraming(media))}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

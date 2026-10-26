@@ -1,0 +1,48 @@
+# OneSugar
+
+> OneSugar (onesugar.pt) é uma plataforma portuguesa de anúncios de acompanhantes, só para maiores de 18 anos. Os perfis são revistos pela equipa antes de serem publicados, e o selo "Verificada" indica quem confirmou a identidade com documento. O contacto é feito directamente com a anunciante, sem intermediários. O site existe em português (padrão) e em inglês (/en).
+
+A OneSugar funciona como portal de classificados: não intermedeia encontros nem pagamentos entre clientes e anunciantes. Cobre os 18 distritos de Portugal continental e a Madeira.
+
+## Páginas principais
+
+- [Página inicial](https://www.onesugar.pt/): apresentação da plataforma e perfis em destaque
+- [Acompanhantes por distrito](https://www.onesugar.pt/location): mapa e lista dos distritos
+- [Todos os perfis](https://www.onesugar.pt/companions): listagem de todos os perfis no ar
+- [Sobre a OneSugar](https://www.onesugar.pt/sobre): quem somos e compromisso com a segurança
+- [Ajuda para anunciantes](https://www.onesugar.pt/ajuda-anunciantes): registo, fotografias, verificação e aprovação
+- [Quanto ganha uma acompanhante](https://www.onesugar.pt/quanto-ganha-acompanhante): calculadora de rendimentos
+
+## Distritos
+
+- [Lisboa](https://www.onesugar.pt/location/lisboa)
+- [Porto](https://www.onesugar.pt/location/porto)
+- [Faro (Algarve)](https://www.onesugar.pt/location/faro)
+- [Setúbal](https://www.onesugar.pt/location/setubal)
+- [Braga](https://www.onesugar.pt/location/braga)
+- [Coimbra](https://www.onesugar.pt/location/coimbra)
+- [Leiria](https://www.onesugar.pt/location/leiria)
+- [Aveiro](https://www.onesugar.pt/location/aveiro)
+- [Madeira](https://www.onesugar.pt/location/madeira)
+- [Beja](https://www.onesugar.pt/location/beja)
+- [Bragança](https://www.onesugar.pt/location/braganca)
+- [Castelo Branco](https://www.onesugar.pt/location/castelo-branco)
+- [Évora](https://www.onesugar.pt/location/evora)
+- [Guarda](https://www.onesugar.pt/location/guarda)
+- [Portalegre](https://www.onesugar.pt/location/portalegre)
+- [Santarém](https://www.onesugar.pt/location/santarem)
+- [Viana do Castelo](https://www.onesugar.pt/location/viana-do-castelo)
+- [Vila Real](https://www.onesugar.pt/location/vila-real)
+- [Viseu](https://www.onesugar.pt/location/viseu)
+
+## English
+
+- [Home](https://www.onesugar.pt/en): verified escorts in Portugal
+- [Escorts by district](https://www.onesugar.pt/en/location): every district in English, for example [Lisbon](https://www.onesugar.pt/en/location/lisboa), [Porto](https://www.onesugar.pt/en/location/porto) and [the Algarve](https://www.onesugar.pt/en/location/faro)
+- [All profiles](https://www.onesugar.pt/en/companions)
+
+## Optional
+
+- [Blog](https://blog.onesugar.pt/): guias e artigos sobre o mercado de acompanhantes em Portugal
+- [Termos e Condições](https://www.onesugar.pt/termos-e-condicoes)
+- [Política de Privacidade](https://www.onesugar.pt/politica-de-privacidade)

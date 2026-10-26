@@ -12,7 +12,8 @@ import {
   isUserBlocked,
 } from '@/db/queries/companions';
 import { BlockedProfileMessage } from '@/components/blocked-profile-message';
-import { getCompanionById } from '@/db/queries';
+import { companionExists, getCompanionById } from '@/db/queries';
+import { notFound } from 'next/navigation';
 import { distritoPorSlug, inDistrict } from '@/lib/districts';
 import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, absoluteUrl, pageAlternates } from '@/lib/i18n';
@@ -27,6 +28,13 @@ export async function generateMetadata({
   const [{ id }, locale] = await Promise.all([params, getLocale()]);
   const companionId = parseInt(id);
   const path = `/companions/${id}`;
+
+  // Perfil que não existe (apagado, ou id inválido): 404 de verdade. Antes a
+  // página respondia 200 com o título genérico "Acompanhante" e "index,
+  // follow", e o Google podia guardar perfis apagados como páginas vazias.
+  // Fica aqui, fora do try, porque o notFound() lança um erro próprio que o
+  // catch abaixo engoliria. Se a consulta falhar, a página segue como antes.
+  await garantirQueExiste(companionId);
 
   try {
     const [companion, district] = await Promise.all([
@@ -84,11 +92,18 @@ export async function generateMetadata({
     // Em pausa ou por aprovar: só abre para o admin ou pelo link de
     // pré-visualização, e não pode ir parar ao Google se o link circular.
     const escondido = companion.paused || !companion.verified;
+    // Perfil de demonstração: pode aparecer no site, mas não deve competir no
+    // Google com os perfis reais. As ligações dele continuam a ser seguidas.
+    const demo = Boolean(companion.is_demo);
 
     return {
       title,
       description,
-      ...(escondido ? { robots: { index: false, follow: false } } : {}),
+      ...(escondido
+        ? { robots: { index: false, follow: false } }
+        : demo
+          ? { robots: { index: false, follow: true } }
+          : {}),
       alternates: pageAlternates(path, locale),
       openGraph: {
         title: `${title} | OneSugar`,
@@ -104,6 +119,12 @@ export async function generateMetadata({
   }
 }
 
+async function garantirQueExiste(companionId: number) {
+  if (!Number.isInteger(companionId) || companionId <= 0) notFound();
+  const existe = await companionExists(companionId).catch(() => true);
+  if (!existe) notFound();
+}
+
 export default async function CompanionPage({
   params,
   searchParams,
@@ -113,6 +134,7 @@ export default async function CompanionPage({
 }) {
   const [{ id }, { ver }] = await Promise.all([params, searchParams]);
   const companionId = parseInt(id);
+  await garantirQueExiste(companionId);
   // Link de pré-visualização enviado pelo admin a quem ainda não autorizou.
   const preview = isValidPreviewToken(companionId, ver);
 

@@ -86,7 +86,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
             className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory hide-scrollbar pb-4"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {companions.map((companion) => {
+            {companions.map((companion, i) => {
               const firstImage = companion.images[0]
               const imageUrl = firstImage ? getImageUrl(firstImage) : "/placeholder.svg?height=400&width=300"
 
@@ -102,6 +102,9 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
                         src={imageUrl || "/placeholder.svg"}
                         alt={companion.name}
                         fill
+                        // Primeiro cartão do carrossel: é a primeira foto que
+                        // aparece no topo do distrito, carrega com prioridade.
+                        priority={i === 0}
                         className="object-cover"
                         sizes="(max-width: 768px) 280px, 320px"
                       />

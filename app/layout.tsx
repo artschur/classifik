@@ -163,13 +163,11 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://www.google-analytics.com" />
         <link rel="dns-prefetch" href="https://i.ytimg.com" />
         <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
-        <link
-          rel="preload"
-          as="image"
-          href="/onesugar-mobile.jpeg"
-          media="(max-width: 768px)"
-          fetchPriority="high"
-        />
+        {/* Sem pré-carregamento de imagem aqui: o layout vale para todas as
+            páginas, e o /onesugar-mobile.jpeg (952 KB) da home antiga era
+            descarregado com prioridade máxima em todas elas no telemóvel,
+            mesmo sem ser usado. Cada página dá prioridade à sua própria
+            imagem principal (priority no next/image). */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

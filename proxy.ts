@@ -30,6 +30,30 @@ const isPublicRoute = createRouteMatcher([
   "/convite/(.*)",
 ]);
 
+/**
+ * Áreas que pedem sessão. Sem sessão, só estas levam ao ecrã de login.
+ *
+ * Antes, tudo o que não estava na lista pública ia para o login, incluindo
+ * endereços que não existem: um link partido ou uma URL antiga respondia com
+ * redireccionamento para accounts.onesugar.pt/sign-in em vez de 404, e era
+ * isso que o Google via. Agora um endereço desconhecido segue para a página e
+ * o Next responde 404.
+ *
+ * Rota privada nova: acrescentar aqui. As páginas privadas continuam a
+ * confirmar a sessão do lado delas.
+ */
+const isPrivateRoute = createRouteMatcher([
+  "/admin(.*)",
+  "/api(.*)",
+  "/block(.*)",
+  "/checkout(.*)",
+  "/onboarding(.*)",
+  "/profile(.*)",
+  "/success(.*)",
+  "/test(.*)",
+  "/verify(.*)",
+]);
+
 // Define public API routes that should bypass auth
 const isPublicApiRoute = createRouteMatcher([
   "/api/stripe", // Stripe webhook needs to be public
@@ -85,7 +109,7 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
 
   if (!userId) {
-    if (isPublicRoute(req)) {
+    if (isPublicRoute(req) || !isPrivateRoute(req)) {
       return withLocale(req);
     }
     const { redirectToSignIn } = await auth();

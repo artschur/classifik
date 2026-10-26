@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getAvailableCitiesSummary } from '@/db/queries';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import type { FilterTypesCompanions } from '@/types/types';
@@ -1201,6 +1203,23 @@ function cityData(cityKey: string, locale: Locale): CityData | undefined {
   return locale === 'en' ? cityMetadataEn[cityKey] : cityMetadata[cityKey];
 }
 
+/**
+ * O distrito existe? Os 19 com texto próprio existem sempre; um slug fora
+ * dessa lista só vale se estiver na tabela de cidades.
+ *
+ * Antes, qualquer endereço /location/<qualquer-coisa> respondia 200 com uma
+ * página "Acompanhantes em Qualquer-coisa" indexável: um erro de escrita ou
+ * um link antigo virava uma página vazia no Google (soft 404). Se a consulta
+ * à base falhar, a página continua a abrir, para uma falha passageira não
+ * tirar distritos do ar.
+ */
+async function distritoExiste(cityKey: string): Promise<boolean> {
+  if (cityMetadata[cityKey]) return true;
+  const cidades = await getAvailableCitiesSummary().catch(() => null);
+  if (!cidades) return true;
+  return cidades.some((c) => c.slug === cityKey);
+}
+
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
@@ -1210,6 +1229,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const [{ city }, locale] = await Promise.all([params, getLocale()]);
   const cityKey = city.toLowerCase();
+  if (!(await distritoExiste(cityKey))) notFound();
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
 
@@ -1536,6 +1556,7 @@ export default async function CompanionsPage({
     searchParams,
     getLocale(),
   ]);
+  if (!(await distritoExiste(city.toLowerCase()))) notFound();
   // Um número de página que não seja inteiro positivo passa a valer como 1:
   // parseInt('abc') devolve NaN, que ia parar à base de dados como deslocamento.
   const page = Math.max(1, parseInt(rawParams.page ?? '1', 10) || 1);
