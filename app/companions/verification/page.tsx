@@ -3,11 +3,16 @@ import { redirect } from 'next/navigation';
 import { db } from '@/db';
 import { companionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { isVerificationPending, verifyItemsIfOnboardingComplete } from '@/app/actions/document-verification';
-import { VideoVerificationForm } from '@/components/video-verification-form';
+import { resumoDocumentos } from '@/db/queries/verificacao';
+import { PassosRegisto } from '@/components/registo/passos-registo';
+import { VerificacaoPasso } from '@/components/registo/verificacao-passo';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Passo 4 do registo: vídeo e documento. Também é para onde levam os avisos
+ * de verificação por fazer ou recusada, e a compra de um plano sem selo.
+ */
 export default async function VideoVerificationPage() {
   const { userId } = await auth();
 
@@ -23,34 +28,19 @@ export default async function VideoVerificationPage() {
   if (!companion) redirect('/companions/register');
 
   // Quem já tem a identidade verificada não tem nada a fazer aqui: o vídeo e
-  // o documento já foram vistos. Quem está online sem selo (perfil importado,
-  // publicado só com consentimento) continua a poder enviá-los.
+  // o documento já foram vistos.
   if (companion.identityVerified) redirect('/profile');
 
-  const [isPending, uploadStatus] = await Promise.all([
-    isVerificationPending(userId),
-    verifyItemsIfOnboardingComplete(userId),
-  ]);
-
-  if (isPending) redirect('/companions/verification/pending');
-
-  // If video already uploaded, go straight to document step
-  if (uploadStatus.isVerificationVideoUploaded && !uploadStatus.isDocumentUploaded) {
-    redirect('/companions/verification/document');
-  }
+  const documentos = await resumoDocumentos(companion.id);
 
   return (
     <div className="container mx-auto py-12 px-4">
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-10 text-sm font-semibold text-muted-foreground">
-        <span className="bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
-        <span className="text-foreground">Vídeo de Verificação</span>
-        <span className="mx-2">→</span>
-        <span className="bg-muted rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
-        <span>Documento de Identificação</span>
-      </div>
-
-      <VideoVerificationForm initialVideoUploaded={uploadStatus.isVerificationVideoUploaded} />
+      <PassosRegisto atual={4} />
+      <VerificacaoPasso
+        video={documentos.video}
+        documento={documentos.documento}
+        motivoRecusa={documentos.motivoRecusa}
+      />
     </div>
   );
 }

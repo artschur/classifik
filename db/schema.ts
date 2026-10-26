@@ -139,6 +139,20 @@ export const companionsTable = pgTable(
     // isto, desverificar quem já não tem documento guardado tirava-a do site
     // sem a fazer aparecer na fila, deixando-a sem caminho de volta.
     sent_to_review_at: timestamp('sent_to_review_at'),
+    // Entrou na fila do admin: na criação do perfil (primeira foto) e outra
+    // vez quando corrige um perfil recusado. Os registos anteriores a este
+    // campo ficam a null e só entram na fila se enviarem documento.
+    submitted_at: timestamp('submitted_at'),
+    // Recusa do admin. Não apaga nada: ela vê o motivo e pode corrigir.
+    rejected_at: timestamp('rejected_at'),
+    rejection_reason: text('rejection_reason'),
+    // Declarou ter 18 anos ou mais e aceitou os termos, no passo 1.
+    terms_accepted_at: timestamp('terms_accepted_at'),
+    // Quando, quem e por que via o selo foi dado ('documento' ou 'whatsapp').
+    // Só o admin lê: no site o selo "Verificada" é igual para todas.
+    identity_verified_at: timestamp('identity_verified_at'),
+    identity_verified_by: text('identity_verified_by'),
+    identity_verified_method: varchar('identity_verified_method', { length: 20 }),
     // Perfil colocado de propósito, sem pessoa por trás. Aparece no site como
     // qualquer outro, mas os botões de contacto ficam inertes: os números e
     // os Instagram que lá estão não são de quem o perfil diz ser.
@@ -327,9 +341,15 @@ export const documentsTable = pgTable(
     storage_path: text('storage_path').notNull(),
     public_url: text('public_url').notNull(),
     verified: boolean('verified').default(false),
+    // 'pendente', 'aprovado' ou 'recusado'. O booleano acima não distinguia
+    // um documento recusado de um por rever; fica em sincronia por
+    // compatibilidade.
+    status: varchar('status', { length: 20 }).default('pendente').notNull(),
+    reviewed_by: text('reviewed_by'),
     verification_date: timestamp('verification_date'),
     created_at: timestamp('created_at').defaultNow(),
     updated_at: timestamp('updated_at').defaultNow(),
+    // Motivo da recusa, que ela vê.
     notes: text('notes'),
   },
   (table) => ({

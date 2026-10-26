@@ -9,9 +9,22 @@ const RD_EVENTS_URL = 'https://api.rd.services/platform/events?event_type=conver
  * disponível em todos os planos.
  */
 export const RD_CONVERSION_APROVADA = 'sugar-aprovada';
+/** Aprovada e no ar, mas sem selo: as boas-vindas pedem a verificação. */
+export const RD_CONVERSION_APROVADA_SEM_VERIFICACAO = 'sugar-aprovada-sem-verificacao';
 export const RD_CONVERSION_RECUSADA = 'sugar-recusada';
+/** O admin recusou o vídeo ou o documento: pede-se um novo envio. */
+export const RD_CONVERSION_DOCUMENTOS_RECUSADOS = 'documentos-recusados';
+/** Carregou em "Pular por agora" no passo da verificação. */
+export const RD_CONVERSION_VERIFICACAO_PULADA = 'verificacao-pulada';
 /** Lead captado na calculadora pública, antes de existir conta. */
 export const RD_CONVERSION_CALCULADORA = 'calculadora-ganhos';
+
+/**
+ * Campo personalizado com o motivo escrito pelo admin, enviado nos eventos de
+ * recusa (perfil e documentos) para entrar no e-mail. Só aparece no RD depois
+ * de o campo ser criado lá com este identificador.
+ */
+export const RD_CAMPO_MOTIVO_RECUSA = 'cf_motivo_recusa';
 
 /**
  * Tags de estado no RD Station.
@@ -30,8 +43,12 @@ export type RDTag =
   | 'conta-criada'
   /** Declarou que quer anunciar, mas ainda não chegou ao fim do registo. */
   | 'registo-incompleto'
+  /** Perfil criado (primeira foto) e na fila do admin, com ou sem verificação. */
+  | 'perfil-criado'
   /** Enviou documento e vídeo: o registo está completo. */
-  | 'registo-concluido';
+  | 'registo-concluido'
+  /** Recebeu o selo "Verificada". Quem tem "aprovado" sem esta está no ar sem selo. */
+  | 'verificada';
 
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 
@@ -192,10 +209,11 @@ export async function sendConversionEventToRD(
   conversionIdentifier: string,
   name?: string,
   customFields?: Record<string, string>,
-): Promise<void> {
+): Promise<boolean> {
   if (!process.env.RD_STATION_CLIENT_ID) {
     console.log('RD Station: RD_STATION_CLIENT_ID ausente, integração desativada');
-    return;
+    // Nada falhou: não há nada a repetir.
+    return true;
   }
 
   // A API aceita e-mail ou telefone como identificador do contacto. Leads
@@ -206,7 +224,7 @@ export async function sendConversionEventToRD(
 
   if (!contact.email && !contact.phone) {
     console.error('RD Station: evento sem e-mail nem telefone, ignorado');
-    return;
+    return false;
   }
 
   try {
@@ -235,12 +253,34 @@ export async function sendConversionEventToRD(
       console.error(
         `RD Station: falha no evento "${conversionIdentifier}" para ${label} (${response.status})`,
       );
-    } else {
-      console.log(
-        `RD Station: evento "${conversionIdentifier}" registado com sucesso (${label})`,
-      );
+      return false;
     }
+    console.log(
+      `RD Station: evento "${conversionIdentifier}" registado com sucesso (${label})`,
+    );
+    return true;
   } catch (error) {
     console.error('RD Station: erro ao registar evento de conversão', error);
+    return false;
+  }
+}
+
+/**
+ * Evento de recusa com o motivo escrito pelo admin, no campo personalizado
+ * `cf_motivo_recusa`. Se o RD rejeitar o evento (por exemplo, porque o campo
+ * ainda não foi criado na conta), repete sem o motivo: a automação dispara
+ * na mesma, só sem o texto.
+ */
+export async function sendConversionEventWithReason(
+  email: string,
+  conversionIdentifier: string,
+  name: string | undefined,
+  motivo: string,
+): Promise<void> {
+  const comMotivo = await sendConversionEventToRD(email, conversionIdentifier, name, {
+    [RD_CAMPO_MOTIVO_RECUSA]: motivo,
+  });
+  if (!comMotivo) {
+    await sendConversionEventToRD(email, conversionIdentifier, name);
   }
 }

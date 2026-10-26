@@ -23,12 +23,14 @@ const TEXT = {
     anos: 'anos',
     ver: 'Ver perfil',
     verificada: 'Verificada',
+    naoVerificada: 'Não verificada',
     alt: (nome: string, cidade: string) => `${nome}, acompanhante em ${cidade}`,
   },
   en: {
     anos: 'years old',
     ver: 'View profile',
     verificada: 'Verified',
+    naoVerificada: 'Not verified',
     alt: (nome: string, cidade: string) => `${nome}, escort in ${cidade}`,
   },
 } as const;
@@ -95,6 +97,11 @@ export function ProfileCard({
             <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label={t.verificada} />
           )}
         </div>
+        {!sugar.identityVerified && (
+          <span className="w-fit rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+            {t.naoVerificada}
+          </span>
+        )}
         <p className="text-xs text-muted-foreground">
           {sugar.age} {t.anos}
           {genero ? ` • ${genero}` : ''}

@@ -103,7 +103,6 @@ export default clerkMiddleware(async (auth, req) => {
   const isCompanion = metadata?.isCompanion;
   const onboardingComplete = metadata?.onboardingComplete;
   const isFirstStepRegistrationComplete = metadata?.isRegistrationComplete;
-  const hasDocs = metadata?.hasUploadedDocs;
 
   if (onboardingComplete === false) {
     if (!req.nextUrl.pathname.startsWith("/onboarding")) {
@@ -112,20 +111,14 @@ export default clerkMiddleware(async (auth, req) => {
     return withLocale(req);
   }
 
-  if (isCompanion) {
-    if (isFirstStepRegistrationComplete === false) {
-      if (!req.nextUrl.pathname.startsWith("/companions/register")) {
-        return NextResponse.redirect(new URL("/companions/register", req.url));
-      }
-      return withLocale(req);
+  // Só se prende quem ainda não tem perfil. A verificação (vídeo e
+  // documento) pode ficar para depois: já não há desvio para lá, e quem não a
+  // fez vê avisos no painel, na edição e no próprio anúncio.
+  if (isCompanion && isFirstStepRegistrationComplete === false) {
+    if (!req.nextUrl.pathname.startsWith("/companions/register")) {
+      return NextResponse.redirect(new URL("/companions/register", req.url));
     }
-
-    if (hasDocs === false) {
-      if (!req.nextUrl.pathname.startsWith("/companions/verification")) {
-        return NextResponse.redirect(new URL("/companions/verification", req.url));
-      }
-      return withLocale(req);
-    }
+    return withLocale(req);
   }
 
   return withLocale(req);

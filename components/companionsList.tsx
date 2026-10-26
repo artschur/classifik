@@ -292,10 +292,17 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
             <h3 className="text-lg font-semibold">{companion.name}</h3>
             <div className="flex items-center gap-2">
               {/*{getPlanBadge(companion.planType)}*/}
-              {/* Antes aparecia a toda a gente. Agora só com o documento visto. */}
-              {companion.identityVerified && (
+              {/* O selo é do documento visto. Quem está no ar sem ele diz-o. */}
+              {companion.identityVerified ? (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   <Check className="w-3 h-3 mr-1" /> {en ? 'Verified' : 'Verificado'}
+                </Badge>
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                >
+                  {en ? 'Not verified' : 'Não verificado'}
                 </Badge>
               )}
               <Badge variant="secondary">{companion.age} {en ? 'years old' : 'anos'}</Badge>

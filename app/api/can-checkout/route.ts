@@ -1,7 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { hasActiveAd } from "@/db/queries/kv";
 import { isUserACompanion } from "@/db/queries/companions";
-import { isVerificationPending } from "@/app/actions/document-verification";
+import { acessoAPlanos, DESTINO_SEM_ACESSO } from "@/db/queries/verificacao";
+import { isAdmin } from "@/components/header";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -15,26 +16,21 @@ export async function GET() {
   // comprava sem perfil ficava com o pagamento pendurado no vazio: o aviso da
   // Stripe chegava, não encontrava a quem atribuir o plano, e desistia em
   // silêncio. A pessoa pagava e continuava a aparecer como anúncio gratuito.
-  if (!(await isUserACompanion(userId))) {
-    return NextResponse.json({
-      canCheckout: false,
-      redirect: "/companions/register",
-    });
+  //
+  // E o anúncio tem de estar verificado: sem selo, o botão leva-a ao passo da
+  // verificação. Os admins ficam isentos, para as compras de teste.
+  if (isAdmin(userId)) {
+    if (!(await isUserACompanion(userId))) {
+      return NextResponse.json({ canCheckout: false, redirect: "/companions/register" });
+    }
+  } else {
+    const acesso = await acessoAPlanos(userId);
+    if (acesso !== "pode") {
+      return NextResponse.json({ canCheckout: false, redirect: DESTINO_SEM_ACESSO[acesso] });
+    }
   }
 
-  const [verificationPending, hasPaid] = await Promise.all([
-    isVerificationPending(userId),
-    hasActiveAd(userId),
-  ]);
-
-  if (verificationPending) {
-    return NextResponse.json({
-      canCheckout: false,
-      redirect: "/companions/verification/pending",
-    });
-  }
-
-  if (hasPaid) {
+  if (await hasActiveAd(userId)) {
     return NextResponse.json({ canCheckout: false, redirect: "/profile" });
   }
 

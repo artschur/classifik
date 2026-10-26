@@ -10,10 +10,17 @@ import {
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getCompanionIdByClerkId } from "@/db/queries/companions";
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { getClerkIdByCompanionId } from "@/db/queries/userActions";
-import { tagCompanionInRD } from "@/lib/rd-station";
+import {
+  RD_CONVERSION_DOCUMENTOS_RECUSADOS,
+  RD_CONVERSION_VERIFICACAO_PULADA,
+  sendConversionEventToRD,
+  sendConversionEventWithReason,
+  tagCompanionInRD,
+} from "@/lib/rd-station";
 import { isAdmin } from "@/components/header";
+import { TIPOS_DOCUMENTO_ID } from "@/db/queries/verificacao";
 import {
   getSupabaseAdmin,
   removeStorageFolder,
@@ -77,6 +84,7 @@ export async function getDocumentsByCompanionId(companionId: number) {
         storage_path: documentsTable.storage_path,
         public_url: documentsTable.public_url,
         verified: documentsTable.verified,
+        status: documentsTable.status,
         verification_date: documentsTable.verification_date,
         notes: documentsTable.notes,
         created_at: documentsTable.created_at,
@@ -106,7 +114,8 @@ export async function getDocumentsByCompanionId(companionId: number) {
 /**
  * O que a própria anunciante já enviou. Identifica-a pela sessão, nunca por
  * um id vindo do navegador, e não devolve endereços: o formulário só precisa
- * de saber que tipos de documento já lá estão.
+ * de saber que tipos de documento já lá estão, em que estado, e o motivo de
+ * uma recusa.
  */
 export async function getMyDocuments() {
   try {
@@ -120,6 +129,8 @@ export async function getMyDocuments() {
         id: documentsTable.id,
         document_type: documentsTable.document_type,
         verified: documentsTable.verified,
+        status: documentsTable.status,
+        notes: documentsTable.notes,
         created_at: documentsTable.created_at,
       })
       .from(documentsTable)
@@ -137,39 +148,94 @@ export async function getMyDocuments() {
   }
 }
 
-export async function verifyDocument(
-  documentId: number,
-  verified: boolean,
-  documentType: string,
-  notes?: string,
-) {
+/**
+ * "Recusar documentos": o vídeo e o documento à espera passam a recusados,
+ * com o motivo, que ela vê no painel e no passo da verificação, onde pode
+ * enviar outros. Os ficheiros ficam guardados. O perfil não muda: se estava
+ * por aprovar, continua na fila e pode ser aprovado sem selo; se estava no
+ * ar, continua no ar sem selo. Só admin.
+ */
+export async function rejectDocuments(companionId: number, motivo: string) {
   try {
     const { userId } = await auth();
     if (!userId || !isAdmin(userId)) {
       return { success: false, error: "Não autorizado" };
     }
 
-    await db
+    const razao = motivo?.trim();
+    if (!razao) {
+      return { success: false, error: "Escreva o motivo: ela vai vê-lo." };
+    }
+
+    const recusados = await db
       .update(documentsTable)
       .set({
-        verified,
-        verification_date: verified ? new Date() : null,
-        notes,
+        status: "recusado",
+        verified: false,
+        verification_date: null,
+        notes: razao.slice(0, 1000),
+        reviewed_by: userId,
         updated_at: new Date(),
       })
-      .where(eq(documentsTable.id, documentId));
+      .where(
+        and(
+          eq(documentsTable.companionId, companionId),
+          eq(documentsTable.status, "pendente"),
+        ),
+      )
+      .returning({ id: documentsTable.id });
+
+    if (recusados.length === 0) {
+      return { success: false, error: "Não há documentos por rever." };
+    }
+
+    const [companion] = await db
+      .select({ email: companionsTable.email, name: companionsTable.name })
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companionId))
+      .limit(1);
+
+    if (companion?.email && !companion.email.endsWith(".invalid")) {
+      await sendConversionEventWithReason(
+        companion.email,
+        RD_CONVERSION_DOCUMENTOS_RECUSADOS,
+        companion.name,
+        razao,
+      );
+    }
 
     revalidatePath("/verify");
-    revalidatePath("/companions/verification");
 
     return { success: true };
   } catch (error) {
-    console.error("Error verifying document:", error);
+    console.error("Error rejecting documents:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
+}
+
+/**
+ * "Pular por agora" no passo da verificação. Só leva o evento ao RD, para os
+ * lembretes: o perfil já está na fila do admin e pode ser aprovado sem selo.
+ */
+export async function skipVerification() {
+  const { userId } = await auth();
+  if (!userId) return { success: false };
+
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  const email = user.emailAddresses[0]?.emailAddress;
+  if (email) {
+    await sendConversionEventToRD(
+      email,
+      RD_CONVERSION_VERIFICACAO_PULADA,
+      user.fullName ?? undefined,
+    );
+  }
+
+  return { success: true };
 }
 
 export async function deleteDocument(documentId: number) {
@@ -236,6 +302,7 @@ export async function verifyItemsIfOnboardingComplete(
   clerkId: string,
 ): Promise<StatusOfItems> {
   try {
+    // Um documento recusado não conta como enviado: ela tem de mandar outro.
     const [imageResult, audioResult, verificationVideoResult, documentResult] =
       await Promise.all([
         db.select().from(imagesTable).where(eq(imagesTable.authId, clerkId)),
@@ -250,6 +317,7 @@ export async function verifyItemsIfOnboardingComplete(
             and(
               eq(documentsTable.authId, clerkId),
               eq(documentsTable.document_type, "verification_video"),
+              ne(documentsTable.status, "recusado"),
             ),
           ),
         db
@@ -258,12 +326,8 @@ export async function verifyItemsIfOnboardingComplete(
           .where(
             and(
               eq(documentsTable.authId, clerkId),
-              inArray(documentsTable.document_type, [
-                "id_card",
-                "passport",
-                "drivers_license",
-                "selfie",
-              ]),
+              inArray(documentsTable.document_type, TIPOS_DOCUMENTO_ID),
+              ne(documentsTable.status, "recusado"),
             ),
           ),
       ]);
@@ -303,7 +367,9 @@ export async function isVerificationPending(clerkId: string): Promise<boolean> {
           document_type: documentsTable.document_type,
         })
         .from(documentsTable)
-        .where(eq(documentsTable.authId, clerkId)),
+        .where(
+          and(eq(documentsTable.authId, clerkId), ne(documentsTable.status, "recusado")),
+        ),
     ]);
 
     if (companionResult.length === 0) {
@@ -331,7 +397,9 @@ export async function isVerificationPending(clerkId: string): Promise<boolean> {
 }
 
 /**
- * Apaga do Storage as fotos e os documentos de um registo recusado. Só admin.
+ * Apaga do Storage as fotos, o áudio e os documentos de um perfil que vai ser
+ * apagado de vez (deleteCompanionPermanently). A recusa já não apaga nada.
+ * Só admin.
  *
  * Antes passava as pastas directamente a `remove`, que só apaga caminhos
  * exactos: não apagava nada nem dava erro, e os documentos de identidade de

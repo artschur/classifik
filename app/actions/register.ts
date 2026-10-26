@@ -5,7 +5,8 @@ import { after } from 'next/server';
 import { registerCompanion } from '@/db/queries/companions';
 import { upsertSubscriptionFromStripe } from '@/db/queries/subscriptions';
 import { stripe } from '@/db/stripe';
-import { RegisterCompanionFormValues } from '@/components/formCompanionRegister';
+import type { RegisterCompanionFormValues } from '@/lib/registo-schema';
+import { tagCompanionInRD } from '@/lib/rd-station';
 
 /**
  * Liga ao perfil recém-criado uma subscrição que já exista na Stripe.
@@ -54,34 +55,46 @@ async function linkExistingSubscription(clerkId: string) {
   }
 }
 
-export async function registerCompanionAction(companionPayload: RegisterCompanionFormValues) {
-  const { userId, sessionClaims } = await auth();
-  if (!userId) {
-    // This is the only place an auth error should originate
-    throw new Error('Authentication failed: No user ID found.');
-  }
+/**
+ * Marca no Clerk que o registo de base está feito, logo que o perfil existe.
+ * Até aqui isto só acontecia no fim do passo das fotos: quem fechava o site
+ * depois da primeira foto ficava presa pelo proxy no formulário, com o perfil
+ * já criado. O RD fica a saber que o perfil foi criado e está na fila.
+ *
+ * Não é exportada de propósito: neste ficheiro tudo o que se exporta fica
+ * chamável a partir do browser.
+ */
+async function markProfileCreated(clerkId: string) {
+  try {
+    const cc = await clerkClient();
+    const user = await cc.users.getUser(clerkId);
+    await cc.users.updateUserMetadata(clerkId, {
+      publicMetadata: {
+        onboardingComplete: true,
+        isCompanion: true,
+        isRegistrationComplete: true,
+      },
+    });
 
-  // 2. Reliably get the user's email
-  let email = sessionClaims?.email;
-  if (!email) {
-    try {
-      const cc = await clerkClient();
-      const user = await cc.users.getUser(userId);
-      email =
-        user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
-        user.emailAddresses?.[0]?.emailAddress;
-    } catch (error) {
-      console.error('Failed to fetch user from Clerk:', error);
-      throw new Error('Could not retrieve user email.');
+    const email = user.emailAddresses[0]?.emailAddress;
+    if (email) {
+      await tagCompanionInRD(email, 'perfil-criado', user.fullName ?? undefined);
     }
+  } catch (error) {
+    console.error('Falha ao marcar o perfil como criado:', error);
+  }
+}
+
+export async function registerCompanionAction(companionPayload: RegisterCompanionFormValues) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error('Sessão expirada. Entre outra vez.');
   }
 
-  if (!email) {
-    throw new Error('Authentication failed: No email found for user.');
-  }
+  // A conta, o email e a validação dos dados ficam do lado do servidor.
+  const companion = await registerCompanion(companionPayload);
 
-  // 3. Call the strict, predictable database helper
-  const companion = await registerCompanion(companionPayload, userId, email);
+  await markProfileCreated(userId);
 
   // Depois da resposta seguir: consultar a Stripe é lento e o registo não
   // deve esperar por isso.

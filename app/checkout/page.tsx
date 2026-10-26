@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { isUserACompanion } from '@/db/queries/companions';
+import { acessoAPlanos } from '@/db/queries/verificacao';
 import { isAdmin } from '@/components/header';
 import { ProductCard } from './productCard';
 import {
@@ -99,6 +100,9 @@ export default async function CheckoutPage() {
   const hasProfile = userId ? await isUserACompanion(userId) : false;
   // Botão de compra de teste sem o mês grátis, só para admin com perfil.
   const adminTest = Boolean(userId && isAdmin(userId) && hasProfile);
+  // Os planos são só para perfis verificados. Os preços continuam à vista,
+  // com o caminho para a verificação; escolher um plano leva lá.
+  const acesso = userId && hasProfile && !isAdmin(userId) ? await acessoAPlanos(userId) : null;
 
   return (
     <div className="container mx-auto py-10">
@@ -114,6 +118,32 @@ export default async function CheckoutPage() {
         </h2>
         <p className="text-lg text-neutral-400">Cancele quando quiser!</p>
       </div>
+      {acesso === 'sem-selo' && (
+        <div className="my-6 p-4 border border-amber-300 bg-amber-50 rounded-lg dark:border-amber-900 dark:bg-amber-950/40">
+          <p className="font-medium mb-1">
+            Para escolher um plano, verifique primeiro o seu perfil.
+          </p>
+          <p className="text-base text-muted-foreground mb-3">
+            Os planos são só para perfis com o selo &quot;Verificada&quot;. Envie
+            o vídeo e o documento: assim que a equipa confirmar, pode escolher
+            o plano aqui.
+          </p>
+          <Link
+            href="/companions/verification"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
+          >
+            Verificar o meu perfil
+          </Link>
+        </div>
+      )}
+      {acesso === 'em-revisao' && (
+        <div className="my-6 p-4 border border-amber-300 bg-amber-50 rounded-lg dark:border-amber-900 dark:bg-amber-950/40">
+          <p className="font-medium mb-1">O seu perfil está em revisão.</p>
+          <p className="text-base text-muted-foreground">
+            Pode escolher um plano assim que a equipa o voltar a aprovar.
+          </p>
+        </div>
+      )}
       {!hasProfile && (
         <div className="my-6 p-4 border border-amber-300 bg-amber-50 rounded-lg dark:border-amber-900 dark:bg-amber-950/40">
           <p className="font-medium mb-1">

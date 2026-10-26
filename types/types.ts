@@ -64,6 +64,24 @@ export type CompanionFiltered = Pick<
    * aqui apaga algo que esteve publicado, por isso o botão diz o que faz.
    */
   wasSentToReview?: boolean;
+  /** Só na fila: estado do vídeo e do documento (db/queries/verificacao.ts). */
+  verificacao?: "verificada" | "em-analise" | "parcial" | "recusada" | "por-enviar";
+  /** Só na fila: vídeo e documento à espera. Aí não se aprova sem selo. */
+  verificacaoCompletaPendente?: boolean;
+  /** Só na fila: há vídeo ou documento por rever. */
+  temDocumentosPendentes?: boolean;
+  /** Só na fila: motivo da última recusa de documentos. */
+  motivoRecusaDocumentos?: string | null;
+  /** Só na fila: nenhuma característica preenchida (passo 5). */
+  semCaracteristicas?: boolean;
+  /** Só na fila: quando entrou (criação do perfil ou reenvio). */
+  submittedAt?: Date | null;
+  /** Só na fila: motivo da recusa anterior, se ela corrigiu e reenviou. */
+  recusaAnterior?: string | null;
+  /** Só na fila e no admin: por que via foi dado o selo. */
+  identityVerifiedMethod?: string | null;
+  /** Só na fila: está no ar e entrou só para rever vídeo e documento. */
+  isDocsReview?: boolean;
 };
 
 export type PendingChange = {
@@ -118,6 +136,15 @@ export type CompanionById = Omit<
   | "stripe_customer_id"
   // Interessa só à fila de verificação; a página do perfil não o lê.
   | "sent_to_review_at"
+  // Estado do registo e auditoria do selo: só o admin e a própria os vêem,
+  // por isso ficam fora da leitura pública (que vai para cache).
+  | "submitted_at"
+  | "rejected_at"
+  | "rejection_reason"
+  | "terms_accepted_at"
+  | "identity_verified_at"
+  | "identity_verified_by"
+  | "identity_verified_method"
 > & {
   // Add characteristics fields with exact names from select query
   weight: Characteristic["weight"];

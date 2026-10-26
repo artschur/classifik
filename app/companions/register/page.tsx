@@ -1,16 +1,11 @@
-import {
-  isVerificationPending,
-  verifyItemsIfOnboardingComplete,
-} from "@/app/actions/document-verification";
 import { RegisterCompanionForm } from "@/components/formCompanionRegister";
 import { SkeletonForm } from "@/components/skeletons/skeletonForm";
-import { db } from "@/db";
+import { EstadoRegisto } from "@/components/registo/estado-registo";
 import { getAvailableCities } from "@/db/queries";
 import { getCompanionToEdit } from "@/db/queries/companions";
 import { getUserPlan } from "@/db/queries/plan";
-import { companionsTable } from "@/db/schema";
+import { acessoAPlanos } from "@/db/queries/verificacao";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -32,76 +27,60 @@ async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
     redirect("/sign-up?redirect_url=/companions/register");
   }
 
-  const [
-    cities,
-    companion,
-    stillVerifying,
-    allVerificationStatus,
-    companionVerificationStatus,
-    userPlan,
-  ] = await Promise.all([
+  const [cities, companion, userPlan, acesso] = await Promise.all([
     getAvailableCities(),
     getCompanionToEdit(userId),
-    isVerificationPending(userId),
-    verifyItemsIfOnboardingComplete(userId),
-    db
-      .select({ verified: companionsTable.verified })
-      .from(companionsTable)
-      .where(eq(companionsTable.auth_id, userId))
-      .limit(1),
     getUserPlan(userId),
+    acessoAPlanos(userId),
   ]);
 
   const maxPhotos = ['classic', 'plus', 'vip'].includes(userPlan) ? 30 : 10;
 
-  const isVerified = companionVerificationStatus[0]?.verified ?? false;
-
-  // Update metadata to track document upload status and ensure companion flags are set.
-  // This also handles users who arrive directly (e.g. from the "Registar como Sugar" CTA)
-  // without going through /onboarding — we auto-mark them as companions.
-  const currentHasDocs = sessionClaims?.metadata?.hasUploadedDocs;
-  // Um perfil já publicado não volta aos passos de verificação: é o caso de
-  // quem reclamou um perfil criado pelo admin, para quem o documento só dá o
-  // selo. Sem isto, a marca passava a false e o proxy prendia-a na
-  // verificação em todas as páginas.
-  const hasDocsNow = allVerificationStatus.isVerificationVideoUploaded || isVerified;
-  const needsOnboarding = !sessionClaims?.metadata?.onboardingComplete;
-
-  if (currentHasDocs !== hasDocsNow || needsOnboarding) {
+  // Quem chega aqui directamente (por exemplo, pelo "Registar como Sugar")
+  // sem passar por /onboarding fica marcada como anunciante. E quem já tem
+  // perfil tem o registo de base feito: sem esta marca, o proxy prendia-a
+  // neste formulário em todas as páginas (contas criadas antes de a marca
+  // passar a ser gravada na criação do perfil).
+  const metadata = sessionClaims?.metadata;
+  const registoFeito = companion ? true : (metadata?.isRegistrationComplete ?? false);
+  if (
+    !metadata?.onboardingComplete ||
+    metadata?.isCompanion !== true ||
+    metadata?.isRegistrationComplete !== registoFeito
+  ) {
     const client = await clerkClient();
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
-        ...sessionClaims?.metadata,
         onboardingComplete: true,
         isCompanion: true,
-        isRegistrationComplete: sessionClaims?.metadata?.isRegistrationComplete ?? isVerified,
-        hasUploadedDocs: hasDocsNow,
+        isRegistrationComplete: registoFeito,
       },
     });
   }
 
-  // If verification is pending (has all docs uploaded), show pending page
-  if (stillVerifying) {
-    redirect("/companions/verification/pending");
-  }
-
-  // Route to the correct verification step based on what's already uploaded
-  if (!isVerified && companion && allVerificationStatus.isImageUploaded) {
-    if (!allVerificationStatus.isVerificationVideoUploaded) {
-      redirect("/companions/verification");
-    }
-    if (!allVerificationStatus.isDocumentUploaded) {
-      redirect("/companions/verification/document");
-    }
-  }
-
   return (
-    <RegisterCompanionForm
-      cities={JSON.parse(JSON.stringify(cities))}
-      companionData={companion ? JSON.parse(JSON.stringify(companion)) : null}
-      maxPhotos={maxPhotos}
-      prefill={prefill}
-    />
+    <>
+      <div className="text-center space-y-2 mb-6">
+        <h1 className="text-2xl font-bold">
+          {companion ? "O seu perfil" : "Torne-se uma Sugar na Onesugar"}
+        </h1>
+        {!companion && (
+          <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
+        )}
+      </div>
+      {companion && (
+        <div className="px-4">
+          <EstadoRegisto clerkId={userId} contexto="edicao" />
+        </div>
+      )}
+      <RegisterCompanionForm
+        cities={JSON.parse(JSON.stringify(cities))}
+        companionData={companion ? JSON.parse(JSON.stringify(companion)) : null}
+        maxPhotos={maxPhotos}
+        prefill={prefill}
+        planosDisponiveis={acesso === "pode"}
+      />
+    </>
   );
 }
 
@@ -119,11 +98,7 @@ export default async function RegisterCompanionPage({
   };
 
   return (
-    <div className="container mx-auto py-8 md:px-0 space-y-10">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold">Torne-se uma Sugar na Onesugar</h1>
-        <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
-      </div>
+    <div className="container mx-auto py-8 md:px-0">
       <div id="register-form">
         <Suspense fallback={<SkeletonForm />}>
           <CompanionFormWithData prefill={prefill} />

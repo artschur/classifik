@@ -5,8 +5,6 @@ import {
   X,
   User,
   Phone,
-  MapPin,
-  Languages,
   Ruler,
   Weight,
   Eye,
@@ -16,14 +14,12 @@ import {
   FileText,
   CheckCircle,
   XCircle,
-  MessageSquare,
   VideoIcon,
-  AlertTriangle,
-  Sparkle,
   Pencil,
   Crop,
   ArrowLeft,
   ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,23 +37,35 @@ import {
   approveCompanion,
   rejectCompanion,
   updateCompanionAge,
+  verifyIdentityAsAdmin,
 } from '@/db/queries/companions';
-import Link from 'next/link';
 import Image from 'next/image';
 import { CompanionFiltered, Media } from '@/types/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  deleteAllDocumentsFromCompanion,
   getDocumentsByCompanionId,
-  verifyDocument,
+  rejectDocuments,
 } from '@/app/actions/document-verification';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   updateImageFramingAsAdmin,
   updateImagesOrderAsAdmin,
@@ -73,6 +81,7 @@ type Document = {
   url: string | null;
   storage_path: string;
   verified: boolean;
+  status: string;
   verification_date: string | null;
   notes: string | null;
   created_at: string;
@@ -81,6 +90,91 @@ type Document = {
 // O endereço assinado termina no token, por isso a extensão vê-se no caminho.
 const isPdfDocument = (doc: Document) =>
   doc.storage_path.toLowerCase().endsWith('.pdf');
+
+const ESTADO_DOCUMENTO: Record<string, { texto: string; className: string }> = {
+  aprovado: { texto: 'Aprovado', className: 'text-green-600' },
+  recusado: { texto: 'Recusado', className: 'text-red-600' },
+  pendente: { texto: 'Por rever', className: 'text-amber-600' },
+};
+
+const ESTADO_VERIFICACAO: Record<
+  NonNullable<CompanionFiltered['verificacao']>,
+  { texto: string; className: string }
+> = {
+  verificada: { texto: 'Verificada', className: 'bg-green-100 text-green-800 hover:bg-green-100' },
+  'em-analise': { texto: 'Vídeo e documento por rever', className: 'bg-sky-100 text-sky-800 hover:bg-sky-100' },
+  parcial: { texto: 'Verificação a meio', className: 'bg-amber-100 text-amber-900 hover:bg-amber-100' },
+  recusada: { texto: 'Documentos recusados', className: 'bg-red-100 text-red-800 hover:bg-red-100' },
+  'por-enviar': { texto: 'Sem verificação', className: 'bg-neutral-200 text-neutral-700 hover:bg-neutral-200' },
+};
+
+function haQuantoTempo(data: Date | null | undefined): string | null {
+  if (!data) return null;
+  const dias = Math.floor((Date.now() - new Date(data).getTime()) / 86_400_000);
+  if (dias <= 0) return 'hoje';
+  if (dias === 1) return 'há 1 dia';
+  return `há ${dias} dias`;
+}
+
+/**
+ * Pede o motivo de uma recusa (do perfil ou dos documentos). O motivo é
+ * obrigatório porque ela vê-o no painel, e vai no e-mail do RD.
+ */
+function DialogoMotivo({
+  open,
+  onOpenChange,
+  titulo,
+  descricao,
+  botao,
+  aGravar,
+  onConfirmar,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  titulo: string;
+  descricao: string;
+  botao: string;
+  aGravar: boolean;
+  onConfirmar: (motivo: string) => void;
+}) {
+  const [motivo, setMotivo] = useState('');
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(aberto) => {
+        if (!aberto) setMotivo('');
+        onOpenChange(aberto);
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{titulo}</DialogTitle>
+          <DialogDescription>{descricao}</DialogDescription>
+        </DialogHeader>
+        <Textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder="Motivo (ela vai ver este texto)"
+          maxLength={1000}
+          rows={4}
+        />
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={aGravar}>
+            Cancelar
+          </Button>
+          <Button
+            className="bg-red-600 hover:bg-red-700 text-white"
+            disabled={!motivo.trim() || aGravar}
+            onClick={() => onConfirmar(motivo.trim())}
+          >
+            {botao}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function SingleCompanionVerify({
   companion,
@@ -95,16 +189,24 @@ export default function SingleCompanionVerify({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(true);
-  const [documentVerifyingId, setDocumentVerifyingId] = useState<number | null>(
-    null
-  );
-  const [verificationNotes, setVerificationNotes] = useState<string>('');
   const [age, setAge] = useState(companion.age);
   const [isEditingAge, setIsEditingAge] = useState(false);
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
+  const [dialogo, setDialogo] = useState<'perfil' | 'documentos' | null>(null);
+  // Estado da verificação, que muda aqui mesmo quando os documentos são
+  // recusados ou a identidade é verificada, sem esperar por recarregar a fila.
+  const [verificacao, setVerificacao] = useState(companion.verificacao ?? 'por-enviar');
+  const [completaPendente, setCompletaPendente] = useState(
+    companion.verificacaoCompletaPendente === true
+  );
+  const [docsPendentes, setDocsPendentes] = useState(
+    companion.temDocumentosPendentes === true
+  );
+  const [motivoDocs, setMotivoDocs] = useState(companion.motivoRecusaDocumentos ?? null);
+  const [temSelo, setTemSelo] = useState(companion.identityVerified === true);
   // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o storagePath
   // e o enquadramento actual, ambos necessários para o admin poder centrar.
   // O filtro olha para a extensão do ficheiro e não só para o campo `type`,
@@ -171,16 +273,20 @@ export default function SingleCompanionVerify({
     typeof currentImage === 'object' && currentImage.pendingApproval === true;
 
   // Um perfil que já está no ar só aparece nesta fila por causa de alterações
-  // por rever. Recusar aqui descarta a edição; não apaga a acompanhante.
+  // por rever, ou de vídeo e documento por ver. Recusar uma edição descarta-a;
+  // não mexe na acompanhante.
   const isEdit = companion.isPendingEdit === true;
-  // Já esteve publicada e foi o admin que a tirou do ar. Como não está
-  // verificada, recusar aqui apaga o perfil de vez — por isso o botão diz
-  // isso em vez de "Rejeitar".
-  const wasSentToReview = companion.wasSentToReview === true && !isEdit;
+  const noAr = companion.verified === true;
+  // No ar e com vídeo ou documento à espera: o admin decide o selo.
+  const docsNoAr = noAr && !temSelo && docsPendentes;
+  // Já esteve publicada e foi o admin que a tirou do ar.
+  const wasSentToReview = companion.wasSentToReview === true && !noAr;
   const pendingChanges = companion.pendingChanges ?? [];
   const newPhotoCount = images.filter(
     (media) => typeof media === 'object' && media.pendingApproval
   ).length;
+  const estadoVerificacao = ESTADO_VERIFICACAO[verificacao];
+  const desde = haQuantoTempo(companion.submittedAt);
 
   const handleSaveFraming = async (framing: {
     focalX: number;
@@ -236,62 +342,109 @@ export default function SingleCompanionVerify({
     );
   };
 
-  const handleApprove = () => {
+  /** Corre uma acção com o aviso de erro de sempre. */
+  const executar = (acao: () => Promise<void>, falha: string) => {
     setError(null);
     startTransition(async () => {
       try {
-        await approveCompanion(companion.id);
-        toast({
-          title: isEdit ? 'Alterações aprovadas' : 'Companheira Aprovada',
-          description: isEdit
-            ? `As alterações de ${companion.name} já estão no ar.`
-            : `${companion.name} foi aprovada com sucesso.`,
-          variant: 'success',
-        });
-        onActionComplete(companion.id);
+        await acao();
       } catch (e) {
-        setError('Falha ao aprovar a companheira. Por favor, tente novamente.');
-        toast({
-          title: 'Erro',
-          description: 'Falha ao aprovar a companheira. Por favor, tente novamente.',
-          variant: 'destructive',
-        });
-      }
-    });
-  };
-
-  const handleReject = () => {
-    setError(null);
-    startTransition(async () => {
-      try {
-        // Numa edição os documentos de verificação continuam válidos: o que
-        // está a ser recusado são as alterações, não a identidade dela.
-        if (!isEdit) {
-          await deleteAllDocumentsFromCompanion(companion.id);
-        }
-        await rejectCompanion(companion.id);
-
-        toast({
-          title: isEdit ? 'Alterações recusadas' : 'Companheira Rejeitada',
-          description: isEdit
-            ? `O perfil de ${companion.name} continua no ar como estava.`
-            : `${companion.name} foi rejeitada.`,
-          variant: 'success',
-        });
-        onActionComplete(companion.id);
-      } catch (e) {
-        const message = isEdit
-          ? 'Falha ao recusar as alterações. Por favor, tente novamente.'
-          : 'Falha ao rejeitar a companheira. Por favor, tente novamente.';
+        const message = e instanceof Error && e.message ? e.message : falha;
         setError(message);
-        toast({
-          title: 'Erro',
-          description: message,
-          variant: 'destructive',
-        });
+        toast({ title: 'Erro', description: message, variant: 'destructive' });
       }
     });
   };
+
+  /** Aprova o registo (põe no ar) ou a edição de um perfil que já está no ar. */
+  const handleApprove = (comSelo: boolean) =>
+    executar(async () => {
+      await approveCompanion(companion.id, { comSelo });
+      toast({
+        title: isEdit ? 'Alterações aprovadas' : 'Companheira aprovada',
+        description: isEdit
+          ? `As alterações de ${companion.name} já estão no ar.`
+          : comSelo || temSelo
+            ? `${companion.name} está no ar com o selo "Verificada".`
+            : `${companion.name} está no ar, sem selo ("Não verificada").`,
+        variant: 'success',
+      });
+      // Uma edição aprovada num perfil que ainda tem documentos à espera
+      // continua na fila para essa decisão.
+      if (isEdit && docsNoAr) return;
+      onActionComplete(companion.id);
+    }, 'Falha ao aprovar. Por favor, tente novamente.');
+
+  /** Recusar uma edição no ar descarta-a (sem motivo, como sempre). */
+  const handleRejectEdit = () =>
+    executar(async () => {
+      await rejectCompanion(companion.id);
+      toast({
+        title: 'Alterações recusadas',
+        description: `O perfil de ${companion.name} continua no ar como estava.`,
+        variant: 'success',
+      });
+      if (docsNoAr) return;
+      onActionComplete(companion.id);
+    }, 'Falha ao recusar as alterações. Por favor, tente novamente.');
+
+  const handleRejectProfile = (motivo: string) =>
+    executar(async () => {
+      await rejectCompanion(companion.id, motivo);
+      setDialogo(null);
+      toast({
+        title: 'Perfil recusado',
+        description: `${companion.name} saiu da fila e vê o motivo ao entrar. Nada foi apagado: está nas Recusadas.`,
+        variant: 'success',
+      });
+      onActionComplete(companion.id);
+    }, 'Falha ao recusar o perfil. Por favor, tente novamente.');
+
+  const handleRejectDocuments = (motivo: string) =>
+    executar(async () => {
+      const result = await rejectDocuments(companion.id, motivo);
+      if (!result.success) {
+        throw new Error(result.error ?? 'Falha ao recusar os documentos.');
+      }
+      setDialogo(null);
+      setDocsPendentes(false);
+      setCompletaPendente(false);
+      setMotivoDocs(motivo);
+      setVerificacao('recusada');
+      setDocuments((docs) =>
+        docs.map((doc) =>
+          doc.status === 'pendente' ? { ...doc, status: 'recusado', verified: false, notes: motivo } : doc
+        )
+      );
+      toast({
+        title: 'Documentos recusados',
+        description: noAr
+          ? `${companion.name} continua no ar, sem selo. Pode enviar outros.`
+          : `${companion.name} pode enviar outros. O perfil continua na fila e já pode ser aprovado sem selo.`,
+        variant: 'success',
+      });
+      // No ar e sem edição por rever, não há mais nada a decidir aqui.
+      if (noAr && !isEdit) onActionComplete(companion.id);
+    }, 'Falha ao recusar os documentos. Por favor, tente novamente.');
+
+  /** Selo para quem já está no ar e enviou vídeo e documento. */
+  const handleVerifyIdentity = () =>
+    executar(async () => {
+      const result = await verifyIdentityAsAdmin(companion.id);
+      if (!result.success) {
+        throw new Error(result.error ?? 'Falha ao verificar.');
+      }
+      setTemSelo(true);
+      setVerificacao('verificada');
+      setDocsPendentes(false);
+      setCompletaPendente(false);
+      toast({
+        title: 'Identidade verificada',
+        description: `${companion.name} passou a ter o selo "Verificada".`,
+        variant: 'success',
+      });
+      if (!isEdit) onActionComplete(companion.id);
+    }, 'Falha ao verificar. Por favor, tente novamente.');
 
   const handleSaveAge = () => {
     setError(null);
@@ -313,65 +466,6 @@ export default function SingleCompanionVerify({
           description: message,
           variant: 'destructive',
         });
-      }
-    });
-  };
-
-  const handleVerifyDocument = (
-    docId: number,
-    documentType: string,
-    verified: boolean
-  ) => {
-    setDocumentVerifyingId(docId);
-    startTransition(async () => {
-      try {
-        const result = await verifyDocument(
-          docId,
-          verified,
-          documentType,
-          verificationNotes
-        );
-        if (result.success) {
-          // Update local state
-          setDocuments(
-            documents.map((doc) =>
-              doc.id === docId
-                ? {
-                  ...doc,
-                  verified,
-                  verification_date: verified
-                    ? new Date().toISOString()
-                    : null,
-                  notes: verificationNotes || null,
-                }
-                : doc
-            )
-          );
-
-          toast({
-            title: verified ? 'Documento Verificado' : 'Documento Rejeitado',
-            description: `O documento foi ${verified ? 'verificado' : 'rejeitado'
-              } com sucesso.`,
-            variant: 'success',
-          });
-
-          setVerificationNotes('');
-        } else {
-          toast({
-            title: 'Erro',
-            description:
-              result.error || 'Ocorreu um erro ao verificar o documento',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        toast({
-          title: 'Erro',
-          description: 'Falha ao atualizar o status de verificação do documento.',
-          variant: 'destructive',
-        });
-      } finally {
-        setDocumentVerifyingId(null);
       }
     });
   };
@@ -462,9 +556,17 @@ export default function SingleCompanionVerify({
               <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
                 Edição de perfil no ar
               </Badge>
+            ) : noAr ? (
+              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                No ar: documentos por rever
+              </Badge>
             ) : wasSentToReview ? (
               <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
                 Devolvida à verificação
+              </Badge>
+            ) : companion.recusaAnterior ? (
+              <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
+                Reenviado depois de recusa
               </Badge>
             ) : (
               <Badge variant="secondary">Registo novo</Badge>
@@ -475,6 +577,21 @@ export default function SingleCompanionVerify({
               <Phone className="w-4 h-4" />
               <span>{companion.phone}</span>
             </div>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Badge className={estadoVerificacao.className}>
+            {estadoVerificacao.texto}
+            {/* A via só aparece aqui, para o admin. No site o selo é igual. */}
+            {verificacao === 'verificada' && companion.identityVerifiedMethod === 'whatsapp'
+              ? ' (WhatsApp)'
+              : ''}
+          </Badge>
+          {companion.semCaracteristicas && (
+            <Badge variant="outline">Sem características</Badge>
+          )}
+          {desde && (
+            <span className="text-xs text-muted-foreground">Entrou na fila {desde}</span>
           )}
         </div>
       </CardHeader>
@@ -489,6 +606,17 @@ export default function SingleCompanionVerify({
         {/* Profile Tab */}
         <TabsContent value="profile">
           <CardContent className="grid gap-4">
+            {companion.recusaAnterior && !noAr && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+                <span className="font-medium">Recusado antes:</span>{' '}
+                {companion.recusaAnterior}
+              </div>
+            )}
+            {motivoDocs && (verificacao === 'recusada' || verificacao === 'parcial') && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-900 dark:bg-red-950/40">
+                <span className="font-medium">Documentos recusados:</span> {motivoDocs}
+              </div>
+            )}
             {(isEdit || pendingChanges.length > 0) && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-900 dark:bg-blue-950/40">
                 <p className="font-medium mb-2">
@@ -728,7 +856,7 @@ export default function SingleCompanionVerify({
               </div>
               <div className="flex items-center space-x-2">
                 <Eye className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">{companion.eyeColor || 'N/A'}</span>
+                <span className="text-sm">{companion.eyeColor || '—'}</span>
               </div>
             </div>
 
@@ -748,7 +876,7 @@ export default function SingleCompanionVerify({
             </div>
 
             <p>Descricão Curta</p>
-            <p className="text-sm">{companion.shortDescription}</p>
+            <p className="text-sm">{companion.shortDescription || '—'}</p>
           </CardContent>
         </TabsContent>
 
@@ -769,7 +897,7 @@ export default function SingleCompanionVerify({
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {/* Show verification videos first */}
-                {documents
+                {[...documents]
                   .sort((a, b) => {
                     // Prioritize verification videos
                     if (
@@ -784,81 +912,43 @@ export default function SingleCompanionVerify({
                       return 1;
                     return 0;
                   })
-                  .map((doc) => (
-                    <div
-                      key={doc.id}
-                      className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 ${isVerificationVideo(doc)
-                        ? 'border-primary/50 bg-primary/5'
-                        : ''
-                        }`}
-                      onClick={() => openDocumentDialog(doc)}
-                    >
-                      {renderDocumentPreview(doc)}
-                      <div className="flex-1">
-                        <p className="font-medium capitalize">
-                          {isVerificationVideo(doc)
-                            ? 'Vídeo de Verificação'
-                            : doc.document_type.replace('_', ' ')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Enviado em{' '}
-                          {new Date(doc.created_at).toLocaleDateString()}
-                        </p>
-                        <div className="flex items-center mt-1">
-                          {doc.verified ? (
-                            <span className="text-xs flex items-center text-green-600">
-                              <CheckCircle size={12} className="mr-1" />{' '}
-                              Verificado
-                              {isVerificationVideo(doc) &&
-                                ' (Será excluído automaticamente para privacidade)'}
-                            </span>
-                          ) : (
-                            <span className="text-xs flex items-center text-amber-600">
-                              <FileText size={12} className="mr-1" /> Pendente
-                              de verificação
-                            </span>
-                          )}
+                  .map((doc) => {
+                    const estado = ESTADO_DOCUMENTO[doc.status] ?? ESTADO_DOCUMENTO.pendente;
+                    return (
+                      <div
+                        key={doc.id}
+                        className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 ${isVerificationVideo(doc)
+                          ? 'border-primary/50 bg-primary/5'
+                          : ''
+                          }`}
+                        onClick={() => openDocumentDialog(doc)}
+                      >
+                        {renderDocumentPreview(doc)}
+                        <div className="flex-1">
+                          <p className="font-medium capitalize">
+                            {isVerificationVideo(doc)
+                              ? 'Vídeo de Verificação'
+                              : doc.document_type.replace('_', ' ')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Enviado em{' '}
+                            {new Date(doc.created_at).toLocaleDateString()}
+                          </p>
+                          <p className={`text-xs flex items-center mt-1 ${estado.className}`}>
+                            {doc.status === 'aprovado' ? (
+                              <CheckCircle size={12} className="mr-1" />
+                            ) : doc.status === 'recusado' ? (
+                              <XCircle size={12} className="mr-1" />
+                            ) : (
+                              <FileText size={12} className="mr-1" />
+                            )}
+                            {estado.texto}
+                            {doc.status === 'recusado' && doc.notes ? `: ${doc.notes}` : ''}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        {!doc.verified ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleVerifyDocument(
-                                doc.id,
-                                doc.document_type,
-                                true
-                              );
-                            }}
-                            disabled={documentVerifyingId === doc.id}
-                          >
-                            <Check className="h-4 w-4 mr-1" /> Verificar
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-amber-600 border-amber-600 hover:bg-amber-600 hover:text-white"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleVerifyDocument(
-                                doc.id,
-                                doc.document_type,
-                                false
-                              );
-                            }}
-                            disabled={documentVerifyingId === doc.id}
-                          >
-                            <X className="h-4 w-4 mr-1" /> Desverificar
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             )}
           </CardContent>
@@ -866,45 +956,177 @@ export default function SingleCompanionVerify({
       </Tabs>
 
       <CardFooter className="flex flex-col gap-4">
-        {wasSentToReview && (
-          <p className="w-full text-sm text-amber-900 dark:text-amber-200">
-            Este perfil já esteve publicado e foi tirado do ar por um admin.
-            Aprovar devolve-o ao site; &quot;Apagar perfil&quot; remove-o de vez,
-            com fotos e avaliações.
-          </p>
+        {/* Edição de um perfil no ar: como sempre. */}
+        {isEdit && (
+          <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+            <Button
+              variant="outline"
+              className="w-full sm:w-1/2 bg-red-500 hover:bg-red-600 text-white"
+              onClick={handleRejectEdit}
+              disabled={isPending}
+            >
+              <X className="w-4 h-4 mr-2" /> Recusar alterações
+            </Button>
+            <Button
+              className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white"
+              onClick={() => handleApprove(false)}
+              disabled={isPending}
+            >
+              <Check className="w-4 h-4 mr-2" /> Aprovar alterações
+            </Button>
+          </div>
         )}
-        <Textarea
-          placeholder="Adicionar notas de verificação (opcional)"
-          className="mb-2"
-          value={verificationNotes}
-          onChange={(e) => setVerificationNotes(e.target.value)}
-        />
-        <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
-          <Button
-            variant="outline"
-            className="w-full sm:w-1/2 bg-red-500 hover:bg-red-600 text-white"
-            onClick={handleReject}
-            disabled={isPending}
-          >
-            <X className="w-4 h-4 mr-2" />{' '}
-            {isEdit
-              ? 'Recusar alterações'
-              : wasSentToReview
-                ? 'Apagar perfil'
-                : 'Rejeitar'}
-          </Button>
-          <Button
-            className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white"
-            onClick={handleApprove}
-            disabled={isPending}
-          >
-            <Check className="w-4 h-4 mr-2" />{' '}
-            {isEdit ? 'Aprovar alterações' : 'Aprovar'}
-          </Button>
-        </div>
+
+        {/* No ar e com vídeo ou documento à espera: decide-se o selo. */}
+        {docsNoAr && (
+          <div className="w-full space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Está no ar sem selo e enviou documentos. Veja-os no separador
+              Documentos.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
+              <Button
+                variant="outline"
+                className="w-full sm:w-1/2 border-red-500 text-red-600 hover:bg-red-50"
+                onClick={() => setDialogo('documentos')}
+                disabled={isPending}
+              >
+                <X className="w-4 h-4 mr-2" /> Recusar documentos
+              </Button>
+              <Button
+                className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white"
+                onClick={handleVerifyIdentity}
+                disabled={isPending}
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" /> Verificar identidade
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Registo por aprovar: pôr no ar (com ou sem selo) ou recusar. */}
+        {!noAr && (
+          <div className="w-full space-y-3">
+            {wasSentToReview && (
+              <p className="w-full text-sm text-amber-900 dark:text-amber-200">
+                Este perfil já esteve publicado e foi tirado do ar por um admin.
+                Aprovar devolve-o ao site; recusar tira-o da fila, sem apagar
+                nada (fica nas Recusadas).
+              </p>
+            )}
+
+            {temSelo ? (
+              <Button
+                className="w-full bg-green-500 hover:bg-green-600 text-white"
+                onClick={() => handleApprove(false)}
+                disabled={isPending}
+              >
+                <Check className="w-4 h-4 mr-2" /> Aprovar (já tem o selo)
+              </Button>
+            ) : (
+              <div className="flex flex-col sm:flex-row w-full gap-4">
+                {docsPendentes ? (
+                  <Button
+                    className="w-full sm:flex-1 bg-green-500 hover:bg-green-600 text-white"
+                    onClick={() => handleApprove(true)}
+                    disabled={isPending}
+                  >
+                    <ShieldCheck className="w-4 h-4 mr-2" /> Aprovar como verificada
+                  </Button>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        className="w-full sm:flex-1 bg-green-500 hover:bg-green-600 text-white"
+                        disabled={isPending}
+                      >
+                        <ShieldCheck className="w-4 h-4 mr-2" /> Aprovar como verificada
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Recebeste o documento dela por WhatsApp?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ela não enviou vídeo nem documento pelo site. O perfil
+                          vai para o ar com o selo &quot;Verificada&quot;, e fica
+                          registado que foi por WhatsApp (só os admins vêem isto).
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleApprove(true)}>
+                          Sim, aprovar como verificada
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+
+                {!completaPendente && (
+                  <Button
+                    variant="outline"
+                    className="w-full sm:flex-1 border-green-600 text-green-700 hover:bg-green-50"
+                    onClick={() => handleApprove(false)}
+                    disabled={isPending}
+                  >
+                    <Check className="w-4 h-4 mr-2" /> Aprovar sem verificação
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {completaPendente && !temSelo && (
+              <p className="text-sm text-muted-foreground">
+                Ela enviou vídeo e documento: aprove como verificada ou recuse
+                os documentos. Depois de recusados, pode aprovar sem selo.
+              </p>
+            )}
+
+            <div className="flex flex-col sm:flex-row w-full gap-4">
+              {docsPendentes && (
+                <Button
+                  variant="outline"
+                  className="w-full sm:flex-1 border-red-500 text-red-600 hover:bg-red-50"
+                  onClick={() => setDialogo('documentos')}
+                  disabled={isPending}
+                >
+                  <X className="w-4 h-4 mr-2" /> Recusar documentos
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="w-full sm:flex-1 bg-red-500 hover:bg-red-600 text-white"
+                onClick={() => setDialogo('perfil')}
+                disabled={isPending}
+              >
+                <X className="w-4 h-4 mr-2" /> Recusar perfil
+              </Button>
+            </div>
+          </div>
+        )}
+
         {error && <p className="text-red-500 text-sm">{error}</p>}
         {isPending && <p className="text-gray-500 text-sm">Processando...</p>}
       </CardFooter>
+
+      <DialogoMotivo
+        open={dialogo === 'perfil'}
+        onOpenChange={(aberto) => setDialogo(aberto ? 'perfil' : null)}
+        titulo={`Recusar o perfil de ${companion.name}`}
+        descricao="Sai da fila sem apagar nada e vai para as Recusadas. Ela vê o motivo ao entrar e, se corrigir o perfil, volta para a fila. O RD recebe a recusa com este motivo."
+        botao="Recusar perfil"
+        aGravar={isPending}
+        onConfirmar={handleRejectProfile}
+      />
+      <DialogoMotivo
+        open={dialogo === 'documentos'}
+        onOpenChange={(aberto) => setDialogo(aberto ? 'documentos' : null)}
+        titulo="Recusar o vídeo e o documento"
+        descricao="Ficam guardados como recusados. Ela vê o motivo e pode enviar outros. O perfil não muda: pode ser aprovado (ou continuar no ar) sem selo."
+        botao="Recusar documentos"
+        aGravar={isPending}
+        onConfirmar={handleRejectDocuments}
+      />
 
       {/* Document Detail Dialog */}
       <Dialog
@@ -936,11 +1158,6 @@ export default function SingleCompanionVerify({
                     >
                       Seu navegador não suporta a tag de vídeo.
                     </video>
-                    {selectedDocument.verified && (
-                      <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs">
-                        Verificado (será excluído)
-                      </div>
-                    )}
                   </div>
                 ) : isPdfDocument(selectedDocument) ? (
                   <div className="flex justify-center py-8 bg-muted rounded-md">
@@ -967,10 +1184,8 @@ export default function SingleCompanionVerify({
 
                 <div>
                   <p className="text-sm mb-1">
-                    <strong>Status:</strong>{' '}
-                    {selectedDocument.verified
-                      ? 'Verificado'
-                      : 'Pendente de verificação'}
+                    <strong>Estado:</strong>{' '}
+                    {(ESTADO_DOCUMENTO[selectedDocument.status] ?? ESTADO_DOCUMENTO.pendente).texto}
                   </p>
                   <p className="text-sm mb-1">
                     <strong>Enviado:</strong>{' '}
@@ -978,53 +1193,22 @@ export default function SingleCompanionVerify({
                   </p>
                   {selectedDocument.verification_date && (
                     <p className="text-sm mb-1">
-                      <strong>Verificado em:</strong>{' '}
+                      <strong>Aprovado em:</strong>{' '}
                       {new Date(
                         selectedDocument.verification_date
                       ).toLocaleDateString()}
                     </p>
                   )}
+                  {selectedDocument.status === 'recusado' && selectedDocument.notes && (
+                    <p className="text-sm mb-1">
+                      <strong>Motivo da recusa:</strong> {selectedDocument.notes}
+                    </p>
+                  )}
                 </div>
-
-                <div>
-                  <label className="text-sm font-medium">Notas</label>
-                  <Textarea
-                    value={verificationNotes || selectedDocument.notes || ''}
-                    onChange={(e) => setVerificationNotes(e.target.value)}
-                    placeholder="Adicionar notas de verificação..."
-                    className="mt-1"
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-                    onClick={() =>
-                      handleVerifyDocument(
-                        selectedDocument.id,
-                        selectedDocument.document_type,
-                        false
-                      )
-                    }
-                    disabled={documentVerifyingId === selectedDocument.id}
-                  >
-                    <X className="h-4 w-4 mr-1" /> Rejeitar
-                  </Button>
-                  <Button
-                    className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
-                    variant="outline"
-                    onClick={() =>
-                      handleVerifyDocument(
-                        selectedDocument.id,
-                        selectedDocument.document_type,
-                        true
-                      )
-                    }
-                    disabled={documentVerifyingId === selectedDocument.id}
-                  >
-                    <Check className="h-4 w-4 mr-1" /> Verificar
-                  </Button>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  A decisão é para o vídeo e o documento juntos, nos botões do
+                  cartão.
+                </p>
               </>
             )}
           </div>

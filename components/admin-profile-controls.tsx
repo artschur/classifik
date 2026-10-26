@@ -1,14 +1,26 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { EyeOff, Eye, ShieldAlert, Star } from 'lucide-react';
+import { EyeOff, Eye, ShieldAlert, ShieldCheck, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   clearSugarOfDay,
   sendCompanionToReview,
   setCompanionPausedAsAdmin,
   setSugarOfDay,
+  verifyIdentityAsAdmin,
 } from '@/db/queries/companions';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
 import { ImportedEditButton } from '@/components/imported-edit-button';
@@ -22,6 +34,8 @@ export function AdminProfileControls({
   name,
   paused,
   verified,
+  identityVerified,
+  viaSelo = null,
   vipActive,
   isSugarOfDay,
   previewPath = null,
@@ -32,6 +46,10 @@ export function AdminProfileControls({
   name: string;
   paused: boolean;
   verified: boolean;
+  /** Selo "Verificada" (documento visto). */
+  identityVerified: boolean;
+  /** Por que via foi dado o selo: só o admin a vê. */
+  viaSelo?: string | null;
   /** VIP pago e ainda dentro da validade — só estas podem ser "do dia". */
   vipActive: boolean;
   isSugarOfDay: boolean;
@@ -40,8 +58,33 @@ export function AdminProfileControls({
   const [isPending, startTransition] = useTransition();
   const [isPaused, setIsPaused] = useState(paused);
   const [isVerified, setIsVerified] = useState(verified);
+  const [temSelo, setTemSelo] = useState(identityVerified);
+  const [via, setVia] = useState(viaSelo);
   const [isDoDia, setIsDoDia] = useState(isSugarOfDay);
   const [confirmingReview, setConfirmingReview] = useState(false);
+
+  // Documento recebido por WhatsApp (ou vídeo e documento já enviados pelo
+  // site): dá o selo sem mexer na publicação. No site o selo é igual.
+  const handleVerifyIdentity = () => {
+    startTransition(async () => {
+      const result = await verifyIdentityAsAdmin(companionId);
+      if (!result.success) {
+        toast({
+          title: 'Erro',
+          description: result.error ?? 'Não foi possível verificar.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setTemSelo(true);
+      setVia(result.method ?? null);
+      toast({
+        title: 'Marcada como verificada',
+        description: `${name} passou a ter o selo "Verificada".`,
+        variant: 'success',
+      });
+    });
+  };
 
   // Quem já é "do dia" vê sempre o botão, para se poder tirar o destaque
   // mesmo que o VIP tenha entretanto expirado.
@@ -131,18 +174,48 @@ export function AdminProfileControls({
         <p className="font-semibold">Controlos de administração</p>
       </div>
 
-      <p className="text-sm text-muted-foreground mb-3">
+      <p className="text-sm text-muted-foreground mb-1">
         {!isVerified
-          ? 'Este perfil não está verificado: não aparece no site e está na fila de verificação. Só os admins o vêem aqui.'
+          ? 'Este perfil não está aprovado: não aparece no site. Só os admins (e a dona) o vêem aqui.'
           : isPaused
             ? 'Este anúncio está pausado: não aparece no site. Só os admins o vêem aqui.'
             : 'Este anúncio está no ar, visível para todos.'}
+      </p>
+      <p className="text-sm text-muted-foreground mb-3">
+        {temSelo
+          ? `Selo: Verificada${via === 'whatsapp' ? ' (documento visto por WhatsApp)' : via === 'documento' ? ' (vídeo e documento pelo site)' : ''}.`
+          : 'Selo: Não verificada.'}
       </p>
 
       <div className="flex flex-col sm:flex-row gap-2">
         {/* Só perfis criados pela equipa e ainda sem conta: os outros são
             editados pela própria anunciante. */}
         {previewPath && <ImportedEditButton companionId={companionId} />}
+        {!temSelo && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isPending}>
+                <ShieldCheck className="h-4 w-4 mr-1.5" /> Marcar como verificada
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Recebeste o documento dela por WhatsApp?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {name} passa a ter o selo &quot;Verificada&quot;, igual ao das
+                  outras. Se ela enviou vídeo e documento pelo site, ficam
+                  aprovados. A via fica registada e só os admins a vêem.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleVerifyIdentity}>
+                  Marcar como verificada
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
         <Button
           variant="outline"
           size="sm"

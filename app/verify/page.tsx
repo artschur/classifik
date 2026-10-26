@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
-import { getUnverifiedCompanions } from '@/db/queries/companions';
+import { getRejectedCompanions, getUnverifiedCompanions } from '@/db/queries/companions';
+import { RejectedCompanions } from '@/components/rejected-companions';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import VerifyCompanionsList from '@/components/verifyCompanionsList';
@@ -94,6 +95,11 @@ async function FetchUnverifiedCompanions() {
   return <VerifyCompanionsList initialCompanions={response} />;
 }
 
+/** Recusados: a recusa não apaga, por isso ficam aqui para reverter ou apagar de vez. */
+async function FetchRejected() {
+  return <RejectedCompanions companions={await getRejectedCompanions()} />;
+}
+
 function CompanionsListSkeleton() {
   return (
     <div className="space-y-4 w-full max-w-2xl">
@@ -124,8 +130,10 @@ export default async function VerifyCompanionPage() {
           <FileCheck className="h-4 w-4" />
           <AlertDialogTitle>Verificação de Documentos</AlertDialogTitle>
           <AlertDialogDescription>
-            Cada sugar precisa mandar um documento e um vídeo de verificação para entrar na
-            plataforma.
+            O perfil entra aqui logo que é criado, com ou sem vídeo e documento. Sem
+            eles, pode ser aprovado sem selo (aparece como &quot;Não verificada&quot;).
+            Com vídeo e documento enviados, aprova-se como verificada ou recusam-se os
+            documentos primeiro. Recusar um perfil não apaga nada.
           </AlertDialogDescription>
         </AlertDialog>
 
@@ -148,10 +156,11 @@ export default async function VerifyCompanionPage() {
       </div>
 
       <Tabs defaultValue="registos" className="w-full max-w-2xl">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="registos">Registos</TabsTrigger>
           <TabsTrigger value="importadas">Importadas</TabsTrigger>
           <TabsTrigger value="pausa">Em pausa</TabsTrigger>
+          <TabsTrigger value="recusadas">Recusadas</TabsTrigger>
         </TabsList>
         <TabsContent value="registos" className="mt-6">
           <Suspense fallback={<CompanionsListSkeleton />}>
@@ -166,6 +175,11 @@ export default async function VerifyCompanionPage() {
         <TabsContent value="pausa" className="mt-6">
           <Suspense fallback={<CompanionsListSkeleton />}>
             <FetchPaused />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="recusadas" className="mt-6">
+          <Suspense fallback={<CompanionsListSkeleton />}>
+            <FetchRejected />
           </Suspense>
         </TabsContent>
       </Tabs>

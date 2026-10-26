@@ -176,6 +176,7 @@ const TEXT = {
     ],
     doDia: 'Sugar do dia',
     anos: 'anos',
+    naoVerificada: 'Não verificada',
     verPerfil: 'Ver perfil',
     altDoDia: (nome: string) => `${nome}, sugar do dia`,
     altSemDoDia: 'OneSugar',
@@ -208,6 +209,7 @@ const TEXT = {
     ],
     doDia: "Today's featured companion",
     anos: 'years old',
+    naoVerificada: 'Not verified',
     verPerfil: 'View profile',
     altDoDia: (nome: string) => `${nome}, featured companion on OneSugar`,
     altSemDoDia: 'OneSugar, verified escorts in Portugal',
@@ -363,7 +365,13 @@ export default async function HomePage({
                   </span>
                   <span className="mt-1 flex items-center gap-2 text-xl font-bold">
                     {doDia.name}
-                    {doDia.identityVerified && <BadgeCheck className="h-5 w-5 text-emerald-400" />}
+                    {doDia.identityVerified ? (
+                      <BadgeCheck className="h-5 w-5 text-emerald-400" />
+                    ) : (
+                      <span className="rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/80">
+                        {t.naoVerificada}
+                      </span>
+                    )}
                   </span>
                   <span className="flex items-center gap-2 text-sm text-white/80">
                     {doDia.age} {t.anos}

@@ -13,6 +13,7 @@ import { eq, desc } from 'drizzle-orm';
 import { ManageAdActions } from '@/components/manage-ad-actions';
 import { canRecordAudio } from '@/lib/audio-access';
 import { Mic } from 'lucide-react';
+import { EstadoRegisto } from '@/components/registo/estado-registo';
 
 interface AdPurchase {
   id: string;
@@ -86,6 +87,9 @@ export default async function AnalyticsDashboard({
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {companion.id !== 0 && (
+        <EstadoRegisto clerkId={userId} contexto="painel" centrado={false} />
+      )}
       <div className="flex flex-wrap gap-4 mb-6">
         <Link href={'/companions/register'}>
           <Button variant="default">Editar Perfil</Button>

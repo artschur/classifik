@@ -6,7 +6,6 @@ import {
   citiesTable,
   NewCompanion,
   neighborhoodsTable,
-  NewCharacteristic,
   imagesTable,
   reviewsTable,
   blockedUsersTable,
@@ -15,16 +14,27 @@ import {
   audioRecordingsTable,
 } from "../schema";
 import { db } from "..";
-import { RegisterCompanionFormValues } from "@/components/formCompanionRegister";
+import {
+  caracteristicasParaBase,
+  caracteristicasVazias,
+  completarPerfilSchema,
+  edicaoPerfilSchema,
+  registoNovoSchema,
+  type CompletarPerfilInput,
+  type RegisterCompanionFormValues,
+} from "@/lib/registo-schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { isAdmin } from "@/components/header";
 import {
   upsertContactInRD,
   tagCompanionInRD,
   sendConversionEventToRD,
+  sendConversionEventWithReason,
   RD_CONVERSION_APROVADA,
+  RD_CONVERSION_APROVADA_SEM_VERIFICACAO,
   RD_CONVERSION_RECUSADA,
 } from "@/lib/rd-station";
+import { ZodError } from "zod";
 import {
   CompanionFiltered,
   CompanionPreview,
@@ -44,6 +54,7 @@ import {
   or,
   ilike,
   isNotNull,
+  isNull,
 } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { getEmail } from "./userActions";
@@ -55,6 +66,14 @@ import {
 import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import { PlanType } from "./kv";
 import { signDocumentUrl } from "@/lib/supabase-admin";
+import { deleteAllDocumentsFromCompanion } from "@/app/actions/document-verification";
+import {
+  estadoVerificacao,
+  resumoDocumentos,
+  resumoDocumentosPorCompanion,
+  temDocumentosPendentes,
+  verificacaoCompletaPendente,
+} from "./verificacao";
 import { approvePendingAudio, discardPendingAudio } from "./audio";
 import { resolveNeighborhoodId } from "./neighborhoods";
 import { isImportedAuthId } from "@/lib/imported-profiles";
@@ -659,86 +678,77 @@ export const getCompanionsToFilter = unstable_cache(
   },
 );
 
-export async function registerCompanion(
-  companionData: RegisterCompanionFormValues,
-  clerkId: string,
-  emailFromAuth: string,
-) {
-  // Destructure companionData and ensure the provided email is used.
-  const {
-    name,
-    phoneNumber,
-    instagramHandle,
-    shortDescription,
-    description,
-    price,
-    age,
-    gender,
-    gender_identity,
-    languages,
-    city,
-    weight,
-    height,
-    ethnicity,
-    eye_color,
-    hair_color,
-    hair_length,
-    shoe_size,
-    silicone,
-    tattoos,
-    piercings,
-    smoker,
-    meets_at_hotel,
-    meets_at_own_place,
-  } = companionData;
+/** A primeira mensagem de um erro de validação, para mostrar a quem preenche. */
+function mensagemDeValidacao(error: unknown): string | null {
+  return error instanceof ZodError ? (error.issues[0]?.message ?? "Dados inválidos") : null;
+}
 
-  // The function now trusts the email passed from the server action.
-  const email = emailFromAuth;
+/**
+ * Cria o perfil no primeiro upload de foto (passo 3 do registo), já na fila do
+ * admin. Leva só os passos 1 e 2: o resto (passo 5) é opcional e vem depois.
+ *
+ * A conta e o email saem da sessão, nunca do pedido: este ficheiro é 'use
+ * server', e com os dois como parâmetros dava para criar um perfil em nome de
+ * outra conta.
+ */
+export async function registerCompanion(companionData: RegisterCompanionFormValues) {
+  const { userId: clerkId, sessionClaims } = await auth();
+  if (!clerkId) {
+    throw new Error("Sessão expirada. Entre outra vez.");
+  }
+
+  let dados;
+  try {
+    dados = registoNovoSchema.parse(companionData);
+  } catch (error) {
+    throw new Error(mensagemDeValidacao(error) ?? "Dados inválidos");
+  }
+
+  let email = sessionClaims?.email;
+  if (!email) {
+    const cc = await clerkClient();
+    const user = await cc.users.getUser(clerkId);
+    email =
+      user.emailAddresses?.find((e) => e.id === user.primaryEmailAddressId)?.emailAddress ??
+      user.emailAddresses?.[0]?.emailAddress;
+  }
+  if (!email) {
+    throw new Error("A conta não tem email associado.");
+  }
 
   try {
+    const agora = new Date();
     const newCompanion = await db.transaction(async (tx) => {
       const neighborhoodId = await resolveNeighborhoodId(
         tx as unknown as typeof db,
-        companionData.neighborhood,
-        city,
+        dados.neighborhood,
+        dados.city,
       );
 
       const [companion] = await tx
         .insert(companionsTable)
         .values({
-          auth_id: clerkId, // Use the clerkId passed from the action
-          name,
-          email, // Use the email passed from the action
-          phone: phoneNumber,
-          instagramHandle,
-          shortDescription,
-          description,
-          price,
-          age,
-          gender,
-          gender_identity,
-          languages,
-          city_id: city,
+          auth_id: clerkId,
+          name: dados.name,
+          email,
+          phone: dados.phoneNumber,
+          description: dados.description,
+          price: dados.price,
+          age: dados.age,
+          gender: dados.gender,
+          city_id: dados.city,
           neighborhood_id: neighborhoodId,
-          meets_at_hotel,
-          meets_at_own_place,
-        } as NewCompanion)
+          meets_at_hotel: dados.meets_at_hotel,
+          meets_at_own_place: dados.meets_at_own_place,
+          // Entra logo na fila do admin, com ou sem verificação.
+          submitted_at: agora,
+          terms_accepted_at: agora,
+        })
         .returning({ id: companionsTable.id });
 
-      await tx.insert(characteristicsTable).values({
-        height,
-        ethnicity,
-        companion_id: companion.id,
-        eye_color,
-        hair_color,
-        hair_length,
-        shoe_size,
-        silicone,
-        tattoos,
-        piercings,
-        weight,
-        smoker,
-      } as any);
+      // A linha fica vazia até ao passo 5, mas tem de existir: as listagens
+      // e a fila juntam-se a esta tabela.
+      await tx.insert(characteristicsTable).values({ companion_id: companion.id });
 
       return companion;
     });
@@ -985,15 +995,15 @@ export async function getCompanionToEdit(
     gender: row.gender ?? "",
     gender_identity: row.gender_identity ?? "",
     languages: row.languages ?? [],
-    // Perfis criados pelo admin podem não ter estes valores: ficam a zero e
-    // o formulário pede-os quando ela completar o registo.
-    weight: row.weight ? parseInt(row.weight) : 0,
-    height: row.height ? parseFloat(row.height) : 0,
+    // As características são opcionais (passo 5): o que falta chega vazio ao
+    // formulário, e não com um valor inventado que ficava gravado.
+    weight: row.weight ? Number(row.weight) : undefined,
+    height: row.height ? Number(row.height) : undefined,
     ethnicity: row.ethnicity ?? "",
     eye_color: row.eye_color ?? "",
     hair_color: row.hair_color ?? "",
     hair_length: row.hair_length ?? "",
-    shoe_size: row.shoe_size ?? 36,
+    shoe_size: row.shoe_size ?? undefined,
     silicone: row.silicone ?? false,
     tattoos: row.tattoos ?? false,
     piercings: row.piercings ?? false,
@@ -1014,6 +1024,27 @@ export async function getCompanionToEdit(
     ...(pendingEdit.payload as Partial<RegisterCompanionFormValues>),
     companionId: published.companionId,
   };
+}
+
+/**
+ * Grava as características, com o que não foi preenchido a null. Se a linha
+ * não existir (não devia, a criação do perfil já a insere), cria-a: sem ela o
+ * perfil desaparecia das listagens, que se juntam a esta tabela.
+ */
+async function gravarCaracteristicas(
+  executor: typeof db,
+  companionId: number,
+  data: Partial<CompletarPerfilInput>,
+) {
+  const valores = caracteristicasParaBase(data);
+  const atualizadas = await executor
+    .update(characteristicsTable)
+    .set(valores)
+    .where(eq(characteristicsTable.companion_id, companionId))
+    .returning({ id: characteristicsTable.id });
+  if (!atualizadas.length) {
+    await executor.insert(characteristicsTable).values({ companion_id: companionId, ...valores });
+  }
 }
 
 /**
@@ -1041,14 +1072,14 @@ async function applyCompanionFormValues(
       .set({
         name: data.name,
         phone: data.phoneNumber,
-        shortDescription: data.shortDescription,
+        shortDescription: data.shortDescription || null,
         description: data.description,
-        instagramHandle: data.instagramHandle,
+        instagramHandle: data.instagramHandle || null,
         price: data.price,
         age: data.age,
         gender: data.gender,
-        gender_identity: data.gender_identity,
-        languages: data.languages,
+        gender_identity: data.gender_identity || null,
+        languages: data.languages ?? [],
         city_id: data.city,
         neighborhood_id: neighborhoodId,
         meets_at_hotel: data.meets_at_hotel,
@@ -1060,22 +1091,7 @@ async function applyCompanionFormValues(
 
     email = companion?.email;
 
-    await tx
-      .update(characteristicsTable)
-      .set({
-        weight: Number(data.weight),
-        height: Number(data.height),
-        ethnicity: data.ethnicity,
-        eye_color: data.eye_color,
-        hair_color: data.hair_color,
-        hair_length: data.hair_length,
-        shoe_size: data.shoe_size,
-        silicone: data.silicone,
-        tattoos: data.tattoos,
-        piercings: data.piercings,
-        smoker: data.smoker,
-      } as NewCharacteristic)
-      .where(eq(characteristicsTable.companion_id, companionId));
+    await gravarCaracteristicas(tx as unknown as typeof db, companionId, data);
   });
 
   // Só depois de os valores serem mesmo os publicados é que o CRM é
@@ -1096,7 +1112,7 @@ async function applyCompanionFormValues(
  */
 export async function updateCompanionFromForm(
   data: RegisterCompanionFormValues,
-): Promise<{ pendingReview: boolean; }> {
+): Promise<{ pendingReview: boolean; reenviado: boolean; }> {
   // A conta sai da sessão, nunca do pedido: o id da conta aparece no
   // endereço das fotos públicas, e com ele qualquer pessoa alterava o perfil
   // de outra (o telefone de um registo por aprovar, por exemplo).
@@ -1105,10 +1121,88 @@ export async function updateCompanionFromForm(
     throw new Error("Sessão expirada. Entre outra vez.");
   }
 
+  let dados;
+  try {
+    dados = edicaoPerfilSchema.parse(data);
+  } catch (error) {
+    throw new Error(mensagemDeValidacao(error) ?? "Dados inválidos");
+  }
+
+  const companion = await perfilDaSessao(clerkId);
+
+  if (!companion.verified) {
+    await applyCompanionFormValues(companion.id, dados);
+    const reenviado = await reenviarSeRecusado(companion);
+    // Só ela (e o admin) vêem o perfil por aprovar, mas a pré-visualização
+    // dela lê da cache.
+    revalidateTag("companion", "max");
+    return { pendingReview: false, reenviado };
+  }
+
+  await guardarEdicaoPendente(companion.id, dados);
+  return { pendingReview: true, reenviado: false };
+}
+
+/**
+ * Passo 5 do registo (e o separador equivalente da edição): descrição curta,
+ * Instagram, identidade de género, línguas e características. Tudo opcional.
+ *
+ * Por aprovar, grava directo e o admin vê logo na fila. Já no ar, passa pela
+ * revisão como qualquer outra edição: junta-se à que estiver à espera ou parte
+ * do que está publicado.
+ */
+export async function saveCompletarPerfil(
+  input: CompletarPerfilInput,
+): Promise<{ pendingReview: boolean; }> {
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    throw new Error("Sessão expirada. Entre outra vez.");
+  }
+
+  let dados;
+  try {
+    dados = completarPerfilSchema.parse(input);
+  } catch (error) {
+    throw new Error(mensagemDeValidacao(error) ?? "Dados inválidos");
+  }
+
+  const companion = await perfilDaSessao(clerkId);
+
+  if (!companion.verified) {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(companionsTable)
+        .set({
+          shortDescription: dados.shortDescription || null,
+          instagramHandle: dados.instagramHandle || null,
+          gender_identity: dados.gender_identity || null,
+          languages: dados.languages,
+          updated_at: new Date(),
+        })
+        .where(eq(companionsTable.id, companion.id));
+      await gravarCaracteristicas(tx as unknown as typeof db, companion.id, dados);
+    });
+    await reenviarSeRecusado(companion);
+    revalidateTag("companion", "max");
+    return { pendingReview: false };
+  }
+
+  const atual = await getCompanionToEdit(clerkId);
+  if (!atual) {
+    throw new Error("Perfil não encontrado");
+  }
+  const { companionId: _id, ...publicado } = atual;
+  await guardarEdicaoPendente(companion.id, { ...publicado, ...dados });
+  return { pendingReview: true };
+}
+
+/** O perfil de quem está com sessão iniciada, com o estado que as gravações precisam. */
+async function perfilDaSessao(clerkId: string) {
   const [companion] = await db
     .select({
       id: companionsTable.id,
       verified: companionsTable.verified,
+      rejectedAt: companionsTable.rejected_at,
     })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, clerkId))
@@ -1117,27 +1211,42 @@ export async function updateCompanionFromForm(
   if (!companion) {
     throw new Error("Perfil não encontrado");
   }
+  return companion;
+}
 
-  if (!companion.verified) {
-    await applyCompanionFormValues(companion.id, data);
-    return { pendingReview: false };
-  }
+/**
+ * Um perfil recusado que ela corrige volta à fila do admin. O motivo antigo
+ * fica gravado, para o admin saber porque foi recusado da última vez.
+ */
+async function reenviarSeRecusado(companion: { id: number; rejectedAt: Date | null; }) {
+  if (!companion.rejectedAt) return false;
+  await db
+    .update(companionsTable)
+    .set({ rejected_at: null, submitted_at: new Date(), updated_at: new Date() })
+    .where(eq(companionsTable.id, companion.id));
+  return true;
+}
+
+/**
+ * Guarda a proposta de um perfil que já está no ar. Os campos vazios ficam a
+ * null, e não de fora: sem isso, apagar um valor não aparecia como alteração
+ * no ecrã do admin, embora fosse aplicado ao aprovar.
+ */
+async function guardarEdicaoPendente(
+  companionId: number,
+  dados: Partial<RegisterCompanionFormValues>,
+) {
+  const payload = JSON.parse(
+    JSON.stringify(dados, (_chave, valor) => (valor === undefined ? null : valor)),
+  ) as Record<string, unknown>;
 
   await db
     .insert(companionPendingEditsTable)
-    .values({
-      companion_id: companion.id,
-      payload: data as unknown as Record<string, unknown>,
-    })
+    .values({ companion_id: companionId, payload })
     .onConflictDoUpdate({
       target: companionPendingEditsTable.companion_id,
-      set: {
-        payload: data as unknown as Record<string, unknown>,
-        updated_at: new Date(),
-      },
+      set: { payload, updated_at: new Date() },
     });
-
-  return { pendingReview: true };
 }
 
 /**
@@ -1252,6 +1361,8 @@ export async function getUnverifiedCompanions(): Promise<
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
+        identityVerified: companionsTable.identity_verified,
+        identityVerifiedMethod: companionsTable.identity_verified_method,
         phone: companionsTable.phone,
         planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
       },
@@ -1284,28 +1395,39 @@ export async function getUnverifiedCompanions(): Promise<
       },
       review: {
         sentToReviewAt: companionsTable.sent_to_review_at,
+        submittedAt: companionsTable.submitted_at,
+        createdAt: companionsTable.created_at,
+        rejectionReason: companionsTable.rejection_reason,
       },
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .innerJoin(
+    // leftJoin: um perfil sem a linha de características não pode ficar
+    // invisível ao admin. A criação do perfil insere-a sempre, mas a fila é o
+    // último sítio onde um registo se pode perder em silêncio.
+    .leftJoin(
       characteristicsTable,
       eq(characteristicsTable.companion_id, companionsTable.id),
     )
     .where(
       or(
-        // Registo novo, ainda sem nada publicado.
+        // Registo por aprovar, ainda sem nada publicado.
         and(
           eq(companionsTable.verified, false),
+          // Recusados saem da fila (ficam no separador "Recusadas") até ela
+          // corrigir o perfil.
+          isNull(companionsTable.rejected_at),
           sql`EXISTS (
             SELECT 1 FROM ${imagesTable}
             WHERE ${imagesTable.companionId} = ${companionsTable.id}
           )`,
-          // A regra continua a ser "só entra na fila quem enviou documento". As
-          // excepções são os perfis que já estavam aprovados antes, que de
-          // outra forma ficariam presos fora do site sem hipótese de
-          // reaprovação, e os que o admin devolveu à fila de propósito.
+          // Entra logo que o perfil é criado (submitted_at), com ou sem
+          // verificação. Os registos anteriores a essa regra só entram se
+          // tiverem enviado documento, como antes; mais as excepções de
+          // sempre: os que já estavam aprovados antes da desverificação em
+          // massa e os que o admin devolveu à fila de propósito.
           or(
+            isNotNull(companionsTable.submitted_at),
             sql`EXISTS (
               SELECT 1 FROM ${documentsTable}
               WHERE ${documentsTable.companionId} = ${companionsTable.id}
@@ -1315,6 +1437,24 @@ export async function getUnverifiedCompanions(): Promise<
               ? inArray(companionsTable.id, legacyApprovedIds)
               : sql`false`,
           ),
+        ),
+        // No ar sem selo, com vídeo e documento à espera: entra para o admin
+        // os ver, sem sair do site.
+        and(
+          eq(companionsTable.verified, true),
+          eq(companionsTable.identity_verified, false),
+          sql`EXISTS (
+            SELECT 1 FROM ${documentsTable}
+            WHERE ${documentsTable.companionId} = ${companionsTable.id}
+              AND ${documentsTable.document_type} = 'verification_video'
+              AND ${documentsTable.status} = 'pendente'
+          )`,
+          sql`EXISTS (
+            SELECT 1 FROM ${documentsTable}
+            WHERE ${documentsTable.companionId} = ${companionsTable.id}
+              AND ${documentsTable.document_type} IN ('id_card', 'passport', 'drivers_license', 'selfie')
+              AND ${documentsTable.status} = 'pendente'
+          )`,
         ),
         // Perfil no ar com alterações por rever. Entra na fila sem sair do
         // site: o visitante continua a ver a versão aprovada.
@@ -1345,12 +1485,17 @@ export async function getUnverifiedCompanions(): Promise<
           ),
         ),
       ),
+    )
+    // Os mais recentes primeiro.
+    .orderBy(
+      desc(sql`COALESCE(${companionsTable.submitted_at}, ${companionsTable.created_at})`),
     );
 
   const results = await query;
   if (results.length === 0) return [];
 
   const companionIds = results.map((r) => r.companion.id);
+  const resumosPromise = resumoDocumentosPorCompanion(companionIds);
 
   // Aqui, ao contrário das leituras públicas, as fotos por aprovar têm mesmo
   // de aparecer: são elas que o admin precisa de ver.
@@ -1381,6 +1526,8 @@ export async function getUnverifiedCompanions(): Promise<
     .from(companionPendingEditsTable)
     .where(inArray(companionPendingEditsTable.companion_id, companionIds));
 
+  // O vídeo que interessa é o que está à espera; depois o aprovado; por fim o
+  // recusado mais recente. Fica o primeiro de cada perfil.
   const videosPromise = db
     .select({
       companionId: documentsTable.companionId,
@@ -1393,6 +1540,10 @@ export async function getUnverifiedCompanions(): Promise<
         inArray(documentsTable.companionId, companionIds),
         eq(documentsTable.document_type, "verification_video"),
       ),
+    )
+    .orderBy(
+      sql`CASE ${documentsTable.status} WHEN 'pendente' THEN 0 WHEN 'aprovado' THEN 1 ELSE 2 END`,
+      desc(documentsTable.created_at),
     );
 
   const audiosPromise = db
@@ -1405,11 +1556,12 @@ export async function getUnverifiedCompanions(): Promise<
     .where(inArray(audioRecordingsTable.companionId, companionIds))
     .orderBy(desc(audioRecordingsTable.created_at));
 
-  const [images, videos, pendingEdits, audios] = await Promise.all([
+  const [images, videos, pendingEdits, audios, resumos] = await Promise.all([
     imagesPromise,
     videosPromise,
     pendingEditsPromise,
     audiosPromise,
+    resumosPromise,
   ]);
 
   // O áudio que está no perfil e o que está à espera, para o admin ouvir os
@@ -1444,8 +1596,13 @@ export async function getUnverifiedCompanions(): Promise<
   );
 
   // O bucket dos documentos é privado: o vídeo só abre por endereço assinado.
+  // Só se assina o primeiro de cada perfil, que é o que aparece.
+  const primeiroVideo = new Map<number, (typeof videos)[number]>();
+  for (const vid of videos) {
+    if (!primeiroVideo.has(vid.companionId)) primeiroVideo.set(vid.companionId, vid);
+  }
   const signedVideos = await Promise.all(
-    videos.map(async (vid) => ({
+    [...primeiroVideo.values()].map(async (vid) => ({
       companionId: vid.companionId,
       url: await signDocumentUrl(vid),
     })),
@@ -1461,9 +1618,11 @@ export async function getUnverifiedCompanions(): Promise<
     const images = imagesMap.get(String(companion.id)) || [];
 
     const audio = audioMap.get(companion.id);
+    const resumo = resumos.get(companion.id)!;
 
-    // Estar no ar e aparecer nesta lista só acontece por causa de uma edição
-    // por rever: no texto, em fotos novas ou num áudio novo.
+    // Estar no ar e aparecer nesta lista acontece por causa de uma edição
+    // por rever (no texto, em fotos novas ou num áudio novo) ou de vídeo e
+    // documento à espera.
     const isPendingEdit =
       companion.verified === true &&
       (Boolean(proposed) ||
@@ -1474,30 +1633,46 @@ export async function getUnverifiedCompanions(): Promise<
       ...companion,
       description: companion.description,
       city: city.name,
-      weight: characteristics.weight,
-      height: characteristics.height,
-      eyeColor: characteristics.eye_color,
-      hairColor: characteristics.hair_color,
-      silicone: characteristics.silicone,
-      tattoos: characteristics.tattoos,
-      piercings: characteristics.piercings,
-      smoker: characteristics.smoker,
-      ethinicity: characteristics.ethnicity,
+      weight: characteristics?.weight ?? null,
+      height: characteristics?.height ?? null,
+      eyeColor: characteristics?.eye_color ?? null,
+      hairColor: characteristics?.hair_color ?? null,
+      silicone: characteristics?.silicone ?? null,
+      tattoos: characteristics?.tattoos ?? null,
+      piercings: characteristics?.piercings ?? null,
+      smoker: characteristics?.smoker ?? null,
+      ethinicity: characteristics?.ethnicity ?? null,
       planType: companion.planType,
       images,
       verificationVideoUrl: videosMap.get(String(companion.id)) || null,
       currentAudioUrl: audio?.current ?? null,
       pendingAudioUrl: audio?.pending ?? null,
       // Já esteve aprovada e foi o admin que a devolveu à fila. Importa
-      // distinguir de um registo novo: recusar aqui apaga um perfil que
-      // esteve publicado, não um candidato que nunca entrou.
+      // distinguir de um registo novo.
       wasSentToReview: review.sentToReviewAt !== null,
       isPendingEdit,
+      isDocsReview:
+        companion.verified === true &&
+        !companion.identityVerified &&
+        temDocumentosPendentes(resumo),
+      verificacao: estadoVerificacao(companion.identityVerified, resumo),
+      verificacaoCompletaPendente: verificacaoCompletaPendente(resumo),
+      temDocumentosPendentes: temDocumentosPendentes(resumo),
+      motivoRecusaDocumentos: resumo.motivoRecusa,
+      semCaracteristicas: caracteristicasVazias({
+        ...(characteristics ?? {}),
+        hair_length: publishedOnly.hair_length,
+        shoe_size: publishedOnly.shoe_size,
+      }),
+      submittedAt: review.submittedAt ?? review.createdAt,
+      // Fora do separador "Recusadas", um motivo gravado é de uma recusa
+      // anterior: ela corrigiu o perfil e reenviou.
+      recusaAnterior: review.rejectionReason,
       pendingChanges: proposed
         ? diffPendingEdit(
           {
             ...companion,
-            ...characteristics,
+            ...(characteristics ?? {}),
             ...publishedOnly,
           },
           proposed,
@@ -1526,21 +1701,87 @@ export async function updateCompanionAge(id: number, age: number) {
 }
 
 /**
+ * Perfis importados ainda sem conta têm um email provisório (.invalid): não há
+ * ninguém do outro lado para receber a automação do RD.
+ */
+function emailParaRD(email: string | null | undefined): email is string {
+  return Boolean(email) && !email!.endsWith(".invalid");
+}
+
+/**
+ * Dá o selo "Verificada": aprova o vídeo e o documento que estiverem à espera
+ * e devolve os campos com quem o deu, quando e por que via. A via é
+ * 'documento' se ela enviou o documento de identificação pelo site, senão
+ * 'whatsapp' (o admin viu-o fora do site). Só o admin lê estes campos: no
+ * site o selo é igual para todas.
+ */
+async function darSelo(companionId: number, adminId: string) {
+  const resumo = await resumoDocumentos(companionId);
+  const agora = new Date();
+
+  await db
+    .update(documentsTable)
+    .set({
+      status: "aprovado",
+      verified: true,
+      verification_date: agora,
+      reviewed_by: adminId,
+      updated_at: agora,
+    })
+    .where(
+      and(eq(documentsTable.companionId, companionId), eq(documentsTable.status, "pendente")),
+    );
+
+  const viaDocumento = resumo.documento === "pendente" || resumo.documento === "aprovado";
+  return {
+    identity_verified: true,
+    identity_verified_at: agora,
+    identity_verified_by: adminId,
+    identity_verified_method: viaDocumento ? "documento" : "whatsapp",
+  };
+}
+
+/**
  * Aprova um registo novo ou uma edição de um perfil que já está no ar. Nos dois
  * casos é aqui que o conteúdo por rever passa a ser o publicado: as alterações
  * guardadas à espera são escritas no perfil e as fotos novas tornam-se visíveis.
+ *
+ * O selo é decisão explícita do admin (`comSelo`), e não consequência de
+ * existir um documento: um documento pode ter sido recusado, e um admin pode
+ * ter visto o documento por WhatsApp.
  */
-export async function approveCompanion(id: number) {
+export async function approveCompanion(
+  id: number,
+  { comSelo = false }: { comSelo?: boolean } = {},
+) {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
     throw new Error("Não autorizado");
   }
 
   const [before] = await db
-    .select({ verified: companionsTable.verified })
+    .select({
+      verified: companionsTable.verified,
+      identityVerified: companionsTable.identity_verified,
+    })
     .from(companionsTable)
     .where(eq(companionsTable.id, id))
     .limit(1);
+
+  if (!before) {
+    throw new Error("Perfil não encontrado");
+  }
+
+  // Com vídeo e documento enviados, já não se põe no ar sem selo: ou se
+  // aprova como verificada, ou se recusam os documentos primeiro. Uma
+  // verificação a meio não bloqueia, e ela continua com o aviso para acabar.
+  if (!before.verified && !before.identityVerified && !comSelo) {
+    if (verificacaoCompletaPendente(await resumoDocumentos(id))) {
+      throw new Error(
+        "Ela enviou vídeo e documento: aprove como verificada ou recuse os documentos primeiro.",
+      );
+    }
+  }
 
   const [pendingEdit] = await db
     .select({ payload: companionPendingEditsTable.payload })
@@ -1561,33 +1802,38 @@ export async function approveCompanion(id: number) {
   await approvePendingImages(id);
   await approvePendingAudio(id);
 
-  // O selo acompanha o documento: quem chega aqui pelo registo normal enviou-o
-  // (é a condição para entrar na fila), mas aprovar uma edição de um perfil
-  // importado, que pode estar online sem documento, não lho pode dar.
+  const novoSelo = comSelo && !before.identityVerified;
+  const selo = novoSelo ? await darSelo(id, userId) : {};
+
   const [companion] = await db
     .update(companionsTable)
     .set({
       verified: true,
       sent_to_review_at: null,
-      identity_verified: sql`${companionsTable.identity_verified} OR EXISTS (
-        SELECT 1 FROM ${documentsTable} WHERE ${documentsTable.companionId} = ${id}
-      )`,
+      rejected_at: null,
+      ...selo,
     })
     .where(eq(companionsTable.id, id))
     .returning({ email: companionsTable.email, name: companionsTable.name });
 
-  // O evento de conversão marca a entrada na plataforma, por isso só dispara
-  // na primeira aprovação. Aprovar uma edição de quem já estava no ar não é
-  // uma conversão nova e não pode voltar a contar como tal.
-  // Perfis importados ainda sem conta têm um email provisório (.invalid):
-  // não há ninguém do outro lado para receber a automação do RD.
-  if (before?.verified !== true && companion?.email && !companion.email.endsWith('.invalid')) {
-    await tagCompanionInRD(companion.email, "aprovado", companion.name);
-    await sendConversionEventToRD(
-      companion.email,
-      RD_CONVERSION_APROVADA,
-      companion.name,
-    );
+  if (emailParaRD(companion?.email)) {
+    // O evento de conversão marca a entrada na plataforma, por isso só
+    // dispara na primeira aprovação. Aprovar uma edição de quem já estava no
+    // ar não é uma conversão nova e não pode voltar a contar como tal. Sem
+    // selo, o evento é outro, para as boas-vindas pedirem a verificação.
+    if (!before.verified) {
+      await tagCompanionInRD(companion.email, "aprovado", companion.name);
+      await sendConversionEventToRD(
+        companion.email,
+        before.identityVerified || comSelo
+          ? RD_CONVERSION_APROVADA
+          : RD_CONVERSION_APROVADA_SEM_VERIFICACAO,
+        companion.name,
+      );
+    }
+    if (novoSelo) {
+      await tagCompanionInRD(companion.email, "verificada", companion.name);
+    }
   }
 
   // Sem isto a aprovação só ficava visível quando o cache da listagem
@@ -1600,23 +1846,73 @@ export async function approveCompanion(id: number) {
 }
 
 /**
- * Recusar tem dois significados opostos, consoante o que está em revisão:
+ * Selo "Verificada" dado fora da aprovação: a partir do perfil dela (o admin
+ * recebeu o documento por WhatsApp) ou na fila, para quem já está no ar e
+ * enviou vídeo e documento. Não mexe na publicação.
+ */
+export async function verifyIdentityAsAdmin(companionId: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    return { success: false, error: "Não autorizado" };
+  }
+
+  const [alvo] = await db
+    .select({
+      identityVerified: companionsTable.identity_verified,
+      email: companionsTable.email,
+      name: companionsTable.name,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, companionId))
+    .limit(1);
+
+  if (!alvo) {
+    return { success: false, error: "Perfil não encontrado." };
+  }
+  if (alvo.identityVerified) {
+    return { success: true, method: null };
+  }
+
+  const selo = await darSelo(companionId, userId);
+  await db
+    .update(companionsTable)
+    .set({ ...selo, updated_at: new Date() })
+    .where(eq(companionsTable.id, companionId));
+
+  if (emailParaRD(alvo.email)) {
+    await tagCompanionInRD(alvo.email, "verificada", alvo.name);
+  }
+
+  revalidateTag("companion", "max");
+  revalidateTag("companions", "max");
+  revalidateTag("companions-filter", "max");
+
+  return { success: true, method: selo.identity_verified_method };
+}
+
+/**
+ * Recusar tem dois significados, consoante o que está em revisão:
  *
  * - Perfil já no ar: o que se recusa é a edição. As alterações propostas e as
  *   fotos novas são descartadas, e o anúncio aprovado fica exactamente como
  *   estava. Apagar a acompanhante aqui seria destruir uma cliente por causa
  *   de uma mudança de descrição.
- * - Registo que nunca foi aprovado: não há nada publicado, e recusar significa
- *   mesmo não aceitar o perfil.
+ * - Registo por aprovar: o perfil sai da fila, com o motivo, mas não se apaga
+ *   nada. Ela vê o motivo ao entrar e, se corrigir o perfil, volta à fila. O
+ *   admin pode reverter ou apagar de vez no separador "Recusadas".
  */
-export async function rejectCompanion(id: number) {
+export async function rejectCompanion(id: number, motivo?: string) {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
     throw new Error("Não autorizado");
   }
 
   const [companion] = await db
-    .select({ verified: companionsTable.verified })
+    .select({
+      verified: companionsTable.verified,
+      email: companionsTable.email,
+      name: companionsTable.name,
+    })
     .from(companionsTable)
     .where(eq(companionsTable.id, id))
     .limit(1);
@@ -1639,36 +1935,135 @@ export async function rejectCompanion(id: number) {
     return { success: true, id, discardedEdit: true };
   }
 
-  let email: string | undefined;
-  let name: string | undefined;
+  const razao = motivo?.trim();
+  if (!razao) {
+    throw new Error("Escreva o motivo da recusa: ela vai vê-lo.");
+  }
+
+  await db
+    .update(companionsTable)
+    .set({
+      rejected_at: new Date(),
+      rejection_reason: razao.slice(0, 1000),
+      updated_at: new Date(),
+    })
+    .where(eq(companionsTable.id, id));
+
+  if (emailParaRD(companion.email)) {
+    await tagCompanionInRD(companion.email, "recusado", companion.name);
+    await sendConversionEventWithReason(
+      companion.email,
+      RD_CONVERSION_RECUSADA,
+      companion.name,
+      razao,
+    );
+  }
+
+  // Não estava no ar, por isso nenhuma listagem muda; é pela pré-visualização
+  // dela, que lê da cache.
+  revalidateTag("companion", "max");
+
+  return { success: true, id, discardedEdit: false };
+}
+
+/** Devolve um perfil recusado à fila, como se ela o tivesse reenviado. */
+export async function revertRejection(id: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    return { success: false, error: "Não autorizado" };
+  }
+
+  const [companion] = await db
+    .update(companionsTable)
+    .set({ rejected_at: null, submitted_at: new Date(), updated_at: new Date() })
+    .where(and(eq(companionsTable.id, id), isNotNull(companionsTable.rejected_at)))
+    .returning({ id: companionsTable.id, name: companionsTable.name });
+
+  if (!companion) {
+    return { success: false, error: "Perfil não encontrado ou já não está recusado." };
+  }
+
+  revalidateTag("companion", "max");
+  return { success: true, name: companion.name };
+}
+
+/**
+ * Apaga de vez um perfil recusado, com fotos, áudio, vídeo e documentos. É o
+ * caminho para pedidos de remoção (RGPD) e para spam. Não avisa o RD.
+ *
+ * Só aceita perfis recusados: um clique fora do sítio não pode apagar um
+ * anúncio no ar.
+ */
+export async function deleteCompanionPermanently(id: number) {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    return { success: false, error: "Não autorizado" };
+  }
+
+  const [alvo] = await db
+    .select({ rejectedAt: companionsTable.rejected_at })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, id))
+    .limit(1);
+
+  if (!alvo) {
+    return { success: false, error: "Perfil não encontrado." };
+  }
+  if (!alvo.rejectedAt) {
+    return { success: false, error: "Só se apagam de vez perfis recusados." };
+  }
+
+  // Os ficheiros primeiro: depois de apagar o perfil já não se sabe a pasta.
+  const ficheiros = await deleteAllDocumentsFromCompanion(id);
+  if (!ficheiros.success) {
+    return {
+      success: false,
+      error: "Não foi possível apagar os ficheiros. O perfil não foi apagado.",
+    };
+  }
 
   await db.transaction(async (tx) => {
     // audio_recordings não tem chave estrangeira para companions, por isso não
-    // vai com o cascade. Os ficheiros saem com deleteAllDocumentsFromCompanion.
+    // vai com o cascade.
     await tx
       .delete(audioRecordingsTable)
       .where(eq(audioRecordingsTable.companionId, id));
-
-    const [deleted] = await tx
-      .delete(companionsTable)
-      .where(eq(companionsTable.id, id))
-      .returning({ email: companionsTable.email, name: companionsTable.name });
-    email = deleted?.email;
-    name = deleted?.name;
+    await tx.delete(companionsTable).where(eq(companionsTable.id, id));
   });
 
-  if (email) {
-    await tagCompanionInRD(email, "recusado", name);
-    await sendConversionEventToRD(email, RD_CONVERSION_RECUSADA, name);
-  }
-
-  // O perfil foi apagado, mas sem isto continuava listado em cache, e quem
-  // clicasse nele ia parar a uma página que já não existe.
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");
   revalidateTag("companions-filter", "max");
 
-  return { success: true, id, discardedEdit: false };
+  return { success: true };
+}
+
+/** Separador "Recusadas" da página de verificação. */
+export async function getRejectedCompanions() {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error("Não autorizado");
+  }
+
+  return db
+    .select({
+      id: companionsTable.id,
+      name: companionsTable.name,
+      phone: companionsTable.phone,
+      city: citiesTable.city,
+      rejectedAt: companionsTable.rejected_at,
+      rejectionReason: companionsTable.rejection_reason,
+      cover: sql<string | null>`(
+        SELECT ${imagesTable.public_url} FROM ${imagesTable}
+        WHERE ${imagesTable.companionId} = ${companionsTable.id}
+        ORDER BY ${imagesTable.position}, ${imagesTable.id}
+        LIMIT 1
+      )`,
+    })
+    .from(companionsTable)
+    .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+    .where(and(eq(companionsTable.verified, false), isNotNull(companionsTable.rejected_at)))
+    .orderBy(desc(companionsTable.rejected_at));
 }
 
 /**

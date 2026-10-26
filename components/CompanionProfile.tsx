@@ -34,6 +34,7 @@ import {
   Star,
   CheckCircle,
   Info,
+  ShieldAlert,
 } from 'lucide-react';
 import { ImageGrid } from '@/components/imageGrid';
 import { getLastSignInByClerkId } from '@/db/queries/userActions';
@@ -58,11 +59,15 @@ import { getLocale } from '@/lib/locale.server';
 import { absoluteUrl, localizeHref, type Locale } from '@/lib/i18n';
 import { traduzirValor } from '@/lib/i18n-values';
 import { LocaleLink } from '@/components/locale-link';
+import { PageViewTracker } from '@/components/analytics-components';
+import { EstadoRegisto } from '@/components/registo/estado-registo';
+import { viaDoSelo } from '@/db/queries/verificacao';
 
 const TEXT = {
   pt: {
     home: 'Início',
     verified: 'Verificada',
+    notVerified: 'Não verificada',
     voice: 'Ouça minha voz',
     about: (n: string) => `Sobre ${n}`,
     originalNote: '',
@@ -88,6 +93,7 @@ const TEXT = {
   en: {
     home: 'Home',
     verified: 'Verified',
+    notVerified: 'Not verified',
     voice: 'Listen to my voice',
     about: (n: string) => `About ${n}`,
     originalNote: 'Description written by the advertiser, in Portuguese.',
@@ -257,12 +263,18 @@ export async function CompanionProfile({
 
   const { userId } = await auth();
   const viewerIsAdmin = Boolean(userId && isAdmin(userId));
+  const viewerIsOwner = Boolean(userId && userId === companion.auth_id);
 
   // Anúncio pausado, ou por aprovar: invisível ao público. O admin é a
   // excepção, senão perdia o acesso à página onde estão os próprios
-  // controlos e não tinha como reverter o que acabou de fazer.
+  // controlos e não tinha como reverter o que acabou de fazer. A dona também:
+  // vê o próprio anúncio antes de ser aprovado, com os avisos do registo.
   const hiddenFromPublic = companion.paused || !companion.verified;
-  if (hiddenFromPublic && !viewerIsAdmin && !preview) notFound();
+  if (hiddenFromPublic && !viewerIsAdmin && !preview && !viewerIsOwner) notFound();
+
+  // A via do selo (documento ou WhatsApp) é só para o admin: fica fora da
+  // leitura pública, que vai para cache.
+  const viaSelo = viewerIsAdmin && companion.identity_verified ? await viaDoSelo(id) : null;
 
   let sanitizedPhone = companion.phone.replace(/\D/g, '').replace(/^0+/, '');
 
@@ -327,7 +339,13 @@ export async function CompanionProfile({
           </li>
         </ol>
       </nav>
-      {hiddenFromPublic && (
+      {/* Só conta como visita quem o vê no ar: um perfil escondido é visto
+          pelo admin, pela dona ou pelo link de pré-visualização. */}
+      {!hiddenFromPublic && <PageViewTracker companionId={id} />}
+      {viewerIsOwner && userId && (
+        <EstadoRegisto clerkId={userId} contexto="anuncio" centrado={false} />
+      )}
+      {hiddenFromPublic && !viewerIsOwner && (
         <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
           {en
             ? 'Preview: this profile is not public yet. Only people with this link can see it.'
@@ -340,6 +358,8 @@ export async function CompanionProfile({
           name={companion.name}
           paused={companion.paused}
           verified={companion.verified}
+          identityVerified={companion.identity_verified}
+          viaSelo={viaSelo}
           // plan_type = 'vip' fica gravado mesmo depois de expirar, por isso
           // a data é que decide se o VIP ainda vale.
           vipActive={
@@ -357,10 +377,14 @@ export async function CompanionProfile({
         <h1 className="text-3xl font-bold">{companion.name}</h1>
         <div className="flex items-center mt-2 space-x-4">
           {/* O selo é da identidade (documento visto), não de estar
-              publicada: há perfis online sem documento. */}
-          {companion.identity_verified && (
+              publicada: há perfis online sem documento, e esses dizem-no. */}
+          {companion.identity_verified ? (
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               <Check className="w-3 h-3 mr-1" /> {t.verified}
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+              <ShieldAlert className="w-3 h-3 mr-1" /> {t.notVerified}
             </Badge>
           )}
           <div className="flex items-center text-yellow-400">

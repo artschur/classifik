@@ -6,6 +6,7 @@ import { isUserACompanion } from '@/db/queries/companions';
 import { companionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { isAdmin } from '@/components/header';
+import { acessoAPlanos, DESTINO_SEM_ACESSO } from '@/db/queries/verificacao';
 
 export async function GET(req: Request) {
     try {
@@ -18,9 +19,17 @@ export async function GET(req: Request) {
         // O mesmo requisito do /api/can-checkout, repetido aqui porque aquele
         // só informa o botão: é este endereço que cria mesmo a assinatura, e
         // chega-se a ele escrevendo o URL à mão. Sem perfil não há anúncio
-        // para destacar, e o pagamento ficaria sem dono.
-        if (!(await isUserACompanion(userId))) {
-            return Response.redirect(new URL('/companions/register', req.url), 303);
+        // para destacar, e o pagamento ficaria sem dono; sem selo, o caminho
+        // é a verificação. Os admins só precisam de perfil (compras de teste).
+        if (isAdmin(userId)) {
+            if (!(await isUserACompanion(userId))) {
+                return Response.redirect(new URL('/companions/register', req.url), 303);
+            }
+        } else {
+            const acesso = await acessoAPlanos(userId);
+            if (acesso !== 'pode') {
+                return Response.redirect(new URL(DESTINO_SEM_ACESSO[acesso], req.url), 303);
+            }
         }
 
         const url = new URL(req.url);

@@ -4,16 +4,17 @@ import * as React from "react";
 import {
   getSignedUploadUrl,
   saveDocumentAfterUpload,
-  getMyDocuments,
 } from "@/app/actions/document-verification";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Check, VideoIcon, AlertCircle } from "lucide-react";
+import { Loader2, VideoIcon, AlertCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
 
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+
+/** Estado de cada peça da verificação (db/queries/verificacao.ts). */
+export type EstadoPecaVerificacao = "por-enviar" | "pendente" | "aprovado" | "recusado";
 
 async function uploadVideoToSupabase(
   file: File,
@@ -46,15 +47,24 @@ async function uploadVideoToSupabase(
   return { success: true };
 }
 
+/**
+ * Bloco do vídeo no passo da verificação. Mostra o estado (por enviar,
+ * recebido, ou recusado com o motivo) e aceita um novo envio depois de uma
+ * recusa. Quem segue para o passo seguinte é a página, por `onEnviado`.
+ */
 export function VideoVerificationForm({
-  initialVideoUploaded,
+  estado: estadoInicial,
+  motivoRecusa,
+  onEnviado,
 }: {
-  initialVideoUploaded: boolean;
+  estado: EstadoPecaVerificacao;
+  motivoRecusa?: string | null;
+  onEnviado?: () => void;
 }) {
   const { isLoaded, user } = useUser();
   const { toast } = useToast();
-  const router = useRouter();
-  const [videoUploaded, setVideoUploaded] = React.useState(initialVideoUploaded);
+  const [estado, setEstado] = React.useState(estadoInicial);
+  const videoUploaded = estado === "pendente" || estado === "aprovado";
   const [isUploading, setIsUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -89,16 +99,13 @@ export function VideoVerificationForm({
       const result = await uploadVideoToSupabase(file);
 
       if (result.success) {
-        const updated = await getMyDocuments();
-        if (updated.success) setVideoUploaded(true);
-
+        setEstado("pendente");
         toast({
           title: "Vídeo enviado!",
-          description: "Pode agora enviar o documento de identificação.",
+          description: "Recebido. A equipa vai analisá-lo.",
           variant: "success",
         });
-
-        router.push("/companions/verification/document");
+        onEnviado?.();
       } else {
         toast({ title: "Erro", description: result.error, variant: "destructive" });
         if (inputRef.current) inputRef.current.value = "";
@@ -121,7 +128,7 @@ export function VideoVerificationForm({
       {/* Header */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-extrabold tracking-tight">Vídeo 360° com um papel</h1>
+          <h2 className="text-2xl font-extrabold tracking-tight">Vídeo 360° com um papel</h2>
           <span className="bg-rose-600 text-white text-sm font-extrabold px-4 py-1.5 rounded-full uppercase tracking-widest shrink-0">
             Obrigatório
           </span>
@@ -159,6 +166,21 @@ export function VideoVerificationForm({
           </p>
         </div>
       </div>
+
+      {estado === "recusado" && (
+        <div className="flex gap-3 rounded-xl border-2 border-red-300 bg-red-50 p-5 text-red-950 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100">
+          <XCircle className="h-6 w-6 shrink-0" />
+          <div className="space-y-1">
+            <p className="font-bold">O vídeo anterior foi recusado</p>
+            {motivoRecusa && (
+              <p className="text-sm">
+                <strong>Motivo:</strong> {motivoRecusa}
+              </p>
+            )}
+            <p className="text-sm">Grave outro e envie-o abaixo.</p>
+          </div>
+        </div>
+      )}
 
       {/* Upload area */}
       {videoUploaded ? (

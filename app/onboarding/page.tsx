@@ -8,7 +8,6 @@ import { handleOnboard } from "./actions";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { isUserACompanion } from "@/db/queries/companions";
-import { EarningsCalculator } from "@/components/earnings-calculator";
 
 export default async function OnboardPage() {
   const { userId, sessionClaims } = await auth();
@@ -32,16 +31,10 @@ export default async function OnboardPage() {
     return redirect("/profile");
   }
 
+  // Ainda sem perfil: segue para o formulário. A verificação vem depois do
+  // perfil criado e pode ficar para mais tarde.
   if (sessionClaims?.metadata?.onboardingComplete) {
-    const isCompanion = sessionClaims.metadata.isCompanion;
-    if (isCompanion) {
-      if (sessionClaims.metadata?.hasUploadedDocs === false) {
-        return redirect("/companions/verification");
-      }
-      return redirect("/companions/register");
-    } else {
-      return redirect("/location");
-    }
+    return redirect(sessionClaims.metadata.isCompanion ? "/companions/register" : "/location");
   }
 
   return (
@@ -57,21 +50,17 @@ export default async function OnboardPage() {
           </p>
         </div>
 
-        <EarningsCalculator
-          cta={
-            <form action={handleOnboard} className="w-full">
-              <input type="hidden" name="isCompanion" value="true" />
-              <button
-                type="submit"
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
-              >
-                Criar o meu perfil de Sugar gratuitamente
-              </button>
-            </form>
-          }
-        />
-
         <form action={handleOnboard} className="w-full max-w-sm">
+          <input type="hidden" name="isCompanion" value="true" />
+          <button
+            type="submit"
+            className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+          >
+            Criar o meu perfil de Sugar gratuitamente
+          </button>
+        </form>
+
+        <form action={handleOnboard} className="w-full max-w-sm -mt-4">
           <input type="hidden" name="isCompanion" value="false" />
           <button
             type="submit"
