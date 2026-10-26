@@ -6,8 +6,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { companionsTable, audioRecordingsTable } from "@/db/schema";
-import { stripe } from "@/db/stripe";
-import { getActiveSubscriptionByClerkId } from "@/db/queries/subscriptions";
+import { cancelarSubscricoesNaStripe } from "@/db/queries/subscriptions";
 import { setCompanionPaused } from "@/db/queries/companions";
 import { removeStorageFolder } from "@/lib/supabase-admin";
 
@@ -23,8 +22,9 @@ export async function togglePauseAd(paused: boolean) {
 }
 
 /**
- * Apaga definitivamente a conta da companion: cancela subscrição activa no
- * Stripe, remove ficheiros do storage (fotos, vídeo de verificação,
+ * Apaga definitivamente a conta da companion: cancela na Stripe as
+ * subscrições que ainda podem cobrar (procuradas na própria Stripe), remove
+ * ficheiros do storage (fotos, vídeo de verificação,
  * documentos, áudio), apaga a linha na base de dados — que arrasta consigo
  * características, fotos, documentos, avaliações, bloqueios e eventos de
  * analytics via cascade — e por fim apaga o utilizador no Clerk.
@@ -44,7 +44,10 @@ export async function deleteCompanionAccount(confirmationPhrase: string) {
   }
 
   const [companion] = await db
-    .select({ id: companionsTable.id })
+    .select({
+      id: companionsTable.id,
+      stripeCustomerId: companionsTable.stripe_customer_id,
+    })
     .from(companionsTable)
     .where(eq(companionsTable.auth_id, userId))
     .limit(1);
@@ -53,20 +56,28 @@ export async function deleteCompanionAccount(confirmationPhrase: string) {
     return { success: false, error: "Perfil não encontrado." };
   }
 
-  // 1. Cancela qualquer subscrição activa no Stripe — apagar os dados não
-  //    pára a cobrança automática por si só.
-  const activeSubscription = await getActiveSubscriptionByClerkId(userId);
-  if (activeSubscription?.stripe_subscription_id) {
-    try {
-      await stripe.subscriptions.cancel(
-        activeSubscription.stripe_subscription_id,
-      );
-    } catch (error) {
-      console.error(
-        "Falha ao cancelar subscrição Stripe ao apagar conta:",
-        error,
-      );
+  // 1. Cancela na Stripe tudo o que ainda pode cobrar esta conta: apagar os
+  //    dados não pára a cobrança automática. Procura na própria Stripe, e não
+  //    só na base, onde a subscrição pode nunca ter ficado registada. Se não
+  //    der para cancelar, não se apaga nada: conta apagada com a cobrança a
+  //    correr era o pior dos casos, e ela pode tentar outra vez.
+  try {
+    const { falhas } = await cancelarSubscricoesNaStripe({
+      clerkId: userId,
+      stripeCustomerId: companion.stripeCustomerId,
+    });
+    if (falhas.length > 0) {
+      return {
+        success: false,
+        error: "Não foi possível cancelar a sua subscrição. Tente outra vez ou contacte o suporte.",
+      };
     }
+  } catch (error) {
+    console.error("Falha ao procurar subscrições na Stripe ao apagar conta:", error);
+    return {
+      success: false,
+      error: "Não foi possível cancelar a sua subscrição. Tente outra vez ou contacte o suporte.",
+    };
   }
 
   // 2. Remove ficheiros do storage nas três localizações usadas pela conta.

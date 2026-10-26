@@ -181,10 +181,18 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       });
 
       if (event.type === 'customer.subscription.deleted') {
-        const client = await clerkClient();
-        await client.users.updateUserMetadata(clerkId, {
-          publicMetadata: { plan: 'free' },
-        });
+        // Apagar a conta cancela a subscrição e apaga logo a seguir o
+        // utilizador no Clerk, por isso este aviso pode chegar sem utilizador.
+        // Deixá-lo falhar fazia a Stripe repetir o envio durante dias e marcar
+        // o endereço como avariado.
+        try {
+          const client = await clerkClient();
+          await client.users.updateUserMetadata(clerkId, {
+            publicMetadata: { plan: 'free' },
+          });
+        } catch (error) {
+          console.warn(`Plano não actualizado no Clerk (conta ${clerkId} já não existe?):`, error);
+        }
       }
 
       // Handle trial-specific events

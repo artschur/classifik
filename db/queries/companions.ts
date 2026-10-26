@@ -75,6 +75,7 @@ import {
   verificacaoCompletaPendente,
 } from "./verificacao";
 import { approvePendingAudio, discardPendingAudio } from "./audio";
+import { cancelarSubscricoesNaStripe } from "./subscriptions";
 import { resolveNeighborhoodId } from "./neighborhoods";
 import { isImportedAuthId } from "@/lib/imported-profiles";
 import { TODOS_OS_DISTRITOS } from "@/lib/districts";
@@ -1988,8 +1989,9 @@ export async function revertRejection(id: number) {
 }
 
 /**
- * Apaga de vez um perfil recusado, com fotos, áudio, vídeo e documentos. É o
- * caminho para pedidos de remoção (RGPD) e para spam. Não avisa o RD.
+ * Apaga de vez um perfil recusado, com fotos, áudio, vídeo e documentos, e
+ * cancela na Stripe o que ainda o pudesse cobrar. É o caminho para pedidos de
+ * remoção (RGPD) e para spam. Não avisa o RD.
  *
  * Só aceita perfis recusados: um clique fora do sítio não pode apagar um
  * anúncio no ar.
@@ -2001,7 +2003,11 @@ export async function deleteCompanionPermanently(id: number) {
   }
 
   const [alvo] = await db
-    .select({ rejectedAt: companionsTable.rejected_at })
+    .select({
+      rejectedAt: companionsTable.rejected_at,
+      authId: companionsTable.auth_id,
+      stripeCustomerId: companionsTable.stripe_customer_id,
+    })
     .from(companionsTable)
     .where(eq(companionsTable.id, id))
     .limit(1);
@@ -2013,7 +2019,29 @@ export async function deleteCompanionPermanently(id: number) {
     return { success: false, error: "Só se apagam de vez perfis recusados." };
   }
 
-  // Os ficheiros primeiro: depois de apagar o perfil já não se sabe a pasta.
+  // Antes de tudo, a cobrança: apagar o perfil não pára a Stripe, e uma
+  // subscrição que ficasse viva continuava a cobrar sem anúncio nenhum. Se
+  // não der para cancelar, não se apaga nada.
+  try {
+    const { falhas } = await cancelarSubscricoesNaStripe({
+      clerkId: alvo.authId,
+      stripeCustomerId: alvo.stripeCustomerId,
+    });
+    if (falhas.length > 0) {
+      return {
+        success: false,
+        error: "Não foi possível cancelar a subscrição na Stripe. O perfil não foi apagado.",
+      };
+    }
+  } catch (error) {
+    console.error("Falha ao procurar subscrições na Stripe antes de apagar:", error);
+    return {
+      success: false,
+      error: "Não foi possível falar com a Stripe para cancelar a subscrição. O perfil não foi apagado.",
+    };
+  }
+
+  // Os ficheiros a seguir: depois de apagar o perfil já não se sabe a pasta.
   const ficheiros = await deleteAllDocumentsFromCompanion(id);
   if (!ficheiros.success) {
     return {

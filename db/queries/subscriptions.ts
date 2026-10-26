@@ -1,7 +1,8 @@
 import { and, eq, inArray, gt } from 'drizzle-orm';
-import { db } from '..';
+import { db, kv } from '..';
 import { companionsTable, subscriptionsTable } from '../schema';
 import Stripe from 'stripe';
+import { stripe } from '../stripe';
 import { priceIdToPlan } from './kv';
 
 const ACTIVE_STATUSES = ['active', 'trialing'] as const;
@@ -120,4 +121,75 @@ export async function getActiveSubscriptionByClerkId(clerkId: string) {
 export async function hasActiveSubscription(clerkId: string) {
   const sub = await getActiveSubscriptionByClerkId(clerkId);
   return Boolean(sub);
+}
+
+/** Estados em que a Stripe ainda cobra, ou pode vir a cobrar, a subscrição. */
+const ESTADOS_QUE_COBRAM: Stripe.Subscription.Status[] = [
+  'active',
+  'trialing',
+  'past_due',
+  'unpaid',
+  'incomplete',
+  'paused',
+];
+
+/**
+ * Cancela na Stripe tudo o que ainda pode cobrar uma conta, antes de o perfil
+ * ser apagado. Procura sempre na própria Stripe, e não só na base: uma
+ * subscrição pode nunca ter ficado registada aqui (comprada antes de haver
+ * perfil, ou com o aviso da Stripe perdido) e continuaria a cobrar depois de
+ * o perfil desaparecer. Foi assim que uma cliente ficou a pagar o VIP sem
+ * anúncio nenhum.
+ *
+ * Os clientes Stripe da conta vêm de três lados: o gravado no perfil, o
+ * gravado no KV no checkout, e uma pesquisa na Stripe pelo id da conta, que o
+ * checkout põe nos metadados do cliente.
+ *
+ * Cancela já, e não no fim do período: sem perfil não há anúncio para pagar.
+ * Os reembolsos ficam de fora, são decisão à parte. Erros a falar com a
+ * Stripe sobem para quem chama, que não deve apagar nada nesse caso.
+ */
+export async function cancelarSubscricoesNaStripe(params: {
+  clerkId: string;
+  stripeCustomerId?: string | null;
+}): Promise<{ canceladas: number; falhas: string[] }> {
+  const { clerkId, stripeCustomerId } = params;
+  const clientes = new Set<string>();
+  if (stripeCustomerId) clientes.add(stripeCustomerId);
+
+  const doCheckout = await kv.get<string>(`stripe:user:${clerkId}`);
+  if (typeof doCheckout === 'string' && doCheckout) clientes.add(doCheckout);
+
+  // O id entra no texto da pesquisa: só passa no formato do Clerk (letras,
+  // números e _), para não partir nem alterar a pesquisa.
+  if (/^[A-Za-z0-9_]+$/.test(clerkId)) {
+    const encontrados = await stripe.customers.search({
+      query: `metadata['userId']:'${clerkId}'`,
+      limit: 20,
+    });
+    for (const cliente of encontrados.data) clientes.add(cliente.id);
+  }
+
+  let canceladas = 0;
+  const falhas: string[] = [];
+
+  for (const cliente of clientes) {
+    const subscricoes = await stripe.subscriptions.list({
+      customer: cliente,
+      status: 'all',
+      limit: 100,
+    });
+    for (const subscricao of subscricoes.data) {
+      if (!ESTADOS_QUE_COBRAM.includes(subscricao.status)) continue;
+      try {
+        await stripe.subscriptions.cancel(subscricao.id);
+        canceladas++;
+      } catch (error) {
+        console.error(`Falha ao cancelar a subscrição ${subscricao.id} na Stripe:`, error);
+        falhas.push(subscricao.id);
+      }
+    }
+  }
+
+  return { canceladas, falhas };
 }

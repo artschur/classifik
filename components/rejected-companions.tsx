@@ -40,7 +40,7 @@ export function RejectedCompanions({ companions }: { companions: Recusada[] }) {
       <p className="text-xs text-muted-foreground">
         Recusados pelo admin. Ela vê o motivo ao entrar e, se corrigir o perfil,
         volta sozinha para a fila. Apagar de vez remove fotos, vídeo e
-        documentos, e não avisa o RD.
+        documentos, cancela a subscrição na Stripe se houver, e não avisa o RD.
       </p>
       <ul className="space-y-3">
         {companions.map((c) => (
@@ -115,6 +115,10 @@ function Linha({ companion: c }: { companion: Recusada }) {
                     <p>
                       O perfil, as fotos, o áudio, o vídeo e os documentos são
                       apagados e não há forma de os recuperar. O RD não é avisado.
+                    </p>
+                    <p>
+                      Se ela tiver um plano, a subscrição é cancelada na Stripe
+                      (sem reembolso automático).
                     </p>
                     <p>
                       Escreva <strong>APAGAR</strong> para confirmar.
