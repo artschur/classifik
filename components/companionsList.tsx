@@ -310,7 +310,13 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
               <Badge variant="secondary">{companion.age} {en ? 'years old' : 'anos'}</Badge>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{companion.shortDescription}</p>
+          {/* Em /en, a tradução da descrição curta quando existe; senão o original. */}
+          <p
+            lang={en && !companion.shortDescriptionEn ? 'pt-PT' : undefined}
+            className="text-sm text-muted-foreground line-clamp-2 mb-2"
+          >
+            {(en && companion.shortDescriptionEn) || companion.shortDescription}
+          </p>
           <div className="flex flex-wrap gap-2">
             {companion.silicone && <Badge variant="outline">Silicone</Badge>}
             {companion.ethinicity && <Badge variant="outline">{traduzirValor(companion.ethinicity, locale)}</Badge>}

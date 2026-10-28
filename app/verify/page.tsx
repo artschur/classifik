@@ -21,6 +21,8 @@ import { getPausedCompanions } from '@/db/queries/paused';
 import { PausedCompanions } from '@/components/paused-companions';
 import { getPublishedImported } from '@/db/queries/candidates';
 import { PublishedImportedList } from '@/components/published-imported';
+import { getPerfisParaTraducao } from '@/app/actions/traducoes';
+import { TraducoesPerfis } from '@/components/traducoes-perfis';
 
 /** Candidatas a anunciante à espera de contacto, ainda sem perfil na OneSugar. */
 async function FetchCandidates() {
@@ -95,6 +97,11 @@ async function FetchUnverifiedCompanions() {
   return <VerifyCompanionsList initialCompanions={response} />;
 }
 
+/** Versão inglesa (/en) das descrições dos perfis publicados. */
+async function FetchTraducoes() {
+  return <TraducoesPerfis perfis={await getPerfisParaTraducao()} />;
+}
+
 /** Recusados: a recusa não apaga, por isso ficam aqui para reverter ou apagar de vez. */
 async function FetchRejected() {
   return <RejectedCompanions companions={await getRejectedCompanions()} />;
@@ -156,11 +163,12 @@ export default async function VerifyCompanionPage() {
       </div>
 
       <Tabs defaultValue="registos" className="w-full max-w-2xl">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="registos">Registos</TabsTrigger>
           <TabsTrigger value="importadas">Importadas</TabsTrigger>
           <TabsTrigger value="pausa">Em pausa</TabsTrigger>
           <TabsTrigger value="recusadas">Recusadas</TabsTrigger>
+          <TabsTrigger value="ingles">Inglês</TabsTrigger>
         </TabsList>
         <TabsContent value="registos" className="mt-6">
           <Suspense fallback={<CompanionsListSkeleton />}>
@@ -180,6 +188,11 @@ export default async function VerifyCompanionPage() {
         <TabsContent value="recusadas" className="mt-6">
           <Suspense fallback={<CompanionsListSkeleton />}>
             <FetchRejected />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="ingles" className="mt-6">
+          <Suspense fallback={<CompanionsListSkeleton />}>
+            <FetchTraducoes />
           </Suspense>
         </TabsContent>
       </Tabs>

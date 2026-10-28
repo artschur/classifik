@@ -379,12 +379,21 @@ export default async function HomePage({
                     <MapPin className="h-3.5 w-3.5" />
                     {nomeDistrito(doDia.city, locale)}
                   </span>
-                  {/* A descrição curta é escrita pela anunciante, em português. */}
-                  {doDia.shortDescription && (
-                    <p lang={en ? 'pt-PT' : undefined} className="mt-1 line-clamp-2 text-sm italic text-white/70">
-                      “{doDia.shortDescription}”
-                    </p>
-                  )}
+                  {/* A descrição curta é escrita pela anunciante, em português.
+                      Em /en usa-se a tradução, quando existe. */}
+                  {(() => {
+                    const traduzida = en ? doDia.shortDescriptionEn : null;
+                    const frase = traduzida || doDia.shortDescription;
+                    if (!frase) return null;
+                    return (
+                      <p
+                        lang={en && !traduzida ? 'pt-PT' : undefined}
+                        className="mt-1 line-clamp-2 text-sm italic text-white/70"
+                      >
+                        “{frase}”
+                      </p>
+                    );
+                  })()}
                   <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-rose-300 group-hover:text-rose-200">
                     {t.verPerfil} <ChevronRight className="h-4 w-4" />
                   </span>

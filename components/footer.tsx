@@ -26,9 +26,10 @@ const FOOTER_TEXT = {
   en: {
     links: [
       { label: "Help for advertisers", href: "/ajuda-anunciantes" },
-      { label: "Terms and Conditions (in Portuguese)", href: "/termos-e-condicoes" },
-      { label: "Privacy Policy (in Portuguese)", href: "/politica-de-privacidade" },
-      { label: "Cookie Policy (in Portuguese)", href: "/politica-de-cookies" },
+      // As três páginas legais já têm versão inglesa em /en.
+      { label: "Terms and Conditions", href: "/termos-e-condicoes" },
+      { label: "Privacy Policy", href: "/politica-de-privacidade" },
+      { label: "Cookie Policy", href: "/politica-de-cookies" },
       { label: "About", href: "/sobre" },
     ],
     about: "About",

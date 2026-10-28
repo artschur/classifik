@@ -1,5 +1,6 @@
-import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { LocaleLink } from "@/components/locale-link"
+import type { Locale } from "@/lib/i18n"
 
 export interface LegalSection {
   title: string
@@ -16,27 +17,50 @@ export interface LegalPageProps {
   intro?: string
   sections: LegalSection[]
   footer?: string
+  locale?: Locale
+  /** Aviso no topo, por exemplo o de que a versão portuguesa prevalece. */
+  note?: string
 }
 
-export function LegalPage({ title, lastUpdated, intro, sections, footer }: LegalPageProps) {
+const TEXT = {
+  pt: { back: "Voltar ao início", updated: "Última atualização" },
+  en: { back: "Back to home", updated: "Last updated" },
+} as const
+
+export function LegalPage({
+  title,
+  lastUpdated,
+  intro,
+  sections,
+  footer,
+  locale = "pt",
+  note,
+}: LegalPageProps) {
+  const t = TEXT[locale]
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-        <Link
+        <LocaleLink
+          locale={locale}
           href="/"
           className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar ao início
-        </Link>
+          {t.back}
+        </LocaleLink>
 
         <header className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl text-balance">
             {title}
           </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Última atualização: {lastUpdated}
+            {t.updated}: {lastUpdated}
           </p>
+          {note && (
+            <p className="mt-4 rounded-md border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+              {note}
+            </p>
+          )}
         </header>
 
         {intro && (

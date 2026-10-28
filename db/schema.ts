@@ -109,6 +109,17 @@ export const companionsTable = pgTable(
     phone: varchar('phone', { length: 20 }).notNull(),
     shortDescription: varchar('short_description', { length: 150 }),
     description: text('description').notNull(),
+    // Versão inglesa das duas descrições, para /en. Gerada pela tradução
+    // automática (lib/traducao-perfis.ts) e revista pelo admin na aprovação.
+    // Sem ela, a versão inglesa mostra o texto em português com um aviso.
+    shortDescriptionEn: text('short_description_en'),
+    descriptionEn: text('description_en'),
+    // Impressão digital do texto em português que foi traduzido. Se o texto
+    // publicado mudar, deixa de bater certo e a tradução é refeita.
+    translation_source: text('translation_source'),
+    // 'auto' (tradução automática) ou 'revisto' (corrigida pelo admin).
+    translation_status: varchar('translation_status', { length: 20 }),
+    translated_at: timestamp('translated_at'),
     price: integer('price'), // opcional: perfis criados pelo admin podem não ter (drizzle/0037)
     age: integer('age').notNull(),
     gender: varchar('gender', { length: 50 }).notNull(),

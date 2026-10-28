@@ -58,6 +58,7 @@ import {
 } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { getEmail } from "./userActions";
+import { garantirTraducao, gravarTraducaoRevista } from "@/lib/traducao-perfis";
 import {
   approvePendingImages,
   discardPendingImages,
@@ -270,6 +271,7 @@ function buildCompanionsQuery(
         id: companionsTable.id,
         name: companionsTable.name,
         shortDescription: companionsTable.shortDescription,
+        shortDescriptionEn: companionsTable.shortDescriptionEn,
         price: companionsTable.price,
         age: companionsTable.age,
         verified: companionsTable.verified,
@@ -332,6 +334,7 @@ export async function getDoDiaCompanion() {
       age: companionsTable.age,
       price: companionsTable.price,
       shortDescription: companionsTable.shortDescription,
+      shortDescriptionEn: companionsTable.shortDescriptionEn,
       verified: companionsTable.verified,
       identityVerified: companionsTable.identity_verified,
       city: citiesTable.city,
@@ -373,6 +376,7 @@ export async function getDoDiaCompanion() {
     age: row.age,
     price: row.price,
     shortDescription: row.shortDescription,
+    shortDescriptionEn: row.shortDescriptionEn,
     verified: row.verified,
     identityVerified: row.identityVerified,
     city: row.city,
@@ -1753,7 +1757,18 @@ async function darSelo(companionId: number, adminId: string) {
  */
 export async function approveCompanion(
   id: number,
-  { comSelo = false }: { comSelo?: boolean } = {},
+  {
+    comSelo = false,
+    ingles,
+  }: {
+    comSelo?: boolean;
+    /**
+     * Versão inglesa vista no separador "Inglês" da fila. `fonte` é a
+     * impressão digital do português que foi traduzido; sem isto (ou se o
+     * português entretanto mudou), a tradução é feita automaticamente.
+     */
+    ingles?: { shortEn: string; descEn: string; fonte: string; editada: boolean };
+  } = {},
 ) {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
@@ -1798,6 +1813,16 @@ export async function approveCompanion(
     await db
       .delete(companionPendingEditsTable)
       .where(eq(companionPendingEditsTable.companion_id, id));
+  }
+
+  // Versão inglesa do texto que vai ficar publicado. Logo a seguir à edição,
+  // e não no fim: se um passo abaixo falhar, o português novo já está no ar
+  // (quem tinha sido aprovada continua visível) e o inglês antigo não pode
+  // ficar ao lado dele. Nenhuma das duas lança erros: uma falha na tradução
+  // deixa o perfil com o português em /en e não impede a aprovação.
+  const traducao = ingles ? await gravarTraducaoRevista(id, ingles) : null;
+  if (!ingles || traducao === 'desatualizada') {
+    await garantirTraducao(id);
   }
 
   await approvePendingImages(id);

@@ -71,6 +71,7 @@ const TEXT = {
     voice: 'Ouça minha voz',
     about: (n: string) => `Sobre ${n}`,
     originalNote: '',
+    translatedNote: '',
     age: 'Idade',
     years: 'anos',
     height: 'Altura',
@@ -97,6 +98,7 @@ const TEXT = {
     voice: 'Listen to my voice',
     about: (n: string) => `About ${n}`,
     originalNote: 'Description written by the advertiser, in Portuguese.',
+    translatedNote: "Translated from the advertiser's original description in Portuguese.",
     age: 'Age',
     years: 'years old',
     height: 'Height',
@@ -292,10 +294,16 @@ export async function CompanionProfile({
   const distrito = district ? distritoPorSlug(district.slug, district.city) : null;
   const primeiraFoto =
     initialMedia.find((m) => m.type === 'image')?.publicUrl ?? null;
+  // Em /en, as descrições traduzidas quando existem (lib/traducao-perfis.ts).
+  // Sem tradução, mostra-se o original em português, marcado como tal.
+  const descricaoEn = en ? companion.descriptionEn?.trim() || null : null;
+  const curtaEn = en ? companion.shortDescriptionEn?.trim() || null : null;
+  const descricao = descricaoEn ?? companion.description;
+  const descricaoCurta = curtaEn ?? companion.shortDescription;
   const jsonLd = profileJsonLd({
     id,
     nome,
-    descricao: companion.shortDescription?.trim() || null,
+    descricao: descricaoCurta?.trim() || null,
     imagem: primeiraFoto,
     idiomas: Array.isArray(companion.languages) ? companion.languages : [],
     distrito,
@@ -422,13 +430,15 @@ export async function CompanionProfile({
                 {t.about(nome)}
               </h2>
               {en && (
-                <p className="text-xs text-muted-foreground mb-2 italic">{t.originalNote}</p>
+                <p className="text-xs text-muted-foreground mb-2 italic">
+                  {descricaoEn ? t.translatedNote : t.originalNote}
+                </p>
               )}
               <p
-                lang={en ? 'pt-PT' : undefined}
+                lang={en && !descricaoEn ? 'pt-PT' : undefined}
                 className="text-muted-foreground mb-6 whitespace-normal truncate break-words overflow-wrap-anywhere"
               >
-                {companion.description}
+                {descricao}
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6">
@@ -537,10 +547,10 @@ export async function CompanionProfile({
           <Card className="sticky top-20">
             <CardContent className="p-6 gap-2 flex flex-col">
               <div
-                lang={en ? 'pt-PT' : undefined}
+                lang={en && !curtaEn ? 'pt-PT' : undefined}
                 className="break-words overflow-wrap-anywhere whitespace-normal"
               >
-                {companion.shortDescription}
+                {descricaoCurta}
               </div>
               <div className="flex justify-between items-center mb-4">
                 <div>

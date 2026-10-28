@@ -43,6 +43,9 @@ const EN_ROUTES: RegExp[] = [
   /^\/sobre$/,
   /^\/ajuda-anunciantes$/,
   /^\/quanto-ganha-acompanhante$/,
+  /^\/termos-e-condicoes$/,
+  /^\/politica-de-privacidade$/,
+  /^\/politica-de-cookies$/,
   // Convite para reclamar um perfil: trocar de idioma tem de manter o mesmo
   // convite, senão a candidata perdia o link e ia parar à home.
   /^\/convite\/[A-Za-z0-9_-]+$/,

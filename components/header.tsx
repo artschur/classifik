@@ -263,8 +263,12 @@ export default async function Header() {
               </Link>
             )}
           </nav>
-          <div className="flex items-center space-x-4">
-            <LanguageSwitcher locale={locale} initialPath={currentPath} className="hidden sm:flex" />
+          {/* No telemóvel o espaço entre os itens encolhe, para o PT | EN
+              caber ao lado do botão do menu sem empurrar o logótipo. */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Sempre visível, também no telemóvel: antes só aparecia dentro
+                do menu, e quem chegava de fora não sabia que havia inglês. */}
+            <LanguageSwitcher locale={locale} initialPath={currentPath} />
             <SignedIn>
               <UserButton />
               <ModeToggle />
@@ -331,7 +335,6 @@ export default async function Header() {
                     </Link>
                   )}
                 </nav>
-                <LanguageSwitcher locale={locale} initialPath={currentPath} className="mt-4" />
                 <div className="mt-4">
                   <SignedIn>
                     <div className="flex items-center space-x-2 text-black">

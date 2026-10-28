@@ -1,15 +1,32 @@
 import type { Metadata } from "next"
 import { LegalPage } from "@/components/legal-page"
+import { getLocale } from "@/lib/locale.server"
+import { OG_LOCALE, absoluteUrl, pageAlternates } from "@/lib/i18n"
 
-export const metadata: Metadata = {
+const metadataPt: Metadata = {
   title: "Política de Cookies",
   description:
     "Sabe como a OneSugar utiliza cookies para melhorar a tua navegação. Aprende a gerir, bloquear ou eliminar cookies no nosso portal de anúncios.",
-  // Canonical autorreferente. Sem isto a página herda o canonical do
-  // layout raiz e declara-se duplicada da homepage.
-  alternates: {
-    canonical: 'https://www.onesugar.pt/politica-de-cookies',
+  // Canonical autorreferente, com a versão inglesa como alternativa.
+  alternates: pageAlternates("/politica-de-cookies", "pt"),
+}
+
+const metadataEn: Metadata = {
+  title: "Cookie Policy",
+  description:
+    "Find out how OneSugar uses cookies to improve your browsing, and how to manage, block or delete them.",
+  alternates: pageAlternates("/politica-de-cookies", "en"),
+  openGraph: {
+    title: "Cookie Policy | OneSugar",
+    url: absoluteUrl("/politica-de-cookies", "en"),
+    siteName: "OneSugar",
+    locale: OG_LOCALE.en,
+    type: "website",
   },
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  return (await getLocale()) === "en" ? metadataEn : metadataPt
 }
 
 const cookiesData = {
@@ -85,6 +102,86 @@ const cookiesData = {
   ],
 }
 
-export default function PoliticaCookiesPage() {
-  return <LegalPage {...cookiesData} />
+const cookiesDataEn = {
+  title: "OneSugar Cookie Policy",
+  lastUpdated: "26 January 2026",
+  note:
+    "This is an English translation of the Portuguese Cookie Policy, provided for convenience. In case of any discrepancy, the Portuguese version prevails.",
+  intro:
+    "To make your browsing on the OneSugar website (onesugar.pt) as efficient and personalised as possible, we use cookies and similar technologies. This policy explains what these tools are, how we use them and how you can manage them.",
+  sections: [
+    {
+      title: "1. What Are Cookies?",
+      content:
+        "Cookies are small text files downloaded to your computer, smartphone or tablet when you visit a website. They allow the site to \"remember\" your actions and preferences (such as login, language and other display settings) for a period of time, so you do not have to set them again every time.",
+    },
+    {
+      title: "2. How Do We Use Cookies?",
+      content: "OneSugar uses cookies for the following purposes:",
+      subsections: [
+        {
+          title: "Strictly Necessary Cookies",
+          content:
+            "These are essential for the website to work. They allow navigation and access to secure areas (such as the advertiser dashboard). Without them, the classifieds service cannot be provided properly.",
+        },
+        {
+          title: "Performance and Analytics Cookies",
+          content:
+            "These help us understand how users interact with the site by collecting anonymous information about the pages visited and the time spent on them. We use these metrics to keep improving OneSugar.",
+        },
+        {
+          title: "Functionality Cookies",
+          content:
+            "These allow the site to remember previous choices (such as your username or region) in order to offer more advanced and personalised features.",
+        },
+        {
+          title: "Advertising and Targeting Cookies",
+          content:
+            "These are used to show ads that are more relevant to you and your interests, and to limit how often you see the same advert. They are only activated when allowed in the cookie preferences, and you can change or withdraw your consent at any time.",
+        },
+      ],
+    },
+    {
+      title: "3. Third-Party Cookies",
+      content:
+        "In certain sections, OneSugar uses cookies provided by trusted partners (such as Google Analytics or automation tools). These third parties may set cookies to measure the effectiveness of external services or to personalise ads outside our platform.",
+    },
+    {
+      title: "4. Managing and Disabling Cookies",
+      content: "You can control and/or delete cookies whenever you wish. Through your browser settings, you can:",
+      subsections: [
+        {
+          title: "See installed cookies",
+          content: "See which cookies are installed and delete them one by one or all at once.",
+        },
+        {
+          title: "Block third-party cookies",
+          content: "Block third-party cookies from being set.",
+        },
+        {
+          title: "Prevent cookies",
+          content: "Prevent any cookie from being set (which may affect how OneSugar works).",
+        },
+      ],
+    },
+    {
+      title: "5. Browser Settings",
+      content:
+        "To adjust your preferences, see the official guides for the main browsers: Google Chrome, Mozilla Firefox, Apple Safari, Microsoft Edge.",
+    },
+    {
+      title: "6. More Information",
+      content:
+        "OneSugar reserves the right to update this policy whenever necessary. If you have any questions about how we handle your privacy, you can contact us at: onesugar.pt@gmail.com.",
+    },
+  ],
+}
+
+export default async function PoliticaCookiesPage() {
+  const locale = await getLocale()
+  return locale === "en" ? (
+    <LegalPage {...cookiesDataEn} locale="en" />
+  ) : (
+    <LegalPage {...cookiesData} />
+  )
 }
