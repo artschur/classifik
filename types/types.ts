@@ -46,6 +46,8 @@ export type CompanionFiltered = Pick<
   verificationVideoUrl?: string | null;
   /** Selo "Verificada": documento visto pelo admin. Só nas listagens. */
   identityVerified?: boolean;
+  /** Descrição curta em inglês, para os cartões em /en. Só nas listagens. */
+  shortDescriptionEn?: string | null;
   /** Áudio que está no perfil público. Só na fila de verificação. */
   currentAudioUrl?: string | null;
   /** Áudio novo à espera de aprovação. Só na fila de verificação. */
@@ -145,6 +147,9 @@ export type CompanionById = Omit<
   | "identity_verified_at"
   | "identity_verified_by"
   | "identity_verified_method"
+  // Controlo interno da tradução: a página só precisa dos textos e do estado.
+  | "translation_source"
+  | "translated_at"
 > & {
   // Add characteristics fields with exact names from select query
   weight: Characteristic["weight"];

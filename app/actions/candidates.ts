@@ -11,6 +11,7 @@ import { importedAuthId, importedEmail, isImportedAuthId } from '@/lib/imported-
 import crypto from 'node:crypto';
 import { resolveNeighborhoodId } from '@/db/queries/neighborhoods';
 import { registarConsentimentoAoPublicar } from '@/db/queries/consent';
+import { garantirTraducao } from '@/lib/traducao-perfis';
 import {
   approvalSchema,
   consentSchema,
@@ -230,6 +231,8 @@ export async function approveCandidate(id: string, input: unknown): Promise<Resu
   // a meio. Se a base falhar depois, as cópias são apagadas.
   const storage = getSupabaseAdmin().storage;
   const copiadas: { path: string; url: string }[] = [];
+  // Fora da transacção, para a tradução correr só depois de o perfil existir.
+  let publicadoId: number | null = null;
   try {
     for (const origem of dados.photos) {
       const { data: ficheiro, error: erroLer } = await storage.from('candidatas').download(origem);
@@ -273,6 +276,7 @@ export async function approveCandidate(id: string, input: unknown): Promise<Resu
           paused: dados.publishPaused,
         })
         .returning({ id: companionsTable.id });
+      publicadoId = companion.id;
 
       await tx.insert(characteristicsTable).values({
         companion_id: companion.id,
@@ -318,6 +322,10 @@ export async function approveCandidate(id: string, input: unknown): Promise<Resu
   // As cópias privadas já não fazem falta: as escolhidas estão no "images".
   await removeStorageFolder('candidatas', `${id}/`);
   await db.execute(sql`update staging.candidatos set fotos_guardadas = null, rascunho = null where id = ${id}`);
+
+  // Versão inglesa da descrição, para /en. Uma falha fica sem consequências:
+  // o perfil mostra o português e o separador "Inglês" do /verify volta a tentar.
+  if (publicadoId) await garantirTraducao(publicadoId);
 
   revalidateTag('companion', 'max');
   revalidateTag('companions', 'max');
@@ -595,6 +603,9 @@ export async function updateImportedProfile(companionId: number, input: unknown)
   // Só agora sai o que mudou de sítio: as tiradas do público, as repostas do arquivo.
   if (tirar.length) await storage.from('images').remove(tirar.map((f) => f.path));
   if (copiadasPerfil.length) await storage.from('candidatas').remove(copiadasPerfil.map((c) => c.origem));
+
+  // Se a descrição mudou, a versão inglesa acompanha.
+  await garantirTraducao(companionId);
 
   revalidateTag('companion', 'max');
   revalidateTag('companions', 'max');

@@ -77,16 +77,16 @@ export async function generateMetadata({
       companion.shortDescription?.trim() ||
       `Conheça ${nome} na OneSugar.`;
 
-    // Versão inglesa: as descrições são escritas pelas anunciantes em
-    // português, por isso o título e a descrição para o Google são gerados
-    // em inglês a partir do nome e do distrito.
+    // Versão inglesa: o título é gerado em inglês a partir do nome e do
+    // distrito. A descrição é a tradução da descrição curta, quando existe
+    // (lib/traducao-perfis.ts); senão um texto gerado da mesma forma.
     if (locale === 'en') {
       const onde = district ? ` ${inDistrict(district.slug)}` : '';
       title =
         companionId === 254
           ? `Sophia | Erotic Massage Specialist${onde}`
           : `${nome}, escort${onde}`;
-      description = `${nome}, escort${onde}, Portugal. See her photos and details and contact her directly on OneSugar, with full discretion.`;
+      description = companion.shortDescriptionEn?.trim() || `${nome}, escort${onde}, Portugal. See her photos and details and contact her directly on OneSugar, with full discretion.`;
     }
 
     // Em pausa ou por aprovar: só abre para o admin ou pelo link de

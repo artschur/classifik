@@ -42,6 +42,7 @@ import {
 import Image from 'next/image';
 import { CompanionFiltered, Media } from '@/types/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RevisaoIngles, type InglesEmRevisao } from '@/components/revisao-ingles';
 import {
   getDocumentsByCompanionId,
   rejectDocuments,
@@ -207,6 +208,8 @@ export default function SingleCompanionVerify({
   );
   const [motivoDocs, setMotivoDocs] = useState(companion.motivoRecusaDocumentos ?? null);
   const [temSelo, setTemSelo] = useState(companion.identityVerified === true);
+  // Versão inglesa revista no separador "Inglês". A null, a aprovação traduz sozinha.
+  const [ingles, setIngles] = useState<InglesEmRevisao | null>(null);
   // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o storagePath
   // e o enquadramento actual, ambos necessários para o admin poder centrar.
   // O filtro olha para a extensão do ficheiro e não só para o campo `type`,
@@ -359,7 +362,17 @@ export default function SingleCompanionVerify({
   /** Aprova o registo (põe no ar) ou a edição de um perfil que já está no ar. */
   const handleApprove = (comSelo: boolean) =>
     executar(async () => {
-      await approveCompanion(companion.id, { comSelo });
+      await approveCompanion(companion.id, {
+        comSelo,
+        ingles: ingles && ingles.descEn.trim()
+          ? {
+              shortEn: ingles.shortEn,
+              descEn: ingles.descEn,
+              fonte: ingles.fonte,
+              editada: ingles.editada,
+            }
+          : undefined,
+      });
       toast({
         title: isEdit ? 'Alterações aprovadas' : 'Companheira aprovada',
         description: isEdit
@@ -596,12 +609,20 @@ export default function SingleCompanionVerify({
         </div>
       </CardHeader>
       <Tabs defaultValue="profile" className="">
-        <TabsList className="grid grid-cols-2 ">
+        <TabsList className="grid grid-cols-3 ">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="documents">
             Documentos ({documents.length})
           </TabsTrigger>
+          <TabsTrigger value="ingles">Inglês</TabsTrigger>
         </TabsList>
+
+        {/* Versão inglesa (/en), revista antes de aprovar */}
+        <TabsContent value="ingles">
+          <CardContent>
+            <RevisaoIngles companionId={companion.id} valor={ingles} onChange={setIngles} />
+          </CardContent>
+        </TabsContent>
 
         {/* Profile Tab */}
         <TabsContent value="profile">

@@ -38,7 +38,7 @@ const faq = [
   { q: 'How many photos can I have on my profile?', a: 'The free plan allows up to 10 photos and videos. Paid plans (Classic, Plus, VIP) raise the limit to 30.' },
   { q: 'My ID document is not being accepted. What should I do?', a: 'Accepted documents: passport, Portuguese Citizen Card or Brazilian RG, driving licence (or Brazilian CNH). The file must be JPG, PNG or PDF, no larger than 5 MB, readable, with no glare or cut off edges.' },
   { q: 'Is it free to sign up?', a: 'Yes, creating a profile on OneSugar is completely free. Paid plans are available if you want more visibility and more clients.', cta: true },
-  { q: 'Does OneSugar share my data with third parties?', a: 'No. The video and document you send are used only to verify your identity and are never shared with third parties. See our Privacy Policy (in Portuguese) for details.' },
+  { q: 'Does OneSugar share my data with third parties?', a: 'No. The video and document you send are used only to verify your identity and are never shared with third parties. See our Privacy Policy for details.' },
   { q: 'Can I have more than one profile with the same email?', a: 'No. Each account is tied to one email address: one email, one account. Creating multiple accounts can lead to permanent suspension.' },
 ];
 
