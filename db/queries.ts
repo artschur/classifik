@@ -50,6 +50,19 @@ export async function getCompanionDetails(id: number) {
   return result[0];
 }
 
+/**
+ * O perfil existe na base? Consulta leve, só para decidir entre a página e
+ * um 404 (o /companions/<id> de um perfil apagado respondia 200).
+ */
+export async function companionExists(id: number): Promise<boolean> {
+  const [row] = await db
+    .select({ id: companionsTable.id })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, id))
+    .limit(1);
+  return Boolean(row);
+}
+
 export async function getCompanionCharacteristics(id: number) {
   const result = await db
     .select({

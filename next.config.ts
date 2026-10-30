@@ -83,13 +83,16 @@ const nextConfig: NextConfig = {
           ]
         : []),
       {
-        // Imagens, fontes e ficheiros estáticos em /public.
-        // Cache de 1h conforme solicitado: perfis têm fotos actualizáveis.
+        // Imagens, fontes e ficheiros estáticos em /public (logótipo, ícones,
+        // imagens fixas). As fotos dos perfis não passam por aqui: ficam no
+        // Supabase e são servidas pelo /_next/image, por isso uma foto nova
+        // aparece logo. 7 dias em vez de 1 hora: o PageSpeed contava cerca de
+        // 785 KB descarregados de novo em cada visita repetida.
         source: '/(.*\\.(?:ico|png|jpg|jpeg|svg|webp|avif|woff|woff2|ttf|otf)$)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, stale-while-revalidate=86400',
+            value: 'public, max-age=604800, stale-while-revalidate=86400',
           },
         ],
       },
