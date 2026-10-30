@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { SignedIn, SignedOut, SignUpButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
+import { RegistarButton } from '@/components/registar-button';
 import {
   Shield,
   MapPin,
@@ -140,14 +141,14 @@ function JoinCta() {
           {/* Com sessão iniciada, a janela de registo do Clerk não abre: o
               botão segue para as acompanhantes. */}
           <SignedOut>
-            <SignUpButton mode="modal">
+            <RegistarButton>
               <button
                 type="button"
                 className="border border-rose-500/60 text-rose-600 hover:bg-rose-600/10 dark:text-rose-300 font-semibold px-7 py-3 rounded-full transition-colors text-sm"
               >
                 Sign up as a client
               </button>
-            </SignUpButton>
+            </RegistarButton>
           </SignedOut>
           <SignedIn>
             <LocaleLink

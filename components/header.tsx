@@ -13,7 +13,6 @@ import {
   SignedIn,
   SignedOut,
   SignInButton,
-  SignUpButton,
   UserButton,
 } from '@clerk/nextjs';
 import {
@@ -27,6 +26,7 @@ import { auth } from '@clerk/nextjs/server';
 import { ModeToggle } from './modeToggle';
 import { isExternal } from 'util/types';
 import { LocaleLink } from '@/components/locale-link';
+import { RegistarButton } from '@/components/registar-button';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { getLocale, getPathWithoutLocale } from '@/lib/locale.server';
 import type { Locale } from '@/lib/i18n';
@@ -35,7 +35,7 @@ const NAV_TEXT = {
   pt: {
     plans: 'Planos',
     editProfile: 'Editar perfil',
-    register: 'Registo',
+    register: 'Quero ser sugar',
     companions: 'Acompanhantes',
     stories: 'Contos',
     help: 'Ajuda no registo',
@@ -49,7 +49,7 @@ const NAV_TEXT = {
   en: {
     plans: 'Plans',
     editProfile: 'Edit profile',
-    register: 'Advertise',
+    register: 'Become a companion',
     companions: 'Escorts',
     stories: 'Stories',
     help: 'Advertiser help',
@@ -138,7 +138,18 @@ function buildPlansNavItem(locale: Locale): NavItem {
   };
 }
 
-function buildRegisterNavItem(isRegisteredCompanion: boolean, locale: Locale): NavItem {
+/**
+ * Só aparece a quem já escolheu: anunciantes veem "Editar perfil" e clientes
+ * veem "Quero ser sugar". Quem ainda não escolheu (sem sessão, ou sem ter
+ * respondido ao popup Sugar/Cliente) não tem item de registo: a escolha faz-se
+ * no botão "Registrar".
+ */
+function buildRegisterNavItem(
+  isRegisteredCompanion: boolean,
+  isClient: boolean,
+  locale: Locale,
+): NavItem | null {
+  if (!isRegisteredCompanion && !isClient) return null;
   const t = NAV_TEXT[locale];
   return isRegisteredCompanion
     ? {
@@ -150,7 +161,7 @@ function buildRegisterNavItem(isRegisteredCompanion: boolean, locale: Locale): N
     }
     : {
       label: t.register,
-      href: '/quanto-ganha-acompanhante',
+      href: '/companions/register',
       icon: <ChartNoAxesColumnIncreasing />,
       prefetch: false,
       className: registerTabClassName,
@@ -202,7 +213,7 @@ export default async function Header() {
   const isRegisteredCompanion = sessionClaims?.metadata?.isCompanion === true;
   const isClient = sessionClaims?.metadata?.isCompanion === false;
   const navItems: NavItem[] = [
-    buildRegisterNavItem(isRegisteredCompanion, locale),
+    ...[buildRegisterNavItem(isRegisteredCompanion, isClient, locale)].filter((item): item is NavItem => item !== null),
     ...(userId && !isClient ? [buildPlansNavItem(locale)] : []),
     ...buildRestNavItems(locale),
   ];
@@ -275,14 +286,14 @@ export default async function Header() {
                   {t.login}
                 </Button>
               </SignInButton>
-              <SignUpButton signInForceRedirectUrl={"/onboarding"}>
+              <RegistarButton>
                 <Button
                   className="hidden sm:inline-flex rounded-full"
                   size="sm"
                 >
                   {t.signUp}
                 </Button>
-              </SignUpButton>
+              </RegistarButton>
               <ModeToggle />
             </SignedOut>
             {/* Mobile Sheet */}
@@ -349,14 +360,14 @@ export default async function Header() {
                           {t.login}
                         </Button>
                       </SignInButton>
-                      <SignUpButton>
+                      <RegistarButton>
                         <Button
                           className="sm:inline-flex rounded-full"
                           size="sm"
                         >
                           {t.signUp}
                         </Button>
-                      </SignUpButton>
+                      </RegistarButton>
                     </div>
                   </SignedOut>
                 </div>

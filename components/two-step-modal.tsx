@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useClerk } from '@clerk/nextjs';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,9 @@ import {
 import { X, Heart, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useEngagement } from '@/hooks/use-engagement';
+import { EVENTO_REGISTAR } from '@/components/registar-button';
 import { useFocusedFlow } from '@/hooks/use-focused-flow';
 import { useLocale } from '@/components/locale-provider';
-import { LocaleLink } from '@/components/locale-link';
 
 const TEXT = {
   pt: {
@@ -28,7 +27,7 @@ const TEXT = {
     welcome: 'Bem-vindo ao OneSugar!',
     choose: 'Escolha como deseja continuar:',
     sugarTitle: 'Sou Sugar',
-    sugarBody: 'Simule os seus ganhos e crie o seu anúncio gratuitamente',
+    sugarBody: 'Crie o seu anúncio gratuitamente',
     sugarPoints: ['Perfil verificado e destaque', '100% do valor do encontro é seu', 'Plataforma segura e discreta'],
     clientTitle: 'Sou Cliente',
     clientBody: 'Encontre sugars verificadas em Portugal',
@@ -45,7 +44,7 @@ const TEXT = {
     welcome: 'Welcome to OneSugar!',
     choose: 'How would you like to continue?',
     sugarTitle: 'I am a companion',
-    sugarBody: 'Estimate your earnings and create your listing for free',
+    sugarBody: 'Create your listing for free',
     sugarPoints: ['Verified and featured profile', 'You keep 100% of what you earn', 'Safe and discreet platform'],
     clientTitle: 'I am a client',
     clientBody: 'Find verified escorts in Portugal',
@@ -54,24 +53,31 @@ const TEXT = {
   },
 } as const;
 
-/** Marca que a escolha Sugar/Cliente já foi mostrada a este navegador. */
-const LEAD_CHOICE_KEY = 'lead-choice-seen';
-
 export function TwoStepModal() {
   const locale = useLocale();
   const t = TEXT[locale];
   const { isSignedIn, isLoaded } = useAuth();
+  const { openSignUp } = useClerk();
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<1 | 2>(1);
-  // No convite não há conteúdo adulto e a candidata vem só ligar a conta; na
-  // pré-visualização do perfil fica a verificação de idade, mas não a
-  // pergunta Sugar/Cliente, que a tirava do caminho.
-  const { convite, preview } = useFocusedFlow();
+  // No convite não há conteúdo adulto e a candidata vem só ligar a conta.
+  const { convite } = useFocusedFlow();
 
-  // A escolha Sugar/Cliente espera que a pessoa mostre interesse. A
-  // verificação de idade não espera por nada: é obrigação legal e tem de vir
-  // antes do conteúdo.
-  const engaged = useEngagement({ afterMs: 8000, afterScrollPx: 300 });
+  // A escolha Sugar/Cliente só abre quando a pessoa carrega em registar
+  // (RegistarButton). Se ainda não confirmou a idade, fica à espera dela.
+  const [pedidoRegisto, setPedidoRegisto] = React.useState(false);
+  React.useEffect(() => {
+    const aoPedir = () => {
+      if (localStorage.getItem('age-verified') === 'true') {
+        setStep(2);
+        setOpen(true);
+      } else {
+        setPedidoRegisto(true);
+      }
+    };
+    window.addEventListener(EVENTO_REGISTAR, aoPedir);
+    return () => window.removeEventListener(EVENTO_REGISTAR, aoPedir);
+  }, []);
 
   React.useEffect(() => {
     if (!isLoaded || isSignedIn || convite) {
@@ -92,22 +98,7 @@ export function TwoStepModal() {
       return;
     }
 
-    // A escolha Sugar/Cliente é mostrada uma vez só, e só depois de a pessoa
-    // ter começado a explorar. Antes reabria a cada carregamento de página e
-    // saltava à frente antes de se ver seja o que for.
-    if (engaged && !preview && localStorage.getItem(LEAD_CHOICE_KEY) !== "true") {
-      setStep(2);
-      setOpen(true);
-    }
-  }, [isSignedIn, isLoaded, engaged, convite, preview]); // Re-run when auth state changes
-
-  // Marca no momento em que a escolha chega ao ecrã, e não apenas quando é
-  // clicada, para que fechar no X ou recarregar a página também não a repita.
-  React.useEffect(() => {
-    if (open && step === 2) {
-      localStorage.setItem(LEAD_CHOICE_KEY, "true");
-    }
-  }, [open, step]);
+  }, [isSignedIn, isLoaded, convite]);
 
   if (isSignedIn) {
     return null;
@@ -115,14 +106,21 @@ export function TwoStepModal() {
   const handleAgeConfirm = () => {
     localStorage.setItem('age-verified', 'true');
 
-    // Quem já tinha visto a escolha antes não a leva outra vez, e na
-    // pré-visualização nunca a leva: confirmada a idade, o modal fecha.
-    if (preview || localStorage.getItem(LEAD_CHOICE_KEY) === 'true') {
-      setOpen(false);
+    // Se a idade foi pedida por quem queria registar-se, segue para a escolha.
+    if (pedidoRegisto) {
+      setPedidoRegisto(false);
+      setStep(2);
       return;
     }
+    setOpen(false);
+  };
 
-    setStep(2);
+  // Depois da escolha, abre o registo já a apontar à página de destino: não
+  // passa pelo /onboarding.
+  const escolher = (tipo: 'sugar' | 'cliente') => {
+    setOpen(false);
+    const destino = `/api/onboard?tipo=${tipo}`;
+    openSignUp({ forceRedirectUrl: destino, signInForceRedirectUrl: destino });
   };
 
   const handleAgeDecline = () => {
@@ -218,10 +216,9 @@ export function TwoStepModal() {
               {/* Content Section */}
               <div className="p-8 pt-0 space-y-4">
                 {/* Sugar Option — passa pela calculadora antes de criar conta */}
-                <LocaleLink
-                  locale={locale}
-                  href="/quanto-ganha-acompanhante"
-                  onClick={() => setOpen(false)}
+                <button
+                  type="button"
+                  onClick={() => escolher('sugar')}
                   className={cn(
                     "block w-full group relative overflow-hidden rounded-xl border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 dark:border-pink-800 p-6 text-left transition-all duration-300",
                     "hover:border-pink-400 hover:shadow-lg hover:scale-[1.02] dark:hover:border-pink-600"
@@ -243,13 +240,12 @@ export function TwoStepModal() {
                       </ul>
                     </div>
                   </div>
-                </LocaleLink>
+                </button>
 
                 {/* Client Option */}
-                <LocaleLink
-                  locale={locale}
-                  href="/location"
-                  onClick={() => setOpen(false)}
+                <button
+                  type="button"
+                  onClick={() => escolher('cliente')}
                   className={cn(
                     // O `block` é necessário porque isto é um <a>, que por
                     // omissão é inline: sem ele o w-full não pega e o fundo
@@ -274,7 +270,7 @@ export function TwoStepModal() {
                       </ul>
                     </div>
                   </div>
-                </LocaleLink>
+                </button>
 
                 <p className="text-xs text-center text-muted-foreground pt-2">
                   {t.footer}

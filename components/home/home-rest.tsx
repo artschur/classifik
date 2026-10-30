@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { SignedIn, SignedOut, SignUpButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
+import { RegistarButton } from '@/components/registar-button';
 import {
   Shield,
   MapPin,
@@ -154,11 +155,11 @@ function RegistarCliente() {
   return (
     <>
       <SignedOut>
-        <SignUpButton mode="modal">
+        <RegistarButton>
           <button type="button" className={CLASSE_CLIENTE}>
             Registar como Cliente
           </button>
-        </SignUpButton>
+        </RegistarButton>
       </SignedOut>
       <SignedIn>
         <Link href="/location" className={CLASSE_CLIENTE}>

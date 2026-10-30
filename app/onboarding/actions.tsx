@@ -1,8 +1,8 @@
 "use server";
 
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { tagCompanionInRD } from "@/lib/rd-station";
+import { definirPerfil } from "@/lib/definir-perfil";
 
 export async function handleOnboard(formData: FormData) {
   try {
@@ -19,33 +19,7 @@ export async function handleOnboard(formData: FormData) {
       throw new Error("Missing isCompanion value in form data");
     }
 
-    const client = await clerkClient();
-    const user = await client.users.getUser(userId);
-
-    // 1. Prepare the new metadata
-    const metadata = {
-      onboardingComplete: true,
-      isCompanion: isCompanion,
-      isRegistrationComplete: false,
-      // Logic: Companions start at 'false' (trap active).
-      // Clients start at 'true' (trap bypassed).
-      hasUploadedDocs: isCompanion ? false : true,
-      plan: user.publicMetadata.plan || "free",
-    };
-
-    // 2. Update Clerk
-    await client.users.updateUser(userId, {
-      publicMetadata: { ...user.publicMetadata, ...metadata },
-    });
-
-    // A partir daqui ela é candidata a anunciante. A tag fica até ao fim do
-    // registo; quem parar a meio é quem tem esta e não tem a de concluído.
-    if (isCompanion) {
-      const email = user.emailAddresses[0]?.emailAddress;
-      if (email) {
-        await tagCompanionInRD(email, "registo-incompleto", user.fullName ?? undefined);
-      }
-    }
+    await definirPerfil(userId, isCompanion);
 
     // 3. Redirect logic
     if (isCompanion) {
