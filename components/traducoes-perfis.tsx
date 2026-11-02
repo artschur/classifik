@@ -19,6 +19,7 @@ const ESTADO = {
   'em-falta': { texto: 'Sem inglês', className: 'bg-amber-100 text-amber-900' },
   auto: { texto: 'Tradução automática', className: 'bg-sky-100 text-sky-900' },
   revisto: { texto: 'Revisto', className: 'bg-green-100 text-green-800' },
+  original: { texto: 'Escrito em inglês', className: 'bg-violet-100 text-violet-900' },
 } as const;
 
 const FALHA: Record<string, string> = {

@@ -6,6 +6,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Mic, Square, Play, Pause, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { useLocale } from '@/components/locale-provider';
+
+const TEXT = {
+  pt: {
+    microfoneTitulo: 'Não foi possível usar o microfone',
+    microfoneTexto:
+      'Autorize o acesso ao microfone no navegador e tente outra vez.',
+    pronto: 'Pronto para gravar',
+    gravacaoGuardada: 'Recording saved',
+    gravar: 'Record audio',
+  },
+  en: {
+    microfoneTitulo: 'Could not use the microphone',
+    microfoneTexto:
+      'Allow microphone access in your browser and try again.',
+    pronto: 'Ready to record',
+    gravacaoGuardada: 'Recording saved',
+    gravar: 'Record audio',
+  },
+} as const;
 
 interface AudioRecorderProps {
   className?: string;
@@ -16,6 +36,7 @@ export function AudioRecorder({
   className,
   onAudioRecorded,
 }: AudioRecorderProps) {
+  const t = TEXT[useLocale()];
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -81,9 +102,8 @@ export function AudioRecorder({
       console.error('Error accessing microphone:', error);
       // Sem isto, um microfone recusado deixava o botão sem resposta nenhuma.
       toast({
-        title: 'Não foi possível usar o microfone',
-        description:
-          'Autorize o acesso ao microfone no navegador e tente outra vez.',
+        title: t.microfoneTitulo,
+        description: t.microfoneTexto,
         variant: 'destructive',
       });
     }
@@ -197,7 +217,7 @@ export function AudioRecorder({
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">Pronto para gravar</p>
+              <p className="text-muted-foreground">{t.pronto}</p>
             )}
           </div>
 
@@ -206,8 +226,8 @@ export function AudioRecorder({
             {isRecording
               ? formatTime(recordingDuration)
               : audioUrl
-              ? 'Recording saved'
-              : 'Record audio'}
+              ? t.gravacaoGuardada
+              : t.gravar}
           </div>
 
           {/* Controls */}

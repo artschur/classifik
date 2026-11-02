@@ -13,6 +13,8 @@ export type InglesEmRevisao = {
   shortEn: string;
   descEn: string;
   editada: boolean;
+  /** A descrição já estava escrita em inglês pela anunciante. */
+  original: boolean;
 };
 
 const AVISOS: Record<string, string> = {
@@ -55,6 +57,7 @@ export function RevisaoIngles({
             shortEn: r.shortEn,
             descEn: r.descEn,
             editada: r.revista,
+            original: r.original,
           });
         } else if (r.fonte !== undefined) {
           setAviso(AVISOS[r.motivo] ?? AVISOS.erro);
@@ -65,6 +68,7 @@ export function RevisaoIngles({
             shortEn: '',
             descEn: '',
             editada: true,
+            original: false,
           });
         } else {
           setAviso('Não foi possível abrir a versão inglesa deste perfil.');
@@ -101,6 +105,11 @@ export function RevisaoIngles({
         publicado: corrija o que for preciso, é gravada ao aprovar. Se não abrir
         este separador, a tradução é feita na mesma ao aprovar.
       </p>
+      {valor.original && !valor.editada && (
+        <p className="rounded-md border p-3 text-sm text-muted-foreground">
+          A descrição já está escrita em inglês: em /en aparece o texto dela, tal como o escreveu.
+        </p>
+      )}
       {aviso && (
         <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
           {aviso}

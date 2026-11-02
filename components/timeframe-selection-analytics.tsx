@@ -2,12 +2,21 @@
 
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { useLocale } from '@/components/locale-provider';
+import { localizeHref } from '@/lib/i18n';
+
+const TEXT = {
+  pt: { dias: (n: number) => `${n} dias` },
+  en: { dias: (n: number) => `${n} days` },
+} as const;
 
 export function AnalyticsTimeframe({ days }: { days: number }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = TEXT[locale];
 
   const changeTimeRange = (selectedDays: number) => {
-    router.push(`/profile?days=${selectedDays}`);
+    router.push(localizeHref(`/profile?days=${selectedDays}`, locale));
   };
 
   return (
@@ -16,19 +25,19 @@ export function AnalyticsTimeframe({ days }: { days: number }) {
         variant={days === 7 ? 'default' : 'outline'}
         onClick={() => changeTimeRange(7)}
       >
-        7 dias
+        {t.dias(7)}
       </Button>
       <Button
         variant={days === 30 ? 'default' : 'outline'}
         onClick={() => changeTimeRange(30)}
       >
-        30 dias
+        {t.dias(30)}
       </Button>
       <Button
         variant={days === 90 ? 'default' : 'outline'}
         onClick={() => changeTimeRange(90)}
       >
-        90 dias
+        {t.dias(90)}
       </Button>
     </div>
   );

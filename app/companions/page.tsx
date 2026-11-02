@@ -436,7 +436,7 @@ function RegistrationCTAInline({ locale }: { locale: Locale }) {
             href="/checkout"
             className="border border-rose-600 text-rose-500 hover:bg-rose-600 hover:text-white text-xs font-semibold px-5 py-2.5 rounded-full transition-colors"
           >
-            See plans (in Portuguese)
+            See plans
           </LocaleLink>
         </div>
       </div>

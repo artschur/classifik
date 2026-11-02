@@ -27,6 +27,21 @@ import {
   removeStorageFolder,
   signDocumentUrl,
 } from "@/lib/supabase-admin";
+import { getLocale } from "@/lib/locale.server";
+
+/** Mensagens que a anunciante vê no envio do vídeo e do documento. */
+const TEXT = {
+  pt: {
+    tipoInvalido: "Tipo de documento inválido",
+    extensaoInvalida: "Extensão de ficheiro inválida",
+    caminhoInvalido: "Caminho de documento inválido",
+  },
+  en: {
+    tipoInvalido: "Invalid document type",
+    extensaoInvalida: "Invalid file extension",
+    caminhoInvalido: "Invalid document path",
+  },
+} as const;
 
 /**
  * Tipos aceites no envio. Fazem parte do nome do ficheiro, por isso não podem
@@ -451,12 +466,13 @@ export async function getSignedUploadUrl(
       return { success: false as const, error: "Authentication required" };
     }
 
+    const t = TEXT[await getLocale()];
     if (!DOCUMENT_TYPES.includes(documentType)) {
-      return { success: false as const, error: "Tipo de documento inválido" };
+      return { success: false as const, error: t.tipoInvalido };
     }
     const extension = fileExtension.toLowerCase();
     if (!/^[a-z0-9]{1,8}$/.test(extension)) {
-      return { success: false as const, error: "Extensão de ficheiro inválida" };
+      return { success: false as const, error: t.extensaoInvalida };
     }
 
     const fileName = `${userId}_${documentType}_${Date.now()}.${extension}`;
@@ -500,8 +516,9 @@ export async function saveDocumentAfterUpload(
       throw new Error("Authentication required");
     }
 
+    const t = TEXT[await getLocale()];
     if (!DOCUMENT_TYPES.includes(documentType)) {
-      throw new Error("Tipo de documento inválido");
+      throw new Error(t.tipoInvalido);
     }
 
     // O caminho vem do navegador. Sem esta verificação dava para registar na
@@ -515,7 +532,7 @@ export async function saveDocumentAfterUpload(
       fileName.includes("/") ||
       fileName.includes("..")
     ) {
-      throw new Error("Caminho de documento inválido");
+      throw new Error(t.caminhoInvalido);
     }
 
     const companionId = await getCompanionIdByClerkId(userId);

@@ -7,6 +7,7 @@ import { upsertSubscriptionFromStripe } from '@/db/queries/subscriptions';
 import { stripe } from '@/db/stripe';
 import type { RegisterCompanionFormValues } from '@/lib/registo-schema';
 import { RD_CONVERSION_PERFIL_CRIADO, sendConversionEventToRD, tagCompanionInRD } from '@/lib/rd-station';
+import { getLocale } from '@/lib/locale.server';
 
 /**
  * Liga ao perfil recém-criado uma subscrição que já exista na Stripe.
@@ -90,7 +91,11 @@ async function markProfileCreated(clerkId: string) {
 export async function registerCompanionAction(companionPayload: RegisterCompanionFormValues) {
   const { userId } = await auth();
   if (!userId) {
-    throw new Error('Sessão expirada. Entre outra vez.');
+    throw new Error(
+      (await getLocale()) === 'en'
+        ? 'Your session has expired. Please sign in again.'
+        : 'Sessão expirada. Entre outra vez.',
+    );
   }
 
   // A conta, o email e a validação dos dados ficam do lado do servidor.

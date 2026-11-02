@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
-import { LOCALE_HEADER, PATH_HEADER, hasEnglish, stripLocale } from "./lib/i18n";
+import { LOCALE_HEADER, PATH_HEADER, hasEnglish, localizeHref, stripLocale } from "./lib/i18n";
 
 // Define protected routes
 const isPublicRoute = createRouteMatcher([
@@ -86,12 +86,14 @@ function withLocale(req: NextRequest) {
 }
 
 export default clerkMiddleware(async (auth, req) => {
-  // Pedidos /en/... de páginas com versão inglesa: são públicas como as
-  // portuguesas, por isso seguem logo para a página.
-  const { locale } = stripLocale(req.nextUrl.pathname);
-  if (locale === "en") {
-    return withLocale(req);
-  }
+  // As regras de acesso são as mesmas nas duas línguas: /en/checkout pede
+  // sessão como /checkout. Por isso as listas abaixo são comparadas com o
+  // caminho sem o prefixo /en, e os redireccionamentos mantêm o idioma.
+  const { locale, path } = stripLocale(req.nextUrl.pathname);
+  const semPrefixo = { nextUrl: { pathname: path } } as NextRequest;
+  const naLista = (lista: (r: NextRequest) => boolean) => lista(semPrefixo);
+  const irPara = (destino: string) =>
+    NextResponse.redirect(new URL(localizeHref(destino, locale), req.url));
 
   // Allow search engine bots to crawl public routes without redirection
   const userAgent = req.headers.get("user-agent") || "";
@@ -102,14 +104,14 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Bots should only access public routes, if they hit a non-public route we let them proceed to the 404 or Auth check naturally
-  if (isBot && isPublicRoute(req)) {
+  if (isBot && naLista(isPublicRoute)) {
     return withLocale(req);
   }
 
   const { userId, sessionClaims } = await auth();
 
   if (!userId) {
-    if (isPublicRoute(req) || !isPrivateRoute(req)) {
+    if (naLista(isPublicRoute) || !naLista(isPrivateRoute)) {
       return withLocale(req);
     }
     const { redirectToSignIn } = await auth();
@@ -120,7 +122,7 @@ export default clerkMiddleware(async (auth, req) => {
   console.log(metadata)
 
   // if logged in allow to public routes
-  if (isPublicRoute(req)) {
+  if (naLista(isPublicRoute)) {
     return withLocale(req);
   }
 
@@ -129,8 +131,8 @@ export default clerkMiddleware(async (auth, req) => {
   const isFirstStepRegistrationComplete = metadata?.isRegistrationComplete;
 
   if (onboardingComplete === false) {
-    if (!req.nextUrl.pathname.startsWith("/onboarding")) {
-      return NextResponse.redirect(new URL("/onboarding", req.url));
+    if (!path.startsWith("/onboarding")) {
+      return irPara("/onboarding");
     }
     return withLocale(req);
   }
@@ -139,8 +141,8 @@ export default clerkMiddleware(async (auth, req) => {
   // documento) pode ficar para depois: já não há desvio para lá, e quem não a
   // fez vê avisos no painel, na edição e no próprio anúncio.
   if (isCompanion && isFirstStepRegistrationComplete === false) {
-    if (!req.nextUrl.pathname.startsWith("/companions/register")) {
-      return NextResponse.redirect(new URL("/companions/register", req.url));
+    if (!path.startsWith("/companions/register")) {
+      return irPara("/companions/register");
     }
     return withLocale(req);
   }

@@ -205,7 +205,7 @@ const TEXT = {
       { href: '/companions', label: 'All verified profiles', icon: ShieldCheck },
       { href: '/quanto-ganha-acompanhante', label: 'Earnings calculator', icon: Calculator },
       { href: '/ajuda-anunciantes', label: 'How to advertise', icon: UserCheck },
-      { href: '/checkout', label: 'Featured plans (in Portuguese)', icon: ShoppingBag },
+      { href: '/checkout', label: 'Featured plans', icon: ShoppingBag },
     ],
     doDia: "Today's featured companion",
     anos: 'years old',
