@@ -3,7 +3,9 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import Link from "next/link";
+import { LocaleLink } from "@/components/locale-link";
+import { useLocale } from "@/components/locale-provider";
+import { localizeHref } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -73,12 +75,7 @@ import {
   CAMPOS_COMPLETAR,
   CAMPOS_INFORMACOES,
   CAMPOS_LOCALIZACAO,
-  completarPerfilSchema,
-  edicaoPerfilSchema,
-  informacoesSchema,
-  localizacaoSchema,
-  registoNovoSchema,
-  termosSchema,
+  esquemasRegisto,
   type RegisterCompanionFormValues,
 } from "@/lib/registo-schema";
 
@@ -90,8 +87,16 @@ export type { RegisterCompanionFormValues };
  * própria). Edição: os mesmos, mais o resto do perfil, que no registo é o
  * passo 5.
  */
-const SECCOES_REGISTO = ["Informações", "Localização", "Fotos"] as const;
-const SECCOES_EDICAO = ["Informações", "Localização", "Fotos", "Sobre si e características"] as const;
+const SECCOES = {
+  pt: {
+    registo: ["Informações", "Localização", "Fotos"],
+    edicao: ["Informações", "Localização", "Fotos", "Sobre si e características"],
+  },
+  en: {
+    registo: ["Details", "Location", "Photos"],
+    edicao: ["Details", "Location", "Photos", "About you and features"],
+  },
+} as const;
 const PAGINA_FOTOS = 2;
 
 /** Campos dos passos 1 e 2 que ficam guardados no navegador se ela sair a meio. */
@@ -111,6 +116,209 @@ const CAMPOS_RASCUNHO = [
 ] as const;
 
 const chaveRascunho = (userId: string) => `onesugar:registo-rascunho:${userId}`;
+
+/** Género: o valor gravado fica em português, só muda o que se mostra. */
+const GENEROS = [
+  { value: "Masculino", pt: "Masculino", en: "Male" },
+  { value: "Feminino", pt: "Feminino", en: "Female" },
+  { value: "Trans", pt: "Trans", en: "Trans" },
+  { value: "Outro", pt: "Outro", en: "Other" },
+] as const;
+
+const TEXT = {
+  pt: {
+    faltaCampoTitulo: "Falta preencher um campo",
+    faltaCampoEtapa: (etapa: string) => `Verifique a etapa "${etapa}" antes de guardar.`,
+    faltaCampoGeral: "Verifique os campos assinalados antes de guardar.",
+    limiteTitulo: "Limite de ficheiros atingido",
+    limiteDescricao: (max: number) => `O teu plano permite no máximo ${max} fotos e vídeos.`,
+    algunsNaoEnviadosTitulo: "Alguns ficheiros não foram enviados",
+    algunsNaoEnviadosDescricao: (livres: number, max: number) =>
+      `Só podias adicionar mais ${livres} ficheiro${livres !== 1 ? "s" : ""} (limite de ${max}).`,
+    aEnviar: "Enviando arquivos...",
+    falhaRegisto: "Falha no registro",
+    algoErrado: "Algo deu errado",
+    falhaEnvioArquivos: (n: number) => `Falha ao enviar ${n} arquivos`,
+    falhaUpload: "Falha no upload",
+    imagensEnviadas: "Imagens enviadas",
+    imagensEnviadasDescricao: (n: number) => `${n} imagens enviadas com sucesso`,
+    imagensApagadas: "Images deleted",
+    imagensApagadasDescricao: (n: number) => `Successfully deleted ${n} images`,
+    falhaApagar: "Delete failed",
+    algoErradoApagar: "Something went wrong",
+    imagemApagada: "Image deleted",
+    imagemApagadaDescricao: "Your image has been deleted successfully",
+    ordemFalhou: "Não foi possível guardar a ordem",
+    tenteNovamente: "Tenta novamente.",
+    ordemGuardada: "Ordem guardada",
+    ordemGuardadaDescricao: "A primeira foto é a capa do teu perfil.",
+    enquadramentoFalhou: "Não foi possível guardar o enquadramento",
+    enquadramentoGuardado: "Enquadramento guardado",
+    enquadramentoGuardadoDescricao: "A foto original não foi alterada.",
+    fotosObrigatorias: "Fotos obrigatórias",
+    fotosObrigatoriasDescricao: "Por favor, adicione pelo menos uma foto antes de continuar.",
+    falhaGuardar: "Falha ao guardar",
+    perfilReenviado: "Perfil reenviado",
+    alteracoesEnviadas: "Alterações enviadas",
+    perfilAtualizado: "Perfil Atualizado",
+    perfilReenviadoDescricao: "A equipa vai voltar a analisar o seu perfil.",
+    alteracoesEnviadasDescricao:
+      "O seu anúncio continua no ar com a versão aprovada. As alterações, incluindo fotos novas, aparecem assim que forem revistas.",
+    perfilAtualizadoDescricao: "Seu perfil foi atualizado com sucesso.",
+    falhaAtualizacao: "Falha na atualização",
+    saltarEtapa: "Salte para a etapa que quer alterar. Pode guardar a partir de qualquer uma.",
+    editarPerfil: "Editar perfil",
+    editarDescricao: "Edite os seus detalhes.",
+    fotosDescricao: "O seu perfil é criado com a primeira foto e segue logo para a nossa equipa.",
+    essencialDescricao: "Só o essencial. O resto do perfil pode completar no fim.",
+    nome: "Nome",
+    telefone: "Numero de Telefone",
+    telefonePlaceholder: "Insira seu numero de telefone",
+    descricao: "Descrição",
+    descricaoPlaceholder: "Conte um pouco sobre você e o que gosta.",
+    preco: "Preço (por hora)",
+    precoPlaceholder: "Insira seu preço cobrado",
+    idade: "Idade",
+    idadePlaceholder: "Selecione sua idade",
+    genero: "Gênero",
+    generoPlaceholder: "Selecione seu gênero",
+    declaro: "Declaro que tenho 18 anos ou mais e aceito os",
+    termos: "Termos e Condições",
+    eA: "e a",
+    privacidade: "Política de Privacidade",
+    localizacao: "Localização",
+    distrito: "Distrito",
+    distritoPlaceholder: "Selecione seu distrito",
+    concelho: "Concelho",
+    concelhoPlaceholder: "Digite seu concelho",
+    hotel: "Atende em Hotel",
+    hotelPergunta: "Você atende clientes em hotéis?",
+    localProprio: "Atende em Local Próprio",
+    localProprioPergunta: "Você atende clientes em seu local?",
+    aCriarPerfil: "A criar o seu perfil...",
+    adicioneFotos: "Adicione fotos e vídeos para que os clientes possam conhecer melhor.",
+    imagemSelecionada: "imagem selecionada",
+    imagensSelecionadas: "imagens selecionadas",
+    aApagar: "Deletando...",
+    apagarSelecionadas: "Deletar Selecionadas",
+    temCerteza: "Você tem certeza?",
+    irreversivelVarias: (n: number) =>
+      `Essa ação não pode ser desfeita. ${n} ${n === 1 ? "imagem será" : "imagens serão"} permanentemente removidas.`,
+    irreversivelUma: "Essa ação não pode ser desfeita. O arquivo será permanentemente removido.",
+    cancelar: "Cancelar",
+    apagar: "Deletar",
+    arrastaFotos: "Arrasta as fotos para mudar a ordem. A primeira é a capa do teu perfil. No ícone de recorte podes escolher que parte da foto fica visível.",
+    guardadoAutomatico:
+      " Aqui as alterações são guardadas automaticamente, não precisas de carregar em guardar.",
+    limiteAtingido: (max: number) => `Limite de ${max} ficheiros atingido.`,
+    upgradeClassic: " Faz upgrade para o plano Classic para adicionar até 30 fotos.",
+    verificaPerfil: "Verifica o teu perfil",
+    paraUpgrade: "para poderes fazer upgrade e adicionar até 30 fotos.",
+    anterior: "Anterior",
+    proximo: "Próximo",
+    aAtualizar: "Atualizando...",
+    aContinuar: "A continuar...",
+    guardarAlteracoes: "Guardar alterações",
+    continuarVerificacao: "Continuar para a verificação",
+  },
+  en: {
+    faltaCampoTitulo: "A field still needs filling in",
+    faltaCampoEtapa: (etapa: string) => `Check the "${etapa}" step before saving.`,
+    faltaCampoGeral: "Check the highlighted fields before saving.",
+    limiteTitulo: "File limit reached",
+    limiteDescricao: (max: number) => `Your plan allows up to ${max} photos and videos.`,
+    algunsNaoEnviadosTitulo: "Some files were not uploaded",
+    algunsNaoEnviadosDescricao: (livres: number, max: number) =>
+      `You could only add ${livres} more file${livres !== 1 ? "s" : ""} (limit of ${max}).`,
+    aEnviar: "Uploading files...",
+    falhaRegisto: "Sign up failed",
+    algoErrado: "Something went wrong",
+    falhaEnvioArquivos: (n: number) => `Failed to upload ${n} file${n !== 1 ? "s" : ""}`,
+    falhaUpload: "Upload failed",
+    imagensEnviadas: "Files uploaded",
+    imagensEnviadasDescricao: (n: number) =>
+      `${n} file${n !== 1 ? "s" : ""} uploaded successfully`,
+    imagensApagadas: "Files deleted",
+    imagensApagadasDescricao: (n: number) =>
+      `${n} file${n !== 1 ? "s" : ""} deleted successfully`,
+    falhaApagar: "Delete failed",
+    algoErradoApagar: "Something went wrong",
+    imagemApagada: "File deleted",
+    imagemApagadaDescricao: "Your file has been deleted.",
+    ordemFalhou: "We couldn't save the order",
+    tenteNovamente: "Please try again.",
+    ordemGuardada: "Order saved",
+    ordemGuardadaDescricao: "The first photo is your profile cover.",
+    enquadramentoFalhou: "We couldn't save the framing",
+    enquadramentoGuardado: "Framing saved",
+    enquadramentoGuardadoDescricao: "The original photo has not been changed.",
+    fotosObrigatorias: "Photos required",
+    fotosObrigatoriasDescricao: "Please add at least one photo before continuing.",
+    falhaGuardar: "Saving failed",
+    perfilReenviado: "Profile sent again",
+    alteracoesEnviadas: "Changes sent",
+    perfilAtualizado: "Profile updated",
+    perfilReenviadoDescricao: "The team will review your profile again.",
+    alteracoesEnviadasDescricao:
+      "Your listing stays live with the approved version. Your changes, including new photos, appear as soon as they have been reviewed.",
+    perfilAtualizadoDescricao: "Your profile has been updated.",
+    falhaAtualizacao: "Update failed",
+    saltarEtapa: "Jump to the step you want to change. You can save from any of them.",
+    editarPerfil: "Edit profile",
+    editarDescricao: "Edit your details.",
+    fotosDescricao: "Your profile is created with your first photo and goes straight to our team.",
+    essencialDescricao: "Just the essentials. You can complete the rest of your profile at the end.",
+    nome: "Name",
+    telefone: "Phone number",
+    telefonePlaceholder: "Enter your phone number",
+    descricao: "Description",
+    descricaoPlaceholder: "Tell us a little about yourself and what you enjoy.",
+    preco: "Price (per hour)",
+    precoPlaceholder: "Enter your rate",
+    idade: "Age",
+    idadePlaceholder: "Select your age",
+    genero: "Gender",
+    generoPlaceholder: "Select your gender",
+    declaro: "I confirm that I am 18 or over and I accept the",
+    termos: "Terms and Conditions",
+    eA: "and the",
+    privacidade: "Privacy Policy",
+    localizacao: "Location",
+    distrito: "District",
+    distritoPlaceholder: "Select your district",
+    concelho: "Municipality",
+    concelhoPlaceholder: "Enter your municipality",
+    hotel: "Hotel visits",
+    hotelPergunta: "Do you see clients at hotels?",
+    localProprio: "Own place",
+    localProprioPergunta: "Do you see clients at your own place?",
+    aCriarPerfil: "Creating your profile...",
+    adicioneFotos: "Add photos and videos so clients can get to know you better.",
+    imagemSelecionada: "file selected",
+    imagensSelecionadas: "files selected",
+    aApagar: "Deleting...",
+    apagarSelecionadas: "Delete selected",
+    temCerteza: "Are you sure?",
+    irreversivelVarias: (n: number) =>
+      `This cannot be undone. ${n} ${n === 1 ? "file will be" : "files will be"} permanently removed.`,
+    irreversivelUma: "This cannot be undone. The file will be permanently removed.",
+    cancelar: "Cancel",
+    apagar: "Delete",
+    arrastaFotos:
+      "Drag the photos to change the order. The first one is your profile cover. Use the crop icon to choose which part of the photo is shown.",
+    guardadoAutomatico: " Changes here are saved automatically, you don't need to press save.",
+    limiteAtingido: (max: number) => `You have reached the limit of ${max} files.`,
+    upgradeClassic: " Upgrade to the Classic plan to add up to 30 photos.",
+    verificaPerfil: "Verify your profile",
+    paraUpgrade: "so you can upgrade and add up to 30 photos.",
+    anterior: "Back",
+    proximo: "Next",
+    aAtualizar: "Saving...",
+    aContinuar: "Continuing...",
+    guardarAlteracoes: "Save changes",
+    continuarVerificacao: "Continue to verification",
+  },
+} as const;
 
 /** Os passos 1 e 2, para saber se mudaram depois de o perfil ser criado. */
 const passosBase = (valores: Partial<RegisterCompanionFormValues>) =>
@@ -140,8 +348,11 @@ export function RegisterCompanionForm({
   prefill,
   planosDisponiveis = false,
 }: RegisterCompanionFormProps) {
+  const locale = useLocale();
+  const t = TEXT[locale];
+  const esquemas = esquemasRegisto(locale);
   const emEdicao = Boolean(companionData);
-  const formSections = emEdicao ? SECCOES_EDICAO : SECCOES_REGISTO;
+  const formSections: readonly string[] = emEdicao ? SECCOES[locale].edicao : SECCOES[locale].registo;
 
   const [currentPage, setCurrentPage] = React.useState(0);
   const [uploadStatus, setUploadStatus] = React.useState("");
@@ -189,9 +400,13 @@ export function RegisterCompanionForm({
   };
 
   const schemaDaPagina = (page: number) => {
-    if (page === 0) return emEdicao ? informacoesSchema : informacoesSchema.merge(termosSchema);
-    if (page === 1) return localizacaoSchema;
-    if (emEdicao && page === 3) return completarPerfilSchema;
+    if (page === 0) {
+      return emEdicao
+        ? esquemas.informacoesSchema
+        : esquemas.informacoesSchema.merge(esquemas.termosSchema);
+    }
+    if (page === 1) return esquemas.localizacaoSchema;
+    if (emEdicao && page === 3) return esquemas.completarPerfilSchema;
     return null;
   };
 
@@ -259,11 +474,11 @@ export function RegisterCompanionForm({
 
     toast({
       variant: "destructive",
-      title: "Falta preencher um campo",
+      title: t.faltaCampoTitulo,
       description:
         page !== undefined
-          ? `Verifique a etapa "${formSections[page]}" antes de guardar.`
-          : "Verifique os campos assinalados antes de guardar.",
+          ? t.faltaCampoEtapa(formSections[page])
+          : t.faltaCampoGeral,
     });
   };
 
@@ -304,7 +519,7 @@ export function RegisterCompanionForm({
   };
 
   const form = useForm<RegisterCompanionFormValues>({
-    resolver: zodResolver(emEdicao ? edicaoPerfilSchema : registoNovoSchema),
+    resolver: zodResolver(emEdicao ? esquemas.edicaoPerfilSchema : esquemas.registoNovoSchema),
     defaultValues: getInitialValues(),
     mode: "onBlur",
     reValidateMode: "onChange",
@@ -388,8 +603,8 @@ export function RegisterCompanionForm({
     if (images.length >= maxPhotos) {
       toast({
         variant: "destructive",
-        title: "Limite de ficheiros atingido",
-        description: `O teu plano permite no máximo ${maxPhotos} fotos e vídeos.`,
+        title: t.limiteTitulo,
+        description: t.limiteDescricao(maxPhotos),
       });
       return;
     }
@@ -398,13 +613,13 @@ export function RegisterCompanionForm({
     const filesToUpload = files.slice(0, allowedCount);
     if (filesToUpload.length < files.length) {
       toast({
-        title: "Alguns ficheiros não foram enviados",
-        description: `Só podias adicionar mais ${allowedCount} ficheiro${allowedCount !== 1 ? "s" : ""} (limite de ${maxPhotos}).`,
+        title: t.algunsNaoEnviadosTitulo,
+        description: t.algunsNaoEnviadosDescricao(allowedCount, maxPhotos),
         variant: "destructive",
       });
     }
 
-    setUploadStatus("Enviando arquivos...");
+    setUploadStatus(t.aEnviar);
 
     try {
       let currentCompanionId = companionId;
@@ -429,9 +644,9 @@ export function RegisterCompanionForm({
         } catch (error) {
           toast({
             variant: "destructive",
-            title: "Falha no registro",
+            title: t.falhaRegisto,
             description:
-              error instanceof Error ? error.message : "Algo deu errado",
+              error instanceof Error ? error.message : t.algoErrado,
           });
           setUploadStatus("");
           setIsRegistering(false);
@@ -452,16 +667,16 @@ export function RegisterCompanionForm({
 
       const errors = results.filter((r) => r.error);
       if (errors.length > 0) {
-        setUploadStatus(`Falha ao enviar ${errors.length} arquivos`);
+        setUploadStatus(t.falhaEnvioArquivos(errors.length));
         toast({
-          title: "Falha no upload",
-          description: `Falha ao enviar ${errors.length} arquivos`,
+          title: t.falhaUpload,
+          description: t.falhaEnvioArquivos(errors.length),
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Imagens enviadas",
-          description: `${files.length} imagens enviadas com sucesso`,
+          title: t.imagensEnviadas,
+          description: t.imagensEnviadasDescricao(files.length),
           variant: "success",
         });
       }
@@ -473,8 +688,8 @@ export function RegisterCompanionForm({
       setUploadStatus("");
     } catch (error) {
       toast({
-        title: "Falha no upload",
-        description: error instanceof Error ? error.message : "Algo deu errado",
+        title: t.falhaUpload,
+        description: error instanceof Error ? error.message : t.algoErrado,
         variant: "destructive",
       });
       setUploadStatus("");
@@ -509,8 +724,8 @@ export function RegisterCompanionForm({
         imagesToDelete.map((storagePath) => deleteImage(storagePath)),
       );
       toast({
-        title: "Images deleted",
-        description: `Successfully deleted ${imagesToDelete.length} images`,
+        title: t.imagensApagadas,
+        description: t.imagensApagadasDescricao(imagesToDelete.length),
         variant: "success",
       });
     } catch (error) {
@@ -520,9 +735,9 @@ export function RegisterCompanionForm({
         setImages(newImages);
       }
       toast({
-        title: "Delete failed",
+        title: t.falhaApagar,
         description:
-          error instanceof Error ? error.message : "Something went wrong",
+          error instanceof Error ? error.message : t.algoErradoApagar,
         variant: "destructive",
       });
     } finally {
@@ -537,8 +752,8 @@ export function RegisterCompanionForm({
     try {
       await deleteImage(storagePath);
       toast({
-        title: "Image deleted",
-        description: "Your image has been deleted successfully",
+        title: t.imagemApagada,
+        description: t.imagemApagadaDescricao,
         variant: "success",
       });
     } catch (error) {
@@ -547,9 +762,9 @@ export function RegisterCompanionForm({
         setImages(newImages);
       }
       toast({
-        title: "Delete failed",
+        title: t.falhaApagar,
         description:
-          error instanceof Error ? error.message : "Something went wrong",
+          error instanceof Error ? error.message : t.algoErradoApagar,
         variant: "destructive",
       });
     }
@@ -568,16 +783,16 @@ export function RegisterCompanionForm({
     if (!result.success) {
       setImages(previousOrder);
       toast({
-        title: "Não foi possível guardar a ordem",
-        description: result.error ?? "Tenta novamente.",
+        title: t.ordemFalhou,
+        description: result.error ?? t.tenteNovamente,
         variant: "destructive",
       });
       return;
     }
 
     toast({
-      title: "Ordem guardada",
-      description: "A primeira foto é a capa do teu perfil.",
+      title: t.ordemGuardada,
+      description: t.ordemGuardadaDescricao,
       variant: "success",
     });
   };
@@ -598,8 +813,8 @@ export function RegisterCompanionForm({
 
     if (!result.success) {
       toast({
-        title: "Não foi possível guardar o enquadramento",
-        description: result.error ?? "Tenta novamente.",
+        title: t.enquadramentoFalhou,
+        description: result.error ?? t.tenteNovamente,
         variant: "destructive",
       });
       return;
@@ -614,8 +829,8 @@ export function RegisterCompanionForm({
     );
     setImageToFrame(null);
     toast({
-      title: "Enquadramento guardado",
-      description: "A foto original não foi alterada.",
+      title: t.enquadramentoGuardado,
+      description: t.enquadramentoGuardadoDescricao,
       variant: "success",
     });
   };
@@ -627,9 +842,8 @@ export function RegisterCompanionForm({
       if (images.length === 0) {
         toast({
           variant: "destructive",
-          title: "Fotos obrigatórias",
-          description:
-            "Por favor, adicione pelo menos uma foto antes de continuar.",
+          title: t.fotosObrigatorias,
+          description: t.fotosObrigatoriasDescricao,
         });
         return;
       }
@@ -643,14 +857,14 @@ export function RegisterCompanionForm({
         } catch (error) {
           toast({
             variant: "destructive",
-            title: "Falha ao guardar",
-            description: error instanceof Error ? error.message : "Algo deu errado",
+            title: t.falhaGuardar,
+            description: error instanceof Error ? error.message : t.algoErrado,
           });
           return;
         }
       }
 
-      router.push("/companions/verification");
+      router.push(localizeHref("/companions/verification", locale));
       return;
     }
     try {
@@ -659,23 +873,23 @@ export function RegisterCompanionForm({
       toast({
         variant: "success",
         title: reenviado
-          ? "Perfil reenviado"
+          ? t.perfilReenviado
           : pendingReview
-            ? "Alterações enviadas"
-            : "Perfil Atualizado",
+            ? t.alteracoesEnviadas
+            : t.perfilAtualizado,
         description: reenviado
-          ? "A equipa vai voltar a analisar o seu perfil."
+          ? t.perfilReenviadoDescricao
           : pendingReview
-            ? "O seu anúncio continua no ar com a versão aprovada. As alterações, incluindo fotos novas, aparecem assim que forem revistas."
-            : "Seu perfil foi atualizado com sucesso.",
+            ? t.alteracoesEnviadasDescricao
+            : t.perfilAtualizadoDescricao,
       });
       router.refresh();
-      router.push("/");
+      router.push(localizeHref("/", locale));
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Falha na atualização",
-        description: error instanceof Error ? error.message : "Algo deu errado",
+        title: t.falhaAtualizacao,
+        description: error instanceof Error ? error.message : t.algoErrado,
       });
     }
   }
@@ -686,8 +900,7 @@ export function RegisterCompanionForm({
       {emEdicao && (
         <div className="mx-auto max-w-3xl mb-4">
           <p className="text-sm text-muted-foreground mb-2">
-            Salte para a etapa que quer alterar. Pode guardar a partir de
-            qualquer uma.
+            {t.saltarEtapa}
           </p>
           <nav className="flex flex-wrap gap-2">
             {formSections.map((section, index) => (
@@ -714,14 +927,14 @@ export function RegisterCompanionForm({
           <Card id="form-fields">
             <CardHeader>
               <CardTitle>
-                {emEdicao ? "Editar perfil" : formSections[currentPage]}
+                {emEdicao ? t.editarPerfil : formSections[currentPage]}
               </CardTitle>
               <CardDescription>
                 {emEdicao
-                  ? "Edite os seus detalhes."
+                  ? t.editarDescricao
                   : currentPage === PAGINA_FOTOS
-                    ? "O seu perfil é criado com a primeira foto e segue logo para a nossa equipa."
-                    : "Só o essencial. O resto do perfil pode completar no fim."}
+                    ? t.fotosDescricao
+                    : t.essencialDescricao}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -734,7 +947,7 @@ export function RegisterCompanionForm({
                       name="name"
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel>Nome</FormLabel>
+                          <FormLabel>{t.nome}</FormLabel>
                           <FormControl>
                             <Input placeholder="Ana Carolina" {...field} />
                           </FormControl>
@@ -747,11 +960,11 @@ export function RegisterCompanionForm({
                       name="phoneNumber"
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel>Numero de Telefone</FormLabel>
+                          <FormLabel>{t.telefone}</FormLabel>
                           <FormControl>
                             <PhoneInput
                               defaultCountry={"PT"}
-                              placeholder="Insira seu numero de telefone"
+                              placeholder={t.telefonePlaceholder}
                               value={field.value}
                               onChange={(value) => field.onChange(value)}
                               onBlur={() => {
@@ -773,10 +986,10 @@ export function RegisterCompanionForm({
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Descrição</FormLabel>
+                        <FormLabel>{t.descricao}</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Conte um pouco sobre você e o que gosta."
+                            placeholder={t.descricaoPlaceholder}
                             {...field}
                           />
                         </FormControl>
@@ -790,7 +1003,7 @@ export function RegisterCompanionForm({
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Preço (por hora)</FormLabel>
+                          <FormLabel>{t.preco}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <IMaskInput
@@ -805,7 +1018,7 @@ export function RegisterCompanionForm({
                                     thousandsSeparator: ".",
                                   },
                                 }}
-                                placeholder="Insira seu preço cobrado"
+                                placeholder={t.precoPlaceholder}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-7 py-2 text-sm ring-offset-background"
                                 value={String(field.value)}
                                 onAccept={(value) =>
@@ -828,7 +1041,7 @@ export function RegisterCompanionForm({
                       name="age"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Idade</FormLabel>
+                          <FormLabel>{t.idade}</FormLabel>
                           <Select
                             onValueChange={(value) =>
                               field.onChange(Number.parseInt(value, 10))
@@ -837,7 +1050,7 @@ export function RegisterCompanionForm({
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Selecione sua idade" />
+                                <SelectValue placeholder={t.idadePlaceholder} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -862,23 +1075,22 @@ export function RegisterCompanionForm({
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Gênero</FormLabel>
+                        <FormLabel>{t.genero}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value ?? ""}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione seu gênero" />
+                              <SelectValue placeholder={t.generoPlaceholder} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Masculino">
-                              Masculino
-                            </SelectItem>
-                            <SelectItem value="Feminino">Feminino</SelectItem>
-                            <SelectItem value="Trans">Trans</SelectItem>
-                            <SelectItem value="Outro">Outro</SelectItem>
+                            {GENEROS.map((g) => (
+                              <SelectItem key={g.value} value={g.value}>
+                                {g[locale]}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -900,22 +1112,24 @@ export function RegisterCompanionForm({
                           </FormControl>
                           <div className="space-y-1 leading-snug">
                             <FormLabel className="font-normal">
-                              Declaro que tenho 18 anos ou mais e aceito os{" "}
-                              <Link
+                              {t.declaro}{" "}
+                              <LocaleLink
+                                locale={locale}
                                 href="/termos-e-condicoes"
                                 target="_blank"
                                 className="underline underline-offset-2"
                               >
-                                Termos e Condições
-                              </Link>{" "}
-                              e a{" "}
-                              <Link
+                                {t.termos}
+                              </LocaleLink>{" "}
+                              {t.eA}{" "}
+                              <LocaleLink
+                                locale={locale}
                                 href="/politica-de-privacidade"
                                 target="_blank"
                                 className="underline underline-offset-2"
                               >
-                                Política de Privacidade
-                              </Link>
+                                {t.privacidade}
+                              </LocaleLink>
                               .
                             </FormLabel>
                             <FormMessage />
@@ -930,13 +1144,13 @@ export function RegisterCompanionForm({
               {/* Localização (passo 2) */}
               {currentPage === 1 && (
                 <div className="space-y-4">
-                  {emEdicao && <h3 className="text-lg font-semibold">Localização</h3>}
+                  {emEdicao && <h3 className="text-lg font-semibold">{t.localizacao}</h3>}
                   <FormField
                     control={form.control}
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Distrito</FormLabel>
+                        <FormLabel>{t.distrito}</FormLabel>
                         <Select
                           onValueChange={(selected) => {
                             field.onChange(Number(selected));
@@ -962,7 +1176,7 @@ export function RegisterCompanionForm({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione seu distrito" />
+                              <SelectValue placeholder={t.distritoPlaceholder} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -983,9 +1197,9 @@ export function RegisterCompanionForm({
                     name="neighborhood"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Concelho</FormLabel>
+                        <FormLabel>{t.concelho}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Digite seu concelho" {...field} />
+                          <Input placeholder={t.concelhoPlaceholder} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1000,10 +1214,10 @@ export function RegisterCompanionForm({
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
                             <FormLabel className="text-base">
-                              Atende em Hotel
+                              {t.hotel}
                             </FormLabel>
                             <FormDescription>
-                              Você atende clientes em hotéis?
+                              {t.hotelPergunta}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1023,10 +1237,10 @@ export function RegisterCompanionForm({
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
                             <FormLabel className="text-base">
-                              Atende em Local Próprio
+                              {t.localProprio}
                             </FormLabel>
                             <FormDescription>
-                              Você atende clientes em seu local?
+                              {t.localProprioPergunta}
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -1049,14 +1263,13 @@ export function RegisterCompanionForm({
                     <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg">
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       <p className="text-sm text-muted-foreground">
-                        A criar o seu perfil...
+                        {t.aCriarPerfil}
                       </p>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-neutral-500">
-                      Adicione fotos e vídeos para que os clientes possam conhecer
-                      melhor.
+                      {t.adicioneFotos}
                     </p>
                     <span className={`text-sm font-medium ${images.length >= maxPhotos ? "text-destructive" : "text-neutral-500"}`}>
                       {images.length}/{maxPhotos}
@@ -1073,8 +1286,8 @@ export function RegisterCompanionForm({
                           {selectedImages.size === 0
                             ? null
                             : selectedImages.size === 1
-                              ? "imagem selecionada"
-                              : "imagens selecionadas"}
+                              ? t.imagemSelecionada
+                              : t.imagensSelecionadas}
                         </p>
                         {selectedImages.size > 0 && (
                           <AlertDialog>
@@ -1087,33 +1300,28 @@ export function RegisterCompanionForm({
                                 {isDeleting ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Deletando...
+                                    {t.aApagar}
                                   </>
                                 ) : (
-                                  <>Deletar Selecionadas</>
+                                  <>{t.apagarSelecionadas}</>
                                 )}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
-                                  Você tem certeza?
+                                  {t.temCerteza}
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Essa ação não pode ser desfeita.{" "}
-                                  {selectedImages.size}{" "}
-                                  {selectedImages.size === 1
-                                    ? "imagem será"
-                                    : "imagens serão"}{" "}
-                                  permanentemente removidas.
+                                  {t.irreversivelVarias(selectedImages.size)}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogCancel>{t.cancelar}</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={handleDeleteSelected}
                                 >
-                                  Deletar
+                                  {t.apagar}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -1121,11 +1329,8 @@ export function RegisterCompanionForm({
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Arrasta as fotos para mudar a ordem. A primeira é a capa
-                        do teu perfil. No ícone de recorte podes escolher que
-                        parte da foto fica visível.
-                        {emEdicao &&
-                          " Aqui as alterações são guardadas automaticamente, não precisas de carregar em guardar."}
+                        {t.arrastaFotos}
+                        {emEdicao && t.guardadoAutomatico}
                       </p>
                       <PhotoSortableGrid
                         images={images}
@@ -1145,15 +1350,14 @@ export function RegisterCompanionForm({
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>
-                              Você tem certeza?
+                              {t.temCerteza}
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Essa ação não pode ser desfeita. O arquivo será
-                              permanentemente removido.
+                              {t.irreversivelUma}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogCancel>{t.cancelar}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => {
                                 if (imageToDelete) {
@@ -1162,7 +1366,7 @@ export function RegisterCompanionForm({
                                 }
                               }}
                             >
-                              Deletar
+                              {t.apagar}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -1189,20 +1393,21 @@ export function RegisterCompanionForm({
                     <FileUpload onChange={handleFileUpload} />
                   ) : (
                     <p className="text-sm text-center text-muted-foreground border border-dashed border-border rounded-lg py-6">
-                      Limite de {maxPhotos} ficheiros atingido.
+                      {t.limiteAtingido(maxPhotos)}
                       {maxPhotos === 10 &&
                         (planosDisponiveis ? (
-                          " Faz upgrade para o plano Classic para adicionar até 30 fotos."
+                          t.upgradeClassic
                         ) : (
                           <>
                             {" "}
-                            <Link
+                            <LocaleLink
+                              locale={locale}
                               href="/companions/verification"
                               className="underline underline-offset-2"
                             >
-                              Verifica o teu perfil
-                            </Link>{" "}
-                            para poderes fazer upgrade e adicionar até 30 fotos.
+                              {t.verificaPerfil}
+                            </LocaleLink>{" "}
+                            {t.paraUpgrade}
                           </>
                         ))}
                     </p>
@@ -1224,7 +1429,7 @@ export function RegisterCompanionForm({
                   onClick={handlePreviousPage}
                   disabled={isRegistering}
                 >
-                  Anterior
+                  {t.anterior}
                 </Button>
               )}
               <div className="flex gap-2 ml-auto">
@@ -1235,7 +1440,7 @@ export function RegisterCompanionForm({
                     onClick={handleNextPage}
                     disabled={isRegistering || form.formState.isSubmitting}
                   >
-                    Próximo
+                    {t.proximo}
                   </Button>
                 )}
                 {/* Na edição dá para guardar de qualquer etapa; no registo o
@@ -1252,12 +1457,12 @@ export function RegisterCompanionForm({
                     {form.formState.isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {emEdicao ? "Atualizando..." : "A continuar..."}
+                        {emEdicao ? t.aAtualizar : t.aContinuar}
                       </>
                     ) : emEdicao ? (
-                      "Guardar alterações"
+                      t.guardarAlteracoes
                     ) : (
-                      "Continuar para a verificação"
+                      t.continuarVerificacao
                     )}
                   </Button>
                 )}

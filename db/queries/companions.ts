@@ -17,9 +17,7 @@ import { db } from "..";
 import {
   caracteristicasParaBase,
   caracteristicasVazias,
-  completarPerfilSchema,
-  edicaoPerfilSchema,
-  registoNovoSchema,
+  esquemasRegisto,
   type CompletarPerfilInput,
   type RegisterCompanionFormValues,
 } from "@/lib/registo-schema";
@@ -35,6 +33,8 @@ import {
   RD_CONVERSION_RECUSADA,
 } from "@/lib/rd-station";
 import { ZodError } from "zod";
+import { getLocale } from "@/lib/locale.server";
+import type { Locale } from "@/lib/i18n";
 import {
   CompanionFiltered,
   CompanionPreview,
@@ -683,9 +683,27 @@ export const getCompanionsToFilter = unstable_cache(
   },
 );
 
+/** Mensagens que o registo e a edição do perfil mostram a quem preenche. */
+const MENSAGENS_PERFIL = {
+  pt: {
+    sessaoExpirada: "Sessão expirada. Entre outra vez.",
+    dadosInvalidos: "Dados inválidos",
+    semEmail: "A conta não tem email associado.",
+    perfilNaoEncontrado: "Perfil não encontrado",
+  },
+  en: {
+    sessaoExpirada: "Your session has expired. Please sign in again.",
+    dadosInvalidos: "Invalid data",
+    semEmail: "Your account has no email address.",
+    perfilNaoEncontrado: "Profile not found",
+  },
+} as const;
+
 /** A primeira mensagem de um erro de validação, para mostrar a quem preenche. */
-function mensagemDeValidacao(error: unknown): string | null {
-  return error instanceof ZodError ? (error.issues[0]?.message ?? "Dados inválidos") : null;
+function mensagemDeValidacao(error: unknown, locale: Locale = "pt"): string | null {
+  return error instanceof ZodError
+    ? (error.issues[0]?.message ?? MENSAGENS_PERFIL[locale].dadosInvalidos)
+    : null;
 }
 
 /**
@@ -697,16 +715,18 @@ function mensagemDeValidacao(error: unknown): string | null {
  * outra conta.
  */
 export async function registerCompanion(companionData: RegisterCompanionFormValues) {
+  const locale = await getLocale();
+  const m = MENSAGENS_PERFIL[locale];
   const { userId: clerkId, sessionClaims } = await auth();
   if (!clerkId) {
-    throw new Error("Sessão expirada. Entre outra vez.");
+    throw new Error(m.sessaoExpirada);
   }
 
   let dados;
   try {
-    dados = registoNovoSchema.parse(companionData);
+    dados = esquemasRegisto(locale).registoNovoSchema.parse(companionData);
   } catch (error) {
-    throw new Error(mensagemDeValidacao(error) ?? "Dados inválidos");
+    throw new Error(mensagemDeValidacao(error, locale) ?? m.dadosInvalidos);
   }
 
   let email = sessionClaims?.email;
@@ -718,7 +738,7 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
       user.emailAddresses?.[0]?.emailAddress;
   }
   if (!email) {
-    throw new Error("A conta não tem email associado.");
+    throw new Error(m.semEmail);
   }
 
   try {
@@ -1118,22 +1138,24 @@ async function applyCompanionFormValues(
 export async function updateCompanionFromForm(
   data: RegisterCompanionFormValues,
 ): Promise<{ pendingReview: boolean; reenviado: boolean; }> {
+  const locale = await getLocale();
+  const m = MENSAGENS_PERFIL[locale];
   // A conta sai da sessão, nunca do pedido: o id da conta aparece no
   // endereço das fotos públicas, e com ele qualquer pessoa alterava o perfil
   // de outra (o telefone de um registo por aprovar, por exemplo).
   const { userId: clerkId } = await auth();
   if (!clerkId) {
-    throw new Error("Sessão expirada. Entre outra vez.");
+    throw new Error(m.sessaoExpirada);
   }
 
   let dados;
   try {
-    dados = edicaoPerfilSchema.parse(data);
+    dados = esquemasRegisto(locale).edicaoPerfilSchema.parse(data);
   } catch (error) {
-    throw new Error(mensagemDeValidacao(error) ?? "Dados inválidos");
+    throw new Error(mensagemDeValidacao(error, locale) ?? m.dadosInvalidos);
   }
 
-  const companion = await perfilDaSessao(clerkId);
+  const companion = await perfilDaSessao(clerkId, locale);
 
   if (!companion.verified) {
     await applyCompanionFormValues(companion.id, dados);
@@ -1159,19 +1181,21 @@ export async function updateCompanionFromForm(
 export async function saveCompletarPerfil(
   input: CompletarPerfilInput,
 ): Promise<{ pendingReview: boolean; }> {
+  const locale = await getLocale();
+  const m = MENSAGENS_PERFIL[locale];
   const { userId: clerkId } = await auth();
   if (!clerkId) {
-    throw new Error("Sessão expirada. Entre outra vez.");
+    throw new Error(m.sessaoExpirada);
   }
 
   let dados;
   try {
-    dados = completarPerfilSchema.parse(input);
+    dados = esquemasRegisto(locale).completarPerfilSchema.parse(input);
   } catch (error) {
-    throw new Error(mensagemDeValidacao(error) ?? "Dados inválidos");
+    throw new Error(mensagemDeValidacao(error, locale) ?? m.dadosInvalidos);
   }
 
-  const companion = await perfilDaSessao(clerkId);
+  const companion = await perfilDaSessao(clerkId, locale);
 
   if (!companion.verified) {
     await db.transaction(async (tx) => {
@@ -1194,7 +1218,7 @@ export async function saveCompletarPerfil(
 
   const atual = await getCompanionToEdit(clerkId);
   if (!atual) {
-    throw new Error("Perfil não encontrado");
+    throw new Error(m.perfilNaoEncontrado);
   }
   const { companionId: _id, ...publicado } = atual;
   await guardarEdicaoPendente(companion.id, { ...publicado, ...dados });
@@ -1202,7 +1226,7 @@ export async function saveCompletarPerfil(
 }
 
 /** O perfil de quem está com sessão iniciada, com o estado que as gravações precisam. */
-async function perfilDaSessao(clerkId: string) {
+async function perfilDaSessao(clerkId: string, locale: Locale) {
   const [companion] = await db
     .select({
       id: companionsTable.id,
@@ -1214,7 +1238,7 @@ async function perfilDaSessao(clerkId: string) {
     .limit(1);
 
   if (!companion) {
-    throw new Error("Perfil não encontrado");
+    throw new Error(MENSAGENS_PERFIL[locale].perfilNaoEncontrado);
   }
   return companion;
 }
@@ -1767,7 +1791,13 @@ export async function approveCompanion(
      * impressão digital do português que foi traduzido; sem isto (ou se o
      * português entretanto mudou), a tradução é feita automaticamente.
      */
-    ingles?: { shortEn: string; descEn: string; fonte: string; editada: boolean };
+    ingles?: {
+      shortEn: string;
+      descEn: string;
+      fonte: string;
+      editada: boolean;
+      original?: boolean;
+    };
   } = {},
 ) {
   const { userId } = await auth();

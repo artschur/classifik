@@ -8,6 +8,7 @@ import { revalidateTag } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { isAdmin } from "@/components/header";
 import { canRecordAudio } from "@/lib/audio-access";
+import { getLocale } from "@/lib/locale.server";
 
 const audioStorage = () => getSupabaseAdmin().storage.from("images");
 
@@ -87,13 +88,15 @@ async function storeAudio(
 async function submitAudio(
     audioFile: File,
 ): Promise<{ success?: boolean; pendingReview?: boolean; error?: string; }> {
+    // As mensagens aparecem no formulário dela: em /en, em inglês.
+    const en = (await getLocale()) === 'en';
     try {
         const owner = await getSessionCompanion();
         if (!owner) {
-            return { error: "Perfil não encontrado." };
+            return { error: en ? "Profile not found." : "Perfil não encontrado." };
         }
         if (!(await canRecordAudio(owner.clerkId))) {
-            return { error: "O áudio está disponível no plano VIP." };
+            return { error: en ? "Audio is available on the VIP plan." : "O áudio está disponível no plano VIP." };
         }
 
         const ownAudios = and(

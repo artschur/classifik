@@ -23,9 +23,9 @@ import { SectionTitle, Steps, FieldList, CheckList, Callout, Divider } from './u
  * Guia para anunciantes em inglês (/en/ajuda-anunciantes).
  *
  * As âncoras são as mesmas da versão portuguesa, porque o índice lateral
- * (toc.tsx) é partilhado. O formulário de registo continua em português,
- * por isso os nomes dos campos aparecem também em português entre
- * parênteses, para quem segue o guia os reconhecer no ecrã.
+ * (toc.tsx) é partilhado. Os nomes dos campos são os do formulário em
+ * inglês (components/formCompanionRegister.tsx e
+ * components/registo/completar-perfil-fields.tsx): se mudarem lá, mudam aqui.
  */
 
 const L = 'en' as const;
@@ -105,9 +105,6 @@ export function AjudaAnunciantesEn() {
               <p className="text-muted-foreground text-base max-w-lg">
                 Everything you need to know to create, verify and publish your profile on OneSugar.
               </p>
-              <p className="text-sm text-muted-foreground max-w-lg mt-3">
-                The sign up form is in Portuguese for now, so this guide shows the Portuguese field names in brackets.
-              </p>
             </div>
 
             {/* 1. SIGN UP */}
@@ -115,7 +112,7 @@ export function AjudaAnunciantesEn() {
               <SectionTitle id="registo" eyebrow="01" title="How to sign up" icon={<ShieldCheck className="h-4 w-4" />} />
               <Steps steps={[
                 { title: 'Open the sign up page', desc: <span>Go to <strong className={strong}>onesugar.pt/companions/register</strong></span> },
-                { title: 'Create an account', desc: 'If you do not have an account yet, click "Criar conta" (Create account). You sign up with an email and a password.' },
+                { title: 'Create an account', desc: 'If you do not have an account yet, choose the option to sign up. You sign up with an email and a password.' },
                 { title: 'Confirm your email', desc: 'If asked, confirm your email address using the link sent to your inbox.' },
                 { title: 'Fill in the profile form', desc: <span>Once you are logged in, you are taken to the profile form, which has <strong className={strong}>4 steps</strong>: Details, Features, Location and Photos.</span> },
                 { title: 'Identity verification', desc: 'After you add your first photo, you are taken to identity verification (video and document). Phone verification is not required to sign up.' },
@@ -129,42 +126,42 @@ export function AjudaAnunciantesEn() {
               <SectionTitle id="criar-anuncio" eyebrow="02" title="How to create your listing" />
               <p className="text-sm text-muted-foreground mb-6">The form has 4 steps that must be completed in order. You can edit your listing at any time after submitting it.</p>
 
-              <p className="text-sm font-semibold text-foreground mb-3">Step 1: Details (Informações)</p>
+              <p className="text-sm font-semibold text-foreground mb-3">Step 1: Details</p>
               <FieldList locale={L} fields={[
-                { name: 'Stage name (Nome artístico)', rule: 'at least 2 characters', req: true },
-                { name: 'Phone number (Telefone)', rule: 'at least 8 characters', req: true },
-                { name: 'Short description (Descrição curta)', rule: 'up to 150 characters', req: true },
-                { name: 'Full description (Descrição completa)', rule: '30 to 500 characters', req: true },
-                { name: 'Price per hour (Preço por hora)', rule: 'number in €', req: true },
-                { name: 'Age (Idade)', rule: '18 to 40+', req: true },
-                { name: 'Gender (Género)', rule: 'Male / Female / Trans / Other', req: true },
-                { name: 'Languages spoken (Línguas)', rule: 'at least 1', req: true },
+                { name: 'Name', rule: 'at least 2 characters', req: true },
+                { name: 'Phone number', rule: 'at least 8 characters', req: true },
+                { name: 'Short description', rule: 'up to 150 characters', req: true },
+                { name: 'Description', rule: '30 to 500 characters', req: true },
+                { name: 'Price (per hour)', rule: 'number in €', req: true },
+                { name: 'Age', rule: '18 to 40+', req: true },
+                { name: 'Gender', rule: 'Male / Female / Trans / Other', req: true },
+                { name: 'Languages', rule: 'at least 1', req: true },
                 { name: 'Instagram', rule: '—', req: false },
-                { name: 'Gender identity (Identidade de género)', rule: 'Cisgender / Transgender / Other', req: false },
+                { name: 'Gender identity', rule: 'Cisgender / Transgender / Other', req: false },
               ]} />
 
-              <p className="text-sm font-semibold text-foreground mt-6 mb-3">Step 2: Features (Características)</p>
+              <p className="text-sm font-semibold text-foreground mt-6 mb-3">Step 2: Features</p>
               <FieldList locale={L} fields={[
-                { name: 'Weight in kg (Peso)', rule: 'at least 30 kg', req: true },
-                { name: 'Height in m (Altura)', rule: '1.30 m to 2.50 m', req: true },
-                { name: 'Ethnicity (Etnia)', rule: 'White / Black / Latina / Asian', req: true },
-                { name: 'Hair colour (Cor do cabelo)', rule: 'Blonde / Brown / Black / …', req: true },
-                { name: 'Eye colour (Cor dos olhos)', rule: 'Blue / Green / Brown / Black', req: false },
-                { name: 'Hair length (Tamanho do cabelo)', rule: 'Short / Medium / Long / Very long', req: false },
-                { name: 'Shoe size, EU (Tamanho do pé)', rule: '—', req: false },
+                { name: 'Weight (kg)', rule: 'at least 30 kg', req: true },
+                { name: 'Height (m)', rule: '1.30 m to 2.50 m', req: true },
+                { name: 'Ethnicity', rule: 'White / Black / Latina / Asian', req: true },
+                { name: 'Hair colour', rule: 'Blonde / Brown / Black / …', req: true },
+                { name: 'Eye colour', rule: 'Blue / Green / Brown / Black', req: false },
+                { name: 'Hair length', rule: 'Short / Medium / Long / Very long', req: false },
+                { name: 'Shoe size (EU)', rule: '—', req: false },
                 { name: 'Silicone / Tattoos / Piercings / Smoker', rule: 'Yes / No', req: false },
               ]} />
 
-              <p className="text-sm font-semibold text-foreground mt-6 mb-3">Step 3: Location (Localização)</p>
+              <p className="text-sm font-semibold text-foreground mt-6 mb-3">Step 3: Location</p>
               <FieldList locale={L} fields={[
-                { name: 'District (Distrito)', rule: 'chosen from the list', req: true },
-                { name: 'Municipality (Concelho)', rule: 'free text', req: true },
-                { name: 'Hotel visits (Atende em hotel)', rule: 'Yes / No', req: false },
-                { name: 'Own place (Atende em local próprio)', rule: 'Yes / No', req: false },
+                { name: 'District', rule: 'chosen from the list', req: true },
+                { name: 'Municipality', rule: 'free text', req: true },
+                { name: 'Hotel visits', rule: 'Yes / No', req: false },
+                { name: 'Own place', rule: 'Yes / No', req: false },
               ]} />
 
               <p className="text-sm text-muted-foreground mt-6">
-                <strong className={strong}>Step 4: Photos (Fotos)</strong>{' '}
+                <strong className={strong}>Step 4: Photos</strong>{' '}
                 see the <a href="#fotografias" className="text-primary hover:underline">Photos</a> section.
               </p>
             </section>
@@ -392,7 +389,7 @@ export function AjudaAnunciantesEn() {
                       {item.a}
                       {item.cta && (
                         <LocaleLink locale={L} href="/checkout" className="ml-1 text-primary hover:underline font-medium">
-                          See plans (in Portuguese) →
+                          See plans →
                         </LocaleLink>
                       )}
                     </div>

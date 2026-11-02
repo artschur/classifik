@@ -1,17 +1,34 @@
-import { Check } from "lucide-react";
+"use client";
 
-const PASSOS = ["Informações", "Localização", "Fotos", "Verificação", "Sobre si"] as const;
+import { Check } from "lucide-react";
+import { useLocale } from "@/components/locale-provider";
+
+// Componente de cliente para ler o idioma do contexto: também é usado em
+// páginas de servidor (verificação, passo 5) sem ter de receber o idioma.
+const TEXT = {
+  pt: {
+    passos: ["Informações", "Localização", "Fotos", "Verificação", "Sobre si"],
+    aria: "Passos do registo",
+    passo: (n: number) => `Passo ${n} de 5`,
+  },
+  en: {
+    passos: ["Details", "Location", "Photos", "Verification", "About you"],
+    aria: "Sign up steps",
+    passo: (n: number) => `Step ${n} of 5`,
+  },
+} as const;
 
 /**
  * Indicador dos cinco passos do registo. Os três primeiros vivem no
  * formulário; a verificação e o resto do perfil têm página própria.
  */
 export function PassosRegisto({ atual }: { atual: 1 | 2 | 3 | 4 | 5 }) {
+  const t = TEXT[useLocale()];
   return (
-    <nav aria-label="Passos do registo" className="mx-auto mb-8 w-full max-w-3xl">
-      <p className="mb-3 text-sm font-medium text-muted-foreground">Passo {atual} de 5</p>
+    <nav aria-label={t.aria} className="mx-auto mb-8 w-full max-w-3xl">
+      <p className="mb-3 text-sm font-medium text-muted-foreground">{t.passo(atual)}</p>
       <ol className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        {PASSOS.map((nome, i) => {
+        {t.passos.map((nome, i) => {
           const n = i + 1;
           const feito = n < atual;
           const agora = n === atual;

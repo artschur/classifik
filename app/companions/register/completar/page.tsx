@@ -5,13 +5,18 @@ import { getCompanionToEdit } from '@/db/queries/companions';
 import { PassosRegisto } from '@/components/registo/passos-registo';
 import { CompletarPerfilForm } from '@/components/registo/completar-perfil-form';
 import type { CompletarPerfilInput } from '@/lib/registo-schema';
+import { getLocale } from '@/lib/locale.server';
+import { localizeHref } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: 'Complete o seu perfil',
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: locale === 'en' ? 'Complete your profile' : 'Complete o seu perfil',
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * Passo 5 do registo: descrição curta, Instagram, identidade de género,
@@ -25,7 +30,7 @@ export default async function CompletarPerfilPage() {
 
   // Já com a edição pendente por cima, se houver: é o que ela escreveu por último.
   const atual = await getCompanionToEdit(userId);
-  if (!atual) redirect('/companions/register');
+  if (!atual) redirect(localizeHref('/companions/register', await getLocale()));
 
   const valoresIniciais: CompletarPerfilInput = {
     shortDescription: atual.shortDescription ?? '',

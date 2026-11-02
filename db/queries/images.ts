@@ -2,11 +2,29 @@
 
 import { db } from '..';
 import { companionsTable, imagesTable } from '../schema';
+import { getLocale } from '@/lib/locale.server';
 import { auth } from '@clerk/nextjs/server';
 import { and, asc, eq, inArray, notInArray, SQL, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { isAdmin } from '@/components/header';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+
+/**
+ * Mensagens que chegam ao ecrã da anunciante (toasts do formulário). Seguem
+ * o idioma do pedido: em /en, inglês. As do admin ficam em português.
+ */
+const MENSAGENS = {
+  semSessao: { pt: 'Não autenticado', en: 'You are not signed in' },
+  fotosDeOutraConta: {
+    pt: 'Existem fotos que não pertencem a esta conta',
+    en: 'Some photos do not belong to this account',
+  },
+  fotoNaoEncontrada: { pt: 'Foto não encontrada', en: 'Photo not found' },
+} as const;
+
+async function mensagem(chave: keyof typeof MENSAGENS): Promise<string> {
+  return MENSAGENS[chave][await getLocale()];
+}
 
 // As fotos vivem no bucket público "images": toda a gente as lê pelo endereço
 // público, mas só o servidor escreve, com a chave service role. Como essa
@@ -164,7 +182,7 @@ export async function getImagesByAuthId(
  */
 export async function deleteImage(storagePath: string): Promise<void> {
   const clerkId = (await auth()).userId;
-  if (!clerkId) throw new Error('Não autenticado');
+  if (!clerkId) throw new Error(await mensagem('semSessao'));
 
   const [image] = await db
     .select({ authId: imagesTable.authId })
@@ -172,7 +190,7 @@ export async function deleteImage(storagePath: string): Promise<void> {
     .where(eq(imagesTable.storage_path, storagePath))
     .limit(1);
 
-  if (!image) throw new Error('Foto não encontrada');
+  if (!image) throw new Error(await mensagem('fotoNaoEncontrada'));
   if (image.authId !== clerkId && !isAdmin(clerkId)) {
     throw new Error('Não autorizado');
   }
@@ -196,7 +214,7 @@ export async function updateImagesOrder(
 ): Promise<{ success: boolean; error?: string; }> {
   try {
     const clerkId = (await auth()).userId;
-    if (!clerkId) return { success: false, error: 'Não autenticado' };
+    if (!clerkId) return { success: false, error: await mensagem('semSessao') };
     if (orderedStoragePaths.length === 0) return { success: true };
 
     // Só reordena fotos que sejam mesmo desta conta, para o caminho de
@@ -215,7 +233,7 @@ export async function updateImagesOrder(
     const pathsToUpdate = orderedStoragePaths.filter((path) => ownedPaths.has(path));
 
     if (pathsToUpdate.length !== orderedStoragePaths.length) {
-      return { success: false, error: 'Existem fotos que não pertencem a esta conta' };
+      return { success: false, error: await mensagem('fotosDeOutraConta') };
     }
 
     await db.transaction(async (tx) => {
@@ -255,7 +273,7 @@ export async function updateImageFraming(
 ): Promise<{ success: boolean; error?: string; }> {
   try {
     const clerkId = (await auth()).userId;
-    if (!clerkId) return { success: false, error: 'Não autenticado' };
+    if (!clerkId) return { success: false, error: await mensagem('semSessao') };
 
     const clamp = (value: number, min: number, max: number) =>
       Math.min(max, Math.max(min, Math.round(value)));
@@ -275,7 +293,7 @@ export async function updateImageFraming(
       )
       .returning({ id: imagesTable.id });
 
-    if (!updated) return { success: false, error: 'Foto não encontrada' };
+    if (!updated) return { success: false, error: await mensagem('fotoNaoEncontrada') };
 
     revalidateCompanionMedia();
 

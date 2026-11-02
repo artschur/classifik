@@ -72,6 +72,7 @@ const TEXT = {
     about: (n: string) => `Sobre ${n}`,
     originalNote: '',
     translatedNote: '',
+    ownEnglishNote: '',
     age: 'Idade',
     years: 'anos',
     height: 'Altura',
@@ -98,7 +99,8 @@ const TEXT = {
     voice: 'Listen to my voice',
     about: (n: string) => `About ${n}`,
     originalNote: 'Description written by the advertiser, in Portuguese.',
-    translatedNote: "Translated from the advertiser's original description in Portuguese.",
+    translatedNote: "Translated from the advertiser's original description.",
+    ownEnglishNote: 'Description written by the advertiser.',
     age: 'Age',
     years: 'years old',
     height: 'Height',
@@ -431,7 +433,11 @@ export async function CompanionProfile({
               </h2>
               {en && (
                 <p className="text-xs text-muted-foreground mb-2 italic">
-                  {descricaoEn ? t.translatedNote : t.originalNote}
+                  {!descricaoEn
+                    ? t.originalNote
+                    : companion.translation_status === 'original'
+                      ? t.ownEnglishNote
+                      : t.translatedNote}
                 </p>
               )}
               <p

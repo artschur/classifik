@@ -8,8 +8,25 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import Link from 'next/link';
 import { Product } from './page';
+import { useLocale } from '@/components/locale-provider';
+import { LocaleLink } from '@/components/locale-link';
+import { localizeHref } from '@/lib/i18n';
+
+const TEXT = {
+  pt: {
+    erro: 'Não foi possível abrir o pagamento. Tenta novamente.',
+    comprar: 'Comprar',
+    criarPerfil: 'Criar perfil primeiro',
+    testeAdmin: 'Teste admin: comprar sem o mês grátis (cobra já)',
+  },
+  en: {
+    erro: 'We could not open the payment page. Please try again.',
+    comprar: 'Buy',
+    criarPerfil: 'Create your profile first',
+    testeAdmin: 'Admin test: buy without the free month (charges now)',
+  },
+} as const;
 
 const buttonClasses =
   'w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4';
@@ -24,6 +41,11 @@ export function ProductCard({
   /** Admin com perfil: mostra a compra de teste sem o mês grátis. */
   adminTest?: boolean;
 }) {
+  const locale = useLocale();
+  const t = TEXT[locale];
+  // O /api/checkout não passa pelo /en, por isso o idioma vai na query.
+  const langParam = locale === 'en' ? '&lang=en' : '';
+
   const handleCheckout = async () => {
     try {
       const res = await fetch('/api/can-checkout');
@@ -31,13 +53,13 @@ export function ProductCard({
 
       const data = await res.json();
       window.location.href = data.canCheckout
-        ? `/api/checkout?priceId=${product.id}`
-        : data.redirect;
+        ? `/api/checkout?priceId=${product.id}${langParam}`
+        : localizeHref(data.redirect, locale);
     } catch (error) {
       // Sem isto, uma falha aqui deixava o botão sem reacção nenhuma e sem
       // rasto: o utilizador clicava e não acontecia nada.
       console.error('Falha ao iniciar o checkout:', error);
-      alert('Não foi possível abrir o pagamento. Tenta novamente.');
+      alert(t.erro);
     }
   };
 
@@ -62,20 +84,20 @@ export function ProductCard({
             passo que falta mesmo. */}
         {hasProfile ? (
           <button onClick={handleCheckout} className={buttonClasses}>
-            Comprar
+            {t.comprar}
           </button>
         ) : (
-          <Link href="/companions/register" className={buttonClasses}>
-            Criar perfil primeiro
-          </Link>
+          <LocaleLink locale={locale} href="/companions/register" className={buttonClasses}>
+            {t.criarPerfil}
+          </LocaleLink>
         )}
         {adminTest && (
           // Vai directo ao checkout: o servidor só tira o mês grátis a admins.
           <a
-            href={`/api/checkout?priceId=${product.id}&semTrial=1`}
+            href={`/api/checkout?priceId=${product.id}&semTrial=1${langParam}`}
             className="w-full text-center text-xs text-amber-600 underline underline-offset-2"
           >
-            Teste admin: comprar sem o mês grátis (cobra já)
+            {t.testeAdmin}
           </a>
         )}
       </CardFooter>

@@ -10,16 +10,34 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useLocale } from '@/components/locale-provider';
+
+const TEXT = {
+  pt: {
+    titulo: 'Visualizações Diárias',
+    serie: 'Visualizações',
+    semDados: 'Sem dados para este período',
+  },
+  en: {
+    titulo: 'Daily views',
+    serie: 'Views',
+    semDados: 'No data for this period',
+  },
+} as const;
 
 export function AnalyticsChart({
   analytics,
 }: {
   analytics: SelfAnalyticsResponse;
 }) {
+  const locale = useLocale();
+  const t = TEXT[locale];
+  // Em português mantém-se o formato de sempre.
+  const dateLocale = locale === 'en' ? 'en-GB' : 'pt-BR';
   return (
     <Card className="mt-6">
       <CardHeader>
-        <CardTitle>Visualizações Diárias</CardTitle>
+        <CardTitle>{t.titulo}</CardTitle>
       </CardHeader>
       <CardContent className="h-80">
         {analytics?.dailyViews?.length > 0 ? (
@@ -31,7 +49,7 @@ export function AnalyticsChart({
               <XAxis
                 dataKey="date"
                 tickFormatter={(date) =>
-                  new Date(date).toLocaleDateString('pt-BR', {
+                  new Date(date).toLocaleDateString(dateLocale, {
                     day: '2-digit',
                     month: '2-digit',
                   })
@@ -40,20 +58,20 @@ export function AnalyticsChart({
               <YAxis />
               <Tooltip
                 labelFormatter={(date) =>
-                  new Date(date).toLocaleDateString('pt-BR')
+                  new Date(date).toLocaleDateString(dateLocale)
                 }
               />
               <Line
                 type="monotone"
                 dataKey="count"
                 stroke="#ef4770"
-                name="Visualizações"
+                name={t.serie}
               />
             </LineChart>
           </ResponsiveContainer>
         ) : (
           <p className="h-full flex items-center justify-center text-muted-foreground">
-            Sem dados para este período
+            {t.semDados}
           </p>
         )}
       </CardContent>
