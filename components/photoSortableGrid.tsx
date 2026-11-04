@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Check, Crop, GripVertical, Star, X } from 'lucide-react';
+import { Check, Crop, GripVertical, RefreshCw, Star, X } from 'lucide-react';
 import {
   DndContext,
   KeyboardSensor,
@@ -29,6 +29,8 @@ export type ManagedImage = {
   focalX?: number;
   focalY?: number;
   zoom?: number;
+  /** Enviada numa edição e ainda por aprovar. Só a vista do admin o preenche. */
+  pendingApproval?: boolean;
 };
 
 interface PhotoSortableGridProps {
@@ -38,6 +40,8 @@ interface PhotoSortableGridProps {
   onReorder: (images: ManagedImage[]) => void;
   onRequestDelete: (storagePath: string) => void;
   onEditFraming: (image: ManagedImage) => void;
+  /** Trocar o ficheiro mantendo o lugar. Sem isto, o botão não aparece. */
+  onReplace?: (image: ManagedImage) => void;
 }
 
 const isVideo = (url: string) => /\.(mp4|webm|ogg|mov)$/i.test(url);
@@ -49,6 +53,7 @@ function SortableTile({
   onToggleSelect,
   onRequestDelete,
   onEditFraming,
+  onReplace,
 }: {
   image: ManagedImage;
   index: number;
@@ -56,6 +61,7 @@ function SortableTile({
   onToggleSelect: (storagePath: string) => void;
   onRequestDelete: (storagePath: string) => void;
   onEditFraming: (image: ManagedImage) => void;
+  onReplace?: (image: ManagedImage) => void;
 }) {
   const {
     attributes,
@@ -140,6 +146,30 @@ function SortableTile({
         </button>
       )}
 
+      {onReplace && (
+        <button
+          type="button"
+          aria-label={`Substituir foto ${index + 1}`}
+          title="Substituir"
+          onClick={(event) => {
+            event.stopPropagation();
+            onReplace(image);
+          }}
+          className={cn(
+            'absolute top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80 transition-colors',
+            video ? 'left-2' : 'left-11',
+          )}
+        >
+          <RefreshCw className="h-4 w-4" />
+        </button>
+      )}
+
+      {image.pendingApproval && (
+        <span className="absolute top-11 left-2 rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white pointer-events-none">
+          Por aprovar
+        </span>
+      )}
+
       <button
         type="button"
         aria-label={`Remover foto ${index + 1}`}
@@ -168,6 +198,7 @@ export function PhotoSortableGrid({
   onReorder,
   onRequestDelete,
   onEditFraming,
+  onReplace,
 }: PhotoSortableGridProps) {
   const sensors = useSensors(
     // A distância mínima evita que tocar para seleccionar seja lido como
@@ -212,6 +243,7 @@ export function PhotoSortableGrid({
               onToggleSelect={onToggleSelect}
               onRequestDelete={onRequestDelete}
               onEditFraming={onEditFraming}
+              onReplace={onReplace}
             />
           ))}
         </div>

@@ -120,6 +120,154 @@ export async function uploadImage(
   }
 }
 
+export type AdminImage = {
+  publicUrl: string;
+  storagePath: string;
+  focalX: number;
+  focalY: number;
+  zoom: number;
+  /** Enviada pela dona numa edição e ainda por aprovar. */
+  pendingApproval: boolean;
+};
+
+/**
+ * Fotos e vídeos de um anúncio, pela ordem do perfil, para o admin gerir na
+ * página do perfil. Inclui as que esperam aprovação; o vídeo de verificação
+ * fica de fora, porque não faz parte do anúncio.
+ */
+export async function getImagesForAdmin(
+  companionId: number
+): Promise<{ success: true; images: AdminImage[] } | { success: false; error: string }> {
+  const clerkId = (await auth()).userId;
+  if (!clerkId || !isAdmin(clerkId)) return { success: false, error: 'Não autorizado' };
+
+  const images = await db
+    .select({
+      publicUrl: imagesTable.public_url,
+      storagePath: imagesTable.storage_path,
+      focalX: imagesTable.focal_x,
+      focalY: imagesTable.focal_y,
+      zoom: imagesTable.zoom,
+      pendingApproval: imagesTable.pending_approval,
+    })
+    .from(imagesTable)
+    .where(
+      and(
+        eq(imagesTable.companionId, companionId),
+        eq(imagesTable.is_verification_video, false)
+      )
+    )
+    .orderBy(asc(imagesTable.position), asc(imagesTable.id));
+
+  return { success: true, images };
+}
+
+/**
+ * O admin junta uma foto ao anúncio de outra pessoa, ou troca uma que lá está.
+ *
+ * Fica separada de uploadImage de propósito: aquela confirma que o perfil é
+ * de quem envia, e é essa verificação que não pode ser afrouxada. A foto fica
+ * em nome da dona do perfil (a mesma pasta e o mesmo auth_id), para ela a ver
+ * e poder geri-la no seu formulário, e entra já aprovada: foi o admin que a
+ * pôs.
+ *
+ * Com `substituir`, a foto nova fica no lugar e com a ordem da antiga, e a
+ * antiga é apagada. O ficheiro antigo só sai do armazenamento depois de a
+ * base estar gravada: se algo falhar pelo caminho, o anúncio não fica sem foto.
+ */
+export async function uploadImageAsAdmin(
+  file: File,
+  companionId: number,
+  substituir?: string
+): Promise<{ success: true; image: AdminImage } | { success: false; error: string }> {
+  try {
+    const clerkId = (await auth()).userId;
+    if (!clerkId || !isAdmin(clerkId)) return { success: false, error: 'Não autorizado' };
+
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      return { success: false, error: 'Só se aceitam fotos e vídeos' };
+    }
+
+    const [companion] = await db
+      .select({ authId: companionsTable.auth_id })
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companionId))
+      .limit(1);
+    if (!companion) return { success: false, error: 'Perfil não encontrado' };
+
+    // A foto a trocar tem de ser deste perfil e do anúncio (não o vídeo de
+    // verificação), senão o pedido podia apagar ficheiros de outra pessoa.
+    let antiga: { id: number; position: number } | null = null;
+    if (substituir) {
+      const [encontrada] = await db
+        .select({ id: imagesTable.id, position: imagesTable.position })
+        .from(imagesTable)
+        .where(
+          and(
+            eq(imagesTable.storage_path, substituir),
+            eq(imagesTable.companionId, companionId),
+            eq(imagesTable.is_verification_video, false)
+          )
+        )
+        .limit(1);
+      if (!encontrada) return { success: false, error: 'A foto a substituir não é deste perfil' };
+      antiga = encontrada;
+    }
+
+    const ext = file.name.split('.').pop() || '';
+    const baseName = sanitizeFilename(file.name.split('.')[0]) || 'foto';
+    const path = `${companion.authId}/${baseName}-${Math.floor(Math.random() * 10000)}.${ext}`;
+
+    const storage = getSupabaseAdmin().storage.from(IMAGES_BUCKET);
+    const { error: storageError } = await storage.upload(path, file, { contentType: file.type });
+    if (storageError) throw storageError;
+    const publicUrl = storage.getPublicUrl(path).data.publicUrl;
+
+    let position: number;
+    if (antiga) {
+      position = antiga.position;
+    } else {
+      const [{ nextPosition }] = await db
+        .select({
+          nextPosition: sql<number>`COALESCE(MAX(${imagesTable.position}), -1) + 1`,
+        })
+        .from(imagesTable)
+        .where(eq(imagesTable.companionId, companionId));
+      position = Number(nextPosition) || 0;
+    }
+
+    try {
+      await db.transaction(async (tx) => {
+        await tx.insert(imagesTable).values({
+          companionId,
+          authId: companion.authId,
+          storage_path: path,
+          public_url: publicUrl,
+          position,
+          pending_approval: false,
+        });
+        if (antiga) await tx.delete(imagesTable).where(eq(imagesTable.id, antiga.id));
+      });
+    } catch (error) {
+      // Sem linha na base, o ficheiro novo ficava órfão no armazenamento.
+      await storage.remove([path]);
+      throw error;
+    }
+
+    if (substituir) await storage.remove([substituir]);
+
+    revalidateCompanionMedia();
+
+    return {
+      success: true,
+      image: { publicUrl, storagePath: path, focalX: 50, focalY: 50, zoom: 100, pendingApproval: false },
+    };
+  } catch (error) {
+    console.error('Falha ao enviar foto como admin:', error);
+    return { success: false, error: 'Não foi possível enviar a foto' };
+  }
+}
+
 // Não é exportada de propósito: este ficheiro é 'use server', e tudo o que for
 // exportado passa a ser uma server action chamável do browser.
 function revalidateCompanionMedia() {

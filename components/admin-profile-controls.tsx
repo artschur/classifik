@@ -24,6 +24,7 @@ import {
 } from '@/db/queries/companions';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
 import { ImportedEditButton } from '@/components/imported-edit-button';
+import { AdminPhotoManager } from '@/components/admin-photo-manager';
 
 /**
  * Controlos de admin na página do próprio perfil. Antes disto, tirar um
@@ -191,6 +192,7 @@ export function AdminProfileControls({
         {/* Só perfis criados pela equipa e ainda sem conta: os outros são
             editados pela própria anunciante. */}
         {previewPath && <ImportedEditButton companionId={companionId} />}
+        <AdminPhotoManager companionId={companionId} name={name} />
         {!temSelo && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
