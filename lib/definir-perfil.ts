@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { tagCompanionInRD } from '@/lib/rd-station';
+import { marcarRegistoIniciado } from '@/lib/rd-station';
 
 /**
  * Regista no Clerk se a conta é de anunciante ou de cliente. É o que o
@@ -25,9 +25,9 @@ export async function definirPerfil(userId: string, isCompanion: boolean) {
   });
 
   // A tag fica até ao fim do registo; quem parar a meio é quem tem esta e não
-  // tem a de concluído.
+  // tem a de concluído. O evento abre os lembretes no RD.
   if (isCompanion) {
     const email = user.emailAddresses[0]?.emailAddress;
-    if (email) await tagCompanionInRD(email, 'registo-incompleto', user.fullName ?? undefined);
+    if (email) await marcarRegistoIniciado(email, user.fullName ?? undefined);
   }
 }

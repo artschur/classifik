@@ -33,6 +33,7 @@ import {
   RD_CONVERSION_APROVADA,
   RD_CONVERSION_APROVADA_SEM_VERIFICACAO,
   RD_CONVERSION_RECUSADA,
+  RD_CONVERSION_SELO_CONCEDIDO,
 } from "@/lib/rd-station";
 import { ZodError } from "zod";
 import {
@@ -1859,6 +1860,11 @@ export async function approveCompanion(
     }
     if (novoSelo) {
       await tagCompanionInRD(companion.email, "verificada", companion.name);
+      // Na primeira aprovação o sugar-aprovada já diz que é verificada (e
+      // tira-a dos lembretes); aqui só falta avisar quando o selo chega depois.
+      if (before.verified) {
+        await sendConversionEventToRD(companion.email, RD_CONVERSION_SELO_CONCEDIDO, companion.name);
+      }
     }
   }
 
@@ -1907,6 +1913,7 @@ export async function verifyIdentityAsAdmin(companionId: number) {
 
   if (emailParaRD(alvo.email)) {
     await tagCompanionInRD(alvo.email, "verificada", alvo.name);
+    await sendConversionEventToRD(alvo.email, RD_CONVERSION_SELO_CONCEDIDO, alvo.name);
   }
 
   revalidateTag("companion", "max");

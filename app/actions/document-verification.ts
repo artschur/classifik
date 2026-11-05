@@ -14,6 +14,7 @@ import { and, eq, inArray, ne } from "drizzle-orm";
 import { getClerkIdByCompanionId } from "@/db/queries/userActions";
 import {
   RD_CONVERSION_DOCUMENTOS_RECUSADOS,
+  RD_CONVERSION_REGISTO_CONCLUIDO,
   RD_CONVERSION_VERIFICACAO_PULADA,
   sendConversionEventToRD,
   sendConversionEventWithReason,
@@ -61,6 +62,9 @@ async function markRegistrationComplete(userId: string) {
   const email = user.emailAddresses[0]?.emailAddress;
   if (email) {
     await tagCompanionInRD(email, "registo-concluido", user.fullName ?? undefined);
+    // Pode repetir-se (um reenvio depois de uma recusa volta a passar aqui);
+    // no RD o fluxo deste evento deve aceitar cada lead uma vez só.
+    await sendConversionEventToRD(email, RD_CONVERSION_REGISTO_CONCLUIDO, user.fullName ?? undefined);
   }
 }
 

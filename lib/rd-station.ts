@@ -19,6 +19,24 @@ export const RD_CONVERSION_VERIFICACAO_PULADA = 'verificacao-pulada';
 /** Lead captado na calculadora pública, antes de existir conta. */
 export const RD_CONVERSION_CALCULADORA = 'calculadora-ganhos';
 
+/*
+ * Marcos do registo. As tags com o mesmo nome continuam a ser gravadas para
+ * segmentar, mas sem plano PRO uma tag não dispara automações: os lembretes
+ * ("parou a meio", "falta verificar") precisam de um evento para entrar no
+ * fluxo e de outro para sair dele.
+ */
+/** Disse que quer anunciar (ou passou de cliente a anunciante). */
+export const RD_CONVERSION_REGISTO_INICIADO = 'registo-iniciado';
+/** Perfil criado na primeira foto: sai dos lembretes de registo parado. */
+export const RD_CONVERSION_PERFIL_CRIADO = 'perfil-criado';
+/** Vídeo e documento enviados, à espera da equipa. */
+export const RD_CONVERSION_REGISTO_CONCLUIDO = 'registo-concluido';
+/**
+ * Selo "Verificada" dado fora da primeira aprovação (essa já envia
+ * sugar-aprovada). Serve de saída dos lembretes de verificação.
+ */
+export const RD_CONVERSION_SELO_CONCEDIDO = 'selo-concedido';
+
 /**
  * Campo personalizado com o motivo escrito pelo admin, enviado nos eventos de
  * recusa (perfil e documentos) para entrar no e-mail. Só aparece no RD depois
@@ -263,6 +281,16 @@ export async function sendConversionEventToRD(
     console.error('RD Station: erro ao registar evento de conversão', error);
     return false;
   }
+}
+
+/**
+ * Quem passa a querer anunciar: a tag para segmentar e o evento que abre os
+ * lembretes de registo parado. Vale para quem escolhe "sou sugar" e para quem
+ * era cliente e decide anunciar.
+ */
+export async function marcarRegistoIniciado(email: string, name?: string): Promise<void> {
+  await tagCompanionInRD(email, 'registo-incompleto', name);
+  await sendConversionEventToRD(email, RD_CONVERSION_REGISTO_INICIADO, name);
 }
 
 /**

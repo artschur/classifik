@@ -6,7 +6,7 @@ import { registerCompanion } from '@/db/queries/companions';
 import { upsertSubscriptionFromStripe } from '@/db/queries/subscriptions';
 import { stripe } from '@/db/stripe';
 import type { RegisterCompanionFormValues } from '@/lib/registo-schema';
-import { tagCompanionInRD } from '@/lib/rd-station';
+import { RD_CONVERSION_PERFIL_CRIADO, sendConversionEventToRD, tagCompanionInRD } from '@/lib/rd-station';
 
 /**
  * Liga ao perfil recém-criado uma subscrição que já exista na Stripe.
@@ -79,6 +79,8 @@ async function markProfileCreated(clerkId: string) {
     const email = user.emailAddresses[0]?.emailAddress;
     if (email) {
       await tagCompanionInRD(email, 'perfil-criado', user.fullName ?? undefined);
+      // Tira-a dos lembretes de registo parado.
+      await sendConversionEventToRD(email, RD_CONVERSION_PERFIL_CRIADO, user.fullName ?? undefined);
     }
   } catch (error) {
     console.error('Falha ao marcar o perfil como criado:', error);

@@ -6,7 +6,9 @@ import { getCompanionToEdit } from "@/db/queries/companions";
 import { getUserPlan } from "@/db/queries/plan";
 import { acessoAPlanos } from "@/db/queries/verificacao";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { after } from "next/server";
 import { Suspense } from "react";
+import { marcarRegistoIniciado } from "@/lib/rd-station";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -51,6 +53,13 @@ async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
     metadata?.isRegistrationComplete !== registoFeito
   ) {
     const client = await clerkClient();
+    // Era cliente (ou ainda não tinha escolhido) e passa a anunciar: o RD tem
+    // de saber, como sabe de quem escolhe "sou sugar". Lido do Clerk e não da
+    // sessão, que só acompanha a alteração no pedido seguinte e faria o
+    // evento repetir-se.
+    const user = companion ? null : await client.users.getUser(userId);
+    const passaASugar = user !== null && user.publicMetadata?.isCompanion !== true;
+
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
         onboardingComplete: true,
@@ -58,6 +67,12 @@ async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
         isRegistrationComplete: registoFeito,
       },
     });
+
+    const email = user?.emailAddresses[0]?.emailAddress;
+    const nome = user?.fullName ?? undefined;
+    if (passaASugar && email) {
+      after(() => marcarRegistoIniciado(email, nome));
+    }
   }
 
   return (
