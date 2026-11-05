@@ -311,7 +311,7 @@ export function GanhosEn() {
               href="/checkout"
               className="w-full sm:w-auto border border-border hover:bg-muted text-foreground font-semibold px-8 py-3 rounded-xl transition-colors text-sm"
             >
-              See plans (in Portuguese)
+              See plans
             </LocaleLink>
           </div>
         </section>

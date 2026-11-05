@@ -8,18 +8,39 @@ import { acessoAPlanos } from "@/db/queries/verificacao";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getLocale } from "@/lib/locale.server";
+import type { Locale } from "@/lib/i18n";
 
-export const metadata: Metadata = {
-  title: 'Registe-se como anunciante',
-  description: 'Join OneSugar Portugal and create your companion profile to connect with verified members seeking private and premium experiences.',
-};
+const TEXT = {
+  pt: {
+    titulo: 'Registe-se como anunciante',
+    oSeuPerfil: "O seu perfil",
+    torneSe: "Torne-se uma Sugar na Onesugar",
+    subtitulo: "Perfis verificados. Visibilidade real. 100% dos ganhos para si.",
+  },
+  en: {
+    titulo: 'Sign up as an advertiser',
+    oSeuPerfil: "Your profile",
+    torneSe: "Become a companion on Onesugar",
+    subtitulo: "Verified profiles. Real visibility. You keep 100% of what you earn.",
+  },
+} as const;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: TEXT[locale].titulo,
+    description: 'Join OneSugar Portugal and create your companion profile to connect with verified members seeking private and premium experiences.',
+  };
+}
 
 
 
 /** Valores trazidos da calculadora pública, para não pedir duas vezes o mesmo. */
 type Prefill = { phoneNumber?: string; price?: number };
 
-async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
+async function CompanionFormWithData({ prefill, locale }: { prefill?: Prefill; locale: Locale }) {
+  const t = TEXT[locale];
   const { userId, sessionClaims, redirectToSignIn } = await auth();
 
   // Não há /sign-up nem /sign-in no site (as páginas de entrada são as do
@@ -64,10 +85,10 @@ async function CompanionFormWithData({ prefill }: { prefill?: Prefill }) {
     <>
       <div className="text-center space-y-2 mb-6">
         <h1 className="text-2xl font-bold">
-          {companion ? "O seu perfil" : "Torne-se uma Sugar na Onesugar"}
+          {companion ? t.oSeuPerfil : t.torneSe}
         </h1>
         {!companion && (
-          <p className="text-sm text-muted-foreground">Perfis verificados. Visibilidade real. 100% dos ganhos para si.</p>
+          <p className="text-sm text-muted-foreground">{t.subtitulo}</p>
         )}
       </div>
       {companion && (
@@ -92,6 +113,7 @@ export default async function RegisterCompanionPage({
   searchParams: Promise<{ phone?: string; price?: number | string }>;
 }) {
   const { phone, price } = await searchParams;
+  const locale = await getLocale();
   const parsedPrice = Number(price);
 
   const prefill: Prefill = {
@@ -103,7 +125,7 @@ export default async function RegisterCompanionPage({
     <div className="container mx-auto py-8 md:px-0">
       <div id="register-form">
         <Suspense fallback={<SkeletonForm />}>
-          <CompanionFormWithData prefill={prefill} />
+          <CompanionFormWithData prefill={prefill} locale={locale} />
         </Suspense>
       </div>
     </div>

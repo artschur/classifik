@@ -18,12 +18,61 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { togglePauseAd, deleteCompanionAccount } from '@/app/actions/account-management';
+import { useLocale } from '@/components/locale-provider';
 
-const DELETE_CONFIRMATION_PHRASE = 'APAGAR';
+// A frase pedida para apagar a conta, em cada idioma. Tem de bater com a do
+// servidor (app/actions/account-management.ts).
+const DELETE_CONFIRMATION_PHRASE = { pt: 'APAGAR', en: 'DELETE' } as const;
+
+const TEXT = {
+  pt: {
+    pausado: 'Anúncio pausado',
+    reactivado: 'Anúncio reactivado',
+    pausadoTexto: 'O teu perfil deixou de aparecer no site. Podes reactivar quando quiseres.',
+    reactivadoTexto: 'O teu perfil voltou a ficar visível no site.',
+    erro: 'Erro',
+    erroActualizar: 'Não foi possível actualizar o anúncio.',
+    erroApagar: 'Não foi possível apagar a conta.',
+    erroApagarTente: 'Não foi possível apagar a conta. Tenta novamente.',
+    reativar: 'Reativar anúncio',
+    pausar: 'Pausar anúncio',
+    apagar: 'Apagar anúncio',
+    dialogoTitulo: 'Apagar a tua conta definitivamente?',
+    dialogoTexto:
+      'Isto apaga o teu perfil, fotos, vídeo de verificação, documentos, avaliações e histórico — de tudo, sem possibilidade de recuperar. Uma eventual subscrição activa é cancelada automaticamente.',
+    escreve: 'Escreve',
+    paraConfirmar: 'para confirmar.',
+    cancelar: 'Cancelar',
+    apagarDefinitivamente: 'Apagar definitivamente',
+  },
+  en: {
+    pausado: 'Listing paused',
+    reactivado: 'Listing reactivated',
+    pausadoTexto: 'Your profile no longer appears on the site. You can reactivate it whenever you like.',
+    reactivadoTexto: 'Your profile is visible on the site again.',
+    erro: 'Error',
+    erroActualizar: 'We could not update your listing.',
+    erroApagar: 'We could not delete your account.',
+    erroApagarTente: 'We could not delete your account. Please try again.',
+    reativar: 'Reactivate listing',
+    pausar: 'Pause listing',
+    apagar: 'Delete listing',
+    dialogoTitulo: 'Delete your account permanently?',
+    dialogoTexto:
+      'This deletes your profile, photos, verification video, documents, reviews and history, all of it, with no way to recover it. Any active subscription is cancelled automatically.',
+    escreve: 'Type',
+    paraConfirmar: 'to confirm.',
+    cancelar: 'Cancel',
+    apagarDefinitivamente: 'Delete permanently',
+  },
+} as const;
 
 export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
   const { toast } = useToast();
   const router = useRouter();
+  const locale = useLocale();
+  const t = TEXT[locale];
+  const frase = DELETE_CONFIRMATION_PHRASE[locale];
 
   const [paused, setPaused] = useState(initialPaused);
   const [isTogglingPause, startTogglePause] = useTransition();
@@ -39,17 +88,15 @@ export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
       if (result.success) {
         setPaused(next);
         toast({
-          title: next ? 'Anúncio pausado' : 'Anúncio reactivado',
-          description: next
-            ? 'O teu perfil deixou de aparecer no site. Podes reactivar quando quiseres.'
-            : 'O teu perfil voltou a ficar visível no site.',
+          title: next ? t.pausado : t.reactivado,
+          description: next ? t.pausadoTexto : t.reactivadoTexto,
           variant: 'success',
         });
         router.refresh();
       } else {
         toast({
-          title: 'Erro',
-          description: result.error ?? 'Não foi possível actualizar o anúncio.',
+          title: t.erro,
+          description: result.error ?? t.erroActualizar,
           variant: 'destructive',
         });
       }
@@ -62,8 +109,8 @@ export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
       const result = await deleteCompanionAccount(confirmationText);
       if (result && !result.success) {
         toast({
-          title: 'Erro',
-          description: result.error ?? 'Não foi possível apagar a conta.',
+          title: t.erro,
+          description: result.error ?? t.erroApagar,
           variant: 'destructive',
         });
         setIsDeleting(false);
@@ -83,8 +130,8 @@ export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
         throw error;
       }
       toast({
-        title: 'Erro',
-        description: 'Não foi possível apagar a conta. Tenta novamente.',
+        title: t.erro,
+        description: t.erroApagarTente,
         variant: 'destructive',
       });
       setIsDeleting(false);
@@ -105,7 +152,7 @@ export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
         ) : (
           <Pause className="h-4 w-4" />
         )}
-        {paused ? 'Reativar anúncio' : 'Pausar anúncio'}
+        {paused ? t.reativar : t.pausar}
       </Button>
 
       <AlertDialog
@@ -119,30 +166,24 @@ export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
         <AlertDialogTrigger asChild>
           <Button variant="destructive">
             <Trash2 className="h-4 w-4" />
-            Apagar anúncio
+            {t.apagar}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apagar a tua conta definitivamente?</AlertDialogTitle>
+            <AlertDialogTitle>{t.dialogoTitulo}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-sm">
+                <p>{t.dialogoTexto}</p>
                 <p>
-                  Isto apaga o teu perfil, fotos, vídeo de verificação, documentos,
-                  avaliações e histórico — de tudo, sem possibilidade de recuperar.
-                  Uma eventual subscrição activa é cancelada automaticamente.
-                </p>
-                <p>
-                  Escreve{' '}
-                  <strong className="text-foreground">
-                    {DELETE_CONFIRMATION_PHRASE}
-                  </strong>{' '}
-                  para confirmar.
+                  {t.escreve}{' '}
+                  <strong className="text-foreground">{frase}</strong>{' '}
+                  {t.paraConfirmar}
                 </p>
                 <Input
                   value={confirmationText}
                   onChange={(e) => setConfirmationText(e.target.value)}
-                  placeholder={DELETE_CONFIRMATION_PHRASE}
+                  placeholder={frase}
                   disabled={isDeleting}
                   autoComplete="off"
                 />
@@ -150,11 +191,11 @@ export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t.cancelar}</AlertDialogCancel>
             <AlertDialogAction
               disabled={
                 isDeleting ||
-                confirmationText.trim().toUpperCase() !== DELETE_CONFIRMATION_PHRASE
+                confirmationText.trim().toUpperCase() !== frase
               }
               onClick={(e) => {
                 e.preventDefault();
@@ -167,7 +208,7 @@ export function ManageAdActions({ initialPaused }: { initialPaused: boolean }) {
               ) : (
                 <Trash2 className="h-4 w-4" />
               )}
-              Apagar definitivamente
+              {t.apagarDefinitivamente}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

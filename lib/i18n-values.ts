@@ -30,6 +30,15 @@ export const VALORES_EN: Record<string, string> = {
   'Francês': 'French',
   'Alemão': 'German',
   Italiano: 'Italian',
+  Masculino: 'Male',
+  Feminino: 'Female',
+  Outro: 'Other',
+  'Cisgênero': 'Cisgender',
+  'Transgênero': 'Transgender',
+  Curto: 'Short',
+  'Médio': 'Medium',
+  Longo: 'Long',
+  'Muito Longo': 'Very long',
 };
 
 export function traduzirValor(valor: string | null | undefined, locale: Locale): string {

@@ -9,15 +9,40 @@ import { companionsTable, audioRecordingsTable } from "@/db/schema";
 import { cancelarSubscricoesNaStripe } from "@/db/queries/subscriptions";
 import { setCompanionPaused } from "@/db/queries/companions";
 import { removeStorageFolder } from "@/lib/supabase-admin";
+import { getLocale } from "@/lib/locale.server";
+import { localizeHref } from "@/lib/i18n";
 
-const DELETE_CONFIRMATION_PHRASE = "APAGAR";
+// Frase de confirmação em cada idioma. Tem de bater com a do botão
+// (components/manage-ad-actions.tsx).
+const DELETE_CONFIRMATION_PHRASE = { pt: "APAGAR", en: "DELETE" } as const;
+
+const MENSAGENS = {
+  pt: {
+    semSessao: "Não autenticada.",
+    frase: "Frase de confirmação incorrecta.",
+    semPerfil: "Perfil não encontrado.",
+    subscricao: "Não foi possível cancelar a sua subscrição. Tente outra vez ou contacte o suporte.",
+  },
+  en: {
+    semSessao: "You are not signed in.",
+    frase: "The confirmation word is incorrect.",
+    semPerfil: "Profile not found.",
+    subscricao: "We could not cancel your subscription. Please try again or contact support.",
+  },
+} as const;
 
 export async function togglePauseAd(paused: boolean) {
+  const locale = await getLocale();
+  const m = MENSAGENS[locale];
   const { userId } = await auth();
-  if (!userId) throw new Error("Não autenticada.");
+  if (!userId) throw new Error(m.semSessao);
 
   const result = await setCompanionPaused(userId, paused);
   revalidatePath("/profile");
+  // O único erro de setCompanionPaused é perfil não encontrado.
+  if (locale === "en" && !result.success) {
+    return { ...result, error: m.semPerfil };
+  }
   return result;
 }
 
@@ -34,13 +59,15 @@ export async function togglePauseAd(paused: boolean) {
  * sem intenção explícita.
  */
 export async function deleteCompanionAccount(confirmationPhrase: string) {
-  if (confirmationPhrase.trim().toUpperCase() !== DELETE_CONFIRMATION_PHRASE) {
-    return { success: false, error: "Frase de confirmação incorrecta." };
+  const locale = await getLocale();
+  const m = MENSAGENS[locale];
+  if (confirmationPhrase.trim().toUpperCase() !== DELETE_CONFIRMATION_PHRASE[locale]) {
+    return { success: false, error: m.frase };
   }
 
   const { userId } = await auth();
   if (!userId) {
-    return { success: false, error: "Não autenticada." };
+    return { success: false, error: m.semSessao };
   }
 
   const [companion] = await db
@@ -53,7 +80,7 @@ export async function deleteCompanionAccount(confirmationPhrase: string) {
     .limit(1);
 
   if (!companion) {
-    return { success: false, error: "Perfil não encontrado." };
+    return { success: false, error: m.semPerfil };
   }
 
   // 1. Cancela na Stripe tudo o que ainda pode cobrar esta conta: apagar os
@@ -69,14 +96,14 @@ export async function deleteCompanionAccount(confirmationPhrase: string) {
     if (falhas.length > 0) {
       return {
         success: false,
-        error: "Não foi possível cancelar a sua subscrição. Tente outra vez ou contacte o suporte.",
+        error: m.subscricao,
       };
     }
   } catch (error) {
     console.error("Falha ao procurar subscrições na Stripe ao apagar conta:", error);
     return {
       success: false,
-      error: "Não foi possível cancelar a sua subscrição. Tente outra vez ou contacte o suporte.",
+      error: m.subscricao,
     };
   }
 
@@ -110,5 +137,5 @@ export async function deleteCompanionAccount(confirmationPhrase: string) {
   revalidateTag("companions", "max");
   revalidateTag("companions-filter", "max");
 
-  redirect("/");
+  redirect(localizeHref("/", locale));
 }

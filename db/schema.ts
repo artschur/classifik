@@ -117,7 +117,8 @@ export const companionsTable = pgTable(
     // Impressão digital do texto em português que foi traduzido. Se o texto
     // publicado mudar, deixa de bater certo e a tradução é refeita.
     translation_source: text('translation_source'),
-    // 'auto' (tradução automática) ou 'revisto' (corrigida pelo admin).
+    // 'auto' (tradução automática), 'revisto' (corrigida pelo admin) ou
+    // 'original' (ela escreveu em inglês e o texto dela fica como está).
     translation_status: varchar('translation_status', { length: 20 }),
     translated_at: timestamp('translated_at'),
     price: integer('price'), // opcional: perfis criados pelo admin podem não ter (drizzle/0037)

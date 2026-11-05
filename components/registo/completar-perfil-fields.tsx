@@ -23,9 +23,95 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/multi-select";
+import { useLocale } from "@/components/locale-provider";
+import type { Locale } from "@/lib/i18n";
+import { traduzirValor } from "@/lib/i18n-values";
 import type { CompletarPerfilInput } from "@/lib/registo-schema";
 
 const LINGUAS = ["Português", "Inglês", "Espanhol", "Francês", "Alemão", "Italiano"];
+
+// Valores gravados (sempre em português). Os que traduzirValor não cobre têm
+// aqui a tradução de cada opção.
+const IDENTIDADES = ["Cisgênero", "Transgênero", "Outro"];
+const ETNIAS = ["Branco", "Negro", "Latino", "Asiático"];
+const CORES_OLHOS = ["Azul", "Verde", "Marrom", "Preto"];
+const CORES_CABELO = ["Loiro", "Castanho", "Preto", "Vermelho", "Cinza", "Branco", "Colorido"];
+const COMPRIMENTOS_CABELO = ["Curto", "Médio", "Longo", "Muito Longo"];
+
+const OPCOES_EN: Record<string, string> = {
+  "Cisgênero": "Cisgender",
+  "Transgênero": "Transgender",
+  Outro: "Other",
+  Curto: "Short",
+  "Médio": "Medium",
+  Longo: "Long",
+  "Muito Longo": "Very long",
+};
+
+/** O texto de uma opção no idioma da página; o valor não muda. */
+const rotulo = (valor: string, locale: Locale) =>
+  locale === "en" ? (OPCOES_EN[valor] ?? traduzirValor(valor, locale)) : valor;
+
+const TEXT = {
+  pt: {
+    sobreSi: "Sobre si",
+    sobreSiAjuda: "Tudo opcional. Quanto mais completo, mais confiança transmite.",
+    descricaoCurta: "Descrição curta",
+    descricaoCurtaPlaceholder: "Uma frase que aparece no cartão do seu anúncio.",
+    instagramPlaceholder: "seu_instagram",
+    identidade: "Identidade de género",
+    selecione: "Selecione",
+    linguas: "Línguas",
+    linguasPlaceholder: "Selecione as suas línguas",
+    caracteristicas: "Características",
+    caracteristicasAjuda: "É o que faz o seu anúncio aparecer nos filtros de quem procura.",
+    peso: "Peso (kg)",
+    pesoPlaceholder: "Ex.: 60",
+    altura: "Altura (m)",
+    etnia: "Etnia",
+    corOlhos: "Cor dos olhos",
+    corCabelo: "Cor do cabelo",
+    comprimentoCabelo: "Comprimento do cabelo",
+    calcado: "Número de calçado (EU)",
+    calcadoPlaceholder: "Ex.: 37",
+    interruptores: {
+      silicone: { label: "Silicone", pergunta: "Tem procedimentos de silicone?" },
+      tattoos: { label: "Tatuagens", pergunta: "Tem tatuagens?" },
+      piercings: { label: "Piercings", pergunta: "Tem piercings?" },
+      smoker: { label: "Fumadora", pergunta: "Fuma?" },
+    },
+  },
+  en: {
+    sobreSi: "About you",
+    sobreSiAjuda: "All optional. The more complete your profile, the more trust it builds.",
+    descricaoCurta: "Short description",
+    descricaoCurtaPlaceholder: "One sentence shown on your listing card.",
+    instagramPlaceholder: "your_instagram",
+    identidade: "Gender identity",
+    selecione: "Select",
+    linguas: "Languages",
+    linguasPlaceholder: "Select your languages",
+    caracteristicas: "Features",
+    caracteristicasAjuda: "This is what makes your listing show up in the filters clients use.",
+    peso: "Weight (kg)",
+    pesoPlaceholder: "e.g. 60",
+    altura: "Height (m)",
+    etnia: "Ethnicity",
+    corOlhos: "Eye colour",
+    corCabelo: "Hair colour",
+    comprimentoCabelo: "Hair length",
+    calcado: "Shoe size (EU)",
+    calcadoPlaceholder: "e.g. 37",
+    interruptores: {
+      silicone: { label: "Silicone", pergunta: "Do you have silicone implants?" },
+      tattoos: { label: "Tattoos", pergunta: "Do you have tattoos?" },
+      piercings: { label: "Piercings", pergunta: "Do you have piercings?" },
+      smoker: { label: "Smoker", pergunta: "Do you smoke?" },
+    },
+  },
+} as const;
+
+const INTERRUPTORES = ["silicone", "tattoos", "piercings", "smoker"] as const;
 
 /** Campo numérico opcional: vazio fica `undefined`, e não 0. */
 const numeroOuVazio = (texto: string) => (texto === "" ? undefined : Number(texto));
@@ -37,14 +123,16 @@ const numeroOuVazio = (texto: string) => (texto === "" ? undefined : Number(text
  */
 export function CompletarPerfilFields() {
   const { control } = useFormContext<CompletarPerfilInput>();
+  const locale = useLocale();
+  const t = TEXT[locale];
 
   return (
     <div className="space-y-8">
       <section className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold">Sobre si</h3>
+          <h3 className="text-lg font-semibold">{t.sobreSi}</h3>
           <p className="text-sm text-muted-foreground">
-            Tudo opcional. Quanto mais completo, mais confiança transmite.
+            {t.sobreSiAjuda}
           </p>
         </div>
 
@@ -53,10 +141,10 @@ export function CompletarPerfilFields() {
           name="shortDescription"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descrição curta</FormLabel>
+              <FormLabel>{t.descricaoCurta}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Uma frase que aparece no cartão do seu anúncio."
+                  placeholder={t.descricaoCurtaPlaceholder}
                   value={field.value ?? ""}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -86,7 +174,7 @@ export function CompletarPerfilFields() {
                     </div>
                     <Input
                       className="rounded-l-none"
-                      placeholder="seu_instagram"
+                      placeholder={t.instagramPlaceholder}
                       value={field.value ? field.value.replace("@", "") : ""}
                       onChange={(e) => field.onChange(e.target.value.replace("@", ""))}
                     />
@@ -102,17 +190,19 @@ export function CompletarPerfilFields() {
             name="gender_identity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Identidade de género</FormLabel>
+                <FormLabel>{t.identidade}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder={t.selecione} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Cisgênero">Cisgênero</SelectItem>
-                    <SelectItem value="Transgênero">Transgênero</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
+                    {IDENTIDADES.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {rotulo(v, locale)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -128,15 +218,15 @@ export function CompletarPerfilFields() {
             <FormItem>
               <FormLabel className="flex items-center gap-2">
                 <Globe className="w-4 h-4" />
-                Línguas
+                {t.linguas}
               </FormLabel>
               <FormControl>
                 <MultiSelect
-                  options={LINGUAS.map((l) => ({ value: l, label: l }))}
+                  options={LINGUAS.map((l) => ({ value: l, label: rotulo(l, locale) }))}
                   onValueChange={field.onChange}
                   value={field.value}
                   defaultValue={field.value}
-                  placeholder="Selecione as suas línguas"
+                  placeholder={t.linguasPlaceholder}
                   variant="inverted"
                   animation={2}
                   maxCount={3}
@@ -150,9 +240,9 @@ export function CompletarPerfilFields() {
 
       <section className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold">Características</h3>
+          <h3 className="text-lg font-semibold">{t.caracteristicas}</h3>
           <p className="text-sm text-muted-foreground">
-            É o que faz o seu anúncio aparecer nos filtros de quem procura.
+            {t.caracteristicasAjuda}
           </p>
         </div>
 
@@ -162,12 +252,12 @@ export function CompletarPerfilFields() {
             name="weight"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Peso (kg)</FormLabel>
+                <FormLabel>{t.peso}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     inputMode="numeric"
-                    placeholder="Ex.: 60"
+                    placeholder={t.pesoPlaceholder}
                     value={field.value?.toString() ?? ""}
                     onChange={(e) => field.onChange(numeroOuVazio(e.target.value))}
                     onBlur={field.onBlur}
@@ -182,7 +272,7 @@ export function CompletarPerfilFields() {
             name="height"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Altura (m)</FormLabel>
+                <FormLabel>{t.altura}</FormLabel>
                 <FormControl>
                   <IMaskInput
                     mask="0,99"
@@ -215,18 +305,19 @@ export function CompletarPerfilFields() {
             name="ethnicity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Etnia</FormLabel>
+                <FormLabel>{t.etnia}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder={t.selecione} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Branco">Branco</SelectItem>
-                    <SelectItem value="Negro">Negro</SelectItem>
-                    <SelectItem value="Latino">Latino</SelectItem>
-                    <SelectItem value="Asiático">Asiático</SelectItem>
+                    {ETNIAS.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {rotulo(v, locale)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -238,18 +329,19 @@ export function CompletarPerfilFields() {
             name="eye_color"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cor dos olhos</FormLabel>
+                <FormLabel>{t.corOlhos}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder={t.selecione} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Azul">Azul</SelectItem>
-                    <SelectItem value="Verde">Verde</SelectItem>
-                    <SelectItem value="Marrom">Marrom</SelectItem>
-                    <SelectItem value="Preto">Preto</SelectItem>
+                    {CORES_OLHOS.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {rotulo(v, locale)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -261,21 +353,19 @@ export function CompletarPerfilFields() {
             name="hair_color"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cor do cabelo</FormLabel>
+                <FormLabel>{t.corCabelo}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder={t.selecione} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Loiro">Loiro</SelectItem>
-                    <SelectItem value="Castanho">Castanho</SelectItem>
-                    <SelectItem value="Preto">Preto</SelectItem>
-                    <SelectItem value="Vermelho">Vermelho</SelectItem>
-                    <SelectItem value="Cinza">Cinza</SelectItem>
-                    <SelectItem value="Branco">Branco</SelectItem>
-                    <SelectItem value="Colorido">Colorido</SelectItem>
+                    {CORES_CABELO.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {rotulo(v, locale)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -287,18 +377,19 @@ export function CompletarPerfilFields() {
             name="hair_length"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Comprimento do cabelo</FormLabel>
+                <FormLabel>{t.comprimentoCabelo}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder={t.selecione} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Curto">Curto</SelectItem>
-                    <SelectItem value="Médio">Médio</SelectItem>
-                    <SelectItem value="Longo">Longo</SelectItem>
-                    <SelectItem value="Muito Longo">Muito Longo</SelectItem>
+                    {COMPRIMENTOS_CABELO.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {rotulo(v, locale)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -310,12 +401,12 @@ export function CompletarPerfilFields() {
             name="shoe_size"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Número de calçado (EU)</FormLabel>
+                <FormLabel>{t.calcado}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     inputMode="numeric"
-                    placeholder="Ex.: 37"
+                    placeholder={t.calcadoPlaceholder}
                     value={field.value?.toString() ?? ""}
                     onChange={(e) => field.onChange(numeroOuVazio(e.target.value))}
                     onBlur={field.onBlur}
@@ -328,14 +419,7 @@ export function CompletarPerfilFields() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(
-            [
-              { name: "silicone", label: "Silicone", pergunta: "Tem procedimentos de silicone?" },
-              { name: "tattoos", label: "Tatuagens", pergunta: "Tem tatuagens?" },
-              { name: "piercings", label: "Piercings", pergunta: "Tem piercings?" },
-              { name: "smoker", label: "Fumadora", pergunta: "Fuma?" },
-            ] as const
-          ).map(({ name, label, pergunta }) => (
+          {INTERRUPTORES.map((name) => ({ name, ...t.interruptores[name] })).map(({ name, label, pergunta }) => (
             <FormField
               key={name}
               control={control}

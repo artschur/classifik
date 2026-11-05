@@ -7,10 +7,13 @@ import { companionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { isAdmin } from '@/components/header';
 import { acessoAPlanos, DESTINO_SEM_ACESSO } from '@/db/queries/verificacao';
+import { localizeHref, type Locale } from '@/lib/i18n';
 
 export async function GET(req: Request) {
     try {
         const { userId } = await auth();
+        // Esta rota não passa pelo /en: o botão dos planos diz o idioma (lang=en).
+        const locale: Locale = new URL(req.url).searchParams.get('lang') === 'en' ? 'en' : 'pt';
 
         if (!userId) {
             return new Response('Unauthorized', { status: 401 });
@@ -23,12 +26,12 @@ export async function GET(req: Request) {
         // é a verificação. Os admins só precisam de perfil (compras de teste).
         if (isAdmin(userId)) {
             if (!(await isUserACompanion(userId))) {
-                return Response.redirect(new URL('/companions/register', req.url), 303);
+                return Response.redirect(new URL(localizeHref('/companions/register', locale), req.url), 303);
             }
         } else {
             const acesso = await acessoAPlanos(userId);
             if (acesso !== 'pode') {
-                return Response.redirect(new URL(DESTINO_SEM_ACESSO[acesso], req.url), 303);
+                return Response.redirect(new URL(localizeHref(DESTINO_SEM_ACESSO[acesso], locale), req.url), 303);
             }
         }
 
@@ -76,10 +79,13 @@ export async function GET(req: Request) {
 
         const checkout = await stripe.checkout.sessions.create({
             customer: stripeCustomerId as string,
-            success_url: 'https://onesugar.pt/success',
+            success_url: `https://onesugar.pt${localizeHref('/success', locale)}`,
             // "Voltar" na página da Stripe regressa aos planos. Antes apontava
             // para /cancelled, uma página que nunca existiu, e dava 404.
-            cancel_url: `${url.origin}/checkout`,
+            cancel_url: `${url.origin}${localizeHref('/checkout', locale)}`,
+            // A página da Stripe em inglês para quem veio do /en. Em português
+            // fica como sempre esteve (a Stripe escolhe pelo navegador).
+            ...(locale === 'en' ? { locale: 'en' as const } : {}),
             mode: 'subscription',
             line_items: [
                 {

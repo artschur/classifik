@@ -34,6 +34,15 @@ export default function robots(): MetadataRoute.Robots {
           // Cache-Control: public, max-age=31536000, immutable para esses paths.
           '/checkout',
           '/onboarding',
+          // As mesmas áreas privadas em inglês: as páginas públicas em /en
+          // ligam para /en/checkout, que sem sessão vai para o login.
+          '/en/checkout',
+          '/en/onboarding',
+          '/en/profile',
+          '/en/success',
+          '/en/block',
+          '/en/companions/register',
+          '/en/companions/verification',
           '/login',
           '/register',
           '/admin',

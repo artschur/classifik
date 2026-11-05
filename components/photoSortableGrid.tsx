@@ -22,6 +22,25 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { framingStyle } from '@/lib/image-framing';
+import { useLocale } from '@/components/locale-provider';
+
+// Também aparece na fila do admin, que navega em português.
+const TEXT = {
+  pt: {
+    alt: (n: number) => `Foto ${n}`,
+    arrastar: (n: number) => `Arrastar foto ${n} para reordenar`,
+    capa: 'Capa',
+    enquadrar: (n: number) => `Ajustar enquadramento da foto ${n}`,
+    remover: (n: number) => `Remover foto ${n}`,
+  },
+  en: {
+    alt: (n: number) => `Photo ${n}`,
+    arrastar: (n: number) => `Drag photo ${n} to reorder`,
+    capa: 'Cover',
+    enquadrar: (n: number) => `Adjust framing of photo ${n}`,
+    remover: (n: number) => `Remove photo ${n}`,
+  },
+} as const;
 
 export type ManagedImage = {
   publicUrl: string;
@@ -71,6 +90,7 @@ function SortableTile({
     transition,
     isDragging,
   } = useSortable({ id: image.storagePath });
+  const t = TEXT[useLocale()];
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -101,7 +121,7 @@ function SortableTile({
       ) : (
         <Image
           src={image.publicUrl}
-          alt={`Foto ${index + 1}`}
+          alt={t.alt(index + 1)}
           fill
           className="object-cover"
           style={framingStyle(image)}
@@ -114,7 +134,7 @@ function SortableTile({
           de movimento, para um toque simples continuar a seleccionar. */}
       <button
         type="button"
-        aria-label={`Arrastar foto ${index + 1} para reordenar`}
+        aria-label={t.arrastar(index + 1)}
         className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
         onClick={() => onToggleSelect(image.storagePath)}
         {...attributes}
@@ -124,7 +144,7 @@ function SortableTile({
       {index === 0 && (
         <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground pointer-events-none">
           <Star className="h-3 w-3 fill-current" />
-          Capa
+          {t.capa}
         </span>
       )}
 
@@ -135,7 +155,7 @@ function SortableTile({
       {!video && (
         <button
           type="button"
-          aria-label={`Ajustar enquadramento da foto ${index + 1}`}
+          aria-label={t.enquadrar(index + 1)}
           onClick={(event) => {
             event.stopPropagation();
             onEditFraming(image);
@@ -172,7 +192,7 @@ function SortableTile({
 
       <button
         type="button"
-        aria-label={`Remover foto ${index + 1}`}
+        aria-label={t.remover(index + 1)}
         onClick={(event) => {
           event.stopPropagation();
           onRequestDelete(image.storagePath);

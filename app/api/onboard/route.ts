@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { isUserACompanion } from '@/db/queries/companions';
 import { definirPerfil } from '@/lib/definir-perfil';
+import { localizeHref, type Locale } from '@/lib/i18n';
 
 /**
  * Destino do registo feito a partir do popup "Sou Sugar / Sou Cliente": grava
@@ -10,7 +11,10 @@ import { definirPerfil } from '@/lib/definir-perfil';
  */
 export async function GET(req: Request) {
   const { userId, sessionClaims } = await auth();
-  const para = (caminho: string) => NextResponse.redirect(new URL(caminho, req.url));
+  // O popup diz em que língua estava a pessoa (lang=en), e o registo segue nela.
+  const locale: Locale = new URL(req.url).searchParams.get('lang') === 'en' ? 'en' : 'pt';
+  const para = (caminho: string) =>
+    NextResponse.redirect(new URL(localizeHref(caminho, locale), req.url));
 
   if (!userId) return para('/');
   if (await isUserACompanion(userId)) return para('/profile');

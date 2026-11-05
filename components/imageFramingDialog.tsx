@@ -13,6 +13,35 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { DEFAULT_FRAMING, framingStyle, type Framing } from '@/lib/image-framing';
+import { useLocale } from '@/components/locale-provider';
+
+// Também aparece na fila do admin, que navega em português.
+const TEXT = {
+  pt: {
+    titulo: 'Ajustar enquadramento',
+    descricao:
+      'Toca ou arrasta na foto para escolher o que fica centrado, e usa o zoom para aproximar. A foto original não é alterada.',
+    alt: 'Pré-visualização do enquadramento',
+    arrasta: 'Arrasta para centrar',
+    zoom: 'Zoom',
+    repor: 'Repor',
+    cancelar: 'Cancelar',
+    aGuardar: 'A guardar...',
+    guardar: 'Guardar',
+  },
+  en: {
+    titulo: 'Adjust framing',
+    descricao:
+      'Tap or drag on the photo to choose what stays centred, and use the zoom to get closer. The original photo is not changed.',
+    alt: 'Framing preview',
+    arrasta: 'Drag to centre',
+    zoom: 'Zoom',
+    repor: 'Reset',
+    cancelar: 'Cancel',
+    aGuardar: 'Saving...',
+    guardar: 'Save',
+  },
+} as const;
 
 interface ImageFramingDialogProps {
   open: boolean;
@@ -34,6 +63,7 @@ export function ImageFramingDialog({
   isSaving = false,
   onSave,
 }: ImageFramingDialogProps) {
+  const t = TEXT[useLocale()];
   const [framing, setFraming] = React.useState<Framing>(initialFraming);
   const frameRef = React.useRef<HTMLDivElement>(null);
   const draggingRef = React.useRef(false);
@@ -80,11 +110,8 @@ export function ImageFramingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Ajustar enquadramento</DialogTitle>
-          <DialogDescription>
-            Toca ou arrasta na foto para escolher o que fica centrado, e usa o
-            zoom para aproximar. A foto original não é alterada.
-          </DialogDescription>
+          <DialogTitle>{t.titulo}</DialogTitle>
+          <DialogDescription>{t.descricao}</DialogDescription>
         </DialogHeader>
 
         {imageUrl && (
@@ -99,7 +126,7 @@ export function ImageFramingDialog({
             >
               <Image
                 src={imageUrl}
-                alt="Pré-visualização do enquadramento"
+                alt={t.alt}
                 fill
                 className="object-cover pointer-events-none"
                 style={framingStyle(framing)}
@@ -114,14 +141,14 @@ export function ImageFramingDialog({
               />
               <span className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-[11px] text-white pointer-events-none">
                 <Move className="h-3 w-3" />
-                Arrasta para centrar
+                {t.arrasta}
               </span>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <label htmlFor="framing-zoom" className="font-medium">
-                  Zoom
+                  {t.zoom}
                 </label>
                 <span className="text-muted-foreground">{framing.zoom}%</span>
               </div>
@@ -152,7 +179,7 @@ export function ImageFramingDialog({
             disabled={isSaving}
           >
             <RotateCcw className="mr-2 h-4 w-4" />
-            Repor
+            {t.repor}
           </Button>
           <div className="flex gap-2">
             <Button
@@ -161,16 +188,16 @@ export function ImageFramingDialog({
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
             >
-              Cancelar
+              {t.cancelar}
             </Button>
             <Button type="button" onClick={() => onSave(framing)} disabled={isSaving}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  A guardar...
+                  {t.aGuardar}
                 </>
               ) : (
-                'Guardar'
+                t.guardar
               )}
             </Button>
           </div>

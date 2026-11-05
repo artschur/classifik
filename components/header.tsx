@@ -29,7 +29,7 @@ import { LocaleLink } from '@/components/locale-link';
 import { RegistarButton } from '@/components/registar-button';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { getLocale, getPathWithoutLocale } from '@/lib/locale.server';
-import type { Locale } from '@/lib/i18n';
+import { localizeHref, type Locale } from '@/lib/i18n';
 
 const NAV_TEXT = {
   pt: {
@@ -265,13 +265,14 @@ export default async function Header() {
               </Link>
             )}
             {userId && (
-              <Link
+              <LocaleLink
+                locale={locale}
                 href="/profile"
                 className={desktopNavItemClassPrimary}
                 prefetch={false}
               >
                 {t.profile}
-              </Link>
+              </LocaleLink>
             )}
           </nav>
           {/* No telemóvel o espaço entre os itens encolhe, para o PT | EN
@@ -285,7 +286,7 @@ export default async function Header() {
               <ModeToggle />
             </SignedIn>
             <SignedOut>
-              <SignInButton signUpForceRedirectUrl={"/onboarding"}>
+              <SignInButton signUpForceRedirectUrl={localizeHref("/onboarding", locale)}>
                 <Button variant="ghost" className="rounded-full" size="sm">
                   {t.login}
                 </Button>
@@ -336,14 +337,15 @@ export default async function Header() {
                     </Link>
                   )}
                   {userId && (
-                    <Link
+                    <LocaleLink
+                      locale={locale}
                       href="/profile"
                       className={mobileNavItemClass}
                       prefetch={false}
                     >
                       <User className="h-4 w-4" />
                       {t.profile}
-                    </Link>
+                    </LocaleLink>
                   )}
                 </nav>
                 <div className="mt-4">

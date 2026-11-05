@@ -4,7 +4,8 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import AnalyticsMain from '@/components/analytics-main';
 import { AnalyticsTimeframe } from '@/components/timeframe-selection-analytics';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { LocaleLink } from '@/components/locale-link';
+import { getLocale } from '@/lib/locale.server';
 import { kv } from '@/db';
 import { getActiveSubscriptionByClerkId } from '@/db/queries/subscriptions';
 import { db } from '@/db';
@@ -14,6 +15,37 @@ import { ManageAdActions } from '@/components/manage-ad-actions';
 import { canRecordAudio } from '@/lib/audio-access';
 import { Mic } from 'lucide-react';
 import { EstadoRegisto } from '@/components/registo/estado-registo';
+
+const TEXT = {
+  pt: {
+    semSessao: 'Faca login para ver as analytics',
+    editar: 'Editar Perfil',
+    audio: 'Gravar áudio',
+    bloqueios: 'Gerenciar Bloqueios',
+    ola: (nome: string) => `Olá ${nome}!`,
+    intro1: 'Esse é seu dashboard de métricas. ',
+    intro2: ' Aqui você verá a interação de seus clientes com o seu perfil.',
+    planoPagamento: 'Plano de pagamento',
+    planoAtual: 'Plano Atual',
+    diasRestantes: (n: number) => `${n} dias restantes`,
+    interacoes: 'Total de Interações',
+    avaliacao: 'Avaliação Média',
+  },
+  en: {
+    semSessao: 'Sign in to see your analytics',
+    editar: 'Edit profile',
+    audio: 'Record audio',
+    bloqueios: 'Manage blocked users',
+    ola: (nome: string) => `Hi ${nome}!`,
+    intro1: 'This is your stats dashboard. ',
+    intro2: ' Here you can see how clients interact with your profile.',
+    planoPagamento: 'Payment plan',
+    planoAtual: 'Current plan',
+    diasRestantes: (n: number) => (n === 1 ? '1 day left' : `${n} days left`),
+    interacoes: 'Total interactions',
+    avaliacao: 'Average rating',
+  },
+} as const;
 
 interface AdPurchase {
   id: string;
@@ -68,11 +100,13 @@ export default async function AnalyticsDashboard({
 }: {
   searchParams: Promise<{ days: string }>;
 }) {
+  const locale = await getLocale();
+  const t = TEXT[locale];
   const { userId, sessionClaims } = await auth();
   const sParams = await searchParams;
 
   if (!userId) {
-    return <div>Faca login para ver as analytics</div>;
+    return <div>{t.semSessao}</div>;
   }
 
   const days = sParams.days ? parseInt(sParams.days) : 7;
@@ -91,38 +125,42 @@ export default async function AnalyticsDashboard({
         <EstadoRegisto clerkId={userId} contexto="painel" centrado={false} />
       )}
       <div className="flex flex-wrap gap-4 mb-6">
-        <Link href={'/companions/register'}>
-          <Button variant="default">Editar Perfil</Button>
-        </Link>
+        <LocaleLink locale={locale} href={'/companions/register'}>
+          <Button variant="default">{t.editar}</Button>
+        </LocaleLink>
         {showAudio && (
-          <Link href={'/companions/register/audio'}>
+          <LocaleLink locale={locale} href={'/companions/register/audio'}>
             <Button variant="default">
               <Mic className="h-4 w-4" />
-              Gravar áudio
+              {t.audio}
             </Button>
-          </Link>
+          </LocaleLink>
         )}
         {sessionClaims.metadata.plan === 'vip' ? (
-          <Link href={'/block'}>
-            <Button variant="outline">Gerenciar Bloqueios</Button>
-          </Link>
+          <LocaleLink locale={locale} href={'/block'}>
+            <Button variant="outline">{t.bloqueios}</Button>
+          </LocaleLink>
         ) : null}
         {companion.id !== 0 && (
           <ManageAdActions initialPaused={companion.paused} />
         )}
       </div>
-      <h1 className="text-3xl font-bold">Olá {companion.name}!</h1>
+      <h1 className="text-3xl font-bold">
+        {/* Sem perfil, a query devolve o nome "Usuário": em inglês fica "Hi there!" */}
+        {t.ola(locale === 'en' && companion.id === 0 ? 'there' : companion.name)}
+      </h1>
       <p className="text-xl font-sans text-gray-300 pt-4">
-        Esse é seu dashboard de métricas. <br /> Aqui você verá a interação de
-        seus clientes com o seu perfil.
+        {t.intro1}
+        <br />
+        {t.intro2}
       </p>
-      <div className="p-8 text-white">Plano de pagamento</div>
+      <div className="p-8 text-white">{t.planoPagamento}</div>
       <div className="p-4 rounded-lg bg-card">
-        <h3 className="text-lg font-semibold">Plano Atual</h3>
+        <h3 className="text-lg font-semibold">{t.planoAtual}</h3>
         <p className="text-2xl font-bold capitalize">
           {companion.plan ?? 'Free'}
         </p>
-        <p className="text-lg font-semibold">{remainingDays} dias restantes</p>
+        <p className="text-lg font-semibold">{t.diasRestantes(remainingDays)}</p>
       </div>
 
       <div className="pt-8">
@@ -130,11 +168,11 @@ export default async function AnalyticsDashboard({
       </div>
       <div className="grid grid-cols-2 gap-4 py-4">
         <div className="p-4 rounded-lg bg-card">
-          <h3 className="text-lg font-semibold">Total de Interações</h3>
+          <h3 className="text-lg font-semibold">{t.interacoes}</h3>
           <p className="text-2xl font-bold">{companion.interactions}</p>
         </div>
         <div className="p-4 rounded-lg bg-card">
-          <h3 className="text-lg font-semibold">Avaliação Média</h3>
+          <h3 className="text-lg font-semibold">{t.avaliacao}</h3>
           {/* No need for toFixed here since we did it in the function */}
           <p className="text-2xl font-bold">{companion.averageRating}/5</p>
         </div>

@@ -4,9 +4,40 @@ import { getCompanionIdByClerkId, getBlockedUsers } from '@/db/queries/companion
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, X } from 'lucide-react';
-import Link from 'next/link';
+import { LocaleLink } from '@/components/locale-link';
 import { unblockUserAction } from '@/app/actions/block-actions';
 import { PlanType } from '@/db/queries/kv';
+import { getLocale } from '@/lib/locale.server';
+import { localizeHref } from '@/lib/i18n';
+
+const TEXT = {
+  pt: {
+    titulo: 'Gerenciar Usuários Bloqueados',
+    subtitulo: 'Usuários bloqueados não conseguem ver o seu perfil.',
+    bloqueados: (n: number) => `Usuários Bloqueados (${n})`,
+    lista: 'Lista dos usuários que você bloqueou de ver o seu perfil.',
+    vazio: 'Você ainda não bloqueou nenhum usuário.',
+    motivo: 'Motivo:',
+    bloqueadoEm: 'Bloqueado em:',
+    dataDesconhecida: 'Data desconhecida',
+    desbloquear: 'Desbloquear',
+    voltar: 'Voltar ao Perfil',
+    erro: 'Erro ao carregar a página de bloqueio.',
+  },
+  en: {
+    titulo: 'Manage blocked users',
+    subtitulo: 'Blocked users cannot see your profile.',
+    bloqueados: (n: number) => `Blocked users (${n})`,
+    lista: 'The users you have blocked from seeing your profile.',
+    vazio: 'You have not blocked anyone yet.',
+    motivo: 'Reason:',
+    bloqueadoEm: 'Blocked on:',
+    dataDesconhecida: 'Unknown date',
+    desbloquear: 'Unblock',
+    voltar: 'Back to profile',
+    erro: 'Error loading the block page.',
+  },
+} as const;
 
 /**
  * Bloqueios da anunciante.
@@ -18,6 +49,8 @@ import { PlanType } from '@/db/queries/kv';
  * o cliente em causa. Fica só a lista de quem já está bloqueado.
  */
 export default async function BlockPage() {
+  const locale = await getLocale();
+  const t = TEXT[locale];
   const { userId, sessionClaims, redirectToSignIn } = await auth();
 
   // A entrada é a página do Clerk: /sign-in não existe no site.
@@ -27,11 +60,11 @@ export default async function BlockPage() {
 
   if (!sessionClaims?.metadata?.isCompanion) {
     console.log('User is not a companion, redirecting to onboarding');
-    redirect('/onboarding');
+    redirect(localizeHref('/onboarding', locale));
   }
 
   if (sessionClaims?.metadata?.plan !== PlanType.VIP) {
-    redirect('/checkout');
+    redirect(localizeHref('/checkout', locale));
   }
 
   try {
@@ -43,10 +76,10 @@ export default async function BlockPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Shield className="w-8 h-8" />
-            Gerenciar Usuários Bloqueados
+            {t.titulo}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Usuários bloqueados não conseguem ver o seu perfil.
+            {t.subtitulo}
           </p>
         </div>
 
@@ -55,16 +88,16 @@ export default async function BlockPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <X className="w-5 h-5" />
-                Usuários Bloqueados ({blockedUsers.length})
+                {t.bloqueados(blockedUsers.length)}
               </CardTitle>
               <CardDescription>
-                Lista dos usuários que você bloqueou de ver o seu perfil.
+                {t.lista}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {blockedUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Você ainda não bloqueou nenhum usuário.
+                  {t.vazio}
                 </p>
               ) : (
                 <div className="space-y-4">
@@ -77,14 +110,16 @@ export default async function BlockPage() {
                         <p className="font-medium">{blockedUser.blocked_user_id}</p>
                         {blockedUser.reason && (
                           <p className="text-sm text-muted-foreground">
-                            Motivo: {blockedUser.reason}
+                            {t.motivo} {blockedUser.reason}
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          Bloqueado em:{' '}
+                          {t.bloqueadoEm}{' '}
                           {blockedUser.created_at
-                            ? new Date(blockedUser.created_at).toLocaleDateString('pt-BR')
-                            : 'Data desconhecida'}
+                            ? new Date(blockedUser.created_at).toLocaleDateString(
+                                locale === 'en' ? 'en-GB' : 'pt-BR',
+                              )
+                            : t.dataDesconhecida}
                         </p>
                       </div>
                       <form
@@ -94,7 +129,7 @@ export default async function BlockPage() {
                         }}
                       >
                         <Button variant="outline" size="sm" type="submit">
-                          Desbloquear
+                          {t.desbloquear}
                         </Button>
                       </form>
                     </div>
@@ -106,9 +141,9 @@ export default async function BlockPage() {
 
           {/* Navigation */}
           <div className="flex justify-center">
-            <Link href="/profile">
-              <Button variant="outline">Voltar ao Perfil</Button>
-            </Link>
+            <LocaleLink locale={locale} href="/profile">
+              <Button variant="outline">{t.voltar}</Button>
+            </LocaleLink>
           </div>
         </div>
       </div>
@@ -117,10 +152,10 @@ export default async function BlockPage() {
     console.error('Error loading block page:', error);
     return (
       <div className="container mx-auto py-8 px-4 text-center">
-        <p className="text-red-500">Erro ao carregar a página de bloqueio.</p>
-        <Link href="/profile">
-          <Button className="mt-4">Voltar ao Perfil</Button>
-        </Link>
+        <p className="text-red-500">{t.erro}</p>
+        <LocaleLink locale={locale} href="/profile">
+          <Button className="mt-4">{t.voltar}</Button>
+        </LocaleLink>
       </div>
     );
   }
