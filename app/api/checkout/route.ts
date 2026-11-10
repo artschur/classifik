@@ -1,4 +1,5 @@
 import { db, kv } from '@/db';
+import { lerIdsGa } from '@/lib/ga-server';
 import { stripe } from '@/db/stripe';
 import { auth } from '@clerk/nextjs/server';
 import { priceIdToPlan } from '@/db/queries/kv';
@@ -107,6 +108,7 @@ export async function GET(req: Request) {
                 stripeCustomerId: stripeCustomerId as string,
                 planType: planInfo.name,
                 ...(semTrial ? { testeAdminSemTrial: 'sim' } : {}),
+                ...metadadosGa(req, userId),
             },
             allow_promotion_codes: true,
         });
@@ -116,4 +118,19 @@ export async function GET(req: Request) {
         console.error('❌ Error creating checkout session:', error);
         return new Response('Internal server error', { status: 500 });
     }
+}
+
+/**
+ * Identificadores do GA4 da visita que iniciou o checkout. O webhook da
+ * Stripe usa-os para atribuir a assinatura e as cobranças (que chegam até 30
+ * dias depois) ao mesmo utilizador do GA4, e portanto à origem dele.
+ * As compras de teste dos admins ficam marcadas para não entrar no GA4.
+ */
+function metadadosGa(req: Request, userId: string): Record<string, string> {
+    if (isAdmin(userId)) return { ga_ignorar: 'sim' };
+    const { clientId, sessionId } = lerIdsGa(req.headers.get('cookie'));
+    return {
+        ...(clientId ? { ga_client_id: clientId } : {}),
+        ...(sessionId ? { ga_session_id: sessionId } : {}),
+    };
 }
