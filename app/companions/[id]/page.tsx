@@ -12,7 +12,11 @@ import {
   isUserBlocked,
 } from '@/db/queries/companions';
 import { BlockedProfileMessage } from '@/components/blocked-profile-message';
-import { companionExists, getCompanionById } from '@/db/queries';
+import { getCompanionById } from '@/db/queries';
+import { db } from '@/db';
+import { companionsTable } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { isAdmin } from '@/components/header';
 import { notFound } from 'next/navigation';
 import { distritoPorSlug, inDistrict } from '@/lib/districts';
 import { getLocale } from '@/lib/locale.server';
@@ -22,10 +26,12 @@ import { isValidPreviewToken } from '@/lib/preview-token';
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ ver?: string }>;
 }): Promise<Metadata> {
-  const [{ id }, locale] = await Promise.all([params, getLocale()]);
+  const [{ id }, { ver }, locale] = await Promise.all([params, searchParams, getLocale()]);
   const companionId = parseInt(id);
   const path = `/companions/${id}`;
 
@@ -34,7 +40,7 @@ export async function generateMetadata({
   // follow", e o Google podia guardar perfis apagados como páginas vazias.
   // Fica aqui, fora do try, porque o notFound() lança um erro próprio que o
   // catch abaixo engoliria. Se a consulta falhar, a página segue como antes.
-  await garantirQueExiste(companionId);
+  await garantirQueEstaNoAr(id, isValidPreviewToken(companionId, ver));
 
   try {
     const [companion, district] = await Promise.all([
@@ -119,10 +125,47 @@ export async function generateMetadata({
   }
 }
 
-async function garantirQueExiste(companionId: number) {
-  if (!Number.isInteger(companionId) || companionId <= 0) notFound();
-  const existe = await companionExists(companionId).catch(() => true);
-  if (!existe) notFound();
+/**
+ * O perfil só abre se existir e estiver no ar. Apagado, pausado ou ainda por
+ * aprovar dá 404 a quem não é o admin, a dona do anúncio ou alguém com o link
+ * de pré-visualização (as mesmas excepções do CompanionProfile).
+ *
+ * Tem de correr aqui, no topo da página e do generateMetadata, e não dentro
+ * do <Suspense> do perfil: depois de o primeiro pedaço do HTML sair, o
+ * estado HTTP já foi enviado como 200, e o notFound() só consegue pôr um
+ * noindex na página. O Google trata isso como soft 404. Se a consulta falhar,
+ * a página segue como antes, para uma falha passageira não tirar perfis do ar.
+ */
+async function garantirQueEstaNoAr(id: string, preview = false) {
+  // Só dígitos: parseInt('12abc') dava 12 e abria o perfil 12 noutro endereço.
+  if (!/^\d+$/.test(id)) notFound();
+  const companionId = parseInt(id, 10);
+  if (companionId <= 0) notFound();
+
+  let perfil: { authId: string; paused: boolean; verified: boolean } | undefined;
+  try {
+    [perfil] = await db
+      .select({
+        authId: companionsTable.auth_id,
+        paused: companionsTable.paused,
+        verified: companionsTable.verified,
+      })
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companionId))
+      .limit(1);
+  } catch (error) {
+    console.error(`Perfil ${companionId}: não foi possível confirmar se está no ar`, error);
+    return;
+  }
+
+  if (!perfil) notFound();
+
+  const escondido = perfil.paused || !perfil.verified;
+  if (!escondido || preview) return;
+
+  const { userId } = await auth();
+  const podeVer = Boolean(userId && (isAdmin(userId) || userId === perfil.authId));
+  if (!podeVer) notFound();
 }
 
 export default async function CompanionPage({
@@ -134,9 +177,9 @@ export default async function CompanionPage({
 }) {
   const [{ id }, { ver }] = await Promise.all([params, searchParams]);
   const companionId = parseInt(id);
-  await garantirQueExiste(companionId);
   // Link de pré-visualização enviado pelo admin a quem ainda não autorizou.
   const preview = isValidPreviewToken(companionId, ver);
+  await garantirQueEstaNoAr(id, preview);
 
   // Check if user is blocked
   const { userId } = await auth();

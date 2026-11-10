@@ -2,6 +2,8 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOCALE_HEADER, PATH_HEADER, hasEnglish, stripLocale } from "./lib/i18n";
 
+import { distritoConhecido } from "./lib/districts";
+
 // Define protected routes
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -66,6 +68,12 @@ const isPublicApiRoute = createRouteMatcher([
  * redireccionam para o português. O cabeçalho é sempre definido aqui, por
  * isso um valor enviado de fora nunca chega às páginas.
  */
+/**
+ * Caminho que não corresponde a nenhuma página: reescrever para ele devolve o
+ * 404 do Next com o estado HTTP certo, sem mudar o endereço na barra.
+ */
+const ROTA_INEXISTENTE = "/_pagina-inexistente";
+
 function withLocale(req: NextRequest) {
   const { locale, path } = stripLocale(req.nextUrl.pathname);
   const headers = new Headers(req.headers);
@@ -73,6 +81,14 @@ function withLocale(req: NextRequest) {
   headers.set(PATH_HEADER, path);
 
   if (locale === "en") {
+    // /en/location/<slug> que não é distrito: 404 aqui mesmo. Antes ia para
+    // /location/<slug> com um 307 e acabava numa página vazia com estado 200.
+    const slug = path.match(/^\/location\/([^/]+)$/)?.[1];
+    if (slug && !hasEnglish(path) && !distritoConhecido(slug)) {
+      const target = req.nextUrl.clone();
+      target.pathname = ROTA_INEXISTENTE;
+      return NextResponse.rewrite(target, { request: { headers } });
+    }
     if (!hasEnglish(path)) {
       const target = req.nextUrl.clone();
       target.pathname = path;
