@@ -4,7 +4,13 @@ import { auth } from '@clerk/nextjs/server';
 import { asc, eq, sql } from 'drizzle-orm';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/db';
-import { characteristicsTable, citiesTable, companionsTable, imagesTable } from '@/db/schema';
+import {
+  characteristicsTable,
+  citiesTable,
+  companionPendingEditsTable,
+  companionsTable,
+  imagesTable,
+} from '@/db/schema';
 import { isAdmin } from '@/components/header';
 import { getSupabaseAdmin, removeStorageFolder } from '@/lib/supabase-admin';
 import { importedAuthId, importedEmail, isImportedAuthId } from '@/lib/imported-profiles';
@@ -362,14 +368,27 @@ export type ImportedProfileForEdit = {
 /** Fotos tiradas do perfil ficam aqui, no bucket privado, para se poderem repor. */
 const pastaArquivo = (authId: string) => `${authId.slice('import_'.length)}/arquivo/`;
 
-/** Perfil criado pelo admin e ainda sem conta dela, ou null. */
+/**
+ * Perfil que o admin pode editar por aqui, ou null: criado pela equipa e ainda
+ * sem conta dela, ou já reivindicado mas ainda na pausa da importação (à
+ * espera da aprovação no /verify). Depois de publicado, quem edita é ela.
+ */
 async function lerImportada(companionId: number) {
   const [perfil] = await db
     .select({ id: companionsTable.id, authId: companionsTable.auth_id })
     .from(companionsTable)
     .where(eq(companionsTable.id, companionId))
     .limit(1);
-  return perfil && isImportedAuthId(perfil.authId) ? perfil : null;
+  if (!perfil) return null;
+  if (isImportedAuthId(perfil.authId)) return { ...perfil, pasta: pastaArquivo(perfil.authId) };
+
+  // Reivindicada: a conta já é dela, mas o arquivo continua na pasta da candidata.
+  const linhas = await db.execute(sql`
+    select id from staging.candidatos
+    where companion_id = ${companionId} and status = 'reivindicado'
+    limit 1`);
+  const candidata = Array.from(linhas)[0] as { id: string } | undefined;
+  return candidata ? { ...perfil, pasta: `${candidata.id}/arquivo/` } : null;
 }
 
 /** Copia um ficheiro entre buckets; sem cópia directa, descarrega e envia. */
@@ -428,7 +447,7 @@ export async function getImportedProfileForEdit(
     db.select({ id: citiesTable.id, city: citiesTable.city }).from(citiesTable).orderBy(asc(citiesTable.city)),
   ]);
 
-  const pasta = pastaArquivo(perfil.authId);
+  const pasta = perfil.pasta;
   const storage = getSupabaseAdmin().storage.from('candidatas');
   const { data: lista } = await storage.list(pasta, { limit: 1000 });
   const caminhos = (lista ?? []).filter((f) => f.id).map((f) => `${pasta}${f.name}`);
@@ -485,6 +504,22 @@ export async function updateImportedProfile(companionId: number, input: unknown)
   const perfil = await lerImportada(companionId);
   if (!perfil) return { success: false, error: 'Este perfil já está ligado a uma conta' };
 
+  // Reivindicada com alterações dela por rever: aprovar aplicava-as por cima
+  // do que se gravasse aqui, e a edição do admin perdia-se.
+  if (!isImportedAuthId(perfil.authId)) {
+    const [pendente] = await db
+      .select({ id: companionPendingEditsTable.companion_id })
+      .from(companionPendingEditsTable)
+      .where(eq(companionPendingEditsTable.companion_id, companionId))
+      .limit(1);
+    if (pendente) {
+      return {
+        success: false,
+        error: 'Ela tem alterações por rever: aprove ou recuse essas alterações primeiro e depois edite.',
+      };
+    }
+  }
+
   const telefone = telefonePT(dados.phone);
   if (!telefone) return { success: false, error: 'WhatsApp inválido' };
 
@@ -501,7 +536,7 @@ export async function updateImportedProfile(companionId: number, input: unknown)
     .from(imagesTable)
     .where(eq(imagesTable.companionId, companionId));
   const atuaisPorCaminho = new Map(atuais.map((f) => [f.path, f.id]));
-  const pasta = pastaArquivo(perfil.authId);
+  const pasta = perfil.pasta;
 
   const escolhidas = dados.photos.map((chave) => {
     const [tipo, ...resto] = chave.split(':');

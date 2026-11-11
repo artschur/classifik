@@ -39,9 +39,13 @@ export async function togglePauseAd(paused: boolean) {
 
   const result = await setCompanionPaused(userId, paused);
   revalidatePath("/profile");
-  // O único erro de setCompanionPaused é perfil não encontrado.
+  // Os erros de setCompanionPaused: perfil não encontrado, ou recusado (ao
+  // tentar reactivar).
   if (locale === "en" && !result.success) {
-    return { ...result, error: m.semPerfil };
+    return {
+      ...result,
+      error: paused ? m.semPerfil : "Your profile was declined: fix it and save to send it back for review.",
+    };
   }
   return result;
 }

@@ -72,6 +72,7 @@ import {
   updateImagesOrderAsAdmin,
 } from '@/db/queries/images';
 import { ImageFramingDialog } from '@/components/imageFramingDialog';
+import { ImportedEditButton } from '@/components/imported-edit-button';
 import { isVideoMedia, mediaFraming, mediaUrl } from '@/lib/image-framing';
 
 type Document = {
@@ -284,7 +285,10 @@ export default function SingleCompanionVerify({
   // no ar (com ou sem alterações dela).
   const reivindicada = companion.reivindicadaPorPublicar === true;
   // No ar e com vídeo ou documento à espera: o admin decide o selo.
-  const docsNoAr = noAr && !temSelo && docsPendentes;
+  // A reivindicada não está no ar (pausa da importação): decide-se como um
+  // registo, com os botões de aprovar com ou sem selo e recusar documentos.
+  const docsNoAr = noAr && !reivindicada && !temSelo && docsPendentes;
+  const comoRegisto = !noAr || reivindicada;
   // Já esteve publicada e foi o admin que a tirou do ar.
   const wasSentToReview = companion.wasSentToReview === true && !noAr;
   const pendingChanges = companion.pendingChanges ?? [];
@@ -380,7 +384,7 @@ export default function SingleCompanionVerify({
       toast({
         title: isEdit ? 'Alterações aprovadas' : 'Companheira aprovada',
         description: reivindicada
-          ? `${companion.name} saiu da pausa e está no ar.`
+          ? `${companion.name} saiu da pausa e está no ar${comSelo || temSelo ? ' com o selo "Verificada"' : ', sem selo ("Não verificada")'}.`
           : isEdit
           ? `As alterações de ${companion.name} já estão no ar.`
           : comSelo || temSelo
@@ -443,7 +447,7 @@ export default function SingleCompanionVerify({
         variant: 'success',
       });
       // No ar e sem edição por rever, não há mais nada a decidir aqui.
-      if (noAr && !isEdit) onActionComplete(companion.id);
+      if (noAr && !isEdit && !reivindicada) onActionComplete(companion.id);
     }, 'Falha ao recusar os documentos. Por favor, tente novamente.');
 
   /** Selo para quem já está no ar e enviou vídeo e documento. */
@@ -990,7 +994,8 @@ export default function SingleCompanionVerify({
         {reivindicada && (
           <p className="w-full text-sm text-violet-900 dark:text-violet-200">
             Perfil importado que ela reivindicou pelo convite. Continua na pausa
-            posta pela equipa: aprovar põe-no no ar.
+            posta pela equipa: aprovar põe-no no ar; editar não. Recusar deixa-o
+            em pausa e vai para as Recusadas.
             {isEdit ? ' Recusar as alterações deixa-o em pausa e aqui na fila.' : ''}
           </p>
         )}
@@ -1000,33 +1005,38 @@ export default function SingleCompanionVerify({
           <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
             <Button
               variant="outline"
-              className="w-full sm:w-1/2 bg-red-500 hover:bg-red-600 text-white"
+              className={`w-full ${reivindicada ? '' : 'sm:w-1/2 '}bg-red-500 hover:bg-red-600 text-white`}
               onClick={handleRejectEdit}
               disabled={isPending}
             >
               <X className="w-4 h-4 mr-2" /> Recusar alterações
             </Button>
-            <Button
-              className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white"
-              onClick={() => handleApprove(false)}
-              disabled={isPending}
-            >
-              <Check className="w-4 h-4 mr-2" />
-              {reivindicada ? 'Aprovar e pôr no ar' : 'Aprovar alterações'}
-            </Button>
+            {/* Na reivindicada, aprovar (com as alterações) é nos botões de
+                baixo, com ou sem selo. */}
+            {!reivindicada && (
+              <Button
+                className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white"
+                onClick={() => handleApprove(false)}
+                disabled={isPending}
+              >
+                <Check className="w-4 h-4 mr-2" /> Aprovar alterações
+              </Button>
+            )}
           </div>
         )}
 
-        {/* Reivindicada sem alterações: só falta pô-la no ar. */}
-        {reivindicada && !isEdit && (
-          <Button
-            className="w-full bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => handleApprove(false)}
-            disabled={isPending}
-          >
-            <Check className="w-4 h-4 mr-2" /> Aprovar e pôr no ar
-          </Button>
-        )}
+        {/* Reivindicada: editar antes de aprovar. Não com alterações dela por
+            rever, que a aprovação aplicaria por cima. */}
+        {reivindicada &&
+          (isEdit ? (
+            <p className="w-full text-xs text-muted-foreground">
+              Para editar o perfil, decida primeiro as alterações dela.
+            </p>
+          ) : (
+            <div className="w-full [&>button]:w-full">
+              <ImportedEditButton companionId={companion.id} />
+            </div>
+          ))}
 
         {/* No ar e com vídeo ou documento à espera: decide-se o selo. */}
         {docsNoAr && (
@@ -1055,8 +1065,9 @@ export default function SingleCompanionVerify({
           </div>
         )}
 
-        {/* Registo por aprovar: pôr no ar (com ou sem selo) ou recusar. */}
-        {!noAr && (
+        {/* Registo por aprovar (ou reivindicada em pausa): pôr no ar, com ou
+            sem selo, ou recusar. */}
+        {comoRegisto && (
           <div className="w-full space-y-3">
             {wasSentToReview && (
               <p className="w-full text-sm text-amber-900 dark:text-amber-200">
@@ -1072,7 +1083,8 @@ export default function SingleCompanionVerify({
                 onClick={() => handleApprove(false)}
                 disabled={isPending}
               >
-                <Check className="w-4 h-4 mr-2" /> Aprovar (já tem o selo)
+                <Check className="w-4 h-4 mr-2" />
+                {reivindicada ? 'Aprovar e pôr no ar (já tem o selo)' : 'Aprovar (já tem o selo)'}
               </Button>
             ) : (
               <div className="flex flex-col sm:flex-row w-full gap-4">
@@ -1164,7 +1176,7 @@ export default function SingleCompanionVerify({
         open={dialogo === 'perfil'}
         onOpenChange={(aberto) => setDialogo(aberto ? 'perfil' : null)}
         titulo={`Recusar o perfil de ${companion.name}`}
-        descricao="Sai da fila sem apagar nada e vai para as Recusadas. Ela vê o motivo ao entrar e, se corrigir o perfil, volta para a fila. O RD recebe a recusa com este motivo."
+        descricao={`Sai da fila sem apagar nada e vai para as Recusadas.${reivindicada ? ' Continua em pausa, e ela não a pode reactivar sozinha.' : ''} Ela vê o motivo ao entrar e, se corrigir o perfil, volta para a fila. O RD recebe a recusa com este motivo.`}
         botao="Recusar perfil"
         aGravar={isPending}
         onConfirmar={handleRejectProfile}

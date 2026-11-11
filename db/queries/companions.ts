@@ -1168,7 +1168,10 @@ export async function updateCompanionFromForm(
   }
 
   await guardarEdicaoPendente(companion.id, dados);
-  return { pendingReview: true, reenviado: false };
+  // Importada reivindicada e recusada (continua em pausa): corrigir devolve-a
+  // à fila, como a qualquer registo recusado.
+  const reenviado = await reenviarSeRecusado(companion);
+  return { pendingReview: true, reenviado };
 }
 
 /**
@@ -1223,6 +1226,7 @@ export async function saveCompletarPerfil(
   }
   const { companionId: _id, ...publicado } = atual;
   await guardarEdicaoPendente(companion.id, { ...publicado, ...dados });
+  await reenviarSeRecusado(companion);
   return { pendingReview: true };
 }
 
@@ -1499,6 +1503,9 @@ export async function getUnverifiedCompanions(): Promise<
         // ou seja, com o botão de recusar a apagá-lo.
         and(
           eq(companionsTable.verified, true),
+          // Só uma importada reivindicada e recusada tem isto no ar (em
+          // pausa): fica nas "Recusadas" até ela corrigir e guardar.
+          isNull(companionsTable.rejected_at),
           or(
             sql`EXISTS (
               SELECT 1 FROM ${companionPendingEditsTable}
@@ -1520,9 +1527,11 @@ export async function getUnverifiedCompanions(): Promise<
         ),
         // Importada que ela reivindicou e que continua na pausa da equipa,
         // mesmo sem ter mudado nada: só sai do esconderijo com uma aprovação.
+        // Recusada, sai da fila (fica nas "Recusadas") até ela corrigir.
         and(
           eq(companionsTable.verified, true),
           eq(companionsTable.paused, true),
+          isNull(companionsTable.rejected_at),
           sql`EXISTS (
             SELECT 1 FROM staging.candidatos s
             WHERE s.companion_id = ${companionsTable.id} AND s.status = 'reivindicado'
@@ -1834,10 +1843,16 @@ export async function approveCompanion(
     throw new Error("Perfil não encontrado");
   }
 
+  // Importada que ela reivindicou e que continua na pausa posta pela equipa:
+  // a aprovação é o momento de a pôr no ar, e conta como a entrada dela na
+  // plataforma, como um registo aprovado.
+  const porPublicar = await reivindicadaPorPublicar(id);
+  const primeiraEntrada = !before.verified || porPublicar;
+
   // Com vídeo e documento enviados, já não se põe no ar sem selo: ou se
   // aprova como verificada, ou se recusam os documentos primeiro. Uma
   // verificação a meio não bloqueia, e ela continua com o aviso para acabar.
-  if (!before.verified && !before.identityVerified && !comSelo) {
+  if (primeiraEntrada && !before.identityVerified && !comSelo) {
     if (verificacaoCompletaPendente(await resumoDocumentos(id))) {
       throw new Error(
         "Ela enviou vídeo e documento: aprove como verificada ou recuse os documentos primeiro.",
@@ -1877,10 +1892,6 @@ export async function approveCompanion(
   const novoSelo = comSelo && !before.identityVerified;
   const selo = novoSelo ? await darSelo(id, userId) : {};
 
-  // Importada que ela reivindicou e que continua na pausa posta pela equipa:
-  // a aprovação é o momento de a pôr no ar.
-  const porPublicar = await reivindicadaPorPublicar(id);
-
   const [companion] = await db
     .update(companionsTable)
     .set({
@@ -1899,8 +1910,9 @@ export async function approveCompanion(
     // O evento de conversão marca a entrada na plataforma, por isso só
     // dispara na primeira aprovação. Aprovar uma edição de quem já estava no
     // ar não é uma conversão nova e não pode voltar a contar como tal. Sem
-    // selo, o evento é outro, para as boas-vindas pedirem a verificação.
-    if (!before.verified) {
+    // selo, o evento é outro, para as boas-vindas pedirem a verificação. A
+    // importada reivindicada entra aqui quando sai da pausa da importação.
+    if (primeiraEntrada) {
       await tagCompanionInRD(companion.email, "aprovado", companion.name);
       await sendConversionEventToRD(
         companion.email,
@@ -1914,7 +1926,7 @@ export async function approveCompanion(
       await tagCompanionInRD(companion.email, "verificada", companion.name);
       // Na primeira aprovação o sugar-aprovada já diz que é verificada (e
       // tira-a dos lembretes); aqui só falta avisar quando o selo chega depois.
-      if (before.verified) {
+      if (!primeiraEntrada) {
         await sendConversionEventToRD(companion.email, RD_CONVERSION_SELO_CONCEDIDO, companion.name);
       }
     }
@@ -2006,7 +2018,14 @@ export async function rejectCompanion(id: number, motivo?: string) {
     return { success: false, id, discardedEdit: false };
   }
 
-  if (companion.verified) {
+  // Importada reivindicada, ainda na pausa da equipa: "Recusar perfil" (com
+  // motivo) é como num registo: sai da fila, nada se apaga, continua em
+  // pausa, e a edição que ela tenha proposto fica guardada para a corrigir.
+  // Sem motivo é "Recusar alterações": descarta a edição, como no ar.
+  const recusarReivindicada =
+    companion.verified && Boolean(motivo?.trim()) && (await reivindicadaPorPublicar(id));
+
+  if (companion.verified && !recusarReivindicada) {
     await db
       .delete(companionPendingEditsTable)
       .where(eq(companionPendingEditsTable.companion_id, id));
@@ -2174,7 +2193,19 @@ export async function getRejectedCompanions() {
     })
     .from(companionsTable)
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
-    .where(and(eq(companionsTable.verified, false), isNotNull(companionsTable.rejected_at)))
+    .where(
+      and(
+        isNotNull(companionsTable.rejected_at),
+        or(
+          eq(companionsTable.verified, false),
+          // Importada reivindicada recusada: aprovada na importação, mas em pausa.
+          sql`EXISTS (
+            SELECT 1 FROM staging.candidatos s
+            WHERE s.companion_id = ${companionsTable.id} AND s.status = 'reivindicado'
+          )`,
+        ),
+      ),
+    )
     .orderBy(desc(companionsTable.rejected_at));
 }
 
@@ -2187,15 +2218,27 @@ export async function setCompanionPaused(clerkId: string, paused: boolean) {
   const [companion] = await db
     .update(companionsTable)
     .set({ paused, updated_at: new Date() })
-    .where(eq(companionsTable.auth_id, clerkId))
-    .returning({ id: companionsTable.id });
+    // Recusada (importada reivindicada, aprovada mas em pausa): não se põe no
+    // ar sozinha; tem de corrigir e passar outra vez pela fila.
+    .where(
+      paused
+        ? eq(companionsTable.auth_id, clerkId)
+        : and(eq(companionsTable.auth_id, clerkId), isNull(companionsTable.rejected_at)),
+    )
+    .returning({ id: companionsTable.id, rejectedAt: companionsTable.rejected_at });
 
   if (!companion) {
-    return { success: false, error: "Perfil não encontrado." };
+    return {
+      success: false,
+      error: paused
+        ? "Perfil não encontrado."
+        : "O teu perfil foi recusado: corrige-o e guarda para voltar à revisão.",
+    };
   }
 
-  // Ela decidiu à mão: nenhuma aprovação posterior pode desfazer isto.
-  await largarMarcaReivindicada(companion.id);
+  // Ela decidiu à mão: nenhuma aprovação posterior pode desfazer isto. Menos
+  // se está recusada: aí a marca fica, para voltar à fila como reivindicada.
+  if (!companion.rejectedAt) await largarMarcaReivindicada(companion.id);
 
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");
@@ -2244,6 +2287,14 @@ export async function setCompanionPausedAsAdmin(
 
   // O admin decidiu à mão: a próxima aprovação já não mexe na pausa.
   await largarMarcaReivindicada(companion.id);
+  // Pôr no ar uma importada que tinha sido recusada desfaz a recusa (sem isto
+  // as edições dela nunca mais entravam na fila).
+  if (!paused) {
+    await db
+      .update(companionsTable)
+      .set({ rejected_at: null })
+      .where(and(eq(companionsTable.id, companion.id), eq(companionsTable.verified, true)));
+  }
 
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");
