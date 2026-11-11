@@ -2,6 +2,7 @@ import { kv } from '@/db';
 import { syncStripeDataToKV } from '@/db/queries/kv';
 import { upsertSubscriptionFromStripe } from '@/db/queries/subscriptions';
 import { stripe } from '@/db/stripe';
+import { medirAssinaturaConcluida, medirCobranca } from '@/lib/ga-assinaturas';
 import { clerkClient } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -154,6 +155,9 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       } else {
         await syncStripeDataToKV(customerId, clerkId);
       }
+
+      // GA4: início do mês grátis, com a origem da visita do checkout.
+      await medirAssinaturaConcluida(session);
     }
 
     if (
@@ -263,6 +267,9 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
         } else {
           console.warn('⚠️ Missing Clerk ID for invoice.payment_succeeded');
         }
+
+        // GA4: receita de cada cobrança real (fim do mês grátis e renovações).
+        await medirCobranca(invoice, subscription);
       }
     }
 

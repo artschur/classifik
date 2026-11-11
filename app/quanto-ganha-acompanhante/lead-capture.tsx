@@ -9,6 +9,7 @@ import { localizeHref } from '@/lib/i18n';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { EarningsCalculator } from '@/components/earnings-calculator';
 import { captureCalculatorLead } from '@/app/actions/calculator-lead';
+import { gaEvent } from '@/lib/ga';
 
 /**
  * Calculadora pública + captação de lead.
@@ -119,6 +120,14 @@ export function LeadCapture() {
       setError(t.mustAccept);
       return;
     }
+
+    // Lead da calculadora: o envio é feito em JavaScript, sem recarregar a
+    // página, por isso a regra criada na interface do GA4 nunca o via.
+    gaEvent('lead_calculadora', {
+      valor_hora: pricePerHour,
+      ganhos_mensais: Math.round(monthly),
+      aceita_marketing: acceptsMarketing,
+    });
 
     setSubmitting(true);
     try {
