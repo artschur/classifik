@@ -23,6 +23,7 @@ import { getPublishedImported } from '@/db/queries/candidates';
 import { PublishedImportedList } from '@/components/published-imported';
 import { getPerfisParaTraducao } from '@/app/actions/traducoes';
 import { TraducoesPerfis } from '@/components/traducoes-perfis';
+import { AdminPhoneSearch } from '@/components/admin-phone-search';
 
 /** Candidatas a anunciante à espera de contacto, ainda sem perfil na OneSugar. */
 async function FetchCandidates() {
@@ -161,6 +162,8 @@ export default async function VerifyCompanionPage() {
           </AlertDialogDescription>
         </AlertDialog>
       </div>
+
+      <AdminPhoneSearch />
 
       <Tabs defaultValue="registos" className="w-full max-w-2xl">
         <TabsList className="grid w-full grid-cols-5">
