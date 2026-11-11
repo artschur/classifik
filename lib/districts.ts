@@ -36,6 +36,11 @@ const DISTRITOS: Record<string, { nome: string; prep: 'em' | 'no' | 'na' | 'nos'
   acores: { nome: 'Açores', prep: 'nos' },
 };
 
+/** O slug é de um dos distritos (ou regiões autónomas) com página no site? */
+export function distritoConhecido(slug: string): boolean {
+  return Object.prototype.hasOwnProperty.call(DISTRITOS, slug.toLowerCase());
+}
+
 export type Distrito = {
   slug: string;
   /** "Setúbal" */
