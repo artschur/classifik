@@ -6,6 +6,8 @@ import { eq } from 'drizzle-orm';
 import { resumoDocumentos } from '@/db/queries/verificacao';
 import { PassosRegisto } from '@/components/registo/passos-registo';
 import { VerificacaoPasso } from '@/components/registo/verificacao-passo';
+import { getLocale } from '@/lib/locale.server';
+import { localizeHref } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +17,9 @@ export const dynamic = 'force-dynamic';
  */
 export default async function VideoVerificationPage() {
   const { userId } = await auth();
+  const locale = await getLocale();
 
-  if (!userId) redirect('/');
+  if (!userId) redirect(localizeHref('/', locale));
 
   const [companion] = await db
     .select({ id: companionsTable.id, identityVerified: companionsTable.identity_verified })
@@ -25,11 +28,11 @@ export default async function VideoVerificationPage() {
     .limit(1)
     .catch(() => [null]);
 
-  if (!companion) redirect('/companions/register');
+  if (!companion) redirect(localizeHref('/companions/register', locale));
 
   // Quem já tem a identidade verificada não tem nada a fazer aqui: o vídeo e
   // o documento já foram vistos.
-  if (companion.identityVerified) redirect('/profile');
+  if (companion.identityVerified) redirect(localizeHref('/profile', locale));
 
   const documentos = await resumoDocumentos(companion.id);
 

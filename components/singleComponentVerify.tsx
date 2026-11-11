@@ -370,6 +370,7 @@ export default function SingleCompanionVerify({
               descEn: ingles.descEn,
               fonte: ingles.fonte,
               editada: ingles.editada,
+              original: ingles.original,
             }
           : undefined,
       });

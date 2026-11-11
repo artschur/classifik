@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { db } from '@/db';
 import { audioRecordingsTable, companionsTable, documentsTable, imagesTable } from '@/db/schema';
 import { readInvite } from '@/db/queries/invites';
-import type { Locale } from '@/lib/i18n';
+import { localizeHref, type Locale } from '@/lib/i18n';
 
 /**
  * Liga o perfil criado pelo admin à conta Clerk de quem abriu o convite.
@@ -116,5 +116,6 @@ export async function claimInvite(
   revalidateTag('companions', 'max');
   revalidateTag('companions-filter', 'max');
 
-  redirect('/companions/register');
+  // Aceite em /en/convite: o formulário abre em inglês.
+  redirect(localizeHref('/companions/register', locale === 'en' ? 'en' : 'pt'));
 }

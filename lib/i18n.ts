@@ -43,6 +43,15 @@ const EN_ROUTES: RegExp[] = [
   /^\/sobre$/,
   /^\/ajuda-anunciantes$/,
   /^\/quanto-ganha-acompanhante$/,
+  // Áreas de quem anuncia (registo, verificação, planos e painel). Pedem
+  // sessão: o proxy.ts aplica as mesmas regras de acesso que em português.
+  /^\/onboarding$/,
+  /^\/companions\/register(\/(audio|completar))?$/,
+  /^\/companions\/verification(\/(document|pending|success))?$/,
+  /^\/checkout$/,
+  /^\/success$/,
+  /^\/profile$/,
+  /^\/block$/,
   /^\/termos-e-condicoes$/,
   /^\/politica-de-privacidade$/,
   /^\/politica-de-cookies$/,

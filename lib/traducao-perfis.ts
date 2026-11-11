@@ -31,7 +31,11 @@ const ENDPOINT = 'https://translation.googleapis.com/language/translate/v2';
 export type MotivoFalha = 'sem-chave' | 'limite' | 'erro';
 
 export type ResultadoTraducao =
-  | { ok: true; textos: string[]; caracteres: number }
+  /**
+   * `idiomas`: o idioma que o Google detectou em cada texto ('' nos vazios).
+   * Um texto que já estava em inglês volta igual ao original.
+   */
+  | { ok: true; textos: string[]; idiomas: string[]; caracteres: number }
   | { ok: false; motivo: MotivoFalha };
 
 /** Impressão digital do texto em português de um perfil. */
@@ -51,8 +55,11 @@ export function caracteresDe(textos: (string | null | undefined)[]): number {
 }
 
 /**
- * Traduz de português para inglês. Textos vazios voltam vazios e não são
- * enviados. A ordem da resposta é a dos textos recebidos.
+ * Traduz para inglês. O idioma de origem não é fixado: o Google detecta-o em
+ * cada texto, porque há anunciantes que escrevem em inglês (ou noutra língua)
+ * e um texto já em inglês não deve ser "traduzido" como se fosse português.
+ * Textos vazios voltam vazios e não são enviados. A ordem da resposta é a dos
+ * textos recebidos.
  */
 export async function traduzirParaIngles(
   textos: (string | null | undefined)[],
@@ -62,7 +69,9 @@ export async function traduzirParaIngles(
 
   const limpos = textos.map((t) => t?.trim() ?? '');
   const aEnviar = limpos.filter(Boolean);
-  if (!aEnviar.length) return { ok: true, textos: limpos, caracteres: 0 };
+  if (!aEnviar.length) {
+    return { ok: true, textos: limpos, idiomas: limpos.map(() => ''), caracteres: 0 };
+  }
 
   try {
     const resposta = await fetch(ENDPOINT, {
@@ -74,7 +83,6 @@ export async function traduzirParaIngles(
       },
       body: JSON.stringify({
         q: aEnviar,
-        source: 'pt',
         target: 'en',
         format: 'text',
         model: 'nmt',
@@ -95,17 +103,29 @@ export async function traduzirParaIngles(
     }
 
     const json = (await resposta.json()) as {
-      data?: { translations?: { translatedText?: string }[] };
+      data?: {
+        translations?: { translatedText?: string; detectedSourceLanguage?: string }[];
+      };
     };
-    const traduzidos = json.data?.translations?.map((t) => t.translatedText ?? '') ?? [];
-    if (traduzidos.length !== aEnviar.length) return { ok: false, motivo: 'erro' };
+    const traducoes = json.data?.translations ?? [];
+    if (traducoes.length !== aEnviar.length) return { ok: false, motivo: 'erro' };
 
+    const textos: string[] = [];
+    const idiomas: string[] = [];
     let i = 0;
-    return {
-      ok: true,
-      textos: limpos.map((t) => (t ? traduzidos[i++].trim() : '')),
-      caracteres: caracteresDe(aEnviar),
-    };
+    for (const original of limpos) {
+      if (!original) {
+        textos.push('');
+        idiomas.push('');
+        continue;
+      }
+      const t = traducoes[i++];
+      const idioma = (t.detectedSourceLanguage ?? '').toLowerCase();
+      idiomas.push(idioma);
+      // Já em inglês: fica o texto dela, tal como o escreveu.
+      textos.push(idioma === 'en' ? original : (t.translatedText ?? '').trim());
+    }
+    return { ok: true, textos, idiomas, caracteres: caracteresDe(aEnviar) };
   } catch (error) {
     console.error('Tradução falhou:', error);
     return { ok: false, motivo: 'erro' };
@@ -127,6 +147,13 @@ export type EstadoTraducao =
   // edição ao mesmo tempo, ou o admin estava a rever um texto antigo).
   | 'desatualizada'
   | MotivoFalha;
+
+/**
+ * translation_status: 'auto' (tradução automática), 'revisto' (corrigida pelo
+ * admin) ou 'original' (a anunciante escreveu a descrição em inglês e o texto
+ * dela é usado tal como está).
+ */
+export type EstadoGravado = 'auto' | 'revisto' | 'original';
 
 /** O texto em português que foi lido, para só gravar se continuar igual. */
 type PortuguesLido = { shortDescription: string | null; description: string };
@@ -184,7 +211,7 @@ export async function garantirTraducao(
       shortEn: shortEn || null,
       descEn: descEn || null,
       fonte,
-      estado: 'auto',
+      estado: resultado.idiomas[1] === 'en' ? 'original' : 'auto',
     });
     return gravou ? 'traduzida' : 'desatualizada';
   } catch (error) {
@@ -200,11 +227,13 @@ export async function garantirTraducao(
  */
 export async function gravarTraducaoRevista(
   companionId: number,
-  { shortEn, descEn, fonte, editada }: {
+  { shortEn, descEn, fonte, editada, original = false }: {
     shortEn: string;
     descEn: string;
     fonte: string;
     editada: boolean;
+    /** A descrição já estava escrita em inglês pela anunciante. */
+    original?: boolean;
   },
 ): Promise<EstadoTraducao> {
   try {
@@ -229,7 +258,7 @@ export async function gravarTraducaoRevista(
       shortEn: shortEn.trim() || null,
       descEn: descricao,
       fonte,
-      estado: editada ? 'revisto' : 'auto',
+      estado: editada ? 'revisto' : original ? 'original' : 'auto',
     });
     return gravou ? 'traduzida' : 'desatualizada';
   } catch (error) {
@@ -256,7 +285,7 @@ async function gravar(
     shortEn: string | null;
     descEn: string | null;
     fonte: string | null;
-    estado: 'auto' | 'revisto' | null;
+    estado: EstadoGravado | null;
   },
 ): Promise<boolean> {
   const atualizados = await db

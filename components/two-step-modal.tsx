@@ -43,7 +43,7 @@ const TEXT = {
     confirm: 'Confirm, I am 18 or older',
     welcome: 'Welcome to OneSugar!',
     choose: 'How would you like to continue?',
-    sugarTitle: 'I am a companion',
+    sugarTitle: 'I am a Sugar',
     sugarBody: 'Create your listing for free',
     sugarPoints: ['Verified and featured profile', 'You keep 100% of what you earn', 'Safe and discreet platform'],
     clientTitle: 'I am a client',
@@ -119,7 +119,8 @@ export function TwoStepModal() {
   // passa pelo /onboarding.
   const escolher = (tipo: 'sugar' | 'cliente') => {
     setOpen(false);
-    const destino = `/api/onboard?tipo=${tipo}`;
+    // O idioma vai junto, para o registo continuar na mesma língua.
+    const destino = `/api/onboard?tipo=${tipo}${locale === 'en' ? '&lang=en' : ''}`;
     openSignUp({ forceRedirectUrl: destino, signInForceRedirectUrl: destino });
   };
 

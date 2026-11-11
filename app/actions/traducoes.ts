@@ -45,6 +45,8 @@ export type RevisaoIngles =
       origem: 'guardada' | 'nova';
       /** A guardada já foi corrigida por um admin: continua marcada como revista. */
       revista: boolean;
+      /** A descrição já estava escrita em inglês: o texto é o dela. */
+      original: boolean;
     }
   | {
       ok: false;
@@ -101,6 +103,7 @@ export async function prepararRevisaoIngles(companionId: number): Promise<Revisa
       descEn: perfil.descriptionEn,
       origem: 'guardada',
       revista: perfil.estado === 'revisto',
+      original: perfil.estado === 'original',
     };
   }
 
@@ -116,6 +119,7 @@ export async function prepararRevisaoIngles(companionId: number): Promise<Revisa
     descEn: resultado.textos[1],
     origem: 'nova',
     revista: false,
+    original: resultado.idiomas[1] === 'en',
   };
 }
 
@@ -128,8 +132,8 @@ export type PerfilTraducao = {
   shortEn: string;
   descEn: string;
   fonte: string;
-  /** 'em-falta': sem tradução ou desactualizada. */
-  estado: 'auto' | 'revisto' | 'em-falta';
+  /** 'em-falta': sem tradução ou desactualizada. 'original': ela escreveu em inglês. */
+  estado: 'auto' | 'revisto' | 'original' | 'em-falta';
   caracteres: number;
 };
 
@@ -165,12 +169,16 @@ export async function getPerfisParaTraducao(): Promise<PerfilTraducao[]> {
       shortEn: atual ? l.shortDescriptionEn ?? '' : '',
       descEn: atual ? l.descriptionEn ?? '' : '',
       fonte,
-      estado: atual ? (l.estado === 'revisto' ? 'revisto' : 'auto') : 'em-falta',
+      estado: atual
+        ? l.estado === 'revisto' || l.estado === 'original'
+          ? l.estado
+          : 'auto'
+        : 'em-falta',
       caracteres: caracteresDe([l.shortDescription, l.description]),
     };
   });
 
-  const ordem = { 'em-falta': 0, auto: 1, revisto: 2 } as const;
+  const ordem = { 'em-falta': 0, auto: 1, original: 2, revisto: 3 } as const;
   return perfis.sort(
     (a, b) => ordem[a.estado] - ordem[b.estado] || Number(a.paused) - Number(b.paused),
   );

@@ -6,6 +6,22 @@ import { motion } from 'framer-motion';
 import { IconUpload } from '@tabler/icons-react';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
+import { useLocale } from '@/components/locale-provider';
+
+const TEXT = {
+  pt: {
+    titulo: 'Faça upload de suas imagens ou vídeos. Limite de 10MB por arquivo.',
+    ajuda:
+      'Arraste e largue ou clique aqui para enviar. Os ficheiros serão apresentados abaixo com uma pré-visualização e barra de progresso. Aguarde que o upload complete antes de enviar o ficheiro.',
+    soltar: 'Solte os arquivos aqui',
+  },
+  en: {
+    titulo: 'Upload your photos or videos. 10 MB limit per file.',
+    ajuda:
+      'Drag and drop or click here to upload. Files appear below with a preview and progress bar. Wait for the upload to finish before continuing.',
+    soltar: 'Drop the files here',
+  },
+} as const;
 
 const mainVariant = {
   initial: { x: 0, y: 0 },
@@ -68,6 +84,7 @@ export const FileUpload = ({
   const handleClick = () => {
     fileInputRef.current?.click();
   };
+  const t = TEXT[useLocale()];
 
   const { getRootProps, isDragActive } = useDropzone({
     multiple: true,
@@ -95,10 +112,10 @@ export const FileUpload = ({
       >
         <div className="flex flex-col items-center justify-center">
           <p className="relative z-20 font-sans font-bold text-neutral-700 dark:text-neutral-300 text-base">
-            Faça upload de suas imagens ou vídeos. Limite de 10MB por arquivo.
+            {t.titulo}
           </p>
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            Arraste e largue ou clique aqui para enviar. Os ficheiros serão apresentados abaixo com uma pré-visualização e barra de progresso. Aguarde que o upload complete antes de enviar o ficheiro.
+            {t.ajuda}
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {isDragActive ? (
@@ -113,7 +130,7 @@ export const FileUpload = ({
                   animate={{ opacity: 1 }}
                   className="text-neutral-600 flex flex-col items-center"
                 >
-                  Solte os arquivos aqui
+                  {t.soltar}
                   <IconUpload className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
                 </motion.p>
               </motion.div>

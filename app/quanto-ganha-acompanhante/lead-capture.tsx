@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useClerk } from '@clerk/nextjs';
 import { useLocale } from '@/components/locale-provider';
 import { LocaleLink } from '@/components/locale-link';
+import { localizeHref } from '@/lib/i18n';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { EarningsCalculator } from '@/components/earnings-calculator';
 import { captureCalculatorLead } from '@/app/actions/calculator-lead';
@@ -62,7 +63,7 @@ const TEXT = {
     safeB: 'quick, free and secure',
     submit: 'Create my free listing →',
     or: 'or',
-    plans: 'See featured plans (in Portuguese)',
+    plans: 'See featured plans',
     looking: 'Looking for a companion?',
     profiles: 'Browse profiles',
   },
@@ -90,7 +91,8 @@ export function LeadCapture() {
     const params = new URLSearchParams();
     if (phoneLooksValid) params.set('phone', phone.trim());
     if (pricePerHour) params.set('price', String(pricePerHour));
-    const target = `/companions/register?${params.toString()}`;
+    // Em /en, o formulário em inglês. O localizeHref mantém a query.
+    const target = localizeHref(`/companions/register?${params.toString()}`, locale);
 
     // O Clerk não abre a janela de registo a quem já tem sessão, e também não
     // dá erro: o botão ficava sem fazer nada. Quem já entrou segue directo.
