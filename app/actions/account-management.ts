@@ -37,7 +37,7 @@ export async function togglePauseAd(paused: boolean) {
   const { userId } = await auth();
   if (!userId) throw new Error(m.semSessao);
 
-  const result = await setCompanionPaused(userId, paused);
+  const result = await setCompanionPaused(paused);
   revalidatePath("/profile");
   // Os erros de setCompanionPaused: perfil não encontrado, ou recusado (ao
   // tentar reactivar).

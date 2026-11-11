@@ -2214,7 +2214,15 @@ export async function getRejectedCompanions() {
  * (aprovação do admin) — o anúncio fica invisível no site sem perder o
  * estado de verificação, e volta a aparecer sozinho ao reactivar.
  */
-export async function setCompanionPaused(clerkId: string, paused: boolean) {
+export async function setCompanionPaused(paused: boolean) {
+  // A conta sai da sessão, nunca do pedido: este ficheiro é 'use server', e
+  // com o id como parâmetro qualquer pessoa pausava ou reactivava o anúncio
+  // de outra (o id aparece nos endereços públicos das fotos).
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    return { success: false, error: "Sessão expirada." };
+  }
+
   const [companion] = await db
     .update(companionsTable)
     .set({ paused, updated_at: new Date() })
