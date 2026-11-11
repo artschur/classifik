@@ -76,16 +76,21 @@ export async function claimInvite(
         .update(companionsTable)
         .set({ auth_id: userId, email, updated_at: new Date() })
         .where(sql`${companionsTable.id} = ${id} and ${companionsTable.auth_id} like 'import\\_%'`)
-        .returning({ id: companionsTable.id });
+        .returning({ id: companionsTable.id, paused: companionsTable.paused });
       if (!ligado) throw new Error('reclamado');
 
       await tx.update(imagesTable).set({ authId: userId }).where(eq(imagesTable.companionId, id));
       await tx.update(audioRecordingsTable).set({ authId: userId }).where(eq(audioRecordingsTable.companionId, id));
       await tx.update(documentsTable).set({ authId: userId }).where(eq(documentsTable.companionId, id));
 
+      // A pausa foi posta pela equipa, para esconder o perfil até ela
+      // autorizar. 'reivindicado' marca isso: a primeira aprovação põe-no no
+      // ar (approveCompanion), e qualquer pausa posta à mão depois apaga a
+      // marca e fica a valer.
       await tx.execute(sql`
         update staging.candidatos
         set reivindicado_em = now(),
+            status = ${ligado.paused ? 'reivindicado' : sql`status`},
             convite_token_hash = null,
             consentimento_em = coalesce(consentimento_em, now()),
             consentimento_canal = coalesce(consentimento_canal, 'convite'),

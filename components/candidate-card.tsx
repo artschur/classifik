@@ -10,6 +10,7 @@ const STATUS_LABEL: Record<Candidate['status'], string> = {
   contactado: 'Contactada',
   autorizado: 'Autorizou',
   publicado: 'Publicada',
+  reivindicado: 'Reivindicou',
   recusado: 'Recusou',
 };
 

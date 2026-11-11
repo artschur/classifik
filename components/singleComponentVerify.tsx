@@ -280,6 +280,9 @@ export default function SingleCompanionVerify({
   // não mexe na acompanhante.
   const isEdit = companion.isPendingEdit === true;
   const noAr = companion.verified === true;
+  // Importada que ela reivindicou, ainda na pausa da equipa: aprovar põe-na
+  // no ar (com ou sem alterações dela).
+  const reivindicada = companion.reivindicadaPorPublicar === true;
   // No ar e com vídeo ou documento à espera: o admin decide o selo.
   const docsNoAr = noAr && !temSelo && docsPendentes;
   // Já esteve publicada e foi o admin que a tirou do ar.
@@ -376,7 +379,9 @@ export default function SingleCompanionVerify({
       });
       toast({
         title: isEdit ? 'Alterações aprovadas' : 'Companheira aprovada',
-        description: isEdit
+        description: reivindicada
+          ? `${companion.name} saiu da pausa e está no ar.`
+          : isEdit
           ? `As alterações de ${companion.name} já estão no ar.`
           : comSelo || temSelo
             ? `${companion.name} está no ar com o selo "Verificada".`
@@ -385,7 +390,7 @@ export default function SingleCompanionVerify({
       });
       // Uma edição aprovada num perfil que ainda tem documentos à espera
       // continua na fila para essa decisão.
-      if (isEdit && docsNoAr) return;
+      if ((isEdit || reivindicada) && docsNoAr) return;
       onActionComplete(companion.id);
     }, 'Falha ao aprovar. Por favor, tente novamente.');
 
@@ -566,7 +571,11 @@ export default function SingleCompanionVerify({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0 flex items-center gap-2 flex-wrap">
             {companion.name}
-            {isEdit ? (
+            {reivindicada ? (
+              <Badge className="bg-violet-100 text-violet-900 hover:bg-violet-100">
+                Importada reivindicada (em pausa){isEdit ? ', com alterações' : ''}
+              </Badge>
+            ) : isEdit ? (
               <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
                 Edição de perfil no ar
               </Badge>
@@ -978,6 +987,14 @@ export default function SingleCompanionVerify({
       </Tabs>
 
       <CardFooter className="flex flex-col gap-4">
+        {reivindicada && (
+          <p className="w-full text-sm text-violet-900 dark:text-violet-200">
+            Perfil importado que ela reivindicou pelo convite. Continua na pausa
+            posta pela equipa: aprovar põe-no no ar.
+            {isEdit ? ' Recusar as alterações deixa-o em pausa e aqui na fila.' : ''}
+          </p>
+        )}
+
         {/* Edição de um perfil no ar: como sempre. */}
         {isEdit && (
           <div className="flex flex-col sm:flex-row justify-between w-full gap-4">
@@ -994,9 +1011,21 @@ export default function SingleCompanionVerify({
               onClick={() => handleApprove(false)}
               disabled={isPending}
             >
-              <Check className="w-4 h-4 mr-2" /> Aprovar alterações
+              <Check className="w-4 h-4 mr-2" />
+              {reivindicada ? 'Aprovar e pôr no ar' : 'Aprovar alterações'}
             </Button>
           </div>
+        )}
+
+        {/* Reivindicada sem alterações: só falta pô-la no ar. */}
+        {reivindicada && !isEdit && (
+          <Button
+            className="w-full bg-green-500 hover:bg-green-600 text-white"
+            onClick={() => handleApprove(false)}
+            disabled={isPending}
+          >
+            <Check className="w-4 h-4 mr-2" /> Aprovar e pôr no ar
+          </Button>
         )}
 
         {/* No ar e com vídeo ou documento à espera: decide-se o selo. */}

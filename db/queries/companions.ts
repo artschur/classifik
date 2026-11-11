@@ -1428,6 +1428,10 @@ export async function getUnverifiedCompanions(): Promise<
         submittedAt: companionsTable.submitted_at,
         createdAt: companionsTable.created_at,
         rejectionReason: companionsTable.rejection_reason,
+        reivindicada: sql<boolean>`EXISTS (
+          SELECT 1 FROM staging.candidatos s
+          WHERE s.companion_id = ${companionsTable.id} AND s.status = 'reivindicado'
+        )`,
       },
     })
     .from(companionsTable)
@@ -1513,6 +1517,16 @@ export async function getUnverifiedCompanions(): Promise<
                 AND ${audioRecordingsTable.pending_approval}
             )`,
           ),
+        ),
+        // Importada que ela reivindicou e que continua na pausa da equipa,
+        // mesmo sem ter mudado nada: só sai do esconderijo com uma aprovação.
+        and(
+          eq(companionsTable.verified, true),
+          eq(companionsTable.paused, true),
+          sql`EXISTS (
+            SELECT 1 FROM staging.candidatos s
+            WHERE s.companion_id = ${companionsTable.id} AND s.status = 'reivindicado'
+          )`,
         ),
       ),
     )
@@ -1681,6 +1695,7 @@ export async function getUnverifiedCompanions(): Promise<
       // distinguir de um registo novo.
       wasSentToReview: review.sentToReviewAt !== null,
       isPendingEdit,
+      reivindicadaPorPublicar: review.reivindicada === true,
       isDocsReview:
         companion.verified === true &&
         !companion.identityVerified &&
@@ -1862,16 +1877,23 @@ export async function approveCompanion(
   const novoSelo = comSelo && !before.identityVerified;
   const selo = novoSelo ? await darSelo(id, userId) : {};
 
+  // Importada que ela reivindicou e que continua na pausa posta pela equipa:
+  // a aprovação é o momento de a pôr no ar.
+  const porPublicar = await reivindicadaPorPublicar(id);
+
   const [companion] = await db
     .update(companionsTable)
     .set({
       verified: true,
       sent_to_review_at: null,
       rejected_at: null,
+      ...(porPublicar ? { paused: false } : {}),
       ...selo,
     })
     .where(eq(companionsTable.id, id))
     .returning({ email: companionsTable.email, name: companionsTable.name });
+
+  if (porPublicar) await largarMarcaReivindicada(id);
 
   if (emailParaRD(companion?.email)) {
     // O evento de conversão marca a entrada na plataforma, por isso só
@@ -2172,6 +2194,9 @@ export async function setCompanionPaused(clerkId: string, paused: boolean) {
     return { success: false, error: "Perfil não encontrado." };
   }
 
+  // Ela decidiu à mão: nenhuma aprovação posterior pode desfazer isto.
+  await largarMarcaReivindicada(companion.id);
+
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");
   revalidateTag("companions-filter", "max");
@@ -2217,11 +2242,38 @@ export async function setCompanionPausedAsAdmin(
     return { success: false, error: "Perfil não encontrado." };
   }
 
+  // O admin decidiu à mão: a próxima aprovação já não mexe na pausa.
+  await largarMarcaReivindicada(companion.id);
+
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");
   revalidateTag("companions-filter", "max");
 
   return { success: true, paused };
+}
+
+/*
+ * Importadas reivindicadas. Na importação o perfil ficou em pausa para estar
+ * escondido até ela autorizar; ao reivindicar o convite, a candidata fica com
+ * status 'reivindicado' (app/actions/convite.ts). Enquanto a marca existir, a
+ * pausa é da equipa e a primeira aprovação põe o perfil no ar. Qualquer pausa
+ * ou reactivação feita à mão apaga a marca e passa a valer essa decisão.
+ *
+ * Não são exportadas: este ficheiro é 'use server'.
+ */
+async function reivindicadaPorPublicar(companionId: number): Promise<boolean> {
+  const linhas = await db.execute(sql`
+    select 1 from staging.candidatos
+    where companion_id = ${companionId} and status = 'reivindicado'
+    limit 1`);
+  return Array.from(linhas).length > 0;
+}
+
+async function largarMarcaReivindicada(companionId: number): Promise<void> {
+  await db.execute(sql`
+    update staging.candidatos
+    set status = 'publicado', atualizado_em = now()
+    where companion_id = ${companionId} and status = 'reivindicado'`);
 }
 
 /**

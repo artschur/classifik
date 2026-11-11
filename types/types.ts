@@ -84,6 +84,11 @@ export type CompanionFiltered = Pick<
   identityVerifiedMethod?: string | null;
   /** Só na fila: está no ar e entrou só para rever vídeo e documento. */
   isDocsReview?: boolean;
+  /**
+   * Só na fila: importada que ela reivindicou e que continua na pausa posta
+   * pela equipa. Aprovar põe-na no ar.
+   */
+  reivindicadaPorPublicar?: boolean;
 };
 
 export type PendingChange = {

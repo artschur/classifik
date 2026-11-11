@@ -18,7 +18,9 @@ import { buildPrefill, draftSchema, type ApprovalPrefill, type Draft } from '@/l
  */
 export type Candidate = {
   id: string;
-  status: 'candidato' | 'contactado' | 'autorizado' | 'publicado' | 'recusado';
+  // 'reivindicado': aceitou o convite e o perfil continua na pausa da equipa,
+  // à espera da primeira aprovação (ver approveCompanion).
+  status: 'candidato' | 'contactado' | 'autorizado' | 'publicado' | 'reivindicado' | 'recusado';
   nomeAnuncio: string;
   telefone: string;
   cidade: string | null;
