@@ -481,6 +481,21 @@ export type DbStory = typeof storiesTable.$inferSelect;
 export type NewDbStory = typeof storiesTable.$inferInsert;
 
 /**
+ * Traduções já feitas pelo Google, por impressão digital do texto em
+ * português (lib/traducao-perfis.ts). Evita pagar o mesmo texto duas vezes:
+ * rever na fila, aprovar e repetir o botão "Traduzir os que faltam" usam
+ * esta cache. Não é lida pelas páginas públicas.
+ */
+export const translationCacheTable = pgTable('translation_cache', {
+  fonte: text('fonte').primaryKey(),
+  short_en: text('short_en'),
+  desc_en: text('desc_en'),
+  // A descrição já estava em inglês: o texto é o dela, não uma tradução.
+  original: boolean('original').default(false).notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
  * Alterações a um perfil já aprovado, à espera de revisão. Enquanto esta linha
  * existir, o site continua a mostrar a versão aprovada: só na aprovação é que
  * o `payload` é escrito nas tabelas reais.
