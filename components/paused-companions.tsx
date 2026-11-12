@@ -20,7 +20,7 @@ import { PhoneTag } from '@/components/phone-tag';
  * próprio anúncio, que só se vêem aqui. Reactivar essas seria passar por
  * cima de uma decisão delas.
  */
-export function PausedCompanions({ companions }: { companions: PausedCompanion[] }) {
+export function PausedCompanions({ companions, total }: { companions: PausedCompanion[]; total?: number }) {
   const importadas = companions.filter((c) => c.imported);
   const daAnunciante = companions.filter((c) => !c.imported);
 
@@ -30,6 +30,12 @@ export function PausedCompanions({ companions }: { companions: PausedCompanion[]
 
   return (
     <div className="space-y-8">
+      {total !== undefined && total > companions.length && (
+        <p className="text-sm text-muted-foreground">
+          {total} perfis em pausa no total. A lista mostra uma página de cada vez; para ir a um
+          perfil, filtre pelo telefone.
+        </p>
+      )}
       <Secao
         titulo="Importadas por publicar"
         nota="Criadas a partir das candidatas e ainda escondidas. Pôr no ar regista que ela autorizou por WhatsApp."

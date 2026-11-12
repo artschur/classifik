@@ -28,6 +28,20 @@ export type CompanionPreview = Pick<Companion, "id" | "name" | "age"> & {
   planType?: string | null;
 };
 
+/** Um documento (ou vídeo) de verificação, como o admin o vê no cartão do /verify. */
+export type DocumentoCartao = {
+  id: number;
+  document_type: string;
+  storage_path: string;
+  verified: boolean | null;
+  status: string;
+  verification_date: Date | string | null;
+  notes: string | null;
+  created_at: Date | string | null;
+  /** Endereço assinado e temporário (o bucket é privado). Null se o ficheiro já não existir. */
+  url: string | null;
+};
+
 export type CompanionFiltered = Pick<
   Companion,
   "id" | "name" | "shortDescription" | "price" | "age" | "verified"
@@ -44,6 +58,11 @@ export type CompanionFiltered = Pick<
   images: (string | Media)[];
   planType?: string | null;
   verificationVideoUrl?: string | null;
+  /**
+   * Os documentos do perfil, já com os endereços assinados. Só no /verify: vêm
+   * junto com os cartões, num único pedido, em vez de um pedido por cartão.
+   */
+  documentos?: DocumentoCartao[];
   /** Selo "Verificada": documento visto pelo admin. Só nas listagens. */
   identityVerified?: boolean;
   /** Descrição curta em inglês, para os cartões em /en. Só nas listagens. */

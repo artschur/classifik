@@ -77,12 +77,18 @@ export type PublishedImported = {
  * pausa ou no ar. É daqui que o admin envia a pré-visualização e o convite.
  */
 export async function getPublishedImported(
-  opcoes: { companionIds?: number[] } = {},
+  opcoes: { companionIds?: number[]; limite?: number; desvio?: number } = {},
 ): Promise<PublishedImported[]> {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
     throw new Error('Não autorizado');
   }
+
+  // Páginas: são mais de mil linhas, cada uma com vários botões e janelas.
+  const paginar =
+    opcoes.limite !== undefined
+      ? sql`limit ${Math.max(1, Math.floor(opcoes.limite))} offset ${Math.max(0, Math.floor(opcoes.desvio ?? 0))}`
+      : sql``;
 
   // Com ids (a busca), só esses perfis.
   const ids = Array.isArray(opcoes.companionIds)
@@ -113,7 +119,8 @@ export async function getPublishedImported(
     join public.cities ci on ci.id = p.location_id
     where p.auth_id like 'import\\_%'
     ${soEstes}
-    order by p.paused desc, p.updated_at desc`);
+    order by p.paused desc, p.updated_at desc, p.id
+    ${paginar}`);
 
   return Array.from(rows).map((r) => ({
     companionId: r.companion_id,
@@ -128,6 +135,22 @@ export async function getPublishedImported(
     conviteExpiraEm: r.convite_expira_em,
     previewPath: `/companions/${r.companion_id}?ver=${previewToken(r.companion_id)}`,
   }));
+}
+
+/** Quantos perfis importados ainda sem conta há (para paginar a lista). */
+export async function contarPublishedImported(): Promise<number> {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error('Não autorizado');
+  }
+  const [linha] = Array.from(
+    await db.execute<{ n: number }>(sql`
+      select count(*)::int as n
+      from staging.candidatos c
+      join public.companions p on p.id = c.companion_id
+      where p.auth_id like 'import\\_%'`),
+  );
+  return linha?.n ?? 0;
 }
 
 /** Endereços assinados, mantendo cada um junto do caminho a que pertence. */

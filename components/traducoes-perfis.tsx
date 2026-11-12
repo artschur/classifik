@@ -46,12 +46,21 @@ function mensagemDoLote(r: ResultadoLote): string {
  * perfis publicados. Traduz os que faltam (em lotes, dentro do limite diário)
  * e deixa corrigir qualquer tradução.
  */
-export function TraducoesPerfis({ perfis }: { perfis: PerfilTraducao[] }) {
+export function TraducoesPerfis({
+  perfis,
+  emFalta: emFaltaTotal,
+  caracteresEmFalta,
+}: {
+  /** Os perfis da página atual. */
+  perfis: PerfilTraducao[];
+  /** Quantos de todos os perfis estão sem inglês, e quantos caracteres faltam traduzir. */
+  emFalta: number;
+  caracteresEmFalta: number;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [aTraduzir, startLote] = useTransition();
-  const emFalta = perfis.filter((p) => p.estado === 'em-falta');
-  const caracteresEmFalta = emFalta.reduce((t, p) => t + p.caracteres, 0);
+  const emFalta = { length: emFaltaTotal };
 
   const traduzirTodos = () =>
     startLote(async () => {

@@ -72,6 +72,37 @@ export async function signDocumentUrl(doc: {
 }
 
 /**
+ * Os endereços temporários de vários documentos de uma vez: um pedido por
+ * bucket em vez de um por documento. Pela mesma ordem da lista; null onde o
+ * ficheiro já não existe.
+ */
+export async function signDocumentUrls(
+  docs: { storage_path: string; public_url: string }[],
+): Promise<(string | null)[]> {
+  const resultado: (string | null)[] = docs.map(() => null);
+  const porBucket = new Map<'documents' | 'images', number[]>();
+  docs.forEach((doc, i) => {
+    const bucket = documentBucket(doc.public_url);
+    porBucket.set(bucket, [...(porBucket.get(bucket) ?? []), i]);
+  });
+
+  await Promise.all(
+    [...porBucket].map(async ([bucket, indices]) => {
+      const { data, error } = await getSupabaseAdmin()
+        .storage.from(bucket)
+        .createSignedUrls(indices.map((i) => docs[i].storage_path), DOCUMENT_URL_TTL_SECONDS);
+      if (error || !data) {
+        console.error('Falha ao assinar endereços de documentos:', error);
+        return;
+      }
+      const porCaminho = new Map(data.map((d) => [d.path, d.signedUrl]));
+      for (const i of indices) resultado[i] = porCaminho.get(docs[i].storage_path) || null;
+    }),
+  );
+  return resultado;
+}
+
+/**
  * Apaga todos os ficheiros dentro de uma "pasta" de um bucket. O SDK só apaga
  * por caminho exacto: passar a pasta a `remove` não apaga nada e não dá erro,
  * por isso é preciso listar primeiro.

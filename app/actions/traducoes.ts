@@ -137,10 +137,37 @@ export type PerfilTraducao = {
   caracteres: number;
 };
 
-/** Perfis publicados, com o estado da versão inglesa. Os que faltam primeiro. */
-export async function getPerfisParaTraducao(): Promise<PerfilTraducao[]> {
+export type PaginaDeTraducoes = {
+  /** Os perfis desta página. */
+  perfis: PerfilTraducao[];
+  /** Totais de todos os perfis, não só da página. */
+  total: number;
+  emFalta: number;
+  caracteresEmFalta: number;
+};
+
+/**
+ * Uma página dos perfis publicados, com o estado da versão inglesa (os que
+ * faltam primeiro) e os totais de todos. São mais de mil perfis, cada um com
+ * as duas descrições: mandar tudo para o ecrã tornava o separador pesado.
+ */
+export async function getPerfisParaTraducao(pagina = 1, porPagina = 40): Promise<PaginaDeTraducoes> {
   if (!(await souAdmin())) throw new Error('Não autorizado');
 
+  const todos = await todasAsTraducoes();
+  const emFalta = todos.filter((p) => p.estado === 'em-falta');
+  const n = Math.max(1, Math.floor(Number(pagina) || 1));
+  const tam = Math.min(100, Math.max(1, Math.floor(Number(porPagina) || 40)));
+  return {
+    perfis: todos.slice((n - 1) * tam, n * tam),
+    total: todos.length,
+    emFalta: emFalta.length,
+    caracteresEmFalta: emFalta.reduce((t, p) => t + p.caracteres, 0),
+  };
+}
+
+/** Todos os perfis publicados, com o estado da versão inglesa. Não exportada: este ficheiro é 'use server'. */
+async function todasAsTraducoes(): Promise<PerfilTraducao[]> {
   const linhas = await db
     .select({
       id: companionsTable.id,
@@ -202,7 +229,7 @@ export async function traduzirEmFalta(): Promise<ResultadoLote> {
     return { ok: false, traduzidos: 0, caracteres: 0, emFalta: 0, paragem: 'nao-autorizado' };
   }
 
-  const emFalta = (await getPerfisParaTraducao()).filter((p) => p.estado === 'em-falta');
+  const emFalta = (await todasAsTraducoes()).filter((p) => p.estado === 'em-falta');
   let traduzidos = 0;
   let caracteres = 0;
   let paragem: ResultadoLote['paragem'];

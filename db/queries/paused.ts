@@ -22,17 +22,32 @@ export type PausedCompanion = {
   previewPath: string | null;
 };
 
+/** Quantos perfis aprovados e em pausa há (para paginar a lista). */
+export async function contarPausadas(): Promise<number> {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) {
+    throw new Error('Não autorizado');
+  }
+  const [linha] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(companionsTable)
+    .where(and(eq(companionsTable.verified, true), eq(companionsTable.paused, true)));
+  return linha?.n ?? 0;
+}
+
 /**
  * Perfis publicados mas escondidos, para o separador "Em pausa" do /verify.
  * Até aqui um perfil pausado só se encontrava pelo endereço directo.
  */
-export async function getPausedCompanions(): Promise<PausedCompanion[]> {
+export async function getPausedCompanions(
+  opcoes: { limite?: number; desvio?: number } = {},
+): Promise<PausedCompanion[]> {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
     throw new Error('Não autorizado');
   }
 
-  const rows = await db
+  const consulta = db
     .select({
       id: companionsTable.id,
       name: companionsTable.name,
@@ -53,6 +68,11 @@ export async function getPausedCompanions(): Promise<PausedCompanion[]> {
     .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
     .where(and(eq(companionsTable.verified, true), eq(companionsTable.paused, true)))
     .orderBy(desc(companionsTable.updated_at), asc(companionsTable.id));
+
+  // São mais de mil linhas: o separador mostra uma página de cada vez.
+  const rows = await (opcoes.limite !== undefined
+    ? consulta.limit(Math.max(1, Math.floor(opcoes.limite))).offset(Math.max(0, Math.floor(opcoes.desvio ?? 0)))
+    : consulta);
 
   return rows.map(({ authId, ...row }) => {
     const imported = isImportedAuthId(authId);

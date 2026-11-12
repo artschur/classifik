@@ -17,9 +17,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCandidates } from '@/db/queries/candidates';
 import { CandidateCard } from '@/components/candidate-card';
 import { getAvailableCities } from '@/db/queries';
-import { getPausedCompanions } from '@/db/queries/paused';
+import { contarPausadas, getPausedCompanions } from '@/db/queries/paused';
 import { PausedCompanions } from '@/components/paused-companions';
-import { getPublishedImported } from '@/db/queries/candidates';
+import { contarPublishedImported, getPublishedImported } from '@/db/queries/candidates';
+import { VerifyPager } from '@/components/verify-pager';
+import { POR_PAGINA, paginaDe } from '@/lib/verify-paginas';
+import Link from 'next/link';
 import { PublishedImportedList } from '@/components/published-imported';
 import { getPerfisParaTraducao } from '@/app/actions/traducoes';
 import { TraducoesPerfis } from '@/components/traducoes-perfis';
@@ -28,20 +31,26 @@ import { VerifySearchResults } from '@/components/verify-search-results';
 import { digitosDaBusca, perfisPorTelefone } from '@/lib/admin-phone-search';
 
 /** Candidatas a anunciante à espera de contacto, ainda sem perfil na OneSugar. */
-async function FetchCandidates() {
-  const [candidates, cidades, publicadas] = await Promise.all([
+async function FetchCandidates({ pagina }: { pagina: number }) {
+  const [candidates, cidades, publicadas, totalPublicadas] = await Promise.all([
     getCandidates(),
     getAvailableCities(),
-    getPublishedImported(),
+    getPublishedImported({ limite: POR_PAGINA, desvio: (pagina - 1) * POR_PAGINA }),
+    contarPublishedImported(),
   ]);
   const cities = cidades
     .map((c) => ({ id: c.id, city: c.city }))
     .sort((a, b) => a.city.localeCompare(b.city, 'pt'));
 
+  const paginador = (
+    <VerifyPager aba="importadas" pagina={pagina} total={totalPublicadas} porPagina={POR_PAGINA} />
+  );
+
   if (candidates.length === 0) {
     return (
       <div className="w-full space-y-8">
-        <PublishedImportedList perfis={publicadas} />
+        <PublishedImportedList perfis={publicadas} total={totalPublicadas} />
+        {paginador}
         <p className="text-lg text-center text-gray-500">
           Não há candidatas importadas por rever.
         </p>
@@ -61,7 +70,8 @@ async function FetchCandidates() {
 
   return (
     <div className="w-full space-y-8">
-      <PublishedImportedList perfis={publicadas} />
+      <PublishedImportedList perfis={publicadas} total={totalPublicadas} />
+      {paginador}
       <nav aria-label="Distritos" className="flex flex-wrap gap-2">
         {[...porDistrito].map(([slug, { nome, lista }]) => (
           <a
@@ -91,8 +101,17 @@ async function FetchCandidates() {
 }
 
 /** Perfis publicados mas escondidos, que de outra forma não têm onde aparecer. */
-async function FetchPaused() {
-  return <PausedCompanions companions={await getPausedCompanions()} />;
+async function FetchPaused({ pagina }: { pagina: number }) {
+  const [companions, total] = await Promise.all([
+    getPausedCompanions({ limite: POR_PAGINA, desvio: (pagina - 1) * POR_PAGINA }),
+    contarPausadas(),
+  ]);
+  return (
+    <div className="space-y-4">
+      <PausedCompanions companions={companions} total={total} />
+      <VerifyPager aba="pausa" pagina={pagina} total={total} porPagina={POR_PAGINA} />
+    </div>
+  );
 }
 
 async function FetchUnverifiedCompanions() {
@@ -101,8 +120,14 @@ async function FetchUnverifiedCompanions() {
 }
 
 /** Versão inglesa (/en) das descrições dos perfis publicados. */
-async function FetchTraducoes() {
-  return <TraducoesPerfis perfis={await getPerfisParaTraducao()} />;
+async function FetchTraducoes({ pagina }: { pagina: number }) {
+  const r = await getPerfisParaTraducao(pagina, POR_PAGINA);
+  return (
+    <div className="space-y-4">
+      <TraducoesPerfis perfis={r.perfis} emFalta={r.emFalta} caracteresEmFalta={r.caracteresEmFalta} />
+      <VerifyPager aba="ingles" pagina={pagina} total={r.total} porPagina={POR_PAGINA} />
+    </div>
+  );
 }
 
 /** Recusados: a recusa não apaga, por isso ficam aqui para reverter ou apagar de vez. */
@@ -157,6 +182,14 @@ async function FetchBusca({ tel }: { tel: string }) {
   );
 }
 
+const ABAS = [
+  ['registos', 'Registos'],
+  ['importadas', 'Importadas'],
+  ['pausa', 'Em pausa'],
+  ['recusadas', 'Recusadas'],
+  ['ingles', 'Inglês'],
+] as const;
+
 function CompanionsListSkeleton() {
   return (
     <div className="space-y-4 w-full max-w-2xl">
@@ -170,7 +203,7 @@ function CompanionsListSkeleton() {
 export default async function VerifyCompanionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tel?: string | string[] }>;
+  searchParams: Promise<{ tel?: string | string[]; aba?: string | string[]; pag?: string | string[] }>;
 }) {
   // A verificação fica aqui, antes dos separadores: as duas listas trazem
   // dados pessoais e nenhuma deve chegar a ser calculada para outra pessoa.
@@ -182,8 +215,11 @@ export default async function VerifyCompanionPage({
     redirect('/location');
   }
 
-  const { tel: telParam } = await searchParams;
+  const { tel: telParam, aba: abaParam, pag: pagParam } = await searchParams;
   const tel = digitosDaBusca(Array.isArray(telParam) ? telParam[0] : telParam);
+  const abaPedida = Array.isArray(abaParam) ? abaParam[0] : abaParam;
+  const aba = ABAS.find(([valor]) => valor === abaPedida)?.[0] ?? 'registos';
+  const pagina = paginaDe(pagParam);
 
   // Com um número no filtro, só os cartões desse número.
   if (tel) {
@@ -234,37 +270,26 @@ export default async function VerifyCompanionPage({
 
       <AdminPhoneSearch />
 
-      <Tabs defaultValue="registos" className="w-full max-w-2xl">
+      {/* Os separadores são ligações (?aba=…) e só o aberto é calculado. Antes
+          eram os cinco de uma vez (mais de 2 MB de HTML, com listas de mais
+          de mil linhas) mesmo que só se visse o primeiro. */}
+      <Tabs value={aba} className="w-full max-w-2xl">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="registos">Registos</TabsTrigger>
-          <TabsTrigger value="importadas">Importadas</TabsTrigger>
-          <TabsTrigger value="pausa">Em pausa</TabsTrigger>
-          <TabsTrigger value="recusadas">Recusadas</TabsTrigger>
-          <TabsTrigger value="ingles">Inglês</TabsTrigger>
+          {ABAS.map(([valor, rotulo]) => (
+            <TabsTrigger key={valor} value={valor} asChild>
+              <Link href={valor === 'registos' ? '/verify' : `/verify?aba=${valor}`} prefetch={false}>
+                {rotulo}
+              </Link>
+            </TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="registos" className="mt-6">
-          <Suspense fallback={<CompanionsListSkeleton />}>
-            <FetchUnverifiedCompanions />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="importadas" className="mt-6">
-          <Suspense fallback={<CompanionsListSkeleton />}>
-            <FetchCandidates />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="pausa" className="mt-6">
-          <Suspense fallback={<CompanionsListSkeleton />}>
-            <FetchPaused />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="recusadas" className="mt-6">
-          <Suspense fallback={<CompanionsListSkeleton />}>
-            <FetchRejected />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="ingles" className="mt-6">
-          <Suspense fallback={<CompanionsListSkeleton />}>
-            <FetchTraducoes />
+        <TabsContent value={aba} className="mt-6">
+          <Suspense key={`${aba}-${pagina}`} fallback={<CompanionsListSkeleton />}>
+            {aba === 'registos' && <FetchUnverifiedCompanions />}
+            {aba === 'importadas' && <FetchCandidates pagina={pagina} />}
+            {aba === 'pausa' && <FetchPaused pagina={pagina} />}
+            {aba === 'recusadas' && <FetchRejected />}
+            {aba === 'ingles' && <FetchTraducoes pagina={pagina} />}
           </Suspense>
         </TabsContent>
       </Tabs>

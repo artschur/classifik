@@ -19,14 +19,14 @@ import { PhoneTag } from '@/components/phone-tag';
  * que o admin lhes envia o link de pré-visualização (abre mesmo em pausa) e o
  * convite para ligarem a conta, e onde os põe no ar quando autorizarem.
  */
-export function PublishedImportedList({ perfis }: { perfis: PublishedImported[] }) {
+export function PublishedImportedList({ perfis, total }: { perfis: PublishedImported[]; total?: number }) {
   if (perfis.length === 0) return null;
 
   return (
     <section className="space-y-3">
       <div>
         <h2 className="text-xl font-semibold border-b pb-2">
-          Publicadas, ainda sem conta dela <span className="font-normal text-muted-foreground">· {perfis.length}</span>
+          Publicadas, ainda sem conta dela <span className="font-normal text-muted-foreground">· {total ?? perfis.length}</span>
         </h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Envie-lhe a pré-visualização para ver como ficou e o convite para ligar a conta. Pôr no ar regista

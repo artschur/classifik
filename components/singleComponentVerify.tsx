@@ -192,8 +192,13 @@ export default function SingleCompanionVerify({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [isLoadingDocs, setIsLoadingDocs] = useState(true);
+  // Os documentos já vêm com o cartão (um único pedido para a página toda). Só
+  // se pedem ao servidor se não vierem, para não voltar a haver uma acção por
+  // cartão ao abrir o /verify.
+  const [documents, setDocuments] = useState<Document[]>(
+    (companion.documentos as Document[] | undefined) ?? [],
+  );
+  const [isLoadingDocs, setIsLoadingDocs] = useState(companion.documentos === undefined);
   const [age, setAge] = useState(companion.age);
   const [isEditingAge, setIsEditingAge] = useState(false);
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
@@ -521,7 +526,8 @@ export default function SingleCompanionVerify({
   };
 
   useEffect(() => {
-    fetchDocuments();
+    if (companion.documentos === undefined) fetchDocuments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só no primeiro cartão sem documentos
   }, [companion.id]);
 
   const openDocumentDialog = (doc: Document) => {

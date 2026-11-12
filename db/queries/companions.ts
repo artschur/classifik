@@ -39,6 +39,7 @@ import type { Locale } from "@/lib/i18n";
 import {
   CompanionFiltered,
   CompanionPreview,
+  DocumentoCartao,
   FilterTypesCompanions,
   Media,
   PendingChange,
@@ -67,7 +68,7 @@ import {
 } from "./images";
 import { unstable_cache, revalidateTag, revalidatePath } from "next/cache";
 import { PlanType } from "./kv";
-import { signDocumentUrl } from "@/lib/supabase-admin";
+import { signDocumentUrls } from "@/lib/supabase-admin";
 import { deleteAllDocumentsFromCompanion } from "@/app/actions/document-verification";
 import {
   estadoVerificacao,
@@ -1325,14 +1326,22 @@ async function guardarEdicaoPendente(
  * tolerante: se ela for apagada, a lista fica vazia e volta a valer só a regra
  * normal de exigir documento.
  */
+// Cópia de segurança antiga: só se lê, e não muda enquanto o servidor corre.
+// Guardada 10 minutos para não custar uma ida à base de dados (~250 ms) a cada
+// abertura do /verify.
+let legacyApprovedCache: { ids: number[]; ate: number } | null = null;
+
 async function getLegacyApprovedIds(): Promise<number[]> {
+  if (legacyApprovedCache && legacyApprovedCache.ate > Date.now()) return legacyApprovedCache.ids;
   try {
     const rows = await db.execute<{ id: number; }>(
       sql`SELECT id FROM companions_verified_backup`,
     );
-    return Array.from(rows as Iterable<{ id: number; }>).map((row) =>
+    const ids = Array.from(rows as Iterable<{ id: number; }>).map((row) =>
       Number(row.id),
     );
+    legacyApprovedCache = { ids, ate: Date.now() + 10 * 60 * 1000 };
+    return ids;
   } catch {
     return [];
   }
@@ -1621,26 +1630,6 @@ export async function getUnverifiedCompanions(
     .from(companionPendingEditsTable)
     .where(inArray(companionPendingEditsTable.companion_id, companionIds));
 
-  // O vídeo que interessa é o que está à espera; depois o aprovado; por fim o
-  // recusado mais recente. Fica o primeiro de cada perfil.
-  const videosPromise = db
-    .select({
-      companionId: documentsTable.companionId,
-      storage_path: documentsTable.storage_path,
-      public_url: documentsTable.public_url,
-    })
-    .from(documentsTable)
-    .where(
-      and(
-        inArray(documentsTable.companionId, companionIds),
-        eq(documentsTable.document_type, "verification_video"),
-      ),
-    )
-    .orderBy(
-      sql`CASE ${documentsTable.status} WHEN 'pendente' THEN 0 WHEN 'aprovado' THEN 1 ELSE 2 END`,
-      desc(documentsTable.created_at),
-    );
-
   const audiosPromise = db
     .select({
       companionId: audioRecordingsTable.companionId,
@@ -1651,13 +1640,66 @@ export async function getUnverifiedCompanions(
     .where(inArray(audioRecordingsTable.companionId, companionIds))
     .orderBy(desc(audioRecordingsTable.created_at));
 
-  const [images, videos, pendingEdits, audios, resumos] = await Promise.all([
+  // Os documentos de todos os cartões, de uma vez. Antes cada cartão pedia os
+  // seus ao abrir, uma acção de servidor por cartão, e o Next corre-as uma de
+  // cada vez: com 14 cartões eram ~20 segundos, e qualquer clique ficava à
+  // espera na mesma fila.
+  const documentosPromise = db
+    .select({
+      companionId: documentsTable.companionId,
+      id: documentsTable.id,
+      document_type: documentsTable.document_type,
+      storage_path: documentsTable.storage_path,
+      public_url: documentsTable.public_url,
+      verified: documentsTable.verified,
+      status: documentsTable.status,
+      verification_date: documentsTable.verification_date,
+      notes: documentsTable.notes,
+      created_at: documentsTable.created_at,
+    })
+    .from(documentsTable)
+    .where(inArray(documentsTable.companionId, companionIds))
+    .orderBy(documentsTable.created_at)
+    // O bucket dos documentos é privado: só abrem por endereço assinado. Um
+    // pedido por bucket para todos os documentos, e não um por documento.
+    .then(async (rows) => {
+      const urls = await signDocumentUrls(
+        rows.map((r) => ({ storage_path: r.storage_path, public_url: r.public_url })),
+      );
+      return rows.map(({ public_url: _publico, ...doc }, i) => ({ ...doc, url: urls[i] }));
+    });
+
+  const [images, pendingEdits, audios, resumos, documentosLinhas] = await Promise.all([
     imagesPromise,
-    videosPromise,
     pendingEditsPromise,
     audiosPromise,
     resumosPromise,
+    documentosPromise,
   ]);
+
+  const documentosMap = new Map<number, DocumentoCartao[]>();
+  for (const { companionId, ...documento } of documentosLinhas) {
+    const lista = documentosMap.get(companionId) ?? [];
+    lista.push(documento);
+    documentosMap.set(companionId, lista);
+  }
+
+  // O vídeo que aparece no cartão é o que está à espera; depois o aprovado;
+  // por fim o recusado mais recente. É um dos documentos já assinados acima,
+  // por isso não há segundo pedido (antes era uma consulta e uma assinatura à
+  // parte, depois do lote).
+  const ordemDoVideo = (status: string) => (status === "pendente" ? 0 : status === "aprovado" ? 1 : 2);
+  const videosMap = new Map<string, string>();
+  for (const id of companionIds) {
+    const videos = documentosLinhas
+      .filter((d) => d.companionId === id && d.document_type === "verification_video")
+      .sort(
+        (a, b) =>
+          ordemDoVideo(a.status) - ordemDoVideo(b.status) ||
+          new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
+      );
+    if (videos[0]?.url) videosMap.set(String(id), videos[0].url);
+  }
 
   // O áudio que está no perfil e o que está à espera, para o admin ouvir os
   // dois. Mais recentes primeiro: fica o primeiro de cada tipo.
@@ -1689,24 +1731,6 @@ export async function getUnverifiedCompanions(
   const pendingEditsMap = new Map(
     pendingEdits.map((edit) => [edit.companionId, edit.payload]),
   );
-
-  // O bucket dos documentos é privado: o vídeo só abre por endereço assinado.
-  // Só se assina o primeiro de cada perfil, que é o que aparece.
-  const primeiroVideo = new Map<number, (typeof videos)[number]>();
-  for (const vid of videos) {
-    if (!primeiroVideo.has(vid.companionId)) primeiroVideo.set(vid.companionId, vid);
-  }
-  const signedVideos = await Promise.all(
-    [...primeiroVideo.values()].map(async (vid) => ({
-      companionId: vid.companionId,
-      url: await signDocumentUrl(vid),
-    })),
-  );
-
-  const videosMap = signedVideos.reduce((acc, vid) => {
-    if (vid.url) acc.set(vid.companionId.toString(), vid.url);
-    return acc;
-  }, new Map<string, string>());
 
   return results.map(({ companion, city, characteristics, publishedOnly, review }) => {
     const proposed = pendingEditsMap.get(companion.id);
@@ -1740,6 +1764,7 @@ export async function getUnverifiedCompanions(
       planType: companion.planType,
       images,
       verificationVideoUrl: videosMap.get(String(companion.id)) || null,
+      documentos: documentosMap.get(companion.id) ?? [],
       currentAudioUrl: audio?.current ?? null,
       pendingAudioUrl: audio?.pending ?? null,
       // Já esteve aprovada e foi o admin que a devolveu à fila. Importa
