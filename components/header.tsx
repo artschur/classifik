@@ -65,6 +65,7 @@ const NAV_TEXT = {
 export const admins = [
   'user_31n1xQBKnF2DWIj5UR4zZUJP3ZG', // Agência Classifik
   'user_3IXZlEwPFLdsmc4izgFYopSHsjF', // Duarte
+  'user_3E3ItBqoy3vcrFc7EsEWZbHApby', // Bruno
 ];
 
 /**
