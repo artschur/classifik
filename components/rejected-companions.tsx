@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { AdminEditButtons } from '@/components/imported-edit-button';
 import {
   deleteCompanionPermanently,
   revertRejection,
@@ -93,6 +94,7 @@ function Linha({ companion: c }: { companion: Recusada }) {
               Ver perfil
             </Link>
           </Button>
+          <AdminEditButtons companionId={c.id} name={c.name} />
           <Button
             variant="outline"
             size="sm"

@@ -22,7 +22,8 @@ import {
   approvalSchema,
   consentSchema,
   draftSchema,
-  importedEditSchema,
+  adminEditSchema,
+  telefoneAdmin,
   telefonePT,
 } from '@/lib/candidate-approval';
 
@@ -363,32 +364,47 @@ export type ImportedProfileForEdit = {
   /** Fotos tiradas do perfil, guardadas no bucket privado. */
   archived: { key: string; url: string }[];
   cities: { id: number; city: string }[];
+  /**
+   * As fotos mudam-se neste formulário (perfis importados, que têm arquivo).
+   * Nos outros mudam-se no "Gerir fotos".
+   */
+  fotosNoEditor: boolean;
+  /** Ela tem alterações por rever: o que se edita é a proposta dela. */
+  edicaoPendente: boolean;
 };
 
 /** Fotos tiradas do perfil ficam aqui, no bucket privado, para se poderem repor. */
 const pastaArquivo = (authId: string) => `${authId.slice('import_'.length)}/arquivo/`;
 
 /**
- * Perfil que o admin pode editar por aqui, ou null: criado pela equipa e ainda
- * sem conta dela, ou já reivindicado mas ainda na pausa da importação (à
- * espera da aprovação no /verify). Depois de publicado, quem edita é ela.
+ * Qualquer perfil, para o admin editar. `pasta` é o arquivo privado das fotos
+ * tiradas: existe nos perfis importados (com ou sem conta dela), que vieram de
+ * uma candidata; nos outros é null e as fotos não se mexem por aqui.
  */
-async function lerImportada(companionId: number) {
+async function lerPerfilParaEditar(companionId: number) {
   const [perfil] = await db
     .select({ id: companionsTable.id, authId: companionsTable.auth_id })
     .from(companionsTable)
     .where(eq(companionsTable.id, companionId))
     .limit(1);
   if (!perfil) return null;
-  if (isImportedAuthId(perfil.authId)) return { ...perfil, pasta: pastaArquivo(perfil.authId) };
+  if (isImportedAuthId(perfil.authId)) return { ...perfil, pasta: pastaArquivo(perfil.authId) as string | null };
 
-  // Reivindicada: a conta já é dela, mas o arquivo continua na pasta da candidata.
+  // Importada que já tem conta: o arquivo continua na pasta da candidata.
   const linhas = await db.execute(sql`
-    select id from staging.candidatos
-    where companion_id = ${companionId} and status = 'reivindicado'
-    limit 1`);
+    select id from staging.candidatos where companion_id = ${companionId} limit 1`);
   const candidata = Array.from(linhas)[0] as { id: string } | undefined;
-  return candidata ? { ...perfil, pasta: `${candidata.id}/arquivo/` } : null;
+  return { ...perfil, pasta: candidata ? `${candidata.id}/arquivo/` : null };
+}
+
+/** Alterações dela por rever (o formato do formulário de registo), ou null. */
+async function lerEdicaoPendente(companionId: number): Promise<Record<string, unknown> | null> {
+  const [pendente] = await db
+    .select({ payload: companionPendingEditsTable.payload })
+    .from(companionPendingEditsTable)
+    .where(eq(companionPendingEditsTable.companion_id, companionId))
+    .limit(1);
+  return pendente ? (pendente.payload as Record<string, unknown>) : null;
 }
 
 /** Copia um ficheiro entre buckets; sem cópia directa, descarrega e envia. */
@@ -405,18 +421,20 @@ async function copiarEntreBuckets(de: string, origem: string, para: string, dest
 }
 
 /**
- * Dados de um perfil importado para o formulário "Editar" do admin, com as
- * fotos do perfil e as que estão no arquivo.
+ * Dados de qualquer perfil para o formulário "Editar" do admin. Nos perfis
+ * importados vêm também as fotos do perfil e as do arquivo. Se ela tiver
+ * alterações por rever, os valores são os da proposta dela: é isso que vai
+ * para o ar ao aprovar, e é isso que o admin corrige.
  */
 export async function getImportedProfileForEdit(
   companionId: number,
 ): Promise<{ success: true; data: ImportedProfileForEdit } | { success: false; error: string }> {
   if (!(await exigirAdmin())) return { success: false, error: 'Não autorizado' };
 
-  const perfil = await lerImportada(companionId);
-  if (!perfil) return { success: false, error: 'Este perfil já está ligado a uma conta' };
+  const perfil = await lerPerfilParaEditar(companionId);
+  if (!perfil) return { success: false, error: 'Perfil não encontrado' };
 
-  const [[c], fotos, cidades] = await Promise.all([
+  const [[c], fotos, cidades, proposta] = await Promise.all([
     db
       .select({
         name: companionsTable.name,
@@ -445,83 +463,84 @@ export async function getImportedProfileForEdit(
       .where(eq(imagesTable.companionId, companionId))
       .orderBy(asc(imagesTable.position), asc(imagesTable.id)),
     db.select({ id: citiesTable.id, city: citiesTable.city }).from(citiesTable).orderBy(asc(citiesTable.city)),
+    lerEdicaoPendente(companionId),
   ]);
 
-  const pasta = perfil.pasta;
-  const storage = getSupabaseAdmin().storage.from('candidatas');
-  const { data: lista } = await storage.list(pasta, { limit: 1000 });
-  const caminhos = (lista ?? []).filter((f) => f.id).map((f) => `${pasta}${f.name}`);
-  const { data: assinados } = caminhos.length
-    ? await storage.createSignedUrls(caminhos, 60 * 60)
-    : { data: [] };
+  let archived: { key: string; url: string }[] = [];
+  if (perfil.pasta) {
+    const storage = getSupabaseAdmin().storage.from('candidatas');
+    const { data: lista } = await storage.list(perfil.pasta, { limit: 1000 });
+    const caminhos = (lista ?? []).filter((f) => f.id).map((f) => `${perfil.pasta}${f.name}`);
+    const { data: assinados } = caminhos.length
+      ? await storage.createSignedUrls(caminhos, 60 * 60)
+      : { data: [] };
+    archived = (assinados ?? [])
+      .filter((a) => a.signedUrl && a.path)
+      .map((a) => ({ key: `arquivo:${a.path}`, url: a.signedUrl }));
+  }
 
   const texto = (v: unknown) => (v === null || v === undefined ? '' : String(v));
+  const numero = (v: unknown) => (v === null || v === undefined || v === '' || Number(v) === 0 ? '' : String(Number(v)));
+  // Valor da proposta dela, se existir; senão o publicado.
+  const p = <T,>(chave: string, publicado: T): T | unknown =>
+    proposta && chave in proposta ? proposta[chave] : publicado;
 
   return {
     success: true,
     data: {
       values: {
-        name: c.name,
-        phone: c.phone,
-        age: texto(c.age),
-        cityId: texto(c.cityId),
-        price: texto(c.price),
-        ethnicity: texto(c.ethnicity),
-        hairColor: texto(c.hairColor),
-        eyeColor: texto(c.eyeColor),
-        height: c.height ? String(Number(c.height)) : '',
-        weight: c.weight ? String(Number(c.weight)) : '',
-        languages: c.languages ?? [],
-        shortDescription: texto(c.shortDescription),
-        description: c.description,
-        meetsAtHotel: c.meetsAtHotel,
-        meetsAtOwnPlace: c.meetsAtOwnPlace,
+        name: texto(p('name', c.name)),
+        phone: texto(p('phoneNumber', c.phone)),
+        age: texto(p('age', c.age)),
+        cityId: texto(p('city', c.cityId)),
+        price: texto(p('price', c.price)),
+        ethnicity: texto(p('ethnicity', c.ethnicity)),
+        hairColor: texto(p('hair_color', c.hairColor)),
+        eyeColor: texto(p('eye_color', c.eyeColor)),
+        height: numero(p('height', c.height)),
+        weight: numero(p('weight', c.weight)),
+        languages: (p('languages', c.languages) as string[] | null) ?? [],
+        shortDescription: texto(p('shortDescription', c.shortDescription)),
+        description: texto(p('description', c.description)),
+        meetsAtHotel: Boolean(p('meets_at_hotel', c.meetsAtHotel)),
+        meetsAtOwnPlace: Boolean(p('meets_at_own_place', c.meetsAtOwnPlace)),
       },
       photos: fotos.map((f) => ({ key: `atual:${f.path}`, url: f.url })),
-      archived: (assinados ?? [])
-        .filter((a) => a.signedUrl && a.path)
-        .map((a) => ({ key: `arquivo:${a.path}`, url: a.signedUrl })),
+      archived,
       cities: cidades,
+      fotosNoEditor: perfil.pasta !== null,
+      edicaoPendente: proposta !== null,
     },
   };
 }
 
 /**
- * Grava a edição de um perfil importado: os dados e as fotos, pela ordem
- * escolhida (a primeira é a capa). Fotos tiradas vão para o arquivo privado e
- * fotos do arquivo escolhidas voltam ao perfil. Não mexe em estar no ar ou em
- * pausa, que tem botão próprio.
+ * Grava a edição de qualquer perfil pelo admin.
+ *
+ * - Sem alterações dela por rever: escreve no perfil (e nas características).
+ * - Com alterações dela por rever: corrige a proposta dela, que vai para o ar
+ *   ao aprovar. Escrever no perfil não servia: a aprovação aplicava a
+ *   proposta por cima e a correcção do admin perdia-se.
+ * - Fotos (só nos importados, que têm arquivo): pela ordem escolhida, a
+ *   primeira é a capa; as tiradas vão para o arquivo privado e as do arquivo
+ *   escolhidas voltam ao perfil.
+ *
+ * Não mexe em estar no ar ou em pausa, que tem botão próprio.
  */
 export async function updateImportedProfile(companionId: number, input: unknown): Promise<Resultado> {
   if (!(await exigirAdmin())) return { success: false, error: 'Não autorizado' };
 
-  const parsed = importedEditSchema.safeParse(input);
+  const parsed = adminEditSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' };
   }
   const dados = parsed.data;
 
-  const perfil = await lerImportada(companionId);
-  if (!perfil) return { success: false, error: 'Este perfil já está ligado a uma conta' };
+  const perfil = await lerPerfilParaEditar(companionId);
+  if (!perfil) return { success: false, error: 'Perfil não encontrado' };
 
-  // Reivindicada com alterações dela por rever: aprovar aplicava-as por cima
-  // do que se gravasse aqui, e a edição do admin perdia-se.
-  if (!isImportedAuthId(perfil.authId)) {
-    const [pendente] = await db
-      .select({ id: companionPendingEditsTable.companion_id })
-      .from(companionPendingEditsTable)
-      .where(eq(companionPendingEditsTable.companion_id, companionId))
-      .limit(1);
-    if (pendente) {
-      return {
-        success: false,
-        error: 'Ela tem alterações por rever: aprove ou recuse essas alterações primeiro e depois edite.',
-      };
-    }
-  }
-
-  const telefone = telefonePT(dados.phone);
-  if (!telefone) return { success: false, error: 'WhatsApp inválido' };
+  const telefone = telefoneAdmin(dados.phone);
+  if (!telefone) return { success: false, error: 'Telefone inválido' };
 
   const [cidade] = await db
     .select({ id: citiesTable.id })
@@ -530,15 +549,18 @@ export async function updateImportedProfile(companionId: number, input: unknown)
     .limit(1);
   if (!cidade) return { success: false, error: 'Distrito desconhecido' };
 
+  const storage = getSupabaseAdmin().storage;
+  const mexerNasFotos = Boolean(dados.photos && perfil.pasta);
+  const pasta = perfil.pasta ?? '';
+
   // As chaves vêm do navegador: só valem fotos deste perfil ou do arquivo dele.
   const atuais = await db
     .select({ id: imagesTable.id, path: imagesTable.storage_path })
     .from(imagesTable)
     .where(eq(imagesTable.companionId, companionId));
   const atuaisPorCaminho = new Map(atuais.map((f) => [f.path, f.id]));
-  const pasta = perfil.pasta;
 
-  const escolhidas = dados.photos.map((chave) => {
+  const escolhidas = (mexerNasFotos ? dados.photos! : []).map((chave) => {
     const [tipo, ...resto] = chave.split(':');
     return { tipo, caminho: resto.join(':') };
   });
@@ -549,14 +571,15 @@ export async function updateImportedProfile(companionId: number, input: unknown)
         : f.caminho.startsWith(pasta) && !f.caminho.slice(pasta.length).includes('/') && !f.caminho.includes('..');
     if (!valida) return { success: false, error: 'Há fotos que não pertencem a este perfil' };
   }
-  if (new Set(dados.photos).size !== dados.photos.length) {
+  if (mexerNasFotos && new Set(dados.photos).size !== dados.photos!.length) {
     return { success: false, error: 'Há fotos repetidas' };
   }
 
   const manter = new Set(escolhidas.filter((f) => f.tipo === 'atual').map((f) => f.caminho));
-  const tirar = atuais.filter((f) => !manter.has(f.path));
+  const tirar = mexerNasFotos ? atuais.filter((f) => !manter.has(f.path)) : [];
   const repor = escolhidas.filter((f) => f.tipo === 'arquivo');
-  const storage = getSupabaseAdmin().storage;
+
+  const proposta = await lerEdicaoPendente(companionId);
 
   // Primeiro as cópias, depois a base: se uma cópia falhar, nada muda no perfil.
   const copiadasArquivo: string[] = [];
@@ -574,37 +597,65 @@ export async function updateImportedProfile(companionId: number, input: unknown)
     }
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(companionsTable)
-        .set({
+      if (proposta) {
+        // Corrige a proposta dela, nas chaves do formulário de registo.
+        const cidadeMudou = String(proposta.city ?? '') !== String(dados.cityId);
+        const corrigida = {
+          ...proposta,
           name: dados.name,
-          phone: telefone,
+          phoneNumber: telefone,
           age: dados.age,
-          city_id: dados.cityId,
+          city: dados.cityId,
+          ...(cidadeMudou ? { neighborhood: '' } : {}),
           price: dados.price ?? null,
           languages: dados.languages,
-          shortDescription: dados.shortDescription || null,
+          shortDescription: dados.shortDescription || '',
           description: dados.description,
           meets_at_hotel: dados.meetsAtHotel,
           meets_at_own_place: dados.meetsAtOwnPlace,
-          updated_at: new Date(),
-        })
-        .where(eq(companionsTable.id, companionId));
+          weight: dados.weight ?? null,
+          height: dados.height ?? null,
+          ethnicity: dados.ethnicity ?? null,
+          eye_color: dados.eyeColor ?? null,
+          hair_color: dados.hairColor ?? null,
+        };
+        await tx
+          .update(companionPendingEditsTable)
+          .set({ payload: corrigida })
+          .where(eq(companionPendingEditsTable.companion_id, companionId));
+      } else {
+        await tx
+          .update(companionsTable)
+          .set({
+            name: dados.name,
+            phone: telefone,
+            age: dados.age,
+            city_id: dados.cityId,
+            price: dados.price ?? null,
+            languages: dados.languages,
+            shortDescription: dados.shortDescription || null,
+            description: dados.description,
+            meets_at_hotel: dados.meetsAtHotel,
+            meets_at_own_place: dados.meetsAtOwnPlace,
+            updated_at: new Date(),
+          })
+          .where(eq(companionsTable.id, companionId));
 
-      const caracteristicas = {
-        weight: dados.weight != null ? String(dados.weight) : null,
-        height: dados.height != null ? String(dados.height) : null,
-        ethnicity: dados.ethnicity ?? null,
-        eye_color: dados.eyeColor ?? null,
-        hair_color: dados.hairColor ?? null,
-      };
-      const atualizadas = await tx
-        .update(characteristicsTable)
-        .set(caracteristicas)
-        .where(eq(characteristicsTable.companion_id, companionId))
-        .returning({ id: characteristicsTable.id });
-      if (!atualizadas.length) {
-        await tx.insert(characteristicsTable).values({ companion_id: companionId, ...caracteristicas });
+        const caracteristicas = {
+          weight: dados.weight != null ? String(dados.weight) : null,
+          height: dados.height != null ? String(dados.height) : null,
+          ethnicity: dados.ethnicity ?? null,
+          eye_color: dados.eyeColor ?? null,
+          hair_color: dados.hairColor ?? null,
+        };
+        const atualizadas = await tx
+          .update(characteristicsTable)
+          .set(caracteristicas)
+          .where(eq(characteristicsTable.companion_id, companionId))
+          .returning({ id: characteristicsTable.id });
+        if (!atualizadas.length) {
+          await tx.insert(characteristicsTable).values({ companion_id: companionId, ...caracteristicas });
+        }
       }
 
       for (const f of tirar) {
@@ -631,7 +682,7 @@ export async function updateImportedProfile(companionId: number, input: unknown)
     // Desfaz as cópias: o perfil e o arquivo ficam como estavam.
     if (copiadasArquivo.length) await storage.from('candidatas').remove(copiadasArquivo);
     if (copiadasPerfil.length) await storage.from('images').remove(copiadasPerfil.map((c) => c.destino));
-    console.error('Falha ao editar perfil importado:', error);
+    console.error('Falha ao editar perfil (admin):', error);
     return { success: false, error: error instanceof Error ? error.message : 'Erro ao guardar' };
   }
 
@@ -639,8 +690,9 @@ export async function updateImportedProfile(companionId: number, input: unknown)
   if (tirar.length) await storage.from('images').remove(tirar.map((f) => f.path));
   if (copiadasPerfil.length) await storage.from('candidatas').remove(copiadasPerfil.map((c) => c.origem));
 
-  // Se a descrição mudou, a versão inglesa acompanha.
-  await garantirTraducao(companionId);
+  // Se a descrição publicada mudou, a versão inglesa acompanha. Numa proposta
+  // por rever, a tradução faz-se na aprovação.
+  if (!proposta) await garantirTraducao(companionId);
 
   revalidateTag('companion', 'max');
   revalidateTag('companions', 'max');

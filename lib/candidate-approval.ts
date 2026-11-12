@@ -81,6 +81,42 @@ export const importedEditSchema = approvalSchema
 
 export type ImportedEditInput = z.infer<typeof importedEditSchema>;
 
+/** Telemóvel português normalizado, ou outro número internacional (+ e 8 a 15 dígitos). */
+export function telefoneAdmin(valor: string | null | undefined): string | null {
+  const pt = telefonePT(valor);
+  if (pt) return pt;
+  const d = String(valor ?? '').replace(/\D/g, '');
+  return String(valor ?? '').trim().startsWith('+') && d.length >= 8 && d.length <= 15 ? `+${d}` : null;
+}
+
+const textoOpcional = z.preprocess(vazio, z.string().trim().max(30).optional());
+
+/**
+ * Edição de qualquer perfil pelo admin (registos, em pausa, recusados, no ar).
+ * Mais tolerante do que a das importadas: há perfis com valores antigos fora
+ * das listas (ex.: "Castanho" nos olhos, "English") e com números
+ * estrangeiros, e não podem ficar impossíveis de guardar por isso. As fotos
+ * só vêm nos perfis que têm arquivo (importados); nos outros mudam-se no
+ * "Gerir fotos".
+ */
+export const adminEditSchema = importedEditSchema
+  .omit({ photos: true, phone: true, price: true, ethnicity: true, hairColor: true, eyeColor: true, languages: true })
+  .extend({
+    phone: z.string().trim().refine((v) => telefoneAdmin(v) !== null, 'Telefone inválido: use +351 9… ou o indicativo do país'),
+    price: z.preprocess(vazio, z.coerce.number().int().min(0, 'Preço inválido').max(10000).optional()),
+    ethnicity: textoOpcional,
+    hairColor: textoOpcional,
+    eyeColor: textoOpcional,
+    languages: z.array(z.string().trim().min(1).max(30)).max(10).default([]),
+    photos: z
+      .array(z.string().regex(/^(atual|arquivo):[^\s]+$/))
+      .min(1, 'O perfil precisa de pelo menos uma foto')
+      .max(50)
+      .optional(),
+  });
+
+export type AdminEditInput = z.infer<typeof adminEditSchema>;
+
 /**
  * Rascunho guardado sem publicar: os mesmos campos, todos opcionais, e sem as
  * regras de mínimo (um nome ainda por escrever não impede guardar o resto).

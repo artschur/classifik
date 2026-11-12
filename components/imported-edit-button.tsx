@@ -16,7 +16,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { CORES_CABELO, CORES_OLHOS, ETNIAS, IDIOMAS, importedEditSchema } from '@/lib/candidate-approval';
+import { CORES_CABELO, CORES_OLHOS, ETNIAS, IDIOMAS, adminEditSchema } from '@/lib/candidate-approval';
+import { AdminPhotoManager } from '@/components/admin-photo-manager';
 import {
   getImportedProfileForEdit,
   updateImportedProfile,
@@ -25,9 +26,23 @@ import {
 import { Campo, Opcoes, selectClass } from '@/components/candidate-actions';
 
 /**
- * Botão "Editar" de um perfil criado pela equipa e ainda sem conta dela: todos
- * os dados e as fotos. Separado de pôr no ar ou pausar, que têm botões
- * próprios. Usado no /verify (Importadas e Em pausa) e na página do perfil.
+ * "Editar" e "Gerir fotos" de admin, lado a lado, para qualquer perfil. É o
+ * par a usar nas páginas de admin (fila, em pausa, recusadas, perfil).
+ */
+export function AdminEditButtons({ companionId, name }: { companionId: number; name: string }) {
+  return (
+    <>
+      <ImportedEditButton companionId={companionId} />
+      <AdminPhotoManager companionId={companionId} name={name} />
+    </>
+  );
+}
+
+/**
+ * Botão "Editar" do admin, para qualquer perfil: nome, contacto, idade,
+ * distrito, preço, características, idiomas e descrições. Nos importados,
+ * também as fotos com o arquivo; nos outros as fotos mudam-se no "Gerir
+ * fotos". Separado de pôr no ar ou pausar, que têm botões próprios.
  */
 export function ImportedEditButton({ companionId }: { companionId: number }) {
   const { toast } = useToast();
@@ -99,15 +114,25 @@ function EditForm({
     set('photos', fotos);
   };
 
+  // Sem arquivo (perfis que não são importados), as fotos não vão no pedido:
+  // mudam-se no "Gerir fotos", que também acrescenta e substitui.
+  const envio = dados.fotosNoEditor ? form : { ...form, photos: undefined };
+
+  // Valores antigos fora das listas (ex.: "Castanho" nos olhos) continuam a
+  // aparecer, para não se perderem ao guardar.
+  const comAtual = (lista: readonly string[], atual: string) =>
+    atual && !lista.includes(atual) ? [...lista, atual] : lista;
+  const idiomas = [...IDIOMAS, ...form.languages.filter((l) => !(IDIOMAS as readonly string[]).includes(l))];
+
   const guardar = () => {
-    const parsed = importedEditSchema.safeParse(form);
+    const parsed = adminEditSchema.safeParse(envio);
     if (!parsed.success) {
       setErro(parsed.error.issues[0]?.message ?? 'Verifique os campos');
       return;
     }
     setErro(null);
     startTransition(async () => {
-      const res = await updateImportedProfile(companionId, form);
+      const res = await updateImportedProfile(companionId, envio);
       if (res.success) {
         toast({ title: 'Perfil actualizado', variant: 'success' });
         onFechar();
@@ -123,17 +148,26 @@ function EditForm({
       <DialogHeader>
         <DialogTitle>Editar perfil</DialogTitle>
         <DialogDescription>
-          Obrigatórios (*): nome, WhatsApp, idade, distrito, descrição e pelo menos uma foto. Guardar não
-          muda se o perfil está no ar ou em pausa.
+          Obrigatórios (*): nome, WhatsApp, idade, distrito e descrição
+          {dados.fotosNoEditor ? ', e pelo menos uma foto' : ''}. Guardar não muda se o perfil está no
+          ar ou em pausa.
+          {!dados.fotosNoEditor && ' Para acrescentar, trocar ou tirar fotos, use "Gerir fotos".'}
         </DialogDescription>
       </DialogHeader>
+
+      {dados.edicaoPendente && (
+        <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-900 dark:bg-blue-950/40">
+          Ela tem alterações por rever: está a editar a proposta dela, já com essas alterações. O que
+          guardar aqui vai para o ar quando a aprovar.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Campo label="Nome a mostrar *">
           <Input value={form.name} maxLength={100} onChange={(e) => set('name', e.target.value)} />
         </Campo>
         <Campo label="WhatsApp *">
-          <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+351 9…" />
+          <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+351 9… (ou +55…)" />
         </Campo>
         <Campo label="Idade *">
           <Input type="number" min={18} value={form.age} onChange={(e) => set('age', e.target.value)} />
@@ -149,16 +183,21 @@ function EditForm({
           </select>
         </Campo>
         <Campo label="Preço por hora (€)">
-          <Input type="number" min={1} value={form.price} onChange={(e) => set('price', e.target.value)} />
+          <Input type="number" min={0} value={form.price} onChange={(e) => set('price', e.target.value)} />
         </Campo>
         <Campo label="Etnia">
-          <Opcoes valor={form.ethnicity} opcoes={ETNIAS} onChange={(v) => set('ethnicity', v)} />
+          <Opcoes valor={form.ethnicity} opcoes={comAtual(ETNIAS, dados.values.ethnicity)} onChange={(v) => set('ethnicity', v)} />
         </Campo>
         <Campo label="Cor do cabelo">
-          <Opcoes valor={form.hairColor} opcoes={CORES_CABELO} onChange={(v) => set('hairColor', v)} />
+          <Opcoes valor={form.hairColor} opcoes={comAtual(CORES_CABELO, dados.values.hairColor)} onChange={(v) => set('hairColor', v)} />
         </Campo>
         <Campo label="Cor dos olhos">
-          <Opcoes valor={form.eyeColor} opcoes={CORES_OLHOS} onChange={(v) => set('eyeColor', v)} vazio="Sem informação" />
+          <Opcoes
+            valor={form.eyeColor}
+            opcoes={comAtual(CORES_OLHOS, dados.values.eyeColor)}
+            onChange={(v) => set('eyeColor', v)}
+            vazio="Sem informação"
+          />
         </Campo>
         <Campo label="Altura (m)">
           <Input value={form.height} onChange={(e) => set('height', e.target.value)} placeholder="1,65" />
@@ -168,7 +207,7 @@ function EditForm({
         </Campo>
         <Campo label="Idiomas" className="sm:col-span-2">
           <div className="flex flex-wrap gap-4">
-            {IDIOMAS.map((idioma) => (
+            {idiomas.map((idioma) => (
               <label key={idioma} className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={form.languages.includes(idioma)}
@@ -200,6 +239,7 @@ function EditForm({
           </label>
         </div>
 
+        {dados.fotosNoEditor && (
         <Campo label={`Fotos no perfil * (${form.photos.length})`} className="sm:col-span-2">
           <p className="text-xs text-muted-foreground">
             A primeira é a capa. Use as setas para mudar a ordem; toque numa foto para a tirar. As fotos
@@ -262,6 +302,7 @@ function EditForm({
             </>
           )}
         </Campo>
+        )}
       </div>
 
       {erro && <p className="text-sm text-red-500">{erro}</p>}

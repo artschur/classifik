@@ -23,8 +23,7 @@ import {
   verifyIdentityAsAdmin,
 } from '@/db/queries/companions';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
-import { ImportedEditButton } from '@/components/imported-edit-button';
-import { AdminPhotoManager } from '@/components/admin-photo-manager';
+import { AdminEditButtons } from '@/components/imported-edit-button';
 
 /**
  * Controlos de admin na página do próprio perfil. Antes disto, tirar um
@@ -189,10 +188,8 @@ export function AdminProfileControls({
       </p>
 
       <div className="flex flex-col sm:flex-row gap-2">
-        {/* Só perfis criados pela equipa e ainda sem conta: os outros são
-            editados pela própria anunciante. */}
-        {previewPath && <ImportedEditButton companionId={companionId} />}
-        <AdminPhotoManager companionId={companionId} name={name} />
+        {/* Qualquer perfil: o admin edita os dados e as fotos de todos. */}
+        <AdminEditButtons companionId={companionId} name={name} />
         {!temSelo && (
           <AlertDialog>
             <AlertDialogTrigger asChild>

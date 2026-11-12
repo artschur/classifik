@@ -72,7 +72,7 @@ import {
   updateImagesOrderAsAdmin,
 } from '@/db/queries/images';
 import { ImageFramingDialog } from '@/components/imageFramingDialog';
-import { ImportedEditButton } from '@/components/imported-edit-button';
+import { AdminEditButtons } from '@/components/imported-edit-button';
 import { isVideoMedia, mediaFraming, mediaUrl } from '@/lib/image-framing';
 
 type Document = {
@@ -1025,18 +1025,12 @@ export default function SingleCompanionVerify({
           </div>
         )}
 
-        {/* Reivindicada: editar antes de aprovar. Não com alterações dela por
-            rever, que a aprovação aplicaria por cima. */}
-        {reivindicada &&
-          (isEdit ? (
-            <p className="w-full text-xs text-muted-foreground">
-              Para editar o perfil, decida primeiro as alterações dela.
-            </p>
-          ) : (
-            <div className="w-full [&>button]:w-full">
-              <ImportedEditButton companionId={companion.id} />
-            </div>
-          ))}
+        {/* Editar em qualquer cartão da fila: dados, características, idiomas
+            e descrições, e as fotos (acrescentar, trocar, tirar, ordenar).
+            Com alterações dela por rever, o que se edita é a proposta dela. */}
+        <div className="flex flex-col sm:flex-row w-full gap-2 [&>button]:flex-1">
+          <AdminEditButtons companionId={companion.id} name={companion.name} />
+        </div>
 
         {/* No ar e com vídeo ou documento à espera: decide-se o selo. */}
         {docsNoAr && (

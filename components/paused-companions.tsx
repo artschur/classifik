@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { PausedCompanion } from '@/db/queries/paused';
 import { sendCompanionToReview, setCompanionPausedAsAdmin } from '@/db/queries/companions';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
-import { ImportedEditButton } from '@/components/imported-edit-button';
+import { AdminEditButtons } from '@/components/imported-edit-button';
 
 /**
  * Separador "Em pausa" do /verify.
@@ -120,9 +120,11 @@ function Linha({ companion: c, geridaPeloAdmin }: { companion: PausedCompanion; 
             Ver perfil
           </Link>
         </Button>
+        {/* O admin edita qualquer perfil, também os que ela própria pausou:
+            editar não muda se está no ar ou em pausa. */}
+        <AdminEditButtons companionId={c.id} name={c.name} />
         {geridaPeloAdmin && (
           <>
-            {c.previewPath && <ImportedEditButton companionId={c.id} />}
             <Button
               variant="outline"
               size="sm"
