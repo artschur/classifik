@@ -181,9 +181,12 @@ function DialogoMotivo({
 export default function SingleCompanionVerify({
   companion,
   onActionComplete,
+  esconderEdicao = false,
 }: {
   companion: CompanionFiltered & { description?: string; };
   onActionComplete: (companionId: number) => void;
+  /** Os botões Editar e Gerir fotos já estão numa barra por cima do cartão (busca). */
+  esconderEdicao?: boolean;
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -585,7 +588,8 @@ export default function SingleCompanionVerify({
               </Badge>
             ) : noAr ? (
               <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-                No ar: documentos por rever
+                {/* Um perfil aprovado sem nada por rever também chega aqui, pela busca. */}
+                {docsPendentes && !temSelo ? 'Aprovado: documentos por rever' : 'Perfil aprovado'}
               </Badge>
             ) : wasSentToReview ? (
               <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">
@@ -1028,9 +1032,11 @@ export default function SingleCompanionVerify({
         {/* Editar em qualquer cartão da fila: dados, características, idiomas
             e descrições, e as fotos (acrescentar, trocar, tirar, ordenar).
             Com alterações dela por rever, o que se edita é a proposta dela. */}
-        <div className="flex flex-col sm:flex-row w-full gap-2 [&>button]:flex-1">
-          <AdminEditButtons companionId={companion.id} name={companion.name} />
-        </div>
+        {!esconderEdicao && (
+          <div className="flex flex-col sm:flex-row w-full gap-2 [&>button]:flex-1">
+            <AdminEditButtons companionId={companion.id} name={companion.name} />
+          </div>
+        )}
 
         {/* No ar e com vídeo ou documento à espera: decide-se o selo. */}
         {docsNoAr && (

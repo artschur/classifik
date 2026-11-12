@@ -12,6 +12,7 @@ import { ImportedShareButtons } from '@/components/imported-share-buttons';
 import { setCompanionPausedAsAdmin } from '@/db/queries/companions';
 import { ConsentDialog } from '@/components/candidate-actions';
 import { AdminEditButtons } from '@/components/imported-edit-button';
+import { PhoneTag } from '@/components/phone-tag';
 
 /**
  * Perfis já criados a partir das candidatas, ainda sem conta delas. É daqui
@@ -41,7 +42,8 @@ export function PublishedImportedList({ perfis }: { perfis: PublishedImported[] 
   );
 }
 
-function Linha({ perfil: p }: { perfil: PublishedImported }) {
+/** A linha de um perfil importado sem conta (também usada nos resultados da busca). */
+export function Linha({ perfil: p }: { perfil: PublishedImported }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -71,6 +73,7 @@ function Linha({ perfil: p }: { perfil: PublishedImported }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">{p.name}</span>
+            <PhoneTag phone={p.phone} />
             <Badge variant="outline">{p.city}</Badge>
             <Badge variant={p.paused ? 'secondary' : 'default'}>{p.paused ? 'Em pausa' : 'No ar'}</Badge>
             {!p.identityVerified && <Badge variant="secondary">Sem selo</Badge>}

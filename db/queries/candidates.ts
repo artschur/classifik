@@ -61,6 +61,7 @@ export type PublishedImported = {
   companionId: number;
   candidateId: string;
   name: string;
+  phone: string;
   city: string;
   paused: boolean;
   identityVerified: boolean;
@@ -75,16 +76,26 @@ export type PublishedImported = {
  * Perfis já criados a partir das candidatas e ainda sem conta delas, em
  * pausa ou no ar. É daqui que o admin envia a pré-visualização e o convite.
  */
-export async function getPublishedImported(): Promise<PublishedImported[]> {
+export async function getPublishedImported(
+  opcoes: { companionIds?: number[] } = {},
+): Promise<PublishedImported[]> {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
     throw new Error('Não autorizado');
   }
 
+  // Com ids (a busca), só esses perfis.
+  const ids = Array.isArray(opcoes.companionIds)
+    ? opcoes.companionIds.filter((id) => Number.isInteger(id) && id > 0).slice(0, 50)
+    : null;
+  if (ids && ids.length === 0) return [];
+  const soEstes = ids ? sql`and p.id in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})` : sql``;
+
   const rows = await db.execute<{
     companion_id: number;
     candidate_id: string;
     name: string;
+    phone: string;
     city: string;
     paused: boolean;
     identity_verified: boolean;
@@ -92,7 +103,7 @@ export async function getPublishedImported(): Promise<PublishedImported[]> {
     consentimento_em: Date | null;
     convite_expira_em: Date | null;
   }>(sql`
-    select p.id as companion_id, c.id as candidate_id, p.name, ci.city, p.paused, p.identity_verified,
+    select p.id as companion_id, c.id as candidate_id, p.name, p.phone, ci.city, p.paused, p.identity_verified,
       c.consentimento_em, c.convite_expira_em,
       (select i.public_url from public.images i
         where i.companion_id = p.id and i.is_verification_video = false
@@ -101,12 +112,14 @@ export async function getPublishedImported(): Promise<PublishedImported[]> {
     join public.companions p on p.id = c.companion_id
     join public.cities ci on ci.id = p.location_id
     where p.auth_id like 'import\\_%'
+    ${soEstes}
     order by p.paused desc, p.updated_at desc`);
 
   return Array.from(rows).map((r) => ({
     companionId: r.companion_id,
     candidateId: r.candidate_id,
     name: r.name,
+    phone: r.phone,
     city: r.city,
     paused: r.paused,
     identityVerified: r.identity_verified,
@@ -160,11 +173,21 @@ type Row = {
   consentimento_em: Date | null;
 };
 
-export async function getCandidates(): Promise<Candidate[]> {
+/**
+ * As candidatas do /verify. Com `telefone` (a busca), só as que têm esse
+ * número: compara só os dígitos, com ou sem indicativo.
+ */
+export async function getCandidates(opcoes: { telefone?: string } = {}): Promise<Candidate[]> {
   const { userId } = await auth();
   if (!userId || !isAdmin(userId)) {
     throw new Error('Não autorizado');
   }
+
+  let digitos = (opcoes.telefone ?? '').replace(/\D/g, '');
+  if (digitos.length > 9) digitos = digitos.slice(-9);
+  const soDoTelefone = digitos.length >= 6
+    ? sql`and regexp_replace(coalesce(c.telefone, ''), '\\D', '', 'g') like ${`%${digitos}%`}`
+    : sql``;
 
   // Quem recusou é apagada; quem já foi publicada passou para companions.
   const rows = await db.execute<Row>(sql`
@@ -172,6 +195,7 @@ export async function getCandidates(): Promise<Candidate[]> {
     from staging.candidatos c
     left join public.cities ci on ci.id = c.city_id
     where c.status in ('candidato', 'contactado', 'autorizado')
+    ${soDoTelefone}
     order by ci.slug nulls last, c.pontuacao desc nulls last, c.criado_em
   `);
 

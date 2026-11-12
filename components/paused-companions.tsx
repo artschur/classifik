@@ -10,6 +10,7 @@ import type { PausedCompanion } from '@/db/queries/paused';
 import { sendCompanionToReview, setCompanionPausedAsAdmin } from '@/db/queries/companions';
 import { ImportedShareButtons } from '@/components/imported-share-buttons';
 import { AdminEditButtons } from '@/components/imported-edit-button';
+import { PhoneTag } from '@/components/phone-tag';
 
 /**
  * Separador "Em pausa" do /verify.
@@ -105,6 +106,7 @@ function Linha({ companion: c, geridaPeloAdmin }: { companion: PausedCompanion; 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{c.name}</span>
+          <PhoneTag phone={c.phone} />
           <Badge variant="outline">{c.city}</Badge>
           {!c.identityVerified && <Badge variant="secondary">Sem selo</Badge>}
         </div>

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AdminEditButtons } from '@/components/imported-edit-button';
+import { PhoneTag } from '@/components/phone-tag';
 import {
   deleteCompanionPermanently,
   revertRejection,
@@ -81,12 +82,14 @@ function Linha({ companion: c }: { companion: Recusada }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">{c.name}</span>
+            <PhoneTag phone={c.phone} />
             <Badge variant="outline">{c.city}</Badge>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {c.phone}
-            {c.rejectedAt && ` · recusado a ${new Date(c.rejectedAt).toLocaleDateString('pt-PT')}`}
-          </p>
+          {c.rejectedAt && (
+            <p className="text-xs text-muted-foreground">
+              Recusado a {new Date(c.rejectedAt).toLocaleDateString('pt-PT')}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button asChild variant="outline" size="sm">

@@ -11,6 +11,7 @@ import { previewToken } from '@/lib/preview-token';
 export type PausedCompanion = {
   id: number;
   name: string;
+  phone: string;
   city: string;
   coverUrl: string | null;
   updatedAt: Date | null;
@@ -35,6 +36,7 @@ export async function getPausedCompanions(): Promise<PausedCompanion[]> {
     .select({
       id: companionsTable.id,
       name: companionsTable.name,
+      phone: companionsTable.phone,
       authId: companionsTable.auth_id,
       city: citiesTable.city,
       updatedAt: companionsTable.updated_at,

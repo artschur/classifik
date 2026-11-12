@@ -1,148 +1,89 @@
-// Só no servidor: chamado pela rota /api/admin/phone-search. Não é uma server
-// action de propósito: as acções do /verify correm uma de cada vez, e a busca
-// ficava à espera das que os cartões da fila disparam ao abrir a página.
+// Só no servidor. Encontra os perfis cujo telefone contém um número, para a
+// busca do /verify mostrar os cartões completos desses perfis.
 import { auth } from '@clerk/nextjs/server';
 import { sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { isAdmin } from '@/components/header';
-
-/** Um perfil (companions), em qualquer estado. */
-export type ResultadoPerfil = {
-  tipo: 'perfil';
-  id: number;
-  nome: string;
-  telefone: string;
-  email: string | null;
-  cidade: string | null;
-  aprovado: boolean;
-  pausado: boolean;
-  selo: boolean;
-  recusado: boolean;
-  motivoRecusa: string | null;
-  /** Criado pela equipa e ainda sem conta dela. */
-  importadaSemConta: boolean;
-  /** Estado da candidata de origem, se veio da importação. */
-  estadoImportacao: string | null;
-  alteracoesPorRever: boolean;
-  criadoEm: string | null;
-};
-
-/** Candidata importada que ainda não tem perfil. */
-export type ResultadoCandidata = {
-  tipo: 'candidata';
-  id: string;
-  nome: string;
-  telefone: string;
-  distrito: string | null;
-  estado: string;
-};
-
-export type ResultadoBusca = ResultadoPerfil | ResultadoCandidata;
+import { isImportedAuthId } from '@/lib/imported-profiles';
+import { previewToken } from '@/lib/preview-token';
 
 const MAX = 30;
 
-/**
- * Busca de admin por número de telefone, em todos os perfis (no ar, em pausa,
- * por aprovar, recusados, importados) e nas candidatas importadas sem perfil.
- * Compara só os dígitos, por isso aceita o número com ou sem indicativo,
- * espaços ou traços.
- */
-export async function searchByPhone(
-  termo: string,
-): Promise<{ success: true; resultados: ResultadoBusca[]; limitado: boolean } | { success: false; error: string }> {
-  const { userId } = await auth();
-  if (!userId || !isAdmin(userId)) return { success: false, error: 'Não autorizado' };
-
-  let digitos = (termo ?? '').replace(/\D/g, '');
-  if (digitos.length < 6) {
-    return { success: false, error: 'Escreva pelo menos 6 dígitos.' };
-  }
-  // Com indicativo (ex.: 351 925 801 096), basta o número nacional: assim
-  // encontra-se também quem o guardou sem indicativo.
+/** Só os dígitos; com indicativo, os 9 do número nacional. Vazio se for curto demais. */
+export function digitosDaBusca(termo: string | null | undefined): string {
+  let digitos = String(termo ?? '').replace(/\D/g, '');
   if (digitos.length > 9) digitos = digitos.slice(-9);
-  const padrao = `%${digitos}%`;
+  return digitos.length >= 6 ? digitos : '';
+}
 
-  const [perfis, candidatas] = await Promise.all([
-    db.execute<{
-      id: number;
-      name: string;
-      phone: string;
-      email: string | null;
-      city: string | null;
-      verified: boolean;
-      paused: boolean;
-      identity_verified: boolean;
-      rejected_at: Date | null;
-      rejection_reason: string | null;
-      auth_id: string;
-      estado_importacao: string | null;
-      alteracoes: boolean;
-      created_at: Date | null;
-    }>(sql`
-      select c.id, c.name, c.phone, c.email, ci.city, c.verified, c.paused, c.identity_verified,
-        c.rejected_at, c.rejection_reason, c.auth_id, c.created_at,
-        (select s.status from staging.candidatos s where s.companion_id = c.id limit 1) as estado_importacao,
-        (exists (select 1 from companion_pending_edits e where e.companion_id = c.id)
-          or exists (select 1 from images i where i.companion_id = c.id and i.pending_approval)) as alteracoes
-      from companions c
-      left join cities ci on ci.id = c.location_id
-      where regexp_replace(coalesce(c.phone, ''), '\\D', '', 'g') like ${padrao}
-      order by c.updated_at desc nulls last
-      limit ${MAX + 1}`),
-    db.execute<{
-      id: string;
-      nome_anuncio: string;
-      telefone: string;
-      distrito: string | null;
-      status: string;
-    }>(sql`
-      select s.id, s.nome_anuncio, s.telefone, ci.city as distrito, s.status
-      from staging.candidatos s
-      left join cities ci on ci.id = s.city_id
-      where s.companion_id is null
-        and regexp_replace(coalesce(s.telefone, ''), '\\D', '', 'g') like ${padrao}
-      order by s.atualizado_em desc nulls last
-      limit ${MAX + 1}`),
-  ]);
+/** O que a barra de controlos de admin (a mesma da página do perfil) precisa. */
+export type ControlosDoPerfil = {
+  companionId: number;
+  name: string;
+  paused: boolean;
+  verified: boolean;
+  identityVerified: boolean;
+  /** Por que via foi dado o selo: só o admin a vê. */
+  viaSelo: string | null;
+  vipActive: boolean;
+  isSugarOfDay: boolean;
+  /** Criado pela equipa e ainda sem conta dela. */
+  importadaSemConta: boolean;
+  previewPath: string | null;
+};
 
-  const listaPerfis = Array.from(perfis);
-  const listaCandidatas = Array.from(candidatas);
+/**
+ * Perfis (em qualquer estado: no ar, em pausa, por aprovar, recusados,
+ * importados com ou sem conta) cujo telefone contém o número. Compara só os
+ * dígitos, por isso aceita o número com ou sem indicativo, espaços ou traços.
+ */
+export async function perfisPorTelefone(
+  termo: string,
+): Promise<{ perfis: ControlosDoPerfil[]; limitado: boolean }> {
+  const { userId } = await auth();
+  if (!userId || !isAdmin(userId)) throw new Error('Não autorizado');
 
-  const resultados: ResultadoBusca[] = [
-    ...listaPerfis.slice(0, MAX).map(
-      (p): ResultadoPerfil => ({
-        tipo: 'perfil',
-        id: p.id,
-        nome: p.name,
-        telefone: p.phone,
-        email: p.email && !p.email.endsWith('.invalid') ? p.email : null,
-        cidade: p.city,
-        aprovado: p.verified,
-        pausado: p.paused,
-        selo: p.identity_verified,
-        recusado: p.rejected_at !== null,
-        motivoRecusa: p.rejection_reason,
-        importadaSemConta: p.auth_id.startsWith('import_'),
-        estadoImportacao: p.estado_importacao,
-        alteracoesPorRever: p.alteracoes,
-        criadoEm: p.created_at ? new Date(p.created_at).toISOString() : null,
-      }),
-    ),
-    ...listaCandidatas.slice(0, MAX).map(
-      (c): ResultadoCandidata => ({
-        tipo: 'candidata',
-        id: c.id,
-        nome: c.nome_anuncio,
-        telefone: c.telefone,
-        distrito: c.distrito,
-        estado: c.status,
-      }),
-    ),
-  ];
+  const digitos = digitosDaBusca(termo);
+  if (!digitos) return { perfis: [], limitado: false };
 
+  const linhas = await db.execute<{
+    id: number;
+    name: string;
+    auth_id: string;
+    paused: boolean;
+    verified: boolean;
+    identity_verified: boolean;
+    via: string | null;
+    vip_ativo: boolean;
+    do_dia: boolean;
+  }>(sql`
+    select c.id, c.name, c.auth_id, c.paused, c.verified, c.identity_verified,
+      c.identity_verified_method as via,
+      -- plan_type = 'vip' fica gravado mesmo depois de expirar: a data é que decide.
+      (c.plan_type = 'vip' and c.ad_expiration_date is not null and c.ad_expiration_date > now()) as vip_ativo,
+      c.is_sugar_of_day as do_dia
+    from companions c
+    where regexp_replace(coalesce(c.phone, ''), '\\D', '', 'g') like ${`%${digitos}%`}
+    order by c.updated_at desc nulls last
+    limit ${MAX + 1}`);
+
+  const todas = Array.from(linhas);
   return {
-    success: true,
-    resultados,
-    limitado: listaPerfis.length > MAX || listaCandidatas.length > MAX,
+    perfis: todas.slice(0, MAX).map((l) => {
+      const importada = isImportedAuthId(l.auth_id);
+      return {
+        companionId: l.id,
+        name: l.name,
+        paused: l.paused,
+        verified: l.verified,
+        identityVerified: l.identity_verified,
+        viaSelo: l.identity_verified ? l.via : null,
+        vipActive: Boolean(l.vip_ativo),
+        isSugarOfDay: l.do_dia,
+        importadaSemConta: importada,
+        previewPath: importada ? `/companions/${l.id}?ver=${previewToken(l.id)}` : null,
+      };
+    }),
+    limitado: todas.length > MAX,
   };
 }

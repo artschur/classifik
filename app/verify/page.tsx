@@ -24,6 +24,8 @@ import { PublishedImportedList } from '@/components/published-imported';
 import { getPerfisParaTraducao } from '@/app/actions/traducoes';
 import { TraducoesPerfis } from '@/components/traducoes-perfis';
 import { AdminPhoneSearch } from '@/components/admin-phone-search';
+import { VerifySearchResults } from '@/components/verify-search-results';
+import { digitosDaBusca, perfisPorTelefone } from '@/lib/admin-phone-search';
 
 /** Candidatas a anunciante à espera de contacto, ainda sem perfil na OneSugar. */
 async function FetchCandidates() {
@@ -108,6 +110,53 @@ async function FetchRejected() {
   return <RejectedCompanions companions={await getRejectedCompanions()} />;
 }
 
+/**
+ * Busca por telefone: o cartão completo de cada perfil com esse número, em
+ * qualquer estado, e as candidatas importadas ainda sem perfil. Só isto é
+ * calculado, sem a fila nem os outros separadores.
+ */
+async function FetchBusca({ tel }: { tel: string }) {
+  const { perfis: encontrados, limitado } = await perfisPorTelefone(tel);
+  const companionIds = encontrados.map((p) => p.companionId);
+  const [perfis, candidatas, cidades, importadasLista] = await Promise.all([
+    getUnverifiedCompanions({ companionIds }),
+    getCandidates({ telefone: tel }),
+    getAvailableCities(),
+    getPublishedImported({ companionIds }),
+  ]);
+  const controlos = Object.fromEntries(encontrados.map((p) => [p.companionId, p]));
+  const importadas = Object.fromEntries(importadasLista.map((p) => [p.companionId, p]));
+  const ordem = new Map(companionIds.map((id, i) => [id, i]));
+  perfis.sort((a, b) => (ordem.get(a.id) ?? 0) - (ordem.get(b.id) ?? 0));
+  const cities = cidades
+    .map((c) => ({ id: c.id, city: c.city }))
+    .sort((a, b) => a.city.localeCompare(b.city, 'pt'));
+
+  const total = perfis.length + candidatas.length;
+  return (
+    <div className="w-full max-w-2xl space-y-6">
+      <p className="text-sm text-muted-foreground">
+        {total === 0
+          ? 'Nenhum perfil nem candidata com este número.'
+          : `${perfis.length} ${perfis.length === 1 ? 'perfil' : 'perfis'}` +
+            (candidatas.length
+              ? ` e ${candidatas.length} ${candidatas.length === 1 ? 'candidata sem perfil' : 'candidatas sem perfil'}`
+              : '') +
+            ' com este número.'}
+        {limitado && ' Há mais: escreva mais dígitos para afinar.'}
+      </p>
+      <VerifySearchResults companions={perfis} controlos={controlos} importadas={importadas} />
+      {candidatas.length > 0 && (
+        <div className="flex flex-col items-center space-y-8">
+          {candidatas.map((candidate) => (
+            <CandidateCard key={candidate.id} candidate={candidate} cities={cities} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CompanionsListSkeleton() {
   return (
     <div className="space-y-4 w-full max-w-2xl">
@@ -118,7 +167,11 @@ function CompanionsListSkeleton() {
   );
 }
 
-export default async function VerifyCompanionPage() {
+export default async function VerifyCompanionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tel?: string | string[] }>;
+}) {
   // A verificação fica aqui, antes dos separadores: as duas listas trazem
   // dados pessoais e nenhuma deve chegar a ser calculada para outra pessoa.
   const { userId } = await auth();
@@ -127,6 +180,22 @@ export default async function VerifyCompanionPage() {
   }
   if (!isAdmin(userId)) {
     redirect('/location');
+  }
+
+  const { tel: telParam } = await searchParams;
+  const tel = digitosDaBusca(Array.isArray(telParam) ? telParam[0] : telParam);
+
+  // Com um número no filtro, só os cartões desse número.
+  if (tel) {
+    return (
+      <section className="p-4 flex flex-col items-center justify-center w-full h-full space-y-4">
+        <h1 className="text-3xl font-bold">Companion Verification</h1>
+        <AdminPhoneSearch inicial={tel} />
+        <Suspense fallback={<CompanionsListSkeleton />}>
+          <FetchBusca tel={tel} />
+        </Suspense>
+      </section>
+    );
   }
 
   return (

@@ -1404,9 +1404,14 @@ function diffPendingEdit(
   }));
 }
 
-export async function getUnverifiedCompanions(): Promise<
-  (CompanionFiltered & { description: string })[]
-> {
+/**
+ * Os cartões do /verify. Sem argumentos, a fila de registos. Com
+ * `companionIds` (a busca por telefone), o cartão completo desses perfis, em
+ * qualquer estado: no ar, em pausa, recusados, por aprovar.
+ */
+export async function getUnverifiedCompanions(
+  opcoes: { companionIds?: number[] } = {},
+): Promise<(CompanionFiltered & { description: string })[]> {
   // A página /verify já só a chama para admins, mas este ficheiro é 'use
   // server' e a função leva consigo os vídeos de verificação: não pode
   // depender de quem a chama ter feito a verificação.
@@ -1415,7 +1420,12 @@ export async function getUnverifiedCompanions(): Promise<
     throw new Error("Não autorizado");
   }
 
-  const legacyApprovedIds = await getLegacyApprovedIds();
+  const idsPedidos = Array.isArray(opcoes.companionIds)
+    ? opcoes.companionIds.filter((id) => Number.isInteger(id) && id > 0).slice(0, 50)
+    : null;
+  if (idsPedidos && idsPedidos.length === 0) return [];
+
+  const legacyApprovedIds = idsPedidos ? [] : await getLegacyApprovedIds();
 
   let query = db
     .select({
@@ -1480,7 +1490,7 @@ export async function getUnverifiedCompanions(): Promise<
       eq(characteristicsTable.companion_id, companionsTable.id),
     )
     .where(
-      or(
+      idsPedidos ? inArray(companionsTable.id, idsPedidos) : or(
         // Registo por aprovar, ainda sem nada publicado.
         and(
           eq(companionsTable.verified, false),
