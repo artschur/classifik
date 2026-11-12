@@ -8,6 +8,8 @@ import { and, asc, eq, inArray, notInArray, SQL, sql } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { isAdmin } from '@/components/header';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { isValidPreviewToken } from '@/lib/preview-token';
+import { readCompanionImages, type FotosDoPerfil } from './images-read';
 
 /**
  * Mensagens que chegam ao ecrã da anunciante (toasts do formulário). Seguem
@@ -306,6 +308,12 @@ export async function getImagesByAuthId(
     zoom: number;
   }[]
 > {
+  // Inclui as fotos por aprovar: só a dona da conta (ou um admin) as vê.
+  const { userId } = await auth();
+  if (!userId || (userId !== authId && !isAdmin(userId))) {
+    throw new Error(await mensagem('semSessao'));
+  }
+
   const images = await db
     .select({
       publicUrl: imagesTable.public_url,
@@ -642,70 +650,40 @@ export async function discardPendingImages(
   return { success: true };
 }
 
+/**
+ * Mais fotos do perfil, para o "ver mais" da galeria (chamado pelo navegador).
+ *
+ * De um perfil no ar, qualquer pessoa as vê. De um perfil escondido (por
+ * aprovar, em pausa, importado sem consentimento), só a dona, um admin ou
+ * quem tem o link de pré-visualização: sem isto, percorrendo ids, viam-se as
+ * fotos de quem ainda não autorizou a publicação.
+ */
 export async function getImagesByCompanionId(
   companionId: number,
   limit: number = 3,
-  offset: number = 0
-): Promise<{
-  images: {
-    publicUrl: string;
-    isVerificationVideo: boolean;
-    focalX: number;
-    focalY: number;
-    zoom: number;
-  }[];
-  total: number;
-}> {
+  offset: number = 0,
+  ver?: string | null,
+): Promise<FotosDoPerfil> {
+  const vazio: FotosDoPerfil = { images: [], total: 0 };
+  if (!Number.isInteger(companionId) || companionId <= 0) return vazio;
 
-  const conditions: SQL[] = [
-    eq(imagesTable.companionId, companionId),
-    eq(imagesTable.is_verification_video, false),
-    // Fotos de uma edição por aprovar não aparecem no perfil público: o
-    // visitante continua a ver o conjunto que foi aprovado.
-    eq(imagesTable.pending_approval, false)];
+  const [perfil] = await db
+    .select({
+      authId: companionsTable.auth_id,
+      verified: companionsTable.verified,
+      paused: companionsTable.paused,
+    })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, companionId))
+    .limit(1);
+  if (!perfil) return vazio;
 
-  const [images, [{ count }]] = await Promise.all([
-    db
-      .select({
-        publicUrl: imagesTable.public_url,
-        isVerificationVideo: imagesTable.is_verification_video,
-        focalX: imagesTable.focal_x,
-        focalY: imagesTable.focal_y,
-        zoom: imagesTable.zoom,
-      })
-      .from(imagesTable)
-      .where(and(...conditions))
-      // Sem esta ordenação o LIMIT/OFFSET não tem ordem garantida, e as páginas
-      // seguintes podiam repetir ou saltar fotos.
-      .orderBy(asc(imagesTable.position), asc(imagesTable.id))
-      .limit(limit)
-      .offset(offset),
+  const noAr = perfil.verified && !perfil.paused;
+  if (!noAr && !isValidPreviewToken(companionId, ver)) {
+    const { userId } = await auth();
+    if (!userId || (userId !== perfil.authId && !isAdmin(userId))) return vazio;
+  }
 
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(imagesTable)
-      .where(and(...conditions))
-  ]);
-
-  return {
-    images,
-    total: count
-  };
-}
-
-export async function getVerificationVideosByCompanionId(
-  companionId: number
-): Promise<{ publicUrl: string; createdAt: Date; }[]> {
-
-  const videos = await db
-    .select({ publicUrl: imagesTable.public_url, createdAt: imagesTable.created_at })
-    .from(imagesTable)
-    .where(
-      and(
-        eq(imagesTable.companionId, companionId),
-        eq(imagesTable.is_verification_video, true)
-      )
-    );
-
-  return videos;
+  // Páginas pequenas: é uma galeria, não uma exportação.
+  return readCompanionImages(companionId, Math.min(Math.max(limit, 1), 24), Math.max(offset, 0));
 }

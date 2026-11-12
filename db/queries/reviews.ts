@@ -35,7 +35,24 @@ export async function getReviewsByCompanionId(id: number): Promise<ReviewRespons
         .where(eq(reviewsTable.companion_id, id));
 };
 
-export async function insertReview({ companion_id, clerkId, comment, rating }: { companion_id: number, clerkId: string, comment: string, rating: number; }): Promise<ReviewResponse> {
+/**
+ * A conta sai sempre da sessão: este ficheiro é 'use server', e com o id como
+ * parâmetro qualquer pessoa escrevia avaliações (ou dava gostos) em nome de
+ * outra, com o nome e a foto dela.
+ */
+async function contaDaSessao(): Promise<string> {
+    const { userId } = await auth();
+    if (!userId) throw new Error('Inicie sessão para continuar.');
+    return userId;
+}
+
+export async function insertReview({ companion_id, comment, rating }: { companion_id: number, comment: string, rating: number; }): Promise<ReviewResponse> {
+    const clerkId = await contaDaSessao();
+    const texto = String(comment ?? '').trim().slice(0, 2000);
+    if (!texto) throw new Error('Escreva um comentário.');
+    const nota = Math.min(5, Math.max(1, Math.round(Number(rating) || 0)));
+    if (!Number.isInteger(companion_id) || companion_id <= 0) throw new Error('Perfil inválido.');
+
     const client = await clerkClient();
     const user = await client.users.getUser(clerkId);
     const username = user.username || user.firstName || 'Anonymous';
@@ -49,8 +66,8 @@ export async function insertReview({ companion_id, clerkId, comment, rating }: {
             companion_id: companion_id,
             username: username,
             user_id: clerkId,
-            rating: Math.round(rating),
-            comment: comment,
+            rating: nota,
+            comment: texto,
             userImageUrl: user.imageUrl,
         })
         .returning({
@@ -66,7 +83,8 @@ export async function insertReview({ companion_id, clerkId, comment, rating }: {
     return inserted as ReviewResponse;
 }
 
-export async function likeReview(reviewId: number, clerkId: string) {
+export async function likeReview(reviewId: number) {
+    const clerkId = await contaDaSessao();
     const existingLike = await db
         .select({ id: reviewsTable.id })
         .from(reviewsTable)
@@ -89,7 +107,8 @@ export async function likeReview(reviewId: number, clerkId: string) {
         .where(eq(reviewsTable.id, reviewId));
 }
 
-export async function unlikeReview(reviewId: number, clerkId: string) {
+export async function unlikeReview(reviewId: number) {
+    const clerkId = await contaDaSessao();
     const existingLike = await db
         .select({ id: reviewsTable.id })
         .from(reviewsTable)

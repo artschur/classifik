@@ -11,7 +11,6 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getCompanionIdByClerkId } from "@/db/queries/companions";
 import { revalidatePath } from "next/cache";
 import { and, eq, inArray, ne } from "drizzle-orm";
-import { getClerkIdByCompanionId } from "@/db/queries/userActions";
 import {
   RD_CONVERSION_DOCUMENTOS_RECUSADOS,
   RD_CONVERSION_REGISTO_CONCLUIDO,
@@ -317,7 +316,9 @@ interface StatusOfItems {
   isVerificationVideoUploaded: boolean;
   isDocumentUploaded: boolean;
 }
-export async function verifyItemsIfOnboardingComplete(
+// Não exportada: este ficheiro é 'use server', e com o id como parâmetro
+// qualquer pessoa consultava o estado do registo de outra conta.
+async function verifyItemsIfOnboardingComplete(
   clerkId: string,
 ): Promise<StatusOfItems> {
   try {
@@ -374,6 +375,10 @@ export async function verifyItemsIfOnboardingComplete(
 }
 
 export async function isVerificationPending(clerkId: string): Promise<boolean> {
+  // Chamável pelo navegador: só sobre a própria conta (ou por um admin).
+  const { userId } = await auth();
+  if (!userId || (userId !== clerkId && !isAdmin(userId))) return false;
+
   try {
     const [companionResult, documentsData] = await Promise.all([
       db
@@ -431,7 +436,13 @@ export async function deleteAllDocumentsFromCompanion(companionId: number) {
       return { success: false, error: "Não autorizado" };
     }
 
-    const authId = await getClerkIdByCompanionId(companionId);
+    const [dono] = await db
+      .select({ authId: companionsTable.auth_id })
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companionId))
+      .limit(1);
+    if (!dono) return { success: false, error: "Perfil não encontrado" };
+    const authId = dono.authId;
 
     await Promise.all([
       removeStorageFolder("images", `${authId}/`),

@@ -795,11 +795,38 @@ export async function registerCompanion(companionData: RegisterCompanionFormValu
   }
 }
 
+/**
+ * Este ficheiro é 'use server': cada função exportada é chamável pelo
+ * navegador. As que recebem o id de uma conta só respondem sobre a conta da
+ * própria sessão, ou a um admin. As páginas passam sempre o id da sessão, por
+ * isso não mudam; um pedido forjado com o id de outra pessoa é recusado.
+ */
+async function exigirPropriaContaOuAdmin(clerkId: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId || (userId !== clerkId && !isAdmin(userId))) {
+    throw new Error("Não autorizado");
+  }
+}
+
+/** O mesmo, para funções que recebem o id do perfil. */
+async function exigirDonaDoPerfilOuAdmin(companionId: number): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Não autorizado");
+  if (isAdmin(userId)) return;
+  const [perfil] = await db
+    .select({ authId: companionsTable.auth_id })
+    .from(companionsTable)
+    .where(eq(companionsTable.id, companionId))
+    .limit(1);
+  if (!perfil || perfil.authId !== userId) throw new Error("Não autorizado");
+}
+
 export async function getRelevantInfoAnalytics({
   clerkId,
 }: {
   clerkId: string;
 }) {
+  await exigirPropriaContaOuAdmin(clerkId);
   const [companion] = await db
     .select({
       id: companionsTable.id,
@@ -842,6 +869,7 @@ export async function getRelevantInfoAnalytics({
 export async function getCompanionNameByClerkId(
   clerkId: string,
 ): Promise<{ name: string; id: number }> {
+  await exigirPropriaContaOuAdmin(clerkId);
   const [companion] = await db
     .select({
       name: companionsTable.name,
@@ -860,6 +888,7 @@ export async function getCompanionNameByClerkId(
 }
 
 export async function isUserACompanion(clerkId: string): Promise<boolean> {
+  await exigirPropriaContaOuAdmin(clerkId);
   const companion = await db
     .select({ id: companionsTable.id })
     .from(companionsTable)
@@ -872,6 +901,7 @@ export async function isUserACompanion(clerkId: string): Promise<boolean> {
 export async function getCompanionByClerkId(
   clerkId: string,
 ): Promise<CompanionFiltered> {
+  await exigirPropriaContaOuAdmin(clerkId);
   const query = db
     .select({
       id: companionsTable.id,
@@ -920,6 +950,8 @@ export async function getCompanionByClerkId(
 export async function getCompanionToEdit(
   clerkId: string,
 ): Promise<(RegisterCompanionFormValues & { companionId: number }) | null> {
+  // Telefone, Instagram e o resto do formulário: só da própria conta.
+  await exigirPropriaContaOuAdmin(clerkId);
   // Fetch companion base data
   const [companion] = await db
     .select({
@@ -2454,6 +2486,7 @@ export async function clearSugarOfDay(companionId: number) {
 }
 
 export async function getCompanionIdByClerkId(id: string): Promise<number> {
+  await exigirPropriaContaOuAdmin(id);
   const companion = await db
     .select({ id: companionsTable.id })
     .from(companionsTable)
@@ -2469,6 +2502,7 @@ export async function blockUser(
   blockedUserId: string,
   reason?: string,
 ) {
+  await exigirDonaDoPerfilOuAdmin(companionId);
   try {
     await db.insert(blockedUsersTable).values({
       companion_id: companionId,
@@ -2486,6 +2520,7 @@ export async function blockUser(
 }
 
 export async function unblockUser(companionId: number, blockedUserId: string) {
+  await exigirDonaDoPerfilOuAdmin(companionId);
   await db
     .delete(blockedUsersTable)
     .where(
@@ -2498,6 +2533,7 @@ export async function unblockUser(companionId: number, blockedUserId: string) {
 }
 
 export async function getBlockedUsers(companionId: number) {
+  await exigirDonaDoPerfilOuAdmin(companionId);
   return await db
     .select({
       id: blockedUsersTable.id,
@@ -2514,6 +2550,9 @@ export async function isUserBlocked(
   companionId: number,
   userId: string,
 ): Promise<boolean> {
+  // Só para quem está a ver: saber se outra pessoa foi bloqueada não é
+  // da conta de ninguém.
+  await exigirPropriaContaOuAdmin(userId);
   const blockedUser = await db
     .select({ id: blockedUsersTable.id })
     .from(blockedUsersTable)

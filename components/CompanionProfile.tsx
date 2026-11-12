@@ -37,13 +37,10 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { ImageGrid } from '@/components/imageGrid';
-import { getLastSignInByClerkId } from '@/db/queries/userActions';
+import { getLastSignInByClerkId } from '@/lib/ultimo-acesso';
 import { WhatsAppButton } from './ui/whatsapp-button';
 
-import {
-  getImagesByCompanionId,
-  getVerificationVideosByCompanionId,
-} from '@/db/queries/images';
+import { readCompanionImages } from '@/db/queries/images-read';
 import { InstagramButton } from './ui/instagramButton';
 import { getAudioUrlByCompanionId } from '@/db/queries/audio';
 import AudioPlayer from '@/audio-player';
@@ -256,9 +253,9 @@ export async function CompanionProfile({
   const [companion, { images, total }, audio, district, locale] =
     await Promise.all([
       getCompanionById(id),
-      getImagesByCompanionId(id, 3, 0),
-      // getVerificationVideosByCompanionId(id),
-      getAudioUrlByCompanionId(id),
+      // Leitura de servidor: o acesso a perfis escondidos decide-se logo abaixo.
+      readCompanionImages(id, 3, 0),
+      getAudioUrlByCompanionId(id, preview ? previewToken(id) : null),
       getCompanionDistrict(id).catch(() => null),
       getLocale(),
     ]);
@@ -416,6 +413,9 @@ export async function CompanionProfile({
             initialImages={initialMedia}
             companionId={id}
             totalImages={total}
+            // Perfil escondido aberto pela pré-visualização: o "ver mais" só
+            // devolve fotos com o token.
+            previewToken={hiddenFromPublic && preview ? previewToken(id) : undefined}
           />
           <Card className="mt-8">
             <CardContent className="p-6">

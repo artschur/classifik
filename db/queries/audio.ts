@@ -8,6 +8,7 @@ import { revalidateTag } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { isAdmin } from "@/components/header";
 import { canRecordAudio } from "@/lib/audio-access";
+import { isValidPreviewToken } from "@/lib/preview-token";
 import { getLocale } from "@/lib/locale.server";
 
 const audioStorage = () => getSupabaseAdmin().storage.from("images");
@@ -139,9 +140,31 @@ export async function updateAudio({ audioFile }: { audioFile: File; }) {
     return submitAudio(audioFile);
 }
 
-/** O áudio que aparece no perfil público: só o aprovado. */
-export async function getAudioUrlByCompanionId(companionId: number): Promise<{ id: number; publicUrl: string; } | null> {
+/**
+ * O áudio que aparece no perfil público: só o aprovado. Chamável pelo
+ * navegador: de um perfil escondido, só para a dona, um admin ou quem tem o
+ * link de pré-visualização.
+ */
+export async function getAudioUrlByCompanionId(
+    companionId: number,
+    ver?: string | null,
+): Promise<{ id: number; publicUrl: string; } | null> {
     try {
+        const [perfil] = await db
+            .select({
+                authId: companionsTable.auth_id,
+                verified: companionsTable.verified,
+                paused: companionsTable.paused,
+            })
+            .from(companionsTable)
+            .where(eq(companionsTable.id, companionId))
+            .limit(1);
+        if (!perfil) return null;
+        if ((!perfil.verified || perfil.paused) && !isValidPreviewToken(companionId, ver)) {
+            const { userId } = await auth();
+            if (!userId || (userId !== perfil.authId && !isAdmin(userId))) return null;
+        }
+
         const [audioResults] = await db
             .select({
                 id: audioRecordingsTable.id,

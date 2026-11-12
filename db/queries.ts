@@ -1,6 +1,6 @@
-'use server';
-
-import { stat } from 'fs';
+// Não é 'use server' de propósito: estas leituras devolvem o email, o
+// telefone e o id da conta de qualquer perfil (também dos escondidos), e só
+// o servidor as pode chamar. Com 'use server' ficavam chamáveis pelo navegador.
 import { db } from './index';
 import {
   companionsTable,
@@ -12,7 +12,7 @@ import {
 } from './schema';
 import { eq } from 'drizzle-orm';
 import { CitySummary, CompanionById } from '../types/types';
-import { getImagesByCompanionId } from './queries/images';
+import { readCompanionImages } from './queries/images-read';
 import { unstable_cache } from 'next/cache';
 
 export async function getCompanionDetails(id: number) {
@@ -94,7 +94,7 @@ export async function getCompanionById(id: number): Promise<CompanionById> {
       const [details, characteristics, images] = await Promise.all([
         getCompanionDetails(companionId),
         getCompanionCharacteristics(companionId),
-        getImagesByCompanionId(companionId),
+        readCompanionImages(companionId),
       ]);
 
       const imagesUrls = images.images.map((image) => image.publicUrl);

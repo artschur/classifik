@@ -32,7 +32,6 @@ export default function InsertReviewsForm({
           companion_id: companionId,
           rating,
           comment: formData.get('comment') as string,
-          clerkId: user.id,
         });
         setComment('');
         setRating(5);

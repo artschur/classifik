@@ -2,9 +2,9 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { db } from "..";
-import { analyticsEventsTable } from "../schema";
+import { analyticsEventsTable, companionsTable } from "../schema";
 import { and, eq, sql, SQL } from "drizzle-orm";
-import { unique } from "drizzle-orm/mysql-core";
+import { isAdmin } from "@/components/header";
 
 export type AnalyticsEvents = 'page_view' | 'whatsapp_click' | 'instagram_click' | 'image_view' | 'review_click';
 
@@ -28,6 +28,14 @@ export interface SelfAnalyticsResponse {
 }
 
 
+const EVENTOS: readonly AnalyticsEvents[] = ['page_view', 'whatsapp_click', 'instagram_click', 'image_view', 'review_click'];
+
+/**
+ * Regista uma visita ou um clique, chamado pelo navegador de quem visita. É
+ * público por natureza (os visitantes não têm conta), por isso só se aceita o
+ * que faz sentido: um tipo de evento conhecido e metadados pequenos, para
+ * ninguém encher a base com pedidos forjados.
+ */
 export async function insertAnalyticsEvent({
     companionId,
     event_type,
@@ -37,20 +45,40 @@ export async function insertAnalyticsEvent({
     event_type: AnalyticsEvents;
     metadata?: Record<string, any>;
 }) {
+    if (!Number.isInteger(companionId) || companionId <= 0) return;
+    if (!EVENTOS.includes(event_type)) return;
+    let meta: Record<string, unknown> = {};
+    try {
+        if (metadata && typeof metadata === 'object' && JSON.stringify(metadata).length <= 1000) meta = metadata;
+    } catch {
+        meta = {};
+    }
 
-    return await db.insert(analyticsEventsTable).values({
+    await db.insert(analyticsEventsTable).values({
         companionId,
         event_type,
-        metadata,
+        metadata: meta,
     });
 }
 
+/** Estatísticas do perfil: só a dona (ou um admin) as vê. */
 export async function getSelfAnalytics({
     days, companionId
 }: {
     days: number;
     companionId: number;
 }): Promise<SelfAnalyticsResponse> {
+    const { userId } = await auth();
+    if (!userId) throw new Error('Não autorizado');
+    if (!isAdmin(userId)) {
+        const [perfil] = await db
+            .select({ authId: companionsTable.auth_id })
+            .from(companionsTable)
+            .where(eq(companionsTable.id, companionId))
+            .limit(1);
+        if (!perfil || perfil.authId !== userId) throw new Error('Não autorizado');
+    }
+    days = Math.min(Math.max(Math.trunc(Number(days) || 30), 1), 365);
 
     const conditions: SQL[] = [
         eq(analyticsEventsTable.companionId, companionId),

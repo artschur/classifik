@@ -15,9 +15,11 @@ interface ImageGridProps {
   initialImages: (Media | string)[];
   companionId: number;
   totalImages: number;
+  /** Só na pré-visualização de um perfil escondido. */
+  previewToken?: string;
 }
 
-export function ImageGrid({ initialImages, companionId, totalImages }: ImageGridProps) {
+export function ImageGrid({ initialImages, companionId, totalImages, previewToken }: ImageGridProps) {
   const [selectedMedia, setSelectedMedia] = useState<Media | string | null>(null);
   const [isPlaying, setIsPlaying] = useState<{ [key: string]: boolean }>({});
   const [images, setImages] = useState<(Media | string)[]>(() =>
@@ -57,7 +59,7 @@ export function ImageGrid({ initialImages, companionId, totalImages }: ImageGrid
 
     setNextBatchLoading(true);
     startTransition(async () => {
-      const result = await getImagesByCompanionId(companionId, 3, offset);
+      const result = await getImagesByCompanionId(companionId, 3, offset, previewToken);
       if (result.images.length === 0) {
         setHasMore(false);
       } else {

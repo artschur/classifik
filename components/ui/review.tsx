@@ -29,7 +29,7 @@ export function Review({
       setLocalUserLiked(false);
 
       try {
-        await unlikeReview(review.id, user.id);
+        await unlikeReview(review.id);
       } catch (error) {
         setLocalLikes((prev) => prev + 1);
         setLocalUserLiked(true);
@@ -44,7 +44,7 @@ export function Review({
       setLocalUserLiked(true);
 
       try {
-        await likeReview(review.id, user.id);
+        await likeReview(review.id);
       } catch (error) {
         setLocalLikes((prev) => prev - 1);
         setLocalUserLiked(false);

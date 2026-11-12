@@ -1,9 +1,11 @@
 'use server';
 
-import { auth, clerkClient } from "@clerk/nextjs/server";
-import { db } from "..";
-import { companionsTable } from "../schema";
-import { eq } from "drizzle-orm";
+import { auth } from "@clerk/nextjs/server";
+
+// Tudo o que está aqui é chamável pelo navegador: só dados da própria sessão.
+// O último acesso de uma anunciante passou para lib/ultimo-acesso.ts, e o id
+// da conta a partir do perfil para app/actions/document-verification.ts, os
+// dois só do servidor.
 
 export async function getEmail() {
   const { sessionClaims } = await auth();
@@ -13,53 +15,4 @@ export async function getEmail() {
 export async function getLastSignIn() {
   const { sessionClaims } = await auth();
   return sessionClaims?.last_sign_in;
-}
-
-export async function checkEmailExists(emailRegistered: string | undefined) {
-  if (!emailRegistered) {
-    return false;
-  }
-  const user = await db
-    .select({ email: companionsTable.email })
-    .from(companionsTable)
-    .where(eq(companionsTable.email, emailRegistered));
-
-  return user.length > 0;
-}
-
-export async function getLastSignInByClerkId(clerkId: string) {
-  const user = await clerkClient();
-  try {
-    const lastSignIn = (await user.users.getUser(clerkId)).lastSignInAt;
-    const getRelativeTime = (timestamp: number) => {
-      const msPerHour = 1000 * 60 * 60;
-      const elapsed = new Date().getTime() - timestamp;
-      const hours = Math.floor(elapsed / msPerHour);
-
-      if (hours < 1) {
-        return "há menos de uma hora";
-      }
-      if (hours < 24) {
-        return hours === 1 ? "há 1 hora" : `há ${hours} horas`;
-      }
-      const days = Math.floor(hours / 24);
-      return days === 1 ? "há 1 dia" : `há ${days} dias`;
-    };
-    if (!lastSignIn) {
-      return "Nunca";
-    }
-    return getRelativeTime(lastSignIn);
-  }
-  catch (error) {
-    return "Never";
-  }
-}
-
-export async function getClerkIdByCompanionId(companionId: number): Promise<string> {
-  const companion = await db
-    .select({ auth_id: companionsTable.auth_id })
-    .from(companionsTable)
-    .where(eq(companionsTable.id, companionId));
-
-  return companion[0].auth_id;
 }
