@@ -16,3 +16,10 @@ CREATE TABLE IF NOT EXISTS "translation_cache" (
   "original" boolean NOT NULL DEFAULT false,
   "created_at" timestamp NOT NULL DEFAULT now()
 );
+
+-- RLS ligado e sem políticas, como todas as outras tabelas: o site lê e grava
+-- com a ligação de servidor, e nada passa pela API do Supabase. Sem isto, as
+-- tabelas novas em "public" ficam com todos os privilégios para "anon" (a
+-- chave pública do site) e qualquer pessoa podia ler e reescrever as
+-- traduções que aparecem em /en.
+ALTER TABLE "translation_cache" ENABLE ROW LEVEL SECURITY;
