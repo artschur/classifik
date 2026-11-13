@@ -34,11 +34,16 @@ const FALHA: Record<string, string> = {
 
 function mensagemDoLote(r: ResultadoLote): string {
   const feitos = `${r.traduzidos} ${r.traduzidos === 1 ? 'perfil traduzido' : 'perfis traduzidos'}`;
-  if (!r.paragem) return `${feitos}. Não falta nenhum.`;
-  if (r.paragem === 'lote') {
-    return `${feitos}. Faltam ${r.emFalta}: clique de novo para continuar.`;
+  const naoGravados = r.naoGravados.length
+    ? ` Não ficaram gravados (o texto mudou entretanto): ${r.naoGravados.join(', ')}.`
+    : '';
+  if (!r.paragem) {
+    return `${feitos}.${naoGravados}${r.emFalta === 0 ? ' Não falta nenhum.' : ''}`;
   }
-  return `${feitos}. ${FALHA[r.paragem] ?? FALHA.erro}`;
+  if (r.paragem === 'lote') {
+    return `${feitos}.${naoGravados} Faltam ${r.emFalta}: clique de novo para continuar.`;
+  }
+  return `${feitos}.${naoGravados} ${FALHA[r.paragem] ?? FALHA.erro}`;
 }
 
 /**

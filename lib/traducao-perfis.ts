@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
-import { and, eq, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 import { db } from '@/db';
-import { companionsTable } from '@/db/schema';
+import { companionsTable, translationCacheTable } from '@/db/schema';
 
 /**
  * Tradução das descrições dos perfis para a versão inglesa (/en).
@@ -14,7 +14,8 @@ import { companionsTable } from '@/db/schema';
  *
  * Só se traduz quando o texto em português publicado muda: a impressão
  * digital desse texto fica em translation_source, e enquanto bater certo não
- * se volta a chamar o Google. A conta tem um limite diário de caracteres no
+ * se volta a chamar o Google. Cada tradução feita fica também guardada em
+ * translation_cache, por isso o mesmo texto nunca é pago duas vezes. A conta tem um limite diário de caracteres no
  * Google Cloud; quando é atingido, o Google recusa em vez de cobrar, e o
  * perfil fica com o português até à tentativa seguinte.
  *
@@ -155,20 +156,78 @@ export type EstadoTraducao =
  */
 export type EstadoGravado = 'auto' | 'revisto' | 'original';
 
-/** O texto em português que foi lido, para só gravar se continuar igual. */
-type PortuguesLido = { shortDescription: string | null; description: string };
+export type DescricoesTraduzidas =
+  /** `gastos`: caracteres enviados ao Google nesta chamada (0 se veio da cache). */
+  | { ok: true; shortEn: string; descEn: string; original: boolean; gastos: number }
+  | { ok: false; motivo: MotivoFalha };
+
+/**
+ * Traduz as duas descrições de um perfil, passando primeiro pela cache
+ * (translation_cache, chave = impressão digital do texto). O mesmo texto
+ * nunca é enviado duas vezes ao Google: abrir a aba "Inglês" de um card,
+ * fechar e voltar, aprovar depois de rever, ou carregar várias vezes em
+ * "Traduzir os que faltam" reaproveita a tradução que já foi paga.
+ * Se a cache falhar, traduz na mesma: a cache poupa, não pode impedir.
+ */
+export async function traduzirDescricoes(
+  shortDescription: string | null | undefined,
+  description: string | null | undefined,
+): Promise<DescricoesTraduzidas> {
+  const fonte = fonteDaTraducao(shortDescription, description);
+  try {
+    const [guardada] = await db
+      .select()
+      .from(translationCacheTable)
+      .where(eq(translationCacheTable.fonte, fonte))
+      .limit(1);
+    if (guardada) {
+      return {
+        ok: true,
+        shortEn: guardada.short_en ?? '',
+        descEn: guardada.desc_en ?? '',
+        original: guardada.original,
+        gastos: 0,
+      };
+    }
+  } catch (error) {
+    console.error('Cache de traduções indisponível:', error);
+  }
+
+  const resultado = await traduzirParaIngles([shortDescription, description]);
+  if (!resultado.ok) return { ok: false, motivo: resultado.motivo };
+
+  const [shortEn, descEn] = resultado.textos;
+  const original = resultado.idiomas[1] === 'en';
+  try {
+    await db
+      .insert(translationCacheTable)
+      .values({ fonte, short_en: shortEn || null, desc_en: descEn || null, original })
+      .onConflictDoNothing();
+  } catch (error) {
+    console.error('Não foi possível guardar a tradução na cache:', error);
+  }
+  return { ok: true, shortEn, descEn, original, gastos: resultado.caracteres };
+}
 
 /**
  * Garante que a versão inglesa corresponde ao texto em português publicado.
- * Se já corresponder, não faz nada (nem gasta caracteres), a não ser que se
- * peça `forcar`. Se o texto mudou e a tradução falhar, apaga a versão inglesa
- * antiga: é melhor mostrar o português com o aviso do que uma tradução de um
- * texto que já não existe.
+ * Se já corresponder, não faz nada, a não ser que se peça `forcar` (que usa a
+ * cache e por isso também não volta a pagar o mesmo texto). Se o texto mudou
+ * e a tradução falhar, apaga a versão inglesa antiga: é melhor mostrar o
+ * português com o aviso do que uma tradução de um texto que já não existe.
  */
 export async function garantirTraducao(
   companionId: number,
-  { forcar = false }: { forcar?: boolean } = {},
+  opcoes: { forcar?: boolean } = {},
 ): Promise<EstadoTraducao> {
+  return (await garantirTraducaoComCusto(companionId, opcoes)).estado;
+}
+
+/** Como garantirTraducao, e diz quantos caracteres foram enviados ao Google. */
+export async function garantirTraducaoComCusto(
+  companionId: number,
+  { forcar = false }: { forcar?: boolean } = {},
+): Promise<{ estado: EstadoTraducao; gastos: number }> {
   try {
     const [perfil] = await db
       .select({
@@ -180,43 +239,43 @@ export async function garantirTraducao(
       .from(companionsTable)
       .where(eq(companionsTable.id, companionId))
       .limit(1);
-    if (!perfil) return 'nao-encontrado';
+    if (!perfil) return { estado: 'nao-encontrado', gastos: 0 };
 
     const fonte = fonteDaTraducao(perfil.shortDescription, perfil.description);
-    if (perfil.fonte === fonte && !forcar) return 'atual';
+    if (perfil.fonte === fonte && !forcar) return { estado: 'atual', gastos: 0 };
 
     if (!caracteresDe([perfil.shortDescription, perfil.description])) {
-      const gravou = await gravar(companionId, perfil, {
+      const gravou = await gravar(companionId, fonte, {
         shortEn: null,
         descEn: null,
         fonte,
         estado: null,
       });
-      return gravou ? 'sem-texto' : 'desatualizada';
+      return { estado: gravou ? 'sem-texto' : 'desatualizada', gastos: 0 };
     }
 
-    const resultado = await traduzirParaIngles([perfil.shortDescription, perfil.description]);
-    if (!resultado.ok) {
+    const traducao = await traduzirDescricoes(perfil.shortDescription, perfil.description);
+    if (!traducao.ok) {
       // Ao forçar uma nova tradução de um texto que não mudou, a que existe
       // continua válida e fica.
       const desatualizada = perfil.fonte !== fonte;
       if (desatualizada && (perfil.fonte !== null || perfil.descriptionEn !== null)) {
-        await gravar(companionId, perfil, { shortEn: null, descEn: null, fonte: null, estado: null });
+        await gravar(companionId, fonte, { shortEn: null, descEn: null, fonte: null, estado: null });
       }
-      return resultado.motivo;
+      return { estado: traducao.motivo, gastos: 0 };
     }
 
-    const [shortEn, descEn] = resultado.textos;
-    const gravou = await gravar(companionId, perfil, {
-      shortEn: shortEn || null,
-      descEn: descEn || null,
+    const gravou = await gravar(companionId, fonte, {
+      shortEn: traducao.shortEn || null,
+      descEn: traducao.descEn || null,
       fonte,
-      estado: resultado.idiomas[1] === 'en' ? 'original' : 'auto',
+      estado: traducao.original ? 'original' : 'auto',
     });
-    return gravou ? 'traduzida' : 'desatualizada';
+    if (!gravou) console.warn(`Tradução do perfil ${companionId} não gravada: o texto mudou.`);
+    return { estado: gravou ? 'traduzida' : 'desatualizada', gastos: traducao.gastos };
   } catch (error) {
     console.error('garantirTraducao falhou:', error);
-    return 'erro';
+    return { estado: 'erro', gastos: 0 };
   }
 }
 
@@ -237,24 +296,10 @@ export async function gravarTraducaoRevista(
   },
 ): Promise<EstadoTraducao> {
   try {
-    const [perfil] = await db
-      .select({
-        shortDescription: companionsTable.shortDescription,
-        description: companionsTable.description,
-      })
-      .from(companionsTable)
-      .where(eq(companionsTable.id, companionId))
-      .limit(1);
-    if (!perfil) return 'nao-encontrado';
-
-    if (fonteDaTraducao(perfil.shortDescription, perfil.description) !== fonte) {
-      return 'desatualizada';
-    }
-
     const descricao = descEn.trim();
     if (!descricao) return garantirTraducao(companionId);
 
-    const gravou = await gravar(companionId, perfil, {
+    const gravou = await gravar(companionId, fonte, {
       shortEn: shortEn.trim() || null,
       descEn: descricao,
       fonte,
@@ -268,14 +313,17 @@ export async function gravarTraducaoRevista(
 }
 
 /**
- * Grava a versão inglesa só se o português ainda for o que foi lido. Entre a
- * leitura e a gravação o Google pode demorar vários segundos, e uma aprovação
- * feita nesse intervalo não pode ser substituída pela tradução do texto
- * antigo. Compara os valores tal como estão na base. Devolve se gravou.
+ * Grava a versão inglesa só se o português publicado ainda for o que foi
+ * traduzido (`fonteEsperada`). A verificação e a gravação correm na mesma
+ * transacção, com a linha bloqueada (SELECT ... FOR UPDATE): entre a leitura
+ * e a gravação o Google pode demorar segundos, e uma aprovação feita nesse
+ * intervalo não pode ser substituída pela tradução do texto antigo. A
+ * comparação é feita pela impressão digital, calculada da mesma forma que
+ * na leitura. Devolve se gravou.
  */
 async function gravar(
   companionId: number,
-  lido: PortuguesLido,
+  fonteEsperada: string,
   {
     shortEn,
     descEn,
@@ -288,25 +336,30 @@ async function gravar(
     estado: EstadoGravado | null;
   },
 ): Promise<boolean> {
-  const atualizados = await db
-    .update(companionsTable)
-    .set({
-      shortDescriptionEn: shortEn,
-      descriptionEn: descEn,
-      translation_source: fonte,
-      translation_status: estado,
-      translated_at: estado ? new Date() : null,
-    })
-    .where(
-      and(
-        eq(companionsTable.id, companionId),
-        eq(companionsTable.description, lido.description),
-        lido.shortDescription === null
-          ? isNull(companionsTable.shortDescription)
-          : eq(companionsTable.shortDescription, lido.shortDescription),
-      ),
-    )
-    .returning({ id: companionsTable.id });
-  if (atualizados.length) refrescarPerfis();
-  return atualizados.length > 0;
+  const gravou = await db.transaction(async (tx) => {
+    const [atual] = await tx
+      .select({
+        shortDescription: companionsTable.shortDescription,
+        description: companionsTable.description,
+      })
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companionId))
+      .for('update');
+    if (!atual) return false;
+    if (fonteDaTraducao(atual.shortDescription, atual.description) !== fonteEsperada) return false;
+
+    await tx
+      .update(companionsTable)
+      .set({
+        shortDescriptionEn: shortEn,
+        descriptionEn: descEn,
+        translation_source: fonte,
+        translation_status: estado,
+        translated_at: estado ? new Date() : null,
+      })
+      .where(eq(companionsTable.id, companionId));
+    return true;
+  });
+  if (gravou) refrescarPerfis();
+  return gravou;
 }

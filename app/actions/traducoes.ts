@@ -9,8 +9,9 @@ import {
   caracteresDe,
   fonteDaTraducao,
   garantirTraducao,
+  garantirTraducaoComCusto,
   gravarTraducaoRevista,
-  traduzirParaIngles,
+  traduzirDescricoes,
   type EstadoTraducao,
   type MotivoFalha,
 } from '@/lib/traducao-perfis';
@@ -107,19 +108,21 @@ export async function prepararRevisaoIngles(companionId: number): Promise<Revisa
     };
   }
 
-  const resultado = await traduzirParaIngles([shortPt, descPt]);
-  if (!resultado.ok) return { ok: false, motivo: resultado.motivo, fonte, shortPt, descPt };
+  // Pela cache: abrir o separador outra vez, ou aprovar a seguir, não volta
+  // a pagar o mesmo texto ao Google.
+  const traducao = await traduzirDescricoes(shortPt, descPt);
+  if (!traducao.ok) return { ok: false, motivo: traducao.motivo, fonte, shortPt, descPt };
 
   return {
     ok: true,
     fonte,
     shortPt,
     descPt,
-    shortEn: resultado.textos[0],
-    descEn: resultado.textos[1],
+    shortEn: traducao.shortEn,
+    descEn: traducao.descEn,
     origem: 'nova',
     revista: false,
-    original: resultado.idiomas[1] === 'en',
+    original: traducao.original,
   };
 }
 
@@ -214,8 +217,11 @@ async function todasAsTraducoes(): Promise<PerfilTraducao[]> {
 export type ResultadoLote = {
   ok: boolean;
   traduzidos: number;
+  /** Caracteres enviados ao Google neste clique (os que vieram da cache não contam). */
   caracteres: number;
   emFalta: number;
+  /** Perfis traduzidos que não ficaram gravados (o texto mudou entretanto). */
+  naoGravados: string[];
   paragem?: MotivoFalha | 'lote' | 'nao-autorizado';
 };
 
@@ -226,23 +232,35 @@ export type ResultadoLote = {
  */
 export async function traduzirEmFalta(): Promise<ResultadoLote> {
   if (!(await souAdmin())) {
-    return { ok: false, traduzidos: 0, caracteres: 0, emFalta: 0, paragem: 'nao-autorizado' };
+    return {
+      ok: false,
+      traduzidos: 0,
+      caracteres: 0,
+      emFalta: 0,
+      naoGravados: [],
+      paragem: 'nao-autorizado',
+    };
   }
 
   const emFalta = (await todasAsTraducoes()).filter((p) => p.estado === 'em-falta');
   let traduzidos = 0;
   let caracteres = 0;
+  const naoGravados: string[] = [];
   let paragem: ResultadoLote['paragem'];
 
   for (const perfil of emFalta) {
+    // Conta tudo o que foi enviado ao Google, gravado ou não: um clique nunca
+    // passa de LIMITE_POR_LOTE, aconteça o que acontecer à gravação.
     if (caracteres + perfil.caracteres > LIMITE_POR_LOTE) {
       paragem = 'lote';
       break;
     }
-    const estado = await garantirTraducao(perfil.id);
-    if (estado === 'traduzida') {
+    const { estado, gastos } = await garantirTraducaoComCusto(perfil.id);
+    caracteres += gastos;
+    if (estado === 'traduzida' || estado === 'sem-texto') {
       traduzidos++;
-      caracteres += perfil.caracteres;
+    } else if (estado === 'desatualizada' || estado === 'nao-encontrado') {
+      naoGravados.push(perfil.name);
     } else if (estado === 'limite' || estado === 'sem-chave' || estado === 'erro') {
       paragem = estado;
       break;
@@ -250,10 +268,11 @@ export async function traduzirEmFalta(): Promise<ResultadoLote> {
   }
 
   return {
-    ok: !paragem || paragem === 'lote',
+    ok: (!paragem || paragem === 'lote') && naoGravados.length === 0,
     traduzidos,
     caracteres,
     emFalta: emFalta.length - traduzidos,
+    naoGravados,
     paragem,
   };
 }
