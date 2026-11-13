@@ -134,7 +134,7 @@ export function AjudaAnunciantesEn() {
                 { name: 'Description', rule: '30 to 500 characters', req: true },
                 { name: 'Price (per hour)', rule: 'number in €', req: true },
                 { name: 'Age', rule: '18 to 40+', req: true },
-                { name: 'Gender', rule: 'Male / Female / Trans / Other', req: true },
+                { name: 'Gender', rule: 'Female / Male / Trans', req: true },
                 { name: 'Languages', rule: 'at least 1', req: true },
                 { name: 'Instagram', rule: '—', req: false },
                 { name: 'Gender identity', rule: 'Cisgender / Transgender / Other', req: false },

@@ -1051,7 +1051,12 @@ export async function getCompanionToEdit(
     description: row.description ?? "",
     price: row.price ?? 0,
     age: row.age ?? 0,
-    gender: row.gender ?? "",
+    // Os perfis importados têm "feminino" em minúsculas; as opções do
+    // formulário são "Feminino", "Masculino" e "Trans".
+    gender:
+      ({ feminino: "Feminino", masculino: "Masculino", trans: "Trans" } as Record<string, string>)[
+        (row.gender ?? "").trim().toLowerCase()
+      ] ?? row.gender ?? "",
     gender_identity: row.gender_identity ?? "",
     languages: row.languages ?? [],
     // As características são opcionais (passo 5): o que falta chega vazio ao
@@ -2281,6 +2286,10 @@ export async function getRejectedCompanions() {
  * (aprovação do admin) — o anúncio fica invisível no site sem perder o
  * estado de verificação, e volta a aparecer sozinho ao reactivar.
  */
+// Não exportada: este ficheiro é 'use server'. Em /en traduz-se em togglePauseAd.
+const ERRO_A_AGUARDAR_APROVACAO =
+  "O teu perfil está à espera da aprovação da equipa OneSugar. Assim que for aprovado, fica no ar.";
+
 export async function setCompanionPaused(paused: boolean) {
   // A conta sai da sessão, nunca do pedido: este ficheiro é 'use server', e
   // com o id como parâmetro qualquer pessoa pausava ou reactivava o anúncio
@@ -2288,6 +2297,21 @@ export async function setCompanionPaused(paused: boolean) {
   const { userId: clerkId } = await auth();
   if (!clerkId) {
     return { success: false, error: "Sessão expirada." };
+  }
+
+  // Importada que reivindicou o convite e ainda não foi aprovada: a pausa é da
+  // equipa, e só a aprovação no /verify a põe no ar. Sem isto ela reactivava o
+  // próprio anúncio e saltava a aprovação (e a marca "reivindicada" apagava-se,
+  // tirando-a da fila).
+  if (!paused) {
+    const aguarda = await db.execute(sql`
+      select 1 from staging.candidatos s
+      join companions c on c.id = s.companion_id
+      where c.auth_id = ${clerkId} and s.status = 'reivindicado'
+      limit 1`);
+    if (Array.from(aguarda).length > 0) {
+      return { success: false, error: ERRO_A_AGUARDAR_APROVACAO, aguardaAprovacao: true };
+    }
   }
 
   const [companion] = await db
@@ -2311,9 +2335,9 @@ export async function setCompanionPaused(paused: boolean) {
     };
   }
 
-  // Ela decidiu à mão: nenhuma aprovação posterior pode desfazer isto. Menos
-  // se está recusada: aí a marca fica, para voltar à fila como reivindicada.
-  if (!companion.rejectedAt) await largarMarcaReivindicada(companion.id);
+  // A marca "reivindicada" não se toca aqui: se ainda existe, o anúncio está
+  // em pausa à espera da aprovação (reactivar foi recusado acima), e pausar
+  // outra vez não pode tirá-la da fila.
 
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");

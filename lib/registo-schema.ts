@@ -20,6 +20,14 @@ const vazio = (v: unknown) =>
     ? undefined
     : v;
 
+/** O género gravado, a partir do que vier (há perfis antigos em minúsculas). */
+const GENERO_CANONICO: Record<string, 'Feminino' | 'Masculino' | 'Trans'> = {
+  feminino: 'Feminino',
+  masculino: 'Masculino',
+  trans: 'Trans',
+};
+const GENEROS_VALIDOS: string[] = Object.values(GENERO_CANONICO);
+
 const numeroOpcional = (min: number, max: number, mensagem: string) =>
   z.preprocess(vazio, z.coerce.number().min(min, mensagem).max(max, mensagem).optional());
 
@@ -102,7 +110,12 @@ function criarEsquemas(m: Mensagens) {
       .min(1, m.precoPositivo)
       .max(10000, m.precoMax),
     age: z.number().min(18, m.idadeMin).max(100),
-    gender: z.string().min(1, m.generoObrigatorio),
+    // Só Feminino, Masculino ou Trans (os do filtro do site). Os perfis antigos
+    // gravados em minúsculas ("feminino") continuam a passar, já normalizados.
+    gender: z.preprocess(
+      (v) => (typeof v === 'string' ? GENERO_CANONICO[v.trim().toLowerCase()] ?? v : v),
+      z.string().refine((v) => GENEROS_VALIDOS.includes(v), m.generoObrigatorio),
+    ),
   });
 
   /**

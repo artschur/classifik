@@ -39,12 +39,18 @@ export async function togglePauseAd(paused: boolean) {
 
   const result = await setCompanionPaused(paused);
   revalidatePath("/profile");
-  // Os erros de setCompanionPaused: perfil não encontrado, ou recusado (ao
-  // tentar reactivar).
+  // Os erros de setCompanionPaused: perfil não encontrado, à espera da
+  // aprovação da equipa (importada que reivindicou), ou recusado (ao tentar
+  // reactivar).
   if (locale === "en" && !result.success) {
+    const aguarda = "aguardaAprovacao" in result && result.aguardaAprovacao === true;
     return {
       ...result,
-      error: paused ? m.semPerfil : "Your profile was declined: fix it and save to send it back for review.",
+      error: paused
+        ? m.semPerfil
+        : aguarda
+          ? "Your profile is waiting for approval from the OneSugar team. It goes live as soon as it is approved."
+          : "Your profile was declined: fix it and save to send it back for review.",
     };
   }
   return result;

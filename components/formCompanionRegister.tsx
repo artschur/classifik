@@ -117,12 +117,15 @@ const CAMPOS_RASCUNHO = [
 
 const chaveRascunho = (userId: string) => `onesugar:registo-rascunho:${userId}`;
 
-/** Género: o valor gravado fica em português, só muda o que se mostra. */
+/**
+ * Género: o valor gravado fica em português, só muda o que se mostra. Só
+ * estes três: são os do filtro do site. "Outro" saiu porque o filtro não o
+ * tinha, e o perfil ficava fora de todas as listas (só aparecia em "Todos").
+ */
 const GENEROS = [
-  { value: "Masculino", pt: "Masculino", en: "Male" },
   { value: "Feminino", pt: "Feminino", en: "Female" },
+  { value: "Masculino", pt: "Masculino", en: "Male" },
   { value: "Trans", pt: "Trans", en: "Trans" },
-  { value: "Outro", pt: "Outro", en: "Other" },
 ] as const;
 
 const TEXT = {
