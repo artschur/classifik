@@ -26,6 +26,9 @@ function planoDa(subscription: Stripe.Subscription) {
   return {
     priceId: price?.id,
     plano: (price && priceIdToPlan[price.id]?.name) || 'desconhecido',
+    /** 7, 15 ou 30: a duração de cada período do plano. */
+    dias: price ? priceIdToPlan[price.id]?.duration : undefined,
+    /** Valor de cada período (7, 15 ou 30 dias). O nome do parâmetro no GA4 ficou "valor_mensal". */
     valorMensal: price?.unit_amount != null ? price.unit_amount / 100 : undefined,
     moeda: (price?.currency ?? 'eur').toUpperCase(),
   };
@@ -43,7 +46,7 @@ export async function medirAssinaturaConcluida(session: Stripe.Checkout.Session)
     const customerId = session.customer as string;
     const clientId = idCliente(meta, customerId);
     const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-    const { plano, valorMensal, moeda } = planoDa(subscription);
+    const { plano, dias, valorMensal, moeda } = planoDa(subscription);
 
     // As cobranças chegam noutra altura e só trazem a assinatura: os ids do
     // GA4 passam a viver também nela.
@@ -57,6 +60,7 @@ export async function medirAssinaturaConcluida(session: Stripe.Checkout.Session)
       'assinatura_concluida',
       {
         plano,
+        dias_plano: dias,
         valor_mensal: valorMensal,
         currency: moeda,
         mes_gratis: subscription.status === 'trialing',
@@ -80,7 +84,7 @@ export async function medirCobranca(
 
     const customerId = invoice.customer as string;
     const clientId = idCliente(meta, customerId);
-    const { priceId, plano } = planoDa(subscription);
+    const { priceId, plano, dias } = planoDa(subscription);
     const primeira = meta.ga_primeira_cobranca !== 'enviada';
     const valor = invoice.amount_paid / 100;
 
@@ -90,7 +94,15 @@ export async function medirCobranca(
       currency: invoice.currency.toUpperCase(),
       tipo_cobranca: primeira ? 'primeira_cobranca' : 'renovacao',
       plano,
-      items: [{ item_id: priceId ?? plano, item_name: `Plano ${plano}`, price: valor, quantity: 1 }],
+      dias_plano: dias,
+      items: [
+        {
+          item_id: priceId ?? plano,
+          item_name: dias ? `Plano ${plano} ${dias} dias` : `Plano ${plano}`,
+          price: valor,
+          quantity: 1,
+        },
+      ],
     });
 
     if (primeira) await guardarNaAssinatura(subscription.id, { ga_primeira_cobranca: 'enviada' });

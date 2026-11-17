@@ -28,6 +28,9 @@ const TEXT = {
     planoPagamento: 'Plano de pagamento',
     planoAtual: 'Plano Atual',
     diasRestantes: (n: number) => `${n} dias restantes`,
+    gerirPlano: 'Gerir ou cancelar o meu plano',
+    gerirPlanoNota: 'Mudar de plano ou de duração, cancelar, mudar o cartão e ver as faturas.',
+    verPlanos: 'Ver os planos',
     interacoes: 'Total de Interações',
     avaliacao: 'Avaliação Média',
   },
@@ -42,6 +45,9 @@ const TEXT = {
     planoPagamento: 'Payment plan',
     planoAtual: 'Current plan',
     diasRestantes: (n: number) => (n === 1 ? '1 day left' : `${n} days left`),
+    gerirPlano: 'Manage or cancel my plan',
+    gerirPlanoNota: 'Change plan or duration, cancel, update your card and see your invoices.',
+    verPlanos: 'See the plans',
     interacoes: 'Total interactions',
     avaliacao: 'Average rating',
   },
@@ -161,6 +167,23 @@ export default async function AnalyticsDashboard({
           {companion.plan ?? 'Free'}
         </p>
         <p className="text-lg font-semibold">{t.diasRestantes(remainingDays)}</p>
+        {companion.id !== 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {companion.stripeCustomerId ? (
+              <>
+                {/* Endereço da API, fora do /en: o idioma vai na query. */}
+                <a href={`/api/portal${locale === 'en' ? '?lang=en' : ''}`}>
+                  <Button variant="outline">{t.gerirPlano}</Button>
+                </a>
+                <p className="text-sm text-muted-foreground">{t.gerirPlanoNota}</p>
+              </>
+            ) : (
+              <LocaleLink locale={locale} href="/checkout">
+                <Button variant="outline">{t.verPlanos}</Button>
+              </LocaleLink>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="pt-8">

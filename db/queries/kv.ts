@@ -3,6 +3,7 @@ import { db, kv } from '..';
 import { companionsTable, paymentsTable, subscriptionsTable } from '../schema';
 import { stripe } from '../stripe';
 import { auth } from '@clerk/nextjs/server';
+import { PLANOS, type OpcaoPlano } from '@/lib/planos';
 
 export enum PlanType {
   FREE = 'free',
@@ -24,16 +25,15 @@ export interface CustomerAdData {
   adPurchases: AdPurchase[];
 }
 
-export const BASIC_PRICE_ID = process.env.STRIPE_BASIC_PRICE_ID || '';
-export const PLUS_PRICE_ID = process.env.STRIPE_PLUS_PRICE_ID || '';
-export const VIP_PRICE_ID = process.env.STRIPE_VIP_PRICE_ID || '';
-
-export const priceIdToPlan: Record<string, { name: string; duration: number }> = {
-  // Replace these with your new recurring price IDs from Stripe Dashboard
-  [BASIC_PRICE_ID]: { name: 'classic', duration: 30 },
-  [PLUS_PRICE_ID]: { name: 'plus', duration: 30 },
-  [VIP_PRICE_ID]: { name: 'vip', duration: 30 },
-};
+/**
+ * Preço da Stripe -> plano e duração (7, 15 ou 30 dias), a partir do catálogo
+ * em lib/planos.ts. Um preço que não esteja aqui não é aceite no checkout.
+ */
+export const priceIdToPlan: Record<string, { name: string; duration: number }> = Object.fromEntries(
+  (Object.entries(PLANOS) as [string, OpcaoPlano[]][]).flatMap(([plano, opcoes]) =>
+    opcoes.map((o) => [o.precoId, { name: plano, duration: o.dias }]),
+  ),
+);
 
 export async function syncStripeDataToKV(
   customerId: string,

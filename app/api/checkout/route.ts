@@ -2,9 +2,10 @@ import { db, kv } from '@/db';
 import { lerIdsGa } from '@/lib/ga-server';
 import { stripe } from '@/db/stripe';
 import { auth } from '@clerk/nextjs/server';
-import { priceIdToPlan } from '@/db/queries/kv';
+import { hasActiveAd, priceIdToPlan } from '@/db/queries/kv';
 import { isUserACompanion } from '@/db/queries/companions';
-import { companionsTable } from '@/db/schema';
+import { companionsTable, subscriptionsTable } from '@/db/schema';
+import { DIAS_GRATIS, temMesGratis, type DiasPlano } from '@/lib/planos';
 import { eq } from 'drizzle-orm';
 import { isAdmin } from '@/components/header';
 import { acessoAPlanos, DESTINO_SEM_ACESSO } from '@/db/queries/verificacao';
@@ -48,13 +49,22 @@ export async function GET(req: Request) {
             return new Response('Missing price ID', { status: 400 });
         }
 
-        // ✅ Validate that the priceId exists in our plan mapping
+        // Só os preços do catálogo (lib/planos.ts): 3 planos × 7, 15 e 30 dias.
         const planInfo = priceIdToPlan[priceId];
         if (!planInfo) {
             return new Response('Invalid price ID', { status: 400 });
         }
 
+        // Uma subscrição de cada vez. O botão já manda para o perfil quem tem
+        // plano activo (ou no mês grátis), mas este endereço abre-se à mão: sem
+        // isto, ficava com duas subscrições a cobrar ao mesmo tempo (por
+        // exemplo, ao "trocar" de 7 para 30 dias sem cancelar a primeira).
+        if (await hasActiveAd(userId)) {
+            return Response.redirect(new URL(localizeHref('/profile', locale), req.url), 303);
+        }
+
         let stripeCustomerId = await kv.get(`stripe:user:${userId}`);
+        const clienteNovo = !stripeCustomerId;
 
         if (!stripeCustomerId) {
             const customer = await stripe.customers.create({
@@ -74,8 +84,17 @@ export async function GET(req: Request) {
             await kv.set(`stripe:user:${userId}`, stripeCustomerId);
         }
 
+        // O mês grátis só existe no plano de 30 dias e só na primeira
+        // subscrição: sem esta verificação, cancelar antes do fim do mês grátis
+        // e assinar de novo dava outro mês grátis, indefinidamente. Os admins
+        // podem pedir a compra de teste sem ele.
+        const comMesGratis =
+            temMesGratis(planInfo.duration as DiasPlano) &&
+            !semTrial &&
+            !(await jaTeveSubscricao(userId, clienteNovo ? null : (stripeCustomerId as string)));
+
         console.log(
-            `🛒 Creating checkout for user ${userId}, customer ${stripeCustomerId}, plan ${planInfo.name}`
+            `🛒 Creating checkout for user ${userId}, customer ${stripeCustomerId}, plan ${planInfo.name} ${planInfo.duration} dias, mês grátis: ${comMesGratis}`
         );
 
         const checkout = await stripe.checkout.sessions.create({
@@ -94,25 +113,26 @@ export async function GET(req: Request) {
                     quantity: 1,
                 },
             ],
-            ...(semTrial
-                ? {}
-                : {
+            ...(comMesGratis
+                ? {
                       subscription_data: {
                           // Um mês. Quem já estiver a meio de um período de dois meses
                           // mantém-no: a Stripe fixa a duração no momento da assinatura.
-                          trial_period_days: 30,
+                          trial_period_days: DIAS_GRATIS,
                           trial_settings: {
                               end_behavior: {
                                   missing_payment_method: 'cancel' as const, // Cancel if no payment method at trial end
                               },
                           },
                       },
-                  }),
+                  }
+                : {}),
             payment_method_collection: 'always',
             metadata: {
                 userId: userId,
                 stripeCustomerId: stripeCustomerId as string,
                 planType: planInfo.name,
+                dias: String(planInfo.duration),
                 ...(semTrial ? { testeAdminSemTrial: 'sim' } : {}),
                 ...metadadosGa(req, userId),
             },
@@ -123,6 +143,30 @@ export async function GET(req: Request) {
     } catch (error) {
         console.error('❌ Error creating checkout session:', error);
         return new Response('Internal server error', { status: 500 });
+    }
+}
+
+/**
+ * Já teve alguma subscrição (em qualquer estado, até cancelada)? É o que
+ * decide se ainda tem direito ao mês grátis. Procura na base (todas as
+ * subscrições chegam pelo webhook, com a conta) e na Stripe, no cliente desta
+ * conta, para o caso de um aviso do webhook se ter perdido. Na dúvida (a
+ * Stripe falhou), não dá o mês grátis.
+ */
+async function jaTeveSubscricao(clerkId: string, stripeCustomerId: string | null): Promise<boolean> {
+    const [naBase] = await db
+        .select({ id: subscriptionsTable.id })
+        .from(subscriptionsTable)
+        .where(eq(subscriptionsTable.clerk_id, clerkId))
+        .limit(1);
+    if (naBase) return true;
+    if (!stripeCustomerId) return false;
+    try {
+        const naStripe = await stripe.subscriptions.list({ customer: stripeCustomerId, status: 'all', limit: 1 });
+        return naStripe.data.length > 0;
+    } catch (error) {
+        console.error('Não foi possível confirmar subscrições anteriores na Stripe:', error);
+        return true;
     }
 }
 

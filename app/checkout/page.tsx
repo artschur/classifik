@@ -7,27 +7,47 @@ import { ProductCard } from './productCard';
 import { LocaleLink } from '@/components/locale-link';
 import { getLocale } from '@/lib/locale.server';
 import { localizeHref, type Locale } from '@/lib/i18n';
-import {
-  BASIC_PRICE_ID,
-  hasActiveAd,
-  PLUS_PRICE_ID,
-  VIP_PRICE_ID,
-} from '@/db/queries/kv';
+import { PLANOS, temMesGratis, type DiasPlano, type PlanoPago } from '@/lib/planos';
+
+/** Uma duração de um plano, como o cartão a mostra. */
+export interface OpcaoProduto {
+  dias: DiasPlano;
+  precoId: string;
+  /** Já formatado: "15 €". */
+  preco: string;
+  /** Os primeiros 30 dias são grátis (só na primeira subscrição). */
+  mesGratis: boolean;
+}
 
 export interface Product {
-  id: string;
+  plano: PlanoPago;
   name: string;
   description: string;
   benefits: string[];
-  price: string;
+  opcoes: OpcaoProduto[];
 }
 
-const products: Product[] = [
+type TextoPlano = Omit<Product, 'opcoes'>;
+
+/** As três durações de um plano, com os preços do catálogo (lib/planos.ts). */
+function comOpcoes(texto: TextoPlano): Product {
+  return {
+    ...texto,
+    opcoes: PLANOS[texto.plano].map((o) => ({
+      dias: o.dias,
+      precoId: o.precoId,
+      preco: `${o.valor} €`,
+      mesGratis: temMesGratis(o.dias),
+    })),
+  };
+}
+
+const products: TextoPlano[] = [
   {
-    id: BASIC_PRICE_ID, // Replace with your new recurring price ID
-    name: 'Classico',
+    plano: 'classic',
+    name: 'Clássico',
     description:
-      'Presença estratégica com recursos essenciais para se destacar. Assinatura mensal',
+      'Presença estratégica com recursos essenciais para se destacar.',
     benefits: [
       'Destaque na listagem do distrito escolhida',
       'Exibição antes dos anúncios gratuitos',
@@ -35,13 +55,12 @@ const products: Product[] = [
       'Selo "CLÁSSICO" no perfil',
       'Suporte via sistema de atendimento prioritário',
     ],
-    price: '€40.00',
   },
   {
-    id: PLUS_PRICE_ID, // Replace with your new recurring price ID
+    plano: 'plus',
     name: 'Plus',
     description:
-      'Mais visibilidade e prioridade para o seu perfil. Assinatura mensal.',
+      'Mais visibilidade e prioridade para o seu perfil.',
     benefits: [
       'Posição de maior destaque no distrito escolhida',
       'Prioridade nas buscas (acima de anúncios Clássico e Gratuito)',
@@ -52,13 +71,12 @@ const products: Product[] = [
       'Acesso à lista de bloqueios/clientes indesejados',
       'Anúncio principal com mais chances de visualização',
     ],
-    price: '€45.00',
   },
   {
-    id: VIP_PRICE_ID, // Replace with your new recurring price ID
+    plano: 'vip',
     name: 'VIP',
     description:
-      'Máximo destaque e prioridade total para o seu perfil. Assinatura mensal.',
+      'Máximo destaque e prioridade total para o seu perfil.',
     benefits: [
       'Destaque absoluto no seu distrito',
       'Prioridade máxima nos resultados de busca',
@@ -72,17 +90,16 @@ const products: Product[] = [
       'Acesso completo à lista de bloqueios/clientes indesejados',
       'Máxima exposição na plataforma',
     ],
-    price: '€50.00',
   },
 ];
 
-// Os mesmos planos, com o texto em inglês. Ids e preços iguais aos de cima.
-const productsEn: Product[] = [
+// Os mesmos planos, com o texto em inglês. Preços iguais (vêm do catálogo).
+const productsEn: TextoPlano[] = [
   {
-    id: BASIC_PRICE_ID,
+    plano: 'classic',
     name: 'Classic',
     description:
-      'A strategic presence with the essential features to stand out. Monthly subscription.',
+      'A strategic presence with the essential features to stand out.',
     benefits: [
       'Featured in the listing for your chosen district',
       'Shown before free listings',
@@ -90,13 +107,12 @@ const productsEn: Product[] = [
       '"CLASSIC" badge on your profile',
       'Support through our priority help desk',
     ],
-    price: '€40.00',
   },
   {
-    id: PLUS_PRICE_ID,
+    plano: 'plus',
     name: 'Plus',
     description:
-      'More visibility and priority for your profile. Monthly subscription.',
+      'More visibility and priority for your profile.',
     benefits: [
       'A more prominent position in your chosen district',
       'Priority in searches (above Classic and free listings)',
@@ -106,13 +122,12 @@ const productsEn: Product[] = [
       'Access to the block list for unwanted clients',
       'Your main listing gets a better chance of being seen',
     ],
-    price: '€45.00',
   },
   {
-    id: VIP_PRICE_ID,
+    plano: 'vip',
     name: 'VIP',
     description:
-      'Maximum visibility and top priority for your profile. Monthly subscription.',
+      'Maximum visibility and top priority for your profile.',
     benefits: [
       'Top spot in your district',
       'Highest priority in search results',
@@ -126,11 +141,13 @@ const productsEn: Product[] = [
       'Full access to the block list for unwanted clients',
       'Maximum exposure on the platform',
     ],
-    price: '€50.00',
   },
 ];
 
-const PRODUCTS: Record<Locale, Product[]> = { pt: products, en: productsEn };
+const PRODUCTS: Record<Locale, Product[]> = {
+  pt: products.map(comOpcoes),
+  en: productsEn.map(comOpcoes),
+};
 
 const TEXT = {
   pt: {
@@ -138,8 +155,9 @@ const TEXT = {
     intro:
       'Escolha o seu anúncio. Após o pagamento, seu perfil será visível no topo do seu distrito, atraindo mais clientes.',
     mesGratis:
-      'Na escolha de um plano, o primeiro mês é grátis (apenas para as 15 primeiras sugars)',
-    cancele: 'Cancele quando quiser!',
+      'Plano de 30 dias: o primeiro mês é grátis na sua primeira subscrição.',
+    cancele:
+      'Escolha 7, 15 ou 30 dias. O plano renova-se sozinho no fim de cada período; cancele quando quiser.',
     semSeloTitulo: 'Para escolher um plano, verifique primeiro o seu perfil.',
     semSeloTexto:
       'Os planos são só para perfis com o selo "Verificada". Envie o vídeo e o documento: assim que a equipa confirmar, pode escolher o plano aqui.',
@@ -156,8 +174,9 @@ const TEXT = {
     intro:
       'Choose your plan. Once you have paid, your profile will appear at the top of your district, bringing you more clients.',
     mesGratis:
-      'When you choose a plan, the first month is free (only for the first 15 companions)',
-    cancele: 'Cancel anytime!',
+      '30-day plan: the first month is free on your first subscription.',
+    cancele:
+      'Choose 7, 15 or 30 days. Your plan renews automatically at the end of each period; cancel anytime.',
     semSeloTitulo: 'To choose a plan, verify your profile first.',
     semSeloTexto:
       'Plans are only for profiles with the "Verified" badge. Send your video and document: as soon as the team confirms them, you can choose your plan here.',
@@ -247,7 +266,7 @@ export default async function CheckoutPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PRODUCTS[locale].map((product) => (
           <ProductCard
-            key={product.id}
+            key={product.plano}
             product={product}
             hasProfile={hasProfile}
             adminTest={adminTest}
