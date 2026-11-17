@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { FaqAcordeao } from '@/components/faq-acordeao';
 import { SignedIn, SignedOut } from '@clerk/nextjs';
 import { RegistarButton } from '@/components/registar-button';
 import {
@@ -350,14 +351,7 @@ export function HomeRestEn() {
       <section className="py-12 px-6 bg-card/50">
         <div className="container mx-auto max-w-3xl">
           <h2 className="text-2xl font-bold text-center mb-10">Frequently asked questions</h2>
-          <div className="space-y-6">
-            {faq.map((item) => (
-              <div key={item.q} className="border-b border-border pb-5">
-                <h3 className="font-semibold text-base mb-2">{item.q}</h3>
-                <p className="text-base text-muted-foreground leading-relaxed">{item.a}</p>
-              </div>
-            ))}
-          </div>
+          <FaqAcordeao itens={faq} />
         </div>
       </section>
 

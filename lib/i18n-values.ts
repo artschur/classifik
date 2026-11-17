@@ -41,7 +41,16 @@ export const VALORES_EN: Record<string, string> = {
   'Muito Longo': 'Very long',
 };
 
+/**
+ * Valores gravados com termos do Brasil, mostrados em português de Portugal.
+ * Só muda o que aparece: o valor gravado e os filtros ficam iguais.
+ */
+const VALORES_PT: Record<string, string> = {
+  Marrom: 'Castanho',
+};
+
 export function traduzirValor(valor: string | null | undefined, locale: Locale): string {
   if (!valor) return 'N/A';
-  return locale === 'en' ? VALORES_EN[valor.trim()] ?? valor : valor;
+  const v = valor.trim();
+  return locale === 'en' ? VALORES_EN[v] ?? valor : VALORES_PT[v] ?? valor;
 }

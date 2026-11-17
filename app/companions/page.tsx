@@ -8,6 +8,7 @@ import { CompanionsList, CompanionsListSkeleton } from '@/components/companionsL
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { LocaleLink } from '@/components/locale-link';
 import { BreadcrumbTrail } from '@/components/breadcrumb-trail';
+import { FaqAcordeao } from '@/components/faq-acordeao';
 import { PlanType } from '@/db/queries/kv';
 import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, absoluteUrl, hasEnglish, type Locale } from '@/lib/i18n';
@@ -360,14 +361,7 @@ function PortugalEditorialAndFAQ({ locale }: { locale: Locale }) {
       {faq && faq.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-5">{en ? 'Frequently asked questions' : 'Perguntas frequentes'}</h2>
-          <div className="space-y-5">
-            {faq.map((item, idx) => (
-              <div key={idx}>
-                <h3 className="text-sm font-semibold mb-1 text-foreground">{item.q}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
-              </div>
-            ))}
-          </div>
+          <FaqAcordeao itens={faq} />
           {faqSchema && (
             <script
               type="application/ld+json"

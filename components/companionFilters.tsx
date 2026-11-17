@@ -33,7 +33,7 @@ const TEXT = {
     noSort: "Sem ordenar",
     asc: "Preço: Menor para Maior",
     desc: "Preço: Maior para menor",
-    search: "Procure sugars pelo nome...",
+    search: "Procure pelo nome...",
     filters: "Filtros",
     panelTitle: "Filtros de pesquisa",
     clear: "Limpar filtros",

@@ -66,8 +66,15 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
     <section className="w-full bg-background py-12 md:py-24">
       <div className="container mx-auto px-4">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-center mb-2">Sugars Premium</h2>
-          <p className="text-muted-foreground text-center">Descubra nossas sugars premium e verificadas</p>
+          {/* Estava só em português, também nas páginas /en. */}
+          <h2 className="text-3xl font-bold text-center mb-2">
+            {locale === "en" ? "Premium profiles" : "Perfis em destaque"}
+          </h2>
+          <p className="text-muted-foreground text-center">
+            {locale === "en"
+              ? "Our premium and verified companions"
+              : "Descubra as nossas acompanhantes premium e verificadas"}
+          </p>
         </div>
 
         <div className="relative">

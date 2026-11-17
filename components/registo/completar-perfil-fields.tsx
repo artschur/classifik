@@ -49,8 +49,10 @@ const OPCOES_EN: Record<string, string> = {
 };
 
 /** O texto de uma opção no idioma da página; o valor não muda. */
+// Em português passa também por traduzirValor: o valor gravado "Marrom"
+// aparece como "Castanho" (lib/i18n-values.ts), sem mudar o que se grava.
 const rotulo = (valor: string, locale: Locale) =>
-  locale === "en" ? (OPCOES_EN[valor] ?? traduzirValor(valor, locale)) : valor;
+  locale === "en" ? (OPCOES_EN[valor] ?? traduzirValor(valor, locale)) : traduzirValor(valor, locale);
 
 const TEXT = {
   pt: {

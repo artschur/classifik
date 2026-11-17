@@ -23,9 +23,9 @@ function ReviewsContent({
   const locale = useLocale();
   if (reviews.length === 0) {
     return (
-      <div className="py-8 mt-8 h-32 text-center flex flex-col items-center">
-        <p className="text-muted-foreground mt-8">
-          {locale === 'en' ? 'No reviews yet' : 'Nenhum review ainda'}
+      <div className="py-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          {locale === 'en' ? 'No reviews yet' : 'Ainda sem avaliações'}
         </p>
       </div>
     );
@@ -48,12 +48,26 @@ export function ReviewsList({
   const { user } = useUser();
   const locale = useLocale();
   const pathname = usePathname();
+  if (!user && initialReviews.length === 0) {
+    // Sem avaliações não há nada escondido: em vez do bloco grande com o
+    // olho fechado e o convite para entrar, uma linha só.
+    return (
+      <div className="py-6 text-center text-sm text-muted-foreground">
+        {locale === 'en' ? 'No reviews yet.' : 'Ainda sem avaliações.'}{' '}
+        <SignInButton mode="modal" forceRedirectUrl={pathname}>
+          <button type="button" className="font-medium text-rose-500 hover:underline">
+            {locale === 'en' ? 'Log in to write one' : 'Inicie sessão para deixar a sua'}
+          </button>
+        </SignInButton>
+      </div>
+    );
+  }
   if (!user) {
     return (
       <div className="py-8 text-center flex flex-col items-center">
         <IconEyeClosed className="w-12 h-12 mx-auto text-muted-foreground" />
         <p className="text-muted-foreground">
-          {locale === 'en' ? 'Log in to read the reviews' : 'Faça login para ver os reviews'}
+          {locale === 'en' ? 'Log in to read the reviews' : 'Inicie sessão para ver as avaliações'}
         </p>
         <SignInButton mode="modal" forceRedirectUrl={pathname}>
           <div className="px-4 p-2 m-4 hover:cursor-pointer rounded-lg bg-primary">

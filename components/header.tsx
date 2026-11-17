@@ -42,7 +42,7 @@ const NAV_TEXT = {
     verify: 'Verificar',
     profile: 'Perfil',
     login: 'Login',
-    signUp: 'Registrar',
+    signUp: 'Registar',
     openMenu: 'Abrir menu',
     blogUrl: 'https://blog.onesugar.pt',
   },

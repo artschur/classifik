@@ -59,12 +59,11 @@ import { LocaleLink } from '@/components/locale-link';
 import { PageViewTracker } from '@/components/analytics-components';
 import { EstadoRegisto } from '@/components/registo/estado-registo';
 import { viaDoSelo } from '@/db/queries/verificacao';
+import { seloVerificacao } from '@/lib/genero';
 
 const TEXT = {
   pt: {
     home: 'Início',
-    verified: 'Verificada',
-    notVerified: 'Não verificada',
     voice: 'Ouça minha voz',
     about: (n: string) => `Sobre ${n}`,
     originalNote: '',
@@ -91,8 +90,6 @@ const TEXT = {
   },
   en: {
     home: 'Home',
-    verified: 'Verified',
-    notVerified: 'Not verified',
     voice: 'Listen to my voice',
     about: (n: string) => `About ${n}`,
     originalNote: 'Description written by the advertiser, in Portuguese.',
@@ -387,11 +384,11 @@ export async function CompanionProfile({
               publicada: há perfis online sem documento, e esses dizem-no. */}
           {companion.identity_verified ? (
             <Badge variant="secondary" className="bg-green-100 text-green-800">
-              <Check className="w-3 h-3 mr-1" /> {t.verified}
+              <Check className="w-3 h-3 mr-1" /> {seloVerificacao(companion.gender, locale).verificado}
             </Badge>
           ) : (
             <Badge variant="secondary" className="bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-              <ShieldAlert className="w-3 h-3 mr-1" /> {t.notVerified}
+              <ShieldAlert className="w-3 h-3 mr-1" /> {seloVerificacao(companion.gender, locale).naoVerificado}
             </Badge>
           )}
           <div className="flex items-center text-yellow-400">

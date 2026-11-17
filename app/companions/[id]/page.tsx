@@ -23,6 +23,7 @@ import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, absoluteUrl, pageAlternates } from '@/lib/i18n';
 import type { Metadata } from 'next';
 import { isValidPreviewToken } from '@/lib/preview-token';
+import { OutrosPerfis } from '@/components/outros-perfis';
 
 export async function generateMetadata({
   params,
@@ -202,7 +203,7 @@ export default async function CompanionPage({
     return <BlockedProfileMessage />;
   }
 
-  const [reviews] = await Promise.all([getReviewsByCompanionId(companionId)]);
+  const [reviews, locale] = await Promise.all([getReviewsByCompanionId(companionId), getLocale()]);
   const reviewsRating =
     reviews.length > 0
       ? reviews.map((review) => review.rating).sort((a, b) => a - b)[
@@ -218,6 +219,11 @@ export default async function CompanionPage({
       </Suspense>
       <Suspense fallback={<ReviewsSkeleton />}>
         <CompanionReviews id={companionId} initialReviews={reviews} />
+      </Suspense>
+      {/* Outros perfis do mesmo distrito, de todos os géneros: a ligação
+          interna que os perfis masculinos e trans não tinham. */}
+      <Suspense fallback={null}>
+        <OutrosPerfis companionId={companionId} locale={locale} />
       </Suspense>
     </div>
   );
