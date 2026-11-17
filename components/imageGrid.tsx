@@ -10,6 +10,7 @@ import { getImagesByCompanionId } from '@/db/queries/images';
 import { useSwipeable } from 'react-swipeable';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { framingStyle, isVideoMedia, mediaFraming } from '@/lib/image-framing';
+import { useLocale } from '@/components/locale-provider';
 
 interface ImageGridProps {
   initialImages: (Media | string)[];
@@ -17,9 +18,16 @@ interface ImageGridProps {
   totalImages: number;
   /** Só na pré-visualização de um perfil escondido. */
   previewToken?: string;
+  /** Nome do perfil, para o texto alternativo das fotos. */
+  nome?: string;
 }
 
-export function ImageGrid({ initialImages, companionId, totalImages, previewToken }: ImageGridProps) {
+export function ImageGrid({ initialImages, companionId, totalImages, previewToken, nome }: ImageGridProps) {
+  const locale = useLocale();
+  // "Bianca, foto 1" em vez de "Media 1": é o texto que o Google Imagens e
+  // os leitores de ecrã lêem.
+  const altDaFoto = (n: number) =>
+    nome ? `${nome}, ${locale === 'en' ? 'photo' : 'foto'} ${n}` : `${locale === 'en' ? 'Photo' : 'Foto'} ${n}`;
   const [selectedMedia, setSelectedMedia] = useState<Media | string | null>(null);
   const [isPlaying, setIsPlaying] = useState<{ [key: string]: boolean }>({});
   const [images, setImages] = useState<(Media | string)[]>(() =>
@@ -237,7 +245,7 @@ export function ImageGrid({ initialImages, companionId, totalImages, previewToke
                   <div>
                     <Image
                       src={mediaUrl || '/placeholder.svg'}
-                      alt={`Media ${index + 1}`}
+                      alt={altDaFoto(index + 1)}
                       fill
                       // A primeira foto é a imagem principal do perfil no
                       // telemóvel: carrega com prioridade (melhora o LCP).
@@ -250,7 +258,7 @@ export function ImageGrid({ initialImages, companionId, totalImages, previewToke
                       src={'/watermark.png'}
                       width={100}
                       height={100}
-                      alt="Marca d'água"
+                      alt=""
                       className="absolute inset-0 m-auto h-16 w-16 opacity-60"
                     />
                   </div>

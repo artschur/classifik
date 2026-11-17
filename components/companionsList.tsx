@@ -261,6 +261,11 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
                       src={mediaUrl(image) || '/placeholder.svg'}
                       alt={en ? `${companion.name}, photo ${index + 1}` : `${companion.name}, foto ${index + 1}`}
                       fill={true}
+                      // Largura real do cartão: uma coluna no telemóvel, duas
+                      // até ao xl e três a partir daí. Sem isto o navegador
+                      // assumia a largura do ecrã e descarregava fotos de até
+                      // 1920px para cada miniatura.
+                      sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
                       className="object-cover"
                       style={framingStyle(mediaFraming(image))}
                     />
@@ -268,7 +273,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
                       src={'/watermark.png'}
                       width={100}
                       height={100}
-                      alt="Marca d'água"
+                      alt=""
                       className="absolute inset-0 m-auto h-16 w-16 opacity-80 invert"
                     />
                   </div>
@@ -277,7 +282,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
             ) : (
               <CarouselItem>
                 <div className="relative aspect-[4/3]">
-                  <Image src="/image.png" alt={companion.name} fill={true} className="object-cover" />
+                  <Image src="/image.png" alt={companion.name} fill={true} sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
                 </div>
               </CarouselItem>
             )}

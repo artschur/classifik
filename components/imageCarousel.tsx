@@ -52,6 +52,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
             alt={`Carousel image ${currentIndex + 1}`}
             layout="fill"
             objectFit="cover"
+            sizes="(min-width: 896px) 896px, 100vw"
             onLoad={handleImageLoad}
             className={`transition-opacity duration-300 ${
               isLoading ? 'opacity-0' : 'opacity-100'

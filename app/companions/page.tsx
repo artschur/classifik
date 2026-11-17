@@ -7,6 +7,7 @@ import { CompanionFilters } from '@/components/companionFilters';
 import { CompanionsList, CompanionsListSkeleton } from '@/components/companionsList';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { LocaleLink } from '@/components/locale-link';
+import { BreadcrumbTrail } from '@/components/breadcrumb-trail';
 import { PlanType } from '@/db/queries/kv';
 import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, absoluteUrl, hasEnglish, type Locale } from '@/lib/i18n';
@@ -479,6 +480,13 @@ export default async function CompanionsIndexPage({
 
   return (
     <div className="container mx-auto px-10 py-8">
+      <BreadcrumbTrail
+        locale={locale}
+        passos={[
+          { nome: en ? 'Home' : 'Início', caminho: '/' },
+          { nome: en ? 'Escorts' : 'Acompanhantes', caminho: '/companions' },
+        ]}
+      />
       <h1 className="text-3xl font-bold mb-6">{t.title}</h1>
 
       <div className="mb-4 text-sm text-muted-foreground flex gap-2">

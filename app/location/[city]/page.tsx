@@ -13,6 +13,8 @@ import { getCompanionsToFilter } from '@/db/queries/companions';
 import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { PlanType } from '@/db/queries/kv';
 import { LocaleLink } from '@/components/locale-link';
+import { BreadcrumbTrail } from '@/components/breadcrumb-trail';
+import { distritoPorSlug, inDistrict } from '@/lib/districts';
 import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, absoluteUrl, pageAlternates, type Locale } from '@/lib/i18n';
 
@@ -1224,11 +1226,18 @@ async function distritoExiste(cityKey: string): Promise<boolean> {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ city: string }>;
+  searchParams: Promise<FilterTypesCompanions>;
 }): Promise<Metadata> {
-  const [{ city }, locale] = await Promise.all([params, getLocale()]);
+  const [{ city }, rawParams, locale] = await Promise.all([
+    params,
+    searchParams,
+    getLocale(),
+  ]);
   const cityKey = city.toLowerCase();
+  const page = Math.max(1, parseInt(rawParams.page ?? '1', 10) || 1);
   if (!(await distritoExiste(cityKey))) notFound();
   const capitalizedCity =
     city.charAt(0).toUpperCase() + city.slice(1).replaceAll('-', ' ');
@@ -1240,26 +1249,56 @@ export async function generateMetadata({
   };
   const path = `/location/${cityKey}`;
 
+  // Páginas seguintes (?page=2...): cada uma lista perfis diferentes. Antes
+  // tinham o canonical da primeira e o mesmo título, e o Google tratava-as
+  // como cópias dela, perdendo os perfis que só aparecem lá. Agora têm
+  // canonical próprio e o número da página no título, como em /companions.
+  // Uma página para lá da última (lista vazia) fica fora do índice e aponta
+  // para a primeira. A consulta é a mesma da lista e vem da cache.
+  const vazia =
+    page > 1 &&
+    (
+      await getCompanionsToFilter(cityKey, page, {
+        ...rawParams,
+        gender: rawParams.gender ?? 'feminino',
+      }).catch(() => null)
+    )?.length === 0;
+  const seguinte = page > 1 && !vazia;
+  // "Acompanhantes em Lisboa, página 2 | Perfis Verificados": o número
+  // entra logo a seguir ao nome do distrito.
+  const title = seguinte
+    ? current.title.replace(
+        /^([^|]+?)(\s*\||$)/,
+        `$1, ${locale === 'en' ? 'page' : 'página'} ${page}$2`,
+      )
+    : current.title;
+  const urlDaPagina = seguinte
+    ? `${absoluteUrl(path, locale)}?page=${page}`
+    : absoluteUrl(path, locale);
+
   return {
-    title: current.title,
+    title,
     description: current.description,
     robots: {
-      index: true,
+      index: !vazia,
       follow: true,
       googleBot: {
-        index: true,
+        index: !vazia,
         follow: true,
         'max-image-preview': 'large',
         'max-snippet': -1,
       },
     },
     // canonical próprio por idioma e hreflang PT/EN nos distritos com texto
-    // inglês (EN_DISTRICTS em lib/i18n.ts).
-    alternates: pageAlternates(path, locale),
+    // inglês (EN_DISTRICTS em lib/i18n.ts). O hreflang fica só na primeira
+    // página: as seguintes são continuação da lista.
+    alternates: seguinte
+      ? { canonical: urlDaPagina }
+      : pageAlternates(path, locale),
     openGraph: {
-      title: current.title,
+      title,
       description: current.description,
-      url: absoluteUrl(path, locale),
+      url: urlDaPagina,
       siteName: 'OneSugar',
       locale: OG_LOCALE[locale],
       type: 'website',
@@ -1268,6 +1307,27 @@ export async function generateMetadata({
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+// "Início › Acompanhantes em Lisboa": o mesmo nome que o caminho dos perfis
+// usa para o distrito, para os dois BreadcrumbList baterem certo.
+function DistrictBreadcrumb({ citySlug, locale }: { citySlug: string; locale: Locale }) {
+  const cityKey = citySlug.toLowerCase();
+  const en = locale === 'en';
+  return (
+    <BreadcrumbTrail
+      locale={locale}
+      passos={[
+        { nome: en ? 'Home' : 'Início', caminho: '/' },
+        {
+          nome: en
+            ? `Escorts ${inDistrict(cityKey)}`
+            : `Acompanhantes ${distritoPorSlug(cityKey, cityKey.replaceAll('-', ' ')).emNome}`,
+          caminho: `/location/${cityKey}`,
+        },
+      ]}
+    />
+  );
+}
 
 function LocationH1({ citySlug, locale }: { citySlug: string; locale: Locale }) {
   const cityKey = citySlug.toLowerCase();
@@ -1578,6 +1638,7 @@ export default async function CompanionsPage({
 
   return (
     <div className="container mx-auto px-10 py-8">
+      <DistrictBreadcrumb citySlug={city} locale={locale} />
       <LocationH1 citySlug={city} locale={locale} />
 
       <div className="mb-4 text-sm text-muted-foreground flex gap-2">

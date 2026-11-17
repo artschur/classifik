@@ -17,11 +17,18 @@ export function CatalogPagination({
   totalPages,
   params,
   locale = 'pt',
+  caminho,
 }: {
   page: number;
   totalPages: number;
   params: Record<string, string | undefined>;
   locale?: Locale;
+  /**
+   * Endereço da página sem parâmetros ('/' ou '/en'). A primeira página do
+   * catálogo liga para ele: uma ligação só com '?' ficava no endereço
+   * "/?", uma cópia da home que o buscador rastreava à parte.
+   */
+  caminho: string;
 }) {
   const t = TEXT[locale];
   if (totalPages <= 1) return null;
@@ -31,7 +38,7 @@ export function CatalogPagination({
     for (const [k, v] of Object.entries(params)) if (v && k !== 'page') p.set(k, v);
     if (n > 1) p.set('page', String(n));
     const qs = p.toString();
-    return `${qs ? `?${qs}` : '?'}#catalogo`;
+    return `${qs ? `?${qs}` : caminho}#catalogo`;
   };
 
   // Até 5 números à volta da página actual, mais a primeira e a última.

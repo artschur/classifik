@@ -78,10 +78,16 @@ export async function generateMetadata({
 
     const custom = customMetadata[companionId];
     let title: string = custom?.title ?? tituloPadrao;
+    // Sem descrição curta, o texto era só "Conheça X na OneSugar." (cerca de
+    // 30 caracteres, em 23 de 40 perfis no crawl de novembro), e o Google
+    // ficava sem nada para mostrar no resultado. Agora leva o distrito e o
+    // que a página tem, no mesmo modelo da versão inglesa. Sem género no
+    // texto: há perfis masculinos e trans.
+    const ondePt = distrito ? ` ${distrito.emNome}` : ' em Portugal';
     let description: string =
       custom?.description ||
       companion.shortDescription?.trim() ||
-      `Conheça ${nome} na OneSugar.`;
+      `${nome}, acompanhante${ondePt}. Veja as fotos e os detalhes do perfil e fale diretamente pela OneSugar, com total discrição.`;
 
     // Versão inglesa: o título é gerado em inglês a partir do nome e do
     // distrito. A descrição é a tradução da descrição curta, quando existe
@@ -92,7 +98,9 @@ export async function generateMetadata({
         companionId === 254
           ? `Sophia | Erotic Massage Specialist${onde}`
           : `${nome}, escort${onde}`;
-      description = companion.shortDescriptionEn?.trim() || `${nome}, escort${onde}, Portugal. See her photos and details and contact her directly on OneSugar, with full discretion.`;
+      description =
+        companion.shortDescriptionEn?.trim() ||
+        `${nome}, escort${onde}, Portugal. See the photos and profile details and get in touch directly on OneSugar, with full discretion.`;
     }
 
     // Em pausa ou por aprovar: só abre para o admin ou pelo link de

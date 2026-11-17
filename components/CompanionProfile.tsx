@@ -381,7 +381,7 @@ export async function CompanionProfile({
         />
       )}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">{companion.name}</h1>
+        <h1 className="text-3xl font-bold">{companion.name.trim()}</h1>
         <div className="flex items-center mt-2 space-x-4">
           {/* O selo é da identidade (documento visto), não de estar
               publicada: há perfis online sem documento, e esses dizem-no. */}
@@ -413,6 +413,7 @@ export async function CompanionProfile({
             initialImages={initialMedia}
             companionId={id}
             totalImages={total}
+            nome={companion.name.trim()}
             // Perfil escondido aberto pela pré-visualização: o "ver mais" só
             // devolve fotos com o token.
             previewToken={hiddenFromPublic && preview ? previewToken(id) : undefined}
