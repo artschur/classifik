@@ -14,6 +14,7 @@ import { ReviewsSkeleton } from './skeletons/skeletonReview';
 import type { ReviewResponse } from '@/db/queries/reviews';
 import { useState } from 'react';
 import { Star } from 'lucide-react';
+import { useLocale } from '@/components/locale-provider';
 
 export default function CompanionReviews({
   id,
@@ -23,6 +24,7 @@ export default function CompanionReviews({
   initialReviews: ReviewResponse[];
 }) {
   const [reviews, setReviews] = useState(initialReviews);
+  const locale = useLocale();
 
   const handleAddReview = (newReview: ReviewResponse) => {
     setReviews((prev) => [newReview, ...prev]);
@@ -45,7 +47,10 @@ export default function CompanionReviews({
               </span>
             </div>
             <Badge variant="secondary" className="text-sm">
-              {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+              {reviews.length}{' '}
+              {locale === 'en'
+                ? reviews.length === 1 ? 'review' : 'reviews'
+                : reviews.length === 1 ? 'avaliação' : 'avaliações'}
             </Badge>
           </div>
         </div>

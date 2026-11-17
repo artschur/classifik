@@ -34,6 +34,15 @@ export default function robots(): MetadataRoute.Robots {
           // Cache-Control: public, max-age=31536000, immutable para esses paths.
           '/checkout',
           '/onboarding',
+          // Áreas de quem tem conta, que sem sessão vão para o login. Estavam
+          // bloqueadas só em /en; o crawl de novembro encontrou a versão
+          // portuguesa do registo a ser rastreada (ligada pelas páginas de
+          // anunciantes e pelo "Criar Conta" do /sobre).
+          '/companions/register',
+          '/companions/verification',
+          '/success',
+          '/block',
+          '/profile',
           // As mesmas áreas privadas em inglês: as páginas públicas em /en
           // ligam para /en/checkout, que sem sessão vai para o login.
           '/en/checkout',
@@ -47,7 +56,6 @@ export default function robots(): MetadataRoute.Robots {
           '/register',
           '/admin',
           '/api/',
-          '/profile/',
           '/*?s=',
           '/*?search=',
         ],

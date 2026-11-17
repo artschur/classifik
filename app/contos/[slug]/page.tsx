@@ -23,6 +23,18 @@ export async function generateStaticParams() {
   return [...dbSlugs, ...staticSlugs];
 }
 
+/**
+ * O resumo do conto tem às vezes mais de 300 caracteres. Na meta description
+ * o Google mostra cerca de 155: corta-se aí, no fim de uma palavra.
+ */
+function resumo(texto: string, max = 155): string {
+  const limpo = texto.replace(/\s+/g, ' ').trim();
+  if (limpo.length <= max) return limpo;
+  const corte = limpo.slice(0, max - 1);
+  const fim = corte.lastIndexOf(' ');
+  return `${(fim > 80 ? corte.slice(0, fim) : corte).replace(/[\s,.;:!?]+$/, '')}…`;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -33,9 +45,16 @@ export async function generateMetadata({
   const story = dbStory ? dbToStory(dbStory) : getStoryBySlug(slug);
   if (!story) return { title: 'Conto não encontrado' };
 
+  // A coleção só entra no título se couber: com ela, vários títulos
+  // passavam dos 60 caracteres e o Google cortava-os no resultado.
+  const comColecao = `${story.title} | ${story.collection}`;
+  const title =
+    comColecao.length + ' | OneSugar'.length <= 60 ? comColecao : story.title;
+  const description = resumo(story.excerpt);
+
   return {
-    title: `${story.title} | ${story.collection}`,
-    description: story.excerpt,
+    title,
+    description,
     robots: { index: true, follow: true },
     // Canonical autorreferente por conto. Sem isto cada conto herdava o
     // canonical da homepage definido no layout raiz.
@@ -44,7 +63,7 @@ export async function generateMetadata({
     },
     openGraph: {
       title: story.title,
-      description: story.excerpt,
+      description,
       url: `https://www.onesugar.pt/contos/${slug}`,
       siteName: 'OneSugar',
       locale: 'pt_PT',
@@ -169,9 +188,12 @@ export default async function StoryPage({
               <div className="my-8 rounded-xl overflow-hidden">
                 <Image
                   src={imageAfter.get(idx)!.src}
-                  alt={imageAfter.get(idx)!.alt || ''}
+                  // Sem texto alternativo escrito no conto, usa o título:
+                  // um alt vazio diz ao Google que a imagem é decorativa.
+                  alt={imageAfter.get(idx)!.alt || `${story.title}, ilustração`}
                   width={800}
                   height={600}
+                  sizes="(min-width: 768px) 768px, 100vw"
                   className="w-full object-cover rounded-xl"
                 />
               </div>

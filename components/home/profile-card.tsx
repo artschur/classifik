@@ -5,6 +5,7 @@ import { LocaleLink } from '@/components/locale-link';
 import { nomeDistrito } from '@/lib/districts';
 import type { Locale } from '@/lib/i18n';
 import type { CatalogCompanion } from '@/db/queries/catalog';
+import { etiquetaGenero, seloVerificacao } from '@/lib/genero';
 
 const PLANO: Record<string, { label: Record<Locale, string>; className: string }> = {
   vip: { label: { pt: 'VIP', en: 'VIP' }, className: 'bg-gradient-to-r from-amber-400 to-yellow-500 text-yellow-950' },
@@ -22,15 +23,11 @@ const TEXT = {
   pt: {
     anos: 'anos',
     ver: 'Ver perfil',
-    verificada: 'Verificada',
-    naoVerificada: 'Não verificada',
     alt: (nome: string, cidade: string) => `${nome}, acompanhante em ${cidade}`,
   },
   en: {
     anos: 'years old',
     ver: 'View profile',
-    verificada: 'Verified',
-    naoVerificada: 'Not verified',
     alt: (nome: string, cidade: string) => `${nome}, escort in ${cidade}`,
   },
 } as const;
@@ -53,6 +50,8 @@ export function ProfileCard({
   const plano = PLANO[sugar.planType?.toLowerCase()];
   const genero = GENERO[sugar.gender?.toLowerCase()]?.[locale];
   const cidade = nomeDistrito(sugar.citySlug || sugar.city, locale);
+  const selo = seloVerificacao(sugar.gender, locale);
+  const etiqueta = etiquetaGenero(sugar.gender, locale);
 
   return (
     <LocaleLink
@@ -81,6 +80,12 @@ export function ProfileCard({
             {plano.label[locale]}
           </span>
         )}
+        {/* Só nos perfis masculinos e trans (lib/genero.ts). */}
+        {etiqueta && (
+          <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
+            {etiqueta}
+          </span>
+        )}
         {sugar.photoCount > 0 && (
           <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
             <Camera className="h-3 w-3" />
@@ -94,12 +99,12 @@ export function ProfileCard({
           <span className="truncate font-semibold">{sugar.name}</span>
           {/* O selo é só para quem confirmou a identidade com documento. */}
           {sugar.identityVerified && (
-            <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label={t.verificada} />
+            <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label={selo.verificado} />
           )}
         </div>
         {!sugar.identityVerified && (
           <span className="w-fit rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-            {t.naoVerificada}
+            {selo.naoVerificado}
           </span>
         )}
         <p className="text-xs text-muted-foreground">

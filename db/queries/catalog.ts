@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, desc, eq, gte, ilike, inArray, lte, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, inArray, lte, ne, sql, type SQL } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import { db } from '..';
 import { characteristicsTable, citiesTable, companionsTable, imagesTable, reviewsTable } from '../schema';
@@ -139,6 +139,60 @@ export const getFeaturedCompanions = unstable_cache(
   },
   ['destaques-home'],
   { revalidate: 300, tags: ['companions'] },
+);
+
+/**
+ * Perfis no ar dos distritos indicados, de todos os géneros, sem o perfil
+ * `excluir`. Alimenta o bloco "Outros perfis" no fim de cada perfil e os
+ * vizinhos de um distrito sem perfis. Planos pagos primeiro, como no catálogo.
+ */
+export const getPerfisDosDistritos = unstable_cache(
+  async (slugs: string[], excluir: number | null, limite: number): Promise<CatalogCompanion[]> => {
+    if (!slugs.length) return [];
+    const linhas = await selecionar()
+      .where(
+        and(
+          eq(companionsTable.verified, true),
+          eq(companionsTable.paused, false),
+          inArray(citiesTable.slug, slugs),
+          ...(excluir ? [ne(companionsTable.id, excluir)] : []),
+        ),
+      )
+      .orderBy(desc(ordemPlano), desc(companionsTable.id))
+      .limit(limite);
+    return completar(linhas);
+  },
+  ['perfis-dos-distritos'],
+  { revalidate: 1800, tags: ['companions', 'companions-filter'] },
+);
+
+/**
+ * Quantos perfis masculinos e trans estão no ar num distrito. A página do
+ * distrito abre em feminino; com isto mostra que há mais, numa ligação.
+ */
+export const getOutrosGenerosNoDistrito = unstable_cache(
+  async (slug: string): Promise<{ masculino: number; trans: number }> => {
+    const linhas = await db
+      .select({
+        genero: sql<string>`lower(${companionsTable.gender})`,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(companionsTable)
+      .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+      .where(
+        and(
+          eq(companionsTable.verified, true),
+          eq(companionsTable.paused, false),
+          eq(citiesTable.slug, slug),
+          inArray(sql`lower(${companionsTable.gender})`, ['masculino', 'trans']),
+        ),
+      )
+      .groupBy(sql`lower(${companionsTable.gender})`);
+    const total = (g: string) => linhas.find((l) => l.genero === g)?.total ?? 0;
+    return { masculino: total('masculino'), trans: total('trans') };
+  },
+  ['outros-generos-distrito'],
+  { revalidate: 1800, tags: ['companions', 'companions-filter'] },
 );
 
 function selecionar() {

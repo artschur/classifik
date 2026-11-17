@@ -120,6 +120,7 @@ export default async function ContosPage({
                     src={featured.coverImage}
                     alt="Contos OneSugar"
                     fill
+                    sizes="320px"
                     className="object-cover"
                   />
                 ) : (
@@ -159,6 +160,7 @@ export default async function ContosPage({
                     src={featured.coverImage}
                     alt={featured.title}
                     fill
+                    sizes="(min-width: 768px) 40vw, 100vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

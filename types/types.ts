@@ -65,6 +65,8 @@ export type CompanionFiltered = Pick<
   documentos?: DocumentoCartao[];
   /** Selo "Verificada": documento visto pelo admin. Só nas listagens. */
   identityVerified?: boolean;
+  /** Género gravado ('Feminino', 'Masculino', 'Trans'). Só nas listagens. */
+  gender?: string | null;
   /** Descrição curta em inglês, para os cartões em /en. Só nas listagens. */
   shortDescriptionEn?: string | null;
   /** Áudio que está no perfil público. Só na fila de verificação. */

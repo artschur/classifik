@@ -22,6 +22,8 @@ import {
   type RegisterCompanionFormValues,
 } from "@/lib/registo-schema";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { after } from "next/server";
+import { avisarIndexNow } from "@/lib/indexnow";
 import { isAdmin } from "@/components/header";
 import {
   upsertContactInRD,
@@ -278,6 +280,7 @@ function buildCompanionsQuery(
         age: companionsTable.age,
         verified: companionsTable.verified,
         identityVerified: companionsTable.identity_verified,
+        gender: companionsTable.gender,
         hasActiveAd: sql<boolean>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.has_active_ad} ELSE false END`.as('hasActiveAd'),
         planType: sql<string>`CASE WHEN ${companionsTable.ad_expiration_date} > NOW() THEN ${companionsTable.plan_type} ELSE 'free' END`.as('planType'),
       },
@@ -2009,6 +2012,17 @@ export async function approveCompanion(
   revalidateTag("companion", "max");
   revalidateTag("companions", "max");
   revalidateTag("companions-filter", "max");
+
+  // Perfil novo ou alterado no ar: avisa o Bing pelo IndexNow, com a página
+  // do perfil e a do distrito, onde ele passa a aparecer. Corre depois da
+  // resposta, por isso não atrasa a aprovação.
+  after(async () => {
+    const distrito = await getCompanionDistrict(id).catch(() => null);
+    await avisarIndexNow([
+      `/companions/${id}`,
+      ...(distrito ? [`/location/${distrito.slug}`] : []),
+    ]);
+  });
 
   return { success: true, id };
 }

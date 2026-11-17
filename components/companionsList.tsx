@@ -16,6 +16,7 @@ import { PlanType } from '@/db/queries/kv';
 import { useLocale } from '@/components/locale-provider';
 import { LocaleLink } from '@/components/locale-link';
 import { traduzirValor } from '@/lib/i18n-values';
+import { etiquetaGenero, seloVerificacao } from '@/lib/genero';
 
 export function CompanionsList({
   location,
@@ -216,6 +217,8 @@ const PlanRibbon = ({ plan }: { plan?: string | null }) => {
 export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   const locale = useLocale();
   const en = locale === 'en';
+  const selo = seloVerificacao(companion.gender, locale);
+  const etiqueta = etiquetaGenero(companion.gender, locale);
   // Mantém o objecto em vez de reduzir ao URL, senão perdia-se o
   // enquadramento que a anunciante escolheu para a capa.
   const images = companion.images.filter(
@@ -257,10 +260,20 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
                 <CarouselItem key={index}>
                   <div className="relative aspect-[4/3]">
                     <PlanRibbon plan={companion.planType} />
+                    {etiqueta && (
+                      <span className="absolute bottom-2 left-2 z-10 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
+                        {etiqueta}
+                      </span>
+                    )}
                     <Image
                       src={mediaUrl(image) || '/placeholder.svg'}
                       alt={en ? `${companion.name}, photo ${index + 1}` : `${companion.name}, foto ${index + 1}`}
                       fill={true}
+                      // Largura real do cartão: uma coluna no telemóvel, duas
+                      // até ao xl e três a partir daí. Sem isto o navegador
+                      // assumia a largura do ecrã e descarregava fotos de até
+                      // 1920px para cada miniatura.
+                      sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
                       className="object-cover"
                       style={framingStyle(mediaFraming(image))}
                     />
@@ -268,7 +281,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
                       src={'/watermark.png'}
                       width={100}
                       height={100}
-                      alt="Marca d'água"
+                      alt=""
                       className="absolute inset-0 m-auto h-16 w-16 opacity-80 invert"
                     />
                   </div>
@@ -277,7 +290,7 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
             ) : (
               <CarouselItem>
                 <div className="relative aspect-[4/3]">
-                  <Image src="/image.png" alt={companion.name} fill={true} className="object-cover" />
+                  <Image src="/image.png" alt={companion.name} fill={true} sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
                 </div>
               </CarouselItem>
             )}
@@ -297,14 +310,14 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
               {/* O selo é do documento visto. Quem está no ar sem ele diz-o. */}
               {companion.identityVerified ? (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  <Check className="w-3 h-3 mr-1" /> {en ? 'Verified' : 'Verificado'}
+                  <Check className="w-3 h-3 mr-1" /> {selo.verificado}
                 </Badge>
               ) : (
                 <Badge
                   variant="secondary"
                   className="bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
                 >
-                  {en ? 'Not verified' : 'Não verificado'}
+                  {selo.naoVerificado}
                 </Badge>
               )}
               <Badge variant="secondary">{companion.age} {en ? 'years old' : 'anos'}</Badge>

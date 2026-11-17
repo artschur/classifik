@@ -85,3 +85,30 @@ export function nomeDistrito(slugOuNome: string, locale: 'pt' | 'en' = 'pt'): st
 export function inDistrict(slugOuNome: string): string {
   return `in ${nomeDistrito(slugOuNome, 'en')}`;
 }
+
+/**
+ * Distritos que fazem fronteira (ou ficam mais perto, no caso da Madeira),
+ * do mais procurado para o menos. Servem para mostrar perfis próximos quando
+ * um distrito tem poucos ou nenhum.
+ */
+export const DISTRITOS_VIZINHOS: Record<string, string[]> = {
+  'viana-do-castelo': ['braga', 'porto'],
+  braga: ['porto', 'viana-do-castelo', 'vila-real'],
+  porto: ['braga', 'aveiro', 'vila-real', 'viseu'],
+  'vila-real': ['porto', 'braga', 'viseu', 'braganca'],
+  braganca: ['vila-real', 'guarda'],
+  aveiro: ['porto', 'coimbra', 'viseu'],
+  viseu: ['porto', 'aveiro', 'coimbra', 'vila-real', 'guarda'],
+  guarda: ['viseu', 'castelo-branco', 'coimbra', 'braganca'],
+  coimbra: ['aveiro', 'leiria', 'viseu', 'castelo-branco', 'guarda'],
+  leiria: ['lisboa', 'coimbra', 'santarem', 'castelo-branco'],
+  'castelo-branco': ['coimbra', 'guarda', 'leiria', 'santarem', 'portalegre'],
+  santarem: ['lisboa', 'leiria', 'setubal', 'evora', 'portalegre', 'castelo-branco'],
+  lisboa: ['setubal', 'santarem', 'leiria'],
+  setubal: ['lisboa', 'evora', 'beja', 'santarem'],
+  portalegre: ['evora', 'santarem', 'castelo-branco'],
+  evora: ['setubal', 'beja', 'portalegre', 'santarem'],
+  beja: ['faro', 'evora', 'setubal'],
+  faro: ['beja', 'setubal', 'lisboa'],
+  madeira: ['lisboa', 'porto', 'faro'],
+};

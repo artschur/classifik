@@ -16,6 +16,7 @@ import {
 import { FeatureItem } from '@/components/v0/feature-tem';
 import { SectionHeading } from '@/components/v0/section-heading';
 import { LiteYouTube } from '@/components/lite-youtube';
+import { FaqAcordeao } from '@/components/faq-acordeao';
 import {
   BRAND_ALTERNATE_NAMES,
   BRAND_NAME,
@@ -242,12 +243,12 @@ export function HomeRest() {
             {[
               {
                 icon: <Mic className="w-6 h-6 text-rose-500" />,
-                title: 'Audios de verificacao',
+                title: 'Áudios de verificação',
                 desc: 'Confirme a autenticidade através de mensagens de voz exclusivas das Sugars.',
               },
               {
                 icon: <ShieldCheck className="w-6 h-6 text-rose-500" />,
-                title: 'Verificacao completa',
+                title: 'Verificação completa',
                 desc: 'O selo Verificada indica que a identidade foi confirmada com documento.',
               },
               {
@@ -257,8 +258,8 @@ export function HomeRest() {
               },
               {
                 icon: <Star className="w-6 h-6 text-rose-500" />,
-                title: 'Avaliacoes reais',
-                desc: 'Consulte opinioes genuinas de outros clientes sobre cada Sugar.',
+                title: 'Avaliações reais',
+                desc: 'Consulte opiniões genuínas de outros clientes sobre cada Sugar.',
               },
             ].map((f, i) => (
               <div
@@ -283,7 +284,7 @@ export function HomeRest() {
             Como funciona a Onesugar
           </h2>
           <p className="text-base text-muted-foreground text-center mb-10">
-            Encontre a sua acompanhante ideal em apenas tres passos simples.
+            Encontre a sua acompanhante ideal em apenas três passos simples.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -349,7 +350,7 @@ export function HomeRest() {
           <div className="grid gap-8 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
             <div className="flex flex-col justify-center space-y-4">
               <SectionHeading
-                title="Por que escolher a Onesugar?"
+                title="Porquê escolher a Onesugar?"
                 description="A plataforma número um para encontros premium em Portugal com total segurança e discrição."
                 centered={false}
               />
@@ -362,7 +363,7 @@ export function HomeRest() {
                 <FeatureItem
                   icon={MapPin}
                   title="Presença nacional em Portugal"
-                  description="Encontre sugars de alto padrão em Lisboa, Porto e nos principais distrito de Portugal."
+                  description="Encontre sugars de alto padrão em Lisboa, Porto e nos principais distritos de Portugal."
                 />
                 <FeatureItem
                   icon={Clock}
@@ -372,7 +373,7 @@ export function HomeRest() {
                 <FeatureItem
                   icon={Star}
                   title="Avaliações genuínas"
-                  description="Acesse avaliações reais de outros clientes sobre cada Sugar."
+                  description="Consulte avaliações reais de outros clientes sobre cada Sugar."
                 />
               </div>
             </div>
@@ -530,15 +531,15 @@ export function HomeRest() {
           <h2 className="text-2xl font-bold text-center mb-10">
             Perguntas frequentes sobre a Onesugar
           </h2>
-          <div className="space-y-6">
-            {[
+          <FaqAcordeao
+            itens={[
               {
                 q: 'O que é a Onesugar?',
                 a: 'A Onesugar é a plataforma portuguesa de referência para quem procura acompanhantes verificadas em Portugal. Opera nos 18 distritos do país e distingue-se por rever cada perfil antes de o publicar; os perfis com o selo Verificada confirmaram a identidade com documento.',
               },
               {
                 q: 'Como funciona a verificação de perfis na Onesugar?',
-                a: 'Cada acompanhante passa por verificação de identidade, fotografia actual e disponibilidade confirmada antes de o perfil ser publicado. A plataforma utiliza verificação por audio, video e documentos para garantir autenticidade. Perfis que nao passam na verificação nao sao publicados.',
+                a: 'Cada acompanhante passa por verificação de identidade, fotografia actual e disponibilidade confirmada antes de o perfil ser publicado. A plataforma utiliza verificação por áudio, vídeo e documentos para garantir autenticidade. Perfis que não passam na verificação não são publicados.',
               },
               {
                 q: 'A Onesugar tem acompanhantes verificadas em todo o Portugal?',
@@ -546,21 +547,14 @@ export function HomeRest() {
               },
               {
                 q: 'É seguro contactar acompanhantes pela Onesugar?',
-                a: 'Sim. A Onesugar nao guarda histórico de contactos entre utilizadores e acompanhantes, nem partilha dados pessoais com terceiros. A revisão prévia de cada perfil e o selo Verificada reduzem os riscos associados a portais sem moderação.',
+                a: 'Sim. A Onesugar não guarda histórico de contactos entre utilizadores e acompanhantes, nem partilha dados pessoais com terceiros. A revisão prévia de cada perfil e o selo Verificada reduzem os riscos associados a portais sem moderação.',
               },
               {
                 q: 'Como posso anunciar como acompanhante na Onesugar?',
-                a: 'Pode criar o seu perfil em onesugar.pt/companions/register. O processo inclui verificação de identidade e disponibilidade. Apos aprovação, o perfil fica visível na página do distrito correspondente e nos resultados de pesquisa da plataforma.',
+                a: 'Pode criar o seu perfil em onesugar.pt/companions/register. O processo inclui verificação de identidade e disponibilidade. Após aprovação, o perfil fica visível na página do distrito correspondente e nos resultados de pesquisa da plataforma.',
               },
-            ].map((item, i) => (
-              <div key={i} className="border-b border-border pb-5">
-                <h3 className="font-semibold text-base mb-2">{item.q}</h3>
-                <p className="text-base text-muted-foreground leading-relaxed">
-                  {item.a}
-                </p>
-              </div>
-            ))}
-          </div>
+            ]}
+          />
         </div>
       </section>
 

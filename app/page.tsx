@@ -451,7 +451,13 @@ export default async function HomePage({
           <p className="py-16 text-center text-muted-foreground">{t.vazio}</p>
         )}
 
-        <CatalogPagination page={page} totalPages={totalPaginas} params={rawParams} locale={locale} />
+        <CatalogPagination
+          page={page}
+          totalPages={totalPaginas}
+          params={rawParams}
+          locale={locale}
+          caminho={en ? '/en' : '/'}
+        />
       </section>
 
       {/* ── RESTO: vídeo, recursos, como funciona, distritos, FAQ, CTAs ── */}
