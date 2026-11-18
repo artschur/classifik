@@ -18,7 +18,6 @@ const allowedEvents: Stripe.Event.Type[] = [
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
-  'customer.subscription.trial_will_end',
   'customer.subscription.paused',
   'customer.subscription.resumed',
   'invoice.payment_succeeded',
@@ -156,7 +155,7 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
         await syncStripeDataToKV(customerId, clerkId);
       }
 
-      // GA4: início do mês grátis, com a origem da visita do checkout.
+      // GA4: subscrição concluída, com a origem da visita do checkout.
       await medirAssinaturaConcluida(session);
     }
 
@@ -164,7 +163,6 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
       event.type === 'customer.subscription.created' ||
       event.type === 'customer.subscription.updated' ||
       event.type === 'customer.subscription.deleted' ||
-      event.type === 'customer.subscription.trial_will_end' ||
       event.type === 'customer.subscription.paused' ||
       event.type === 'customer.subscription.resumed'
     ) {
@@ -199,20 +197,10 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
         }
       }
 
-      // Handle trial-specific events
-      if (event.type === 'customer.subscription.trial_will_end') {
-        console.log(
-          `⚠️ Trial ending soon for user ${clerkId}, subscription ${subscription.id}`
-        );
-        // You could send an email notification here
-        // The trial ends in 3 days (or immediately if trial is less than 3 days)
-      }
-
       if (event.type === 'customer.subscription.paused') {
         console.log(
           `⏸️ Subscription paused for user ${clerkId}, subscription ${subscription.id}`
         );
-        // Subscription was paused due to missing payment method after trial
       }
 
       if (event.type === 'customer.subscription.resumed') {
@@ -243,7 +231,7 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
     }
 
     // Cobrança com sucesso: é aqui que o acesso é de fato prolongado, tanto
-    // na primeira cobrança pós-trial como em cada renovação mensal. Sem este
+    // na primeira cobrança como em cada renovação. Sem este
     // bloco, o evento chegava e não fazia nada: o gatilho estava na lista de
     // eventos permitidos, mas não existia nenhum tratamento para ele.
     if (event.type === 'invoice.payment_succeeded') {
@@ -268,7 +256,7 @@ async function processEvent(event: Stripe.Event, clerkId: string) {
           console.warn('⚠️ Missing Clerk ID for invoice.payment_succeeded');
         }
 
-        // GA4: receita de cada cobrança real (fim do mês grátis e renovações).
+        // GA4: receita de cada cobrança real (a primeira e as renovações).
         await medirCobranca(invoice, subscription);
       }
     }

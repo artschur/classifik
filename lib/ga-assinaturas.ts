@@ -6,10 +6,10 @@ import { clientIdDeReserva, enviarEventoGa } from '@/lib/ga-server';
 /**
  * Medição das assinaturas no GA4, chamada pelo webhook da Stripe.
  *
- * O checkout dá 30 dias grátis, por isso há dois momentos:
- * - assinatura_concluida: o checkout terminou e o mês grátis começou (0 €).
- * - purchase: a Stripe cobrou de facto. Primeiro no fim do mês grátis, depois
- *   em cada renovação. É aqui que entra a receita, com o id da fatura como
+ * Dois momentos:
+ * - assinatura_concluida: o checkout terminou e a subscrição começou.
+ * - purchase: a Stripe cobrou de facto, no checkout e depois em cada
+ *   renovação. É aqui que entra a receita, com o id da fatura como
  *   transaction_id.
  *
  * Os identificadores do GA4 vêm dos metadados que o /api/checkout grava na
@@ -38,7 +38,7 @@ export async function medirAssinaturaConcluida(session: Stripe.Checkout.Session)
   try {
     if (session.mode !== 'subscription' || !session.subscription) return;
     const meta = session.metadata ?? {};
-    if (meta.ga_ignorar === 'sim' || meta.testeAdminSemTrial === 'sim') {
+    if (meta.ga_ignorar === 'sim') {
       await guardarNaAssinatura(session.subscription, { ga_ignorar: 'sim' });
       return;
     }
@@ -63,7 +63,6 @@ export async function medirAssinaturaConcluida(session: Stripe.Checkout.Session)
         dias_plano: dias,
         valor_mensal: valorMensal,
         currency: moeda,
-        mes_gratis: subscription.status === 'trialing',
       },
       // O evento chega segundos depois do checkout: entra na mesma sessão.
       { sessionId: meta.ga_session_id }

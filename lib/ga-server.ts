@@ -5,8 +5,8 @@ import { createHash } from 'crypto';
  *
  * Serve para o que acontece longe do navegador: a assinatura confirmada pela
  * Stripe e as cobranças, que chegam pelo webhook. Assim contam mesmo quando a
- * pessoa fecha o separador, usa bloqueador de anúncios ou é cobrada 30 dias
- * depois, no fim do mês grátis.
+ * pessoa fecha o separador, usa bloqueador de anúncios ou é cobrada dias
+ * depois, numa renovação.
  *
  * Precisa de GA4_API_SECRET na Vercel (GA4 > Admin > Fluxos de dados > Web >
  * Chaves secretas da API do Measurement Protocol). Sem ela, não envia nada e

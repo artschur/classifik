@@ -7,7 +7,7 @@ import { ProductCard } from './productCard';
 import { LocaleLink } from '@/components/locale-link';
 import { getLocale } from '@/lib/locale.server';
 import { localizeHref, type Locale } from '@/lib/i18n';
-import { PLANOS, temMesGratis, type DiasPlano, type PlanoPago } from '@/lib/planos';
+import { PLANOS, type DiasPlano, type PlanoPago } from '@/lib/planos';
 
 /** Uma duração de um plano, como o cartão a mostra. */
 export interface OpcaoProduto {
@@ -15,8 +15,6 @@ export interface OpcaoProduto {
   precoId: string;
   /** Já formatado: "15 €". */
   preco: string;
-  /** Os primeiros 30 dias são grátis (só na primeira subscrição). */
-  mesGratis: boolean;
 }
 
 export interface Product {
@@ -37,7 +35,6 @@ function comOpcoes(texto: TextoPlano): Product {
       dias: o.dias,
       precoId: o.precoId,
       preco: `${o.valor} €`,
-      mesGratis: temMesGratis(o.dias),
     })),
   };
 }
@@ -154,10 +151,9 @@ const TEXT = {
     titulo: 'Selecione seu Anúncio',
     intro:
       'Escolha o seu anúncio. Após o pagamento, seu perfil será visível no topo do seu distrito, atraindo mais clientes.',
-    mesGratis:
-      'Plano de 30 dias: o primeiro mês é grátis na sua primeira subscrição.',
+    duracoes: 'Escolha 7, 15 ou 30 dias.',
     cancele:
-      'Escolha 7, 15 ou 30 dias. O plano renova-se sozinho no fim de cada período; cancele quando quiser.',
+      'O plano renova-se sozinho no fim de cada período; cancele quando quiser no seu painel.',
     semSeloTitulo: 'Para escolher um plano, verifique primeiro o seu perfil.',
     semSeloTexto:
       'Os planos são só para perfis com o selo "Verificada". Envie o vídeo e o documento: assim que a equipa confirmar, pode escolher o plano aqui.',
@@ -173,10 +169,9 @@ const TEXT = {
     titulo: 'Choose your plan',
     intro:
       'Choose your plan. Once you have paid, your profile will appear at the top of your district, bringing you more clients.',
-    mesGratis:
-      '30-day plan: the first month is free on your first subscription.',
+    duracoes: 'Choose 7, 15 or 30 days.',
     cancele:
-      'Choose 7, 15 or 30 days. Your plan renews automatically at the end of each period; cancel anytime.',
+      'Your plan renews automatically at the end of each period; cancel anytime from your dashboard.',
     semSeloTitulo: 'To choose a plan, verify your profile first.',
     semSeloTexto:
       'Plans are only for profiles with the "Verified" badge. Send your video and document: as soon as the team confirms them, you can choose your plan here.',
@@ -216,8 +211,6 @@ export default async function CheckoutPage() {
   // acontecer é assinar sem ter anúncio, e isso é travado no botão e nas
   // rotas que iniciam o pagamento.
   const hasProfile = userId ? await isUserACompanion(userId) : false;
-  // Botão de compra de teste sem o mês grátis, só para admin com perfil.
-  const adminTest = Boolean(userId && isAdmin(userId) && hasProfile);
   // Os planos são só para perfis verificados. Os preços continuam à vista,
   // com o caminho para a verificação; escolher um plano leva lá.
   const acesso = userId && hasProfile && !isAdmin(userId) ? await acessoAPlanos(userId) : null;
@@ -227,7 +220,7 @@ export default async function CheckoutPage() {
       <h1 className="text-2xl font-bold mb-6">{t.titulo}</h1>
       <p className="mb-4">{t.intro}</p>
       <div className="flex flex-col items-start justify-start my-6 p-6 border border-neutral-800 rounded-lg bg-card">
-        <h2 className="text-neutral-100 text-xl">{t.mesGratis}</h2>
+        <h2 className="text-neutral-100 text-xl">{t.duracoes}</h2>
         <p className="text-lg text-neutral-400">{t.cancele}</p>
       </div>
       {acesso === 'sem-selo' && (
@@ -269,7 +262,6 @@ export default async function CheckoutPage() {
             key={product.plano}
             product={product}
             hasProfile={hasProfile}
-            adminTest={adminTest}
           />
         ))}
       </div>

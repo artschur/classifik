@@ -19,16 +19,12 @@ const TEXT = {
     comprar: 'Escolher',
     criarPerfil: 'Criar perfil primeiro',
     dias: (n: number) => `${n} dias`,
-    mesGratis: '1.º mês grátis',
-    testeAdmin: 'Teste admin: 30 dias sem o mês grátis (cobra já)',
   },
   en: {
     erro: 'We could not open the payment page. Please try again.',
     comprar: 'Choose',
     criarPerfil: 'Create your profile first',
     dias: (n: number) => `${n} days`,
-    mesGratis: '1st month free',
-    testeAdmin: 'Admin test: 30 days without the free month (charges now)',
   },
 } as const;
 
@@ -38,18 +34,14 @@ const buttonClasses =
 export function ProductCard({
   product,
   hasProfile,
-  adminTest = false,
 }: {
   product: Product;
   hasProfile: boolean;
-  /** Admin com perfil: mostra a compra de teste sem o mês grátis. */
-  adminTest?: boolean;
 }) {
   const locale = useLocale();
   const t = TEXT[locale];
   // O /api/checkout não passa pelo /en, por isso o idioma vai na query.
   const langParam = locale === 'en' ? '&lang=en' : '';
-  const opcao30 = product.opcoes.find((o) => o.dias === 30);
 
   const handleCheckout = async (opcao: OpcaoProduto) => {
     try {
@@ -89,9 +81,6 @@ export function ProductCard({
               <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">{t.dias(opcao.dias)}</p>
                 <p className="text-xl font-bold leading-tight">{opcao.preco}</p>
-                {opcao.mesGratis && (
-                  <p className="text-xs font-medium text-green-500">{t.mesGratis}</p>
-                )}
               </div>
               {hasProfile ? (
                 <button onClick={() => handleCheckout(opcao)} className={buttonClasses}>
@@ -109,15 +98,6 @@ export function ProductCard({
           <LocaleLink locale={locale} href="/companions/register" className={`${buttonClasses} w-full`}>
             {t.criarPerfil}
           </LocaleLink>
-        )}
-        {adminTest && opcao30 && (
-          // Vai directo ao checkout: o servidor só tira o mês grátis a admins.
-          <a
-            href={`/api/checkout?priceId=${encodeURIComponent(opcao30.precoId)}&semTrial=1${langParam}`}
-            className="w-full text-center text-xs text-amber-600 underline underline-offset-2"
-          >
-            {t.testeAdmin}
-          </a>
         )}
       </CardFooter>
     </Card>

@@ -52,14 +52,6 @@ export const PLANOS: Record<PlanoPago, OpcaoPlano[]> = {
 };
 
 /**
- * O mês grátis (30 dias antes da primeira cobrança) só existe no plano de 30
- * dias, e só na primeira subscrição de cada anunciante (ver /api/checkout).
- * Dar 30 dias grátis a quem escolhe 7 seria dar mais do que ela compra.
- */
-export const DIAS_GRATIS = 30;
-export const temMesGratis = (dias: DiasPlano) => dias === 30;
-
-/**
  * Portal de cliente da Stripe (configuração criada a 17/11/2026): a sugar
  * cancela (no fim do período pago), faz upgrade (a diferença é cobrada já),
  * downgrade ou mudança para uma duração mais curta (só no fim do período),

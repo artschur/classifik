@@ -18,8 +18,6 @@ import { RDLeadSync } from '@/components/rd-lead-sync';
 import { ThemeProvider } from '@/components/theme-provider';
 import { WhatsAppButton } from '@/components/whatsapp-button';
 import { TwoStepModal } from '@/components/two-step-modal';
-import { GlobalPopupWrapper } from '@/components/global-popup-wrapper';
-import { CustomToaster } from '@/components/custom-toaster';
 import { CtaClickTracker } from '@/components/cta-click-tracker';
 import { LocaleProvider } from '@/components/locale-provider';
 import { getLocale } from '@/lib/locale.server';
@@ -244,31 +242,7 @@ export default async function RootLayout({
             <Footer />
             <WhatsAppButton />
             <Toaster />
-            <CustomToaster
-              // A oferta é para anunciantes, e os planos só existem em
-              // português: não aparece nas páginas em inglês.
-              isEnabled={locale === 'pt'}
-              autoShow={true}
-              // Espera antes de aparecer a quem não rolou nada; quem rolar
-              // vê-o mais cedo.
-              autoShowDelay={20000}
-              title="1 Mês Grátis em Qualquer Plano!"
-              description="Comece seu período de teste gratuito hoje. Sem compromisso!"
-              type="info"
-              buttonText="Começar Teste Grátis"
-              buttonUrl="/checkout"
-              persistent={true}
-              cookieKey="trial-toaster-dismissed"
-            />
             <TwoStepModal />
-            <GlobalPopupWrapper
-              isEnabled={false}
-              title="Ganhe 1 mês grátis no seu Plano!"
-              description="Por tempo limitado! Aproveite!"
-              confirmText="Mostre-me!"
-              cancelText="Não quero"
-              showCloseButton={true}
-            />
           </ThemeProvider>
           </LocaleProvider>
 
