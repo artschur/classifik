@@ -10,6 +10,24 @@ import { DISTRITOS_VIZINHOS, distritoPorSlug, inDistrict, nomeDistrito } from '@
 import type { Locale } from '@/lib/i18n';
 
 const MAXIMO = 8;
+/** Quantos perfis se vão buscar para escolher os 8 (mais do que um distrito tem hoje). */
+const CANDIDATOS = 60;
+
+/**
+ * Os perfis que vêm a seguir a este, numa roda ordenada pelo número do
+ * perfil: depois do 253 vêm o 304, o 315..., e no fim volta ao início.
+ *
+ * Com os 8 primeiros por plano e data, os perfis mais antigos e sem plano
+ * nunca entravam no bloco de ninguém (o crawl de 18/11 encontrou o 253 e o
+ * 304, em Lisboa, sem nenhuma ligação). Na roda, cada perfil aparece no
+ * bloco dos perfis que vêm antes dele, por isso todos recebem ligações, e
+ * cada página mostra um conjunto diferente.
+ */
+function aSeguir(perfis: CatalogCompanion[], id: number): CatalogCompanion[] {
+  const ordem = [...perfis].sort((a, b) => a.id - b.id);
+  const corte = ordem.findIndex((p) => p.id > id);
+  return corte <= 0 ? ordem : [...ordem.slice(corte), ...ordem.slice(0, corte)];
+}
 
 /** "em Lisboa" / "in Lisbon", para os títulos. */
 function emDistrito(slug: string, locale: Locale): string {
@@ -65,11 +83,15 @@ export async function OutrosPerfis({ companionId, locale }: { companionId: numbe
   if (!distrito) return null;
   const slug = distrito.slug;
 
-  let perfis = await getPerfisDosDistritos([slug], companionId, MAXIMO).catch(() => []);
+  let perfis = aSeguir(
+    await getPerfisDosDistritos([slug], companionId, CANDIDATOS).catch(() => []),
+    companionId,
+  ).slice(0, MAXIMO);
   const soDoDistrito = perfis.length >= 4;
   if (!soDoDistrito) {
-    const vizinhos = await getPerfisDosDistritos(DISTRITOS_VIZINHOS[slug] ?? [], companionId, MAXIMO).catch(
-      () => [],
+    const vizinhos = aSeguir(
+      await getPerfisDosDistritos(DISTRITOS_VIZINHOS[slug] ?? [], companionId, CANDIDATOS).catch(() => []),
+      companionId,
     );
     perfis = [...perfis, ...vizinhos].slice(0, MAXIMO);
   }
