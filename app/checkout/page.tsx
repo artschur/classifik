@@ -50,7 +50,7 @@ const products: TextoPlano[] = [
       'Exibição antes dos anúncios gratuitos',
       'Aparece no carrossel da página de localização do distrito',
       'Selo "CLÁSSICO" no perfil',
-      'Suporte via sistema de atendimento prioritário',
+      'Gravação de áudio de apresentação.',
     ],
   },
   {
@@ -60,9 +60,9 @@ const products: TextoPlano[] = [
       'Mais visibilidade e prioridade para o seu perfil.',
     benefits: [
       'Posição de maior destaque no distrito escolhida',
-      'Prioridade nas buscas (acima de anúncios Clássico e Gratuito)',
+      'Prioridade nas buscas (acima de anúncios Clássico)',
       'Listagem acima dos perfis do plano Clássico',
-
+      'Gravação de áudio de apresentação.',
       'Selo "PLUS" visível no seu perfil',
       'Suporte com atendimento prioritário',
       'Acesso à lista de bloqueios/clientes indesejados',
@@ -77,15 +77,19 @@ const products: TextoPlano[] = [
     benefits: [
       'Destaque absoluto no seu distrito',
       'Prioridade máxima nos resultados de busca',
+      'Fotografias ilimitadas',
       'Posição preferencial na seção de visitas por distrito',
       'Listado antes de todos os perfis do site',
       'Aparece no carrossel da página de localização da distrito',
       'Visibilidade superior aos planos Clássico e Plus',
       'Selo "VIP" exclusivo no seu perfil',
       'Possibilidade de gravar um áudio de apresentação',
-      'Suporte premium com atendimento dedicado',
+      'Suporte premium com atendimento prioritário',
       'Acesso completo à lista de bloqueios/clientes indesejados',
       'Máxima exposição na plataforma',
+      'Gravação de áudio de apresentação.',
+      'Acesso exclusivo à comunidade OnesSugar',
+
     ],
   },
 ];
