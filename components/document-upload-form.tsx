@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { medirVerificacaoErro } from "@/lib/ga-registo";
 import {
   Select,
   SelectContent,
@@ -221,9 +222,11 @@ export function DocumentUploadForm({
         });
         onEnviado?.();
       } else {
+        medirVerificacaoErro("documento", "envio");
         toast({ title: t.erro, description: result.error, variant: "destructive" });
       }
     } catch (error) {
+      medirVerificacaoErro("documento", "envio");
       toast({
         title: t.erro,
         description: error instanceof Error ? error.message : t.erroEnviar,
@@ -342,6 +345,7 @@ export function DocumentUploadForm({
                         if (file) {
                           onChange(file);
                           if (file.size > MAX_FILE_SIZE) {
+                            medirVerificacaoErro("documento", "tamanho");
                             form.setError("file", { message: t.maximo5mb });
                           } else {
                             form.clearErrors("file");

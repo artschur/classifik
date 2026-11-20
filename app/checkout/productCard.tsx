@@ -12,6 +12,7 @@ import type { OpcaoProduto, Product } from './page';
 import { useLocale } from '@/components/locale-provider';
 import { LocaleLink } from '@/components/locale-link';
 import { localizeHref } from '@/lib/i18n';
+import { gaEvent } from '@/lib/ga';
 
 const TEXT = {
   pt: {
@@ -49,6 +50,16 @@ export function ProductCard({
       if (!res.ok) throw new Error(`can-checkout respondeu ${res.status}`);
 
       const data = await res.json();
+      if (data.canCheckout) {
+        // GA4: início do pagamento (evento recomendado). A assinatura em si é
+        // medida no servidor, pelo webhook da Stripe.
+        gaEvent('begin_checkout', {
+          currency: 'EUR',
+          value: opcao.valor,
+          plano: product.plano,
+          dias_plano: opcao.dias,
+        });
+      }
       window.location.href = data.canCheckout
         ? `/api/checkout?priceId=${encodeURIComponent(opcao.precoId)}${langParam}`
         : localizeHref(data.redirect, locale);
