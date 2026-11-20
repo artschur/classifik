@@ -93,7 +93,7 @@ const sobreData = {
     },
   ],
   ctaText: "Criar Conta",
-  ctaLink: "/companions/register",
+  ctaLink: "/anunciar",
   footer: "OneSugar: anúncios reais, com mais confiança.",
 }
 

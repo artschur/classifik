@@ -113,7 +113,7 @@ export default async function Footer() {
                 className="mt-4 border-neutral-300 bg-transparent text-neutral-900 hover:bg-neutral-200 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-white gap-2"
                 asChild
               >
-                <LocaleLink locale={locale} href="/checkout">
+                <LocaleLink locale={locale} href="/anunciar">
                   <SquarePlus className="h-4 w-4 text-violet-500" />
                   {t.createAd}
                 </LocaleLink>

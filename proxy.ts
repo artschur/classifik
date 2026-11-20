@@ -26,6 +26,7 @@ const isPublicRoute = createRouteMatcher([
   "/contos",
   "/contos/(.*)",
   "/ajuda-anunciantes",
+  "/anunciar",
   "/quanto-ganha-acompanhante",
   // Convite para reclamar um perfil: quem o abre ainda pode não ter conta, e
   // a página explica antes de pedir para entrar.

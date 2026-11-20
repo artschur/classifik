@@ -8,7 +8,7 @@ import {
   MapPin,
   ScrollText,
   ShieldCheck,
-  ShoppingBag,
+  BookOpen,
   Star,
   UserCheck,
 } from 'lucide-react';
@@ -170,9 +170,9 @@ const TEXT = {
     popular: [
       { href: '/location', label: 'Ver acompanhantes', icon: Heart },
       { href: '/quanto-ganha-acompanhante', label: 'Calculadora de ganhos', icon: Calculator },
-      { href: '/ajuda-anunciantes', label: 'Como ser acompanhante', icon: UserCheck },
+      { href: '/anunciar', label: 'Como ser acompanhante', icon: UserCheck },
       { href: '/contos', label: 'Contos', icon: ScrollText },
-      { href: '/checkout', label: 'Planos de destaque', icon: ShoppingBag },
+      { href: '/ajuda-anunciantes', label: 'Guia para anunciantes', icon: BookOpen },
     ],
     doDia: 'Sugar do dia',
     anos: 'anos',
@@ -204,8 +204,8 @@ const TEXT = {
       { href: '/location', label: 'Browse escorts', icon: Heart },
       { href: '/companions', label: 'All verified profiles', icon: ShieldCheck },
       { href: '/quanto-ganha-acompanhante', label: 'Earnings calculator', icon: Calculator },
-      { href: '/ajuda-anunciantes', label: 'How to advertise', icon: UserCheck },
-      { href: '/checkout', label: 'Featured plans', icon: ShoppingBag },
+      { href: '/anunciar', label: 'How to advertise', icon: UserCheck },
+      { href: '/ajuda-anunciantes', label: 'Advertiser guide', icon: BookOpen },
     ],
     doDia: "Today's featured companion",
     anos: 'years old',
@@ -298,7 +298,7 @@ export default async function HomePage({
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <LocaleLink
                 locale={locale}
-                href="/quanto-ganha-acompanhante"
+                href="/anunciar"
                 className="inline-flex items-center justify-center rounded-xl bg-rose-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-rose-950/40 transition-colors hover:bg-rose-500 sm:text-base"
               >
                 {t.anunciar}
