@@ -25,6 +25,10 @@ export const WhatsAppButton = ({
   // Vale também para a versão inglesa (/en/companions/123).
   if (/^(\/en)?\/companions\/\d+\/?$/.test(pathname ?? '')) return null;
 
+  // Em /anunciar, no telemóvel, o WhatsApp do apoio está na barra fixa do
+  // fundo da página: o botão flutuante ficaria por cima dela.
+  const naPaginaAnunciar = /^(\/en)?\/anunciar\/?$/.test(pathname ?? '');
+
   return (
     <Link
       href={whatsappUrl}
@@ -33,7 +37,7 @@ export const WhatsAppButton = ({
       // Contacto com a própria OneSugar (suporte), separado do contacto com
       // as acompanhantes.
       onClick={() => gaEvent('contato_suporte', { metodo: 'whatsapp' })}
-      className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out z-50 flex items-center justify-center"
+      className={`fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out z-50 ${naPaginaAnunciar ? 'hidden md:flex' : 'flex'} items-center justify-center`}
     >
       <IconBrandWhatsapp />
       <span className="ml-2">{locale === 'en' ? 'Contact support' : 'Contactar suporte'}</span>

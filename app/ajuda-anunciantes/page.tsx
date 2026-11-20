@@ -66,7 +66,7 @@ const howToSchema = {
   name: 'Como publicar o teu perfil na Onesugar',
   description: 'Guia passo a passo para criar, verificar e publicar o teu perfil de anunciante na plataforma Onesugar.',
   step: [
-    { '@type': 'HowToStep', name: 'Como fazer o registo', url: 'https://www.onesugar.pt/ajuda-anunciantes#registo', text: 'Acede a onesugar.pt/companions/register, cria uma conta com e-mail e palavra-passe, confirma o e-mail e preenche o formulário de 4 passos.' },
+    { '@type': 'HowToStep', name: 'Como fazer o registo', url: 'https://www.onesugar.pt/ajuda-anunciantes#registo', text: 'Acede a onesugar.pt/anunciar, cria uma conta com e-mail e palavra-passe, confirma o e-mail e preenche o formulário de 4 passos.' },
     { '@type': 'HowToStep', name: 'Como criar o anúncio', url: 'https://www.onesugar.pt/ajuda-anunciantes#criar-anuncio', text: 'Preenche o formulário de 4 passos: Informações, Características, Localização e Fotos.' },
     { '@type': 'HowToStep', name: 'Como enviar as fotografias', url: 'https://www.onesugar.pt/ajuda-anunciantes#fotografias', text: 'Envia entre 1 e 10 fotos ou vídeos (até 30 nos planos pagos). Formatos aceites: JPG, PNG, WebP, MP4.' },
     { '@type': 'HowToStep', name: 'Como gravar o vídeo de verificação 360°', url: 'https://www.onesugar.pt/ajuda-anunciantes#video-verificacao', text: 'Grava um vídeo de 10 a 15 segundos segurando um papel com "OneSugar" e a data de hoje, mostrando o rosto e o corpo com boa iluminação. Máx. 50 MB.' },
@@ -128,7 +128,7 @@ export default async function AjudaAnunciantesPage() {
             <section>
               <SectionTitle id="registo" eyebrow="01" title="Como fazer o registo" icon={<ShieldCheck className="h-4 w-4" />} />
               <Steps steps={[
-                { title: 'Acede à página de registo', desc: <span>Vai a <strong className="text-foreground font-medium">onesugar.pt/companions/register</strong></span> },
+                { title: 'Acede à página de registo', desc: <span>Vai a <Link href="/anunciar" className="text-foreground font-medium underline">onesugar.pt/anunciar</Link></span> },
                 { title: 'Cria uma conta', desc: 'Se ainda não tens conta, clica em "Criar conta". O registo é feito com e-mail e palavra-passe.' },
                 { title: 'Confirma o e-mail', desc: 'Se for pedido, confirma o endereço de e-mail através do link enviado para a tua caixa de entrada.' },
                 { title: 'Preenche o formulário de perfil', desc: <span>Depois de autenticada, és redirecionada para o formulário de criação de perfil com <strong className="text-foreground font-medium">4 passos</strong>: Informações, Características, Localização e Fotos.</span> },

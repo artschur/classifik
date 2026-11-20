@@ -42,6 +42,7 @@ const EN_ROUTES: RegExp[] = [
   /^\/companions\/\d+$/,
   /^\/sobre$/,
   /^\/ajuda-anunciantes$/,
+  /^\/anunciar$/,
   /^\/quanto-ganha-acompanhante$/,
   // Áreas de quem anuncia (registo, verificação, planos e painel). Pedem
   // sessão: o proxy.ts aplica as mesmas regras de acesso que em português.

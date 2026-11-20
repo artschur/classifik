@@ -58,7 +58,7 @@ const howToSchema = {
   inLanguage: 'en',
   description: 'Step by step guide to creating, verifying and publishing your advertiser profile on OneSugar.',
   step: [
-    { '@type': 'HowToStep', name: 'Sign up', url: `${PAGE}#registo`, text: 'Go to onesugar.pt/companions/register, create an account with your email and a password, confirm your email and fill in the 4 step form.' },
+    { '@type': 'HowToStep', name: 'Sign up', url: `${PAGE}#registo`, text: 'Go to onesugar.pt/en/anunciar, create an account with your email and a password, confirm your email and fill in the 4 step form.' },
     { '@type': 'HowToStep', name: 'Create your listing', url: `${PAGE}#criar-anuncio`, text: 'Complete the 4 step form: Details, Features, Location and Photos.' },
     { '@type': 'HowToStep', name: 'Upload your photos', url: `${PAGE}#fotografias`, text: 'Upload between 1 and 10 photos or videos (up to 30 on paid plans). Accepted formats: JPG, PNG, WebP, MP4.' },
     { '@type': 'HowToStep', name: 'Record the 360° verification video', url: `${PAGE}#video-verificacao`, text: 'Record a 10 to 15 second video holding a piece of paper with "OneSugar" and today\'s date, showing your face and body in good light. Maximum 50 MB.' },
@@ -111,7 +111,7 @@ export function AjudaAnunciantesEn() {
             <section>
               <SectionTitle id="registo" eyebrow="01" title="How to sign up" icon={<ShieldCheck className="h-4 w-4" />} />
               <Steps steps={[
-                { title: 'Open the sign up page', desc: <span>Go to <strong className={strong}>onesugar.pt/companions/register</strong></span> },
+                { title: 'Open the sign up page', desc: <span>Go to <strong className={strong}>onesugar.pt/en/anunciar</strong></span> },
                 { title: 'Create an account', desc: 'If you do not have an account yet, choose the option to sign up. You sign up with an email and a password.' },
                 { title: 'Confirm your email', desc: 'If asked, confirm your email address using the link sent to your inbox.' },
                 { title: 'Fill in the profile form', desc: <span>Once you are logged in, you are taken to the profile form, which has <strong className={strong}>4 steps</strong>: Details, Features, Location and Photos.</span> },

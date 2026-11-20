@@ -31,6 +31,7 @@ const TEXT = {
     titleA: 'Comece a anunciar',
     titleB: 'gratuitamente',
     subtitle: 'Criar o perfil não tem custo. Só paga se quiser mais destaque.',
+    comoFunciona: 'Ver como funciona o registo',
     phoneLabel: 'O seu número de telefone profissional',
     phoneHint: 'Esta informação ficará visível no seu perfil.',
     marketing: 'Aceito receber informações sobre o meu registo e promoções.',
@@ -53,6 +54,7 @@ const TEXT = {
     titleA: 'Start advertising',
     titleB: 'for free',
     subtitle: 'Creating your profile costs nothing. You only pay if you want more visibility.',
+    comoFunciona: 'See how sign up works',
     phoneLabel: 'Your work phone number',
     phoneHint: 'This number will be shown on your profile.',
     marketing: 'I agree to receive updates about my sign up and promotions.',
@@ -168,7 +170,10 @@ export function LeadCapture() {
             <span className="text-rose-500">{t.titleB}</span>
           </h2>
           <p className="text-sm text-muted-foreground">
-            {t.subtitle}
+            {t.subtitle}{' '}
+            <LocaleLink locale={locale} href="/anunciar" className="font-medium text-rose-500 hover:underline">
+              {t.comoFunciona}
+            </LocaleLink>
           </p>
         </div>
 

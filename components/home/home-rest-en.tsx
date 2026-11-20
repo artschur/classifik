@@ -134,7 +134,7 @@ function JoinCta() {
         <div className="flex flex-wrap justify-center gap-4">
           <LocaleLink
             locale={L}
-            href="/quanto-ganha-acompanhante"
+            href="/anunciar"
             className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
           >
             Sign up as a companion

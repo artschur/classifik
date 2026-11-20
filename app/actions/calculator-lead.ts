@@ -3,6 +3,7 @@
 import {
   sendConversionEventToRD,
   RD_CONVERSION_CALCULADORA,
+  RD_CONVERSION_PAGINA_ANUNCIAR,
 } from '@/lib/rd-station';
 
 /**
@@ -19,6 +20,12 @@ import {
 export async function captureCalculatorLead(input: {
   phone: string;
   simulatedMonthly?: number;
+  /**
+   * De onde veio o lead. A página /anunciar usa o mesmo formulário de
+   * telefone, mas com conversão própria no RD, para se saber qual das duas
+   * páginas o trouxe.
+   */
+  origem?: 'calculadora' | 'anunciar';
 }): Promise<{ success: boolean }> {
   const phone = input.phone.trim();
 
@@ -30,7 +37,7 @@ export async function captureCalculatorLead(input: {
   try {
     await sendConversionEventToRD(
       { phone },
-      RD_CONVERSION_CALCULADORA,
+      input.origem === 'anunciar' ? RD_CONVERSION_PAGINA_ANUNCIAR : RD_CONVERSION_CALCULADORA,
       undefined,
       input.simulatedMonthly
         ? { cf_ganho_simulado: String(input.simulatedMonthly) }
