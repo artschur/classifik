@@ -15,6 +15,8 @@ export interface OpcaoProduto {
   precoId: string;
   /** Já formatado: "15 €". */
   preco: string;
+  /** Em euros, para o begin_checkout do GA4. */
+  valor: number;
 }
 
 export interface Product {
@@ -35,6 +37,7 @@ function comOpcoes(texto: TextoPlano): Product {
       dias: o.dias,
       precoId: o.precoId,
       preco: `${o.valor} €`,
+      valor: o.valor,
     })),
   };
 }

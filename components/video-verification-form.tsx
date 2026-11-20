@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/components/locale-provider";
 import type { Locale } from "@/lib/i18n";
+import { medirVerificacaoErro } from "@/lib/ga-registo";
 
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
@@ -144,6 +145,7 @@ export function VideoVerificationForm({
     if (!isLoaded || !user?.id) return;
 
     if (file.size > MAX_VIDEO_SIZE) {
+      medirVerificacaoErro("video", "tamanho");
       toast({
         title: t.demasiadoGrande,
         description: t.maximo50mb,
@@ -154,6 +156,7 @@ export function VideoVerificationForm({
     }
 
     if (!file.type.startsWith("video/")) {
+      medirVerificacaoErro("video", "formato");
       toast({
         title: t.formatoInvalido,
         description: t.videoValido,
@@ -178,10 +181,12 @@ export function VideoVerificationForm({
         });
         onEnviado?.();
       } else {
+        medirVerificacaoErro("video", "envio");
         toast({ title: t.erro, description: result.error, variant: "destructive" });
         if (inputRef.current) inputRef.current.value = "";
       }
     } catch (error) {
+      medirVerificacaoErro("video", "envio");
       toast({
         title: t.erro,
         description: error instanceof Error ? error.message : t.erroEnviar,

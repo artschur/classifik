@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +22,7 @@ import { CompletarPerfilFields } from "@/components/registo/completar-perfil-fie
 import { LocaleLink } from "@/components/locale-link";
 import { useLocale } from "@/components/locale-provider";
 import { localizeHref } from "@/lib/i18n";
+import { medirPasso, medirRegistoConcluido } from "@/lib/ga-registo";
 
 const FIM_DO_REGISTO = "/companions/verification/pending";
 
@@ -77,9 +79,15 @@ export function CompletarPerfilForm({
     mode: "onBlur",
   });
 
+  // GA4: passo 5 do registo.
+  useEffect(() => {
+    medirPasso(5);
+  }, []);
+
   async function onSubmit(data: CompletarPerfilInput) {
     try {
       const { pendingReview } = await saveCompletarPerfil(data);
+      medirRegistoConcluido();
       toast({
         variant: "success",
         title: pendingReview ? t.enviadoRevisao : t.perfilCompleto,
