@@ -21,6 +21,7 @@ import {
 } from "@/components/video-verification-form";
 import { DocumentUploadForm } from "@/components/document-upload-form";
 import { skipVerification } from "@/app/actions/document-verification";
+import { medirPasso, medirVerificacaoEnviada, medirVerificacaoPulada } from "@/lib/ga-registo";
 import { useLocale } from "@/components/locale-provider";
 import { localizeHref } from "@/lib/i18n";
 
@@ -86,7 +87,13 @@ export function VerificacaoPasso({
 
   const completa = enviada(estadoVideo) && enviada(estadoDocumento);
 
+  // GA4: passo 4 do registo.
+  React.useEffect(() => {
+    medirPasso(4);
+  }, []);
+
   const pular = async () => {
+    medirVerificacaoPulada();
     setAPular(true);
     try {
       await skipVerification();
@@ -119,13 +126,19 @@ export function VerificacaoPasso({
       <VideoVerificationForm
         estado={video}
         motivoRecusa={video === "recusado" ? motivoRecusa : null}
-        onEnviado={() => setEstadoVideo("pendente")}
+        onEnviado={() => {
+          medirVerificacaoEnviada("video");
+          setEstadoVideo("pendente");
+        }}
       />
 
       <DocumentUploadForm
         estado={documento}
         motivoRecusa={documento === "recusado" ? motivoRecusa : null}
-        onEnviado={() => setEstadoDocumento("pendente")}
+        onEnviado={() => {
+          medirVerificacaoEnviada("documento");
+          setEstadoDocumento("pendente");
+        }}
       />
 
       <div className="flex flex-col gap-3 border-t pt-8">

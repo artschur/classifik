@@ -68,6 +68,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { registerCompanionAction } from "@/app/actions/register";
+import { medirContaCriada, medirErroPasso, medirPasso, medirPerfilCriado, type PassoRegisto } from "@/lib/ga-registo";
 import { saveRegistrationContact } from "@/app/companions/register/action";
 import { CompletarPerfilFields } from "@/components/registo/completar-perfil-fields";
 import { PassosRegisto } from "@/components/registo/passos-registo";
@@ -413,15 +414,23 @@ export function RegisterCompanionForm({
     return null;
   };
 
-  const validateCurrentPage = async () => {
+  /** Valida a etapa atual e devolve os campos com erro (só os nomes, para o GA4). */
+  const validateCurrentPage = async (): Promise<{ ok: boolean; campos: string[] }> => {
     const schema = schemaDaPagina(currentPage);
-    if (!schema) return true;
+    if (!schema) return { ok: true, campos: [] };
     const result = await schema.safeParseAsync(form.getValues());
-    return result.success;
+    if (result.success) return { ok: true, campos: [] };
+    return { ok: false, campos: result.error.issues.map((i) => String(i.path[0] ?? "")) };
   };
 
+  // GA4: cada passo do registo novo que ela abre (na edição não conta).
+  React.useEffect(() => {
+    if (!emEdicao) medirPasso((currentPage + 1) as PassoRegisto);
+  }, [currentPage, emEdicao]);
+
   const handleNextPage = async () => {
-    const isValid = await validateCurrentPage();
+    const { ok: isValid, campos } = await validateCurrentPage();
+    if (!isValid && !emEdicao) medirErroPasso((currentPage + 1) as PassoRegisto, campos);
     if (isValid) {
       // A primeira etapa é a que tem nome e telemóvel. Só em registo novo:
       // na edição o perfil já existe e o contacto já está sincronizado.
@@ -467,6 +476,7 @@ export function RegisterCompanionForm({
    * exemplo, no concelho. Assim o formulário leva-a até ao campo em falta.
    */
   const handleInvalidSubmit = (errors: Record<string, unknown>) => {
+    if (!emEdicao) medirErroPasso((currentPage + 1) as PassoRegisto, Object.keys(errors));
     const firstField = Object.keys(errors)[0];
     const page = firstField !== undefined ? fieldToPage[firstField] : undefined;
 
@@ -528,6 +538,13 @@ export function RegisterCompanionForm({
     reValidateMode: "onChange",
   });
   const { isLoaded, user } = useUser();
+
+  // GA4: conta acabada de criar (o Clerk cria-a fora do site, por isso só se
+  // vê quando ela chega aqui pela primeira vez).
+  React.useEffect(() => {
+    if (!isLoaded || !user || emEdicao) return;
+    medirContaCriada(user.id, user.createdAt, user.externalAccounts[0]?.provider ?? "email");
+  }, [isLoaded, user, emEdicao]);
 
   React.useEffect(() => {
     if (companionData && isLoaded && user?.id) {
@@ -636,6 +653,7 @@ export function RegisterCompanionForm({
           const companion = await registerCompanionAction(formData);
           currentCompanionId = companion.id;
           setCompanionId(companion.id);
+          medirPerfilCriado();
           passosNaCriacaoRef.current = passosBase(formData);
           apagarRascunho();
           // A conta passou a ter o registo de base feito (metadados no
