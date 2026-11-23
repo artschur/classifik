@@ -90,7 +90,7 @@ function HomeSchemas() {
         name: 'Como posso anunciar como acompanhante na Onesugar?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Pode criar o seu perfil em onesugar.pt/companions/register. O processo inclui verificação de identidade e disponibilidade. Após aprovação, o perfil fica visível na página do distrito correspondente e nos resultados de pesquisa.',
+          text: 'Pode criar o seu perfil, grátis, em onesugar.pt/anunciar. O processo inclui verificação de identidade e disponibilidade. Após aprovação, o perfil fica visível na página do distrito correspondente e nos resultados de pesquisa.',
         },
       },
     ],
@@ -183,7 +183,7 @@ export function HomeRest() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/quanto-ganha-acompanhante"
+              href="/anunciar"
               className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
             >
               Registar como Sugar
@@ -336,7 +336,7 @@ export function HomeRest() {
             verificadas em Portugal.
           </p>
           <Link
-            href="/quanto-ganha-acompanhante"
+            href="/anunciar"
             className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-8 py-3 rounded-full transition-colors"
           >
             Registar como Sugar
@@ -398,7 +398,7 @@ export function HomeRest() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/quanto-ganha-acompanhante"
+              href="/anunciar"
               className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-7 py-3 rounded-full transition-colors text-sm"
             >
               Registar como Sugar
@@ -551,7 +551,7 @@ export function HomeRest() {
               },
               {
                 q: 'Como posso anunciar como acompanhante na Onesugar?',
-                a: 'Pode criar o seu perfil em onesugar.pt/companions/register. O processo inclui verificação de identidade e disponibilidade. Após aprovação, o perfil fica visível na página do distrito correspondente e nos resultados de pesquisa da plataforma.',
+                a: 'Pode criar o seu perfil, grátis, em onesugar.pt/anunciar. O processo inclui verificação de identidade e disponibilidade. Após aprovação, o perfil fica visível na página do distrito correspondente e nos resultados de pesquisa da plataforma.',
               },
             ]}
           />

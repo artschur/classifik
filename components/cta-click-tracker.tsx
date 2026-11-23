@@ -11,6 +11,7 @@ import { stripLocale } from '@/lib/i18n';
  * dizia qual dos CTAs (topo, meio ou fim de página, calculadora) a gerou.
  */
 const DESTINOS_ANUNCIO = [
+  '/anunciar',
   '/checkout',
   '/quanto-ganha-acompanhante',
   '/companions/register',

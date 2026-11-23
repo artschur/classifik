@@ -18,6 +18,8 @@ export const RD_CONVERSION_DOCUMENTOS_RECUSADOS = 'documentos-recusados';
 export const RD_CONVERSION_VERIFICACAO_PULADA = 'verificacao-pulada';
 /** Lead captado na calculadora pública, antes de existir conta. */
 export const RD_CONVERSION_CALCULADORA = 'calculadora-ganhos';
+/** Lead da página /anunciar: telefone deixado antes de criar a conta. */
+export const RD_CONVERSION_PAGINA_ANUNCIAR = 'pagina-anunciar';
 
 /*
  * Marcos do registo. As tags com o mesmo nome continuam a ser gravadas para

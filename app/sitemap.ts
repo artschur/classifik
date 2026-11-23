@@ -99,6 +99,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // /blog não entra: responde 301 para blog.onesugar.pt, que tem o seu
     // próprio sitemap. Um sitemap só deve listar endereços que respondem 200.
     {
+      url: `${baseUrl}/anunciar`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/ajuda-anunciantes`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,

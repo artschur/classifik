@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { useAuth, useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { localizeHref } from '@/lib/i18n';
 import {
   Dialog,
   DialogContent,
@@ -58,6 +60,7 @@ export function TwoStepModal() {
   const t = TEXT[locale];
   const { isSignedIn, isLoaded } = useAuth();
   const { openSignUp } = useClerk();
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [step, setStep] = React.useState<1 | 2>(1);
   // No convite não há conteúdo adulto e a candidata vem só ligar a conta.
@@ -119,6 +122,13 @@ export function TwoStepModal() {
   // passa pelo /onboarding.
   const escolher = (tipo: 'sugar' | 'cliente') => {
     setOpen(false);
+    // Quem quer anunciar vai primeiro à página /anunciar, que explica o
+    // registo, a verificação e os planos antes de pedir a conta. Antes abria
+    // logo a janela de criar conta, sem explicar nada.
+    if (tipo === 'sugar') {
+      router.push(localizeHref('/anunciar', locale));
+      return;
+    }
     // O idioma vai junto, para o registo continuar na mesma língua.
     const destino = `/api/onboard?tipo=${tipo}${locale === 'en' ? '&lang=en' : ''}`;
     openSignUp({ forceRedirectUrl: destino, signInForceRedirectUrl: destino });
@@ -216,7 +226,7 @@ export function TwoStepModal() {
 
               {/* Content Section */}
               <div className="p-8 pt-0 space-y-4">
-                {/* Sugar Option — passa pela calculadora antes de criar conta */}
+                {/* Sugar: segue para a página /anunciar antes de criar conta */}
                 <button
                   type="button"
                   onClick={() => escolher('sugar')}

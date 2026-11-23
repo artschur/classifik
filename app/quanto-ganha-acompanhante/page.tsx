@@ -371,7 +371,7 @@ export default async function QuantoGanhaAcompanhantePage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/companions/register"
+              href="/anunciar"
               className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors text-sm"
             >
               Criar anúncio grátis
