@@ -8,10 +8,11 @@ import { acessoAPlanos } from "@/db/queries/verificacao";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { after } from "next/server";
 import { Suspense } from "react";
-import { marcarRegistoIniciado } from "@/lib/rd-station";
+import { marcarRegistoIniciado, upsertContactInRD } from "@/lib/rd-station";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { getLocale } from "@/lib/locale.server";
-import type { Locale } from "@/lib/i18n";
+import { localizeHref, type Locale } from "@/lib/i18n";
 
 const TEXT = {
   pt: {
@@ -41,15 +42,26 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Valores trazidos da calculadora pública, para não pedir duas vezes o mesmo. */
 type Prefill = { phoneNumber?: string; price?: number };
 
+/**
+ * Telemóvel vindo do endereço, em formato internacional (+351912345678).
+ * Nove dígitos sem indicativo são tratados como número português.
+ */
+function normalizarTelefone(valor?: string): string | undefined {
+  const bruto = valor?.trim().replace(/^00/, "+");
+  if (!bruto) return undefined;
+  const digitos = bruto.replace(/\D/g, "");
+  const numero = bruto.startsWith("+") ? `+${digitos}` : digitos.length === 9 ? `+351${digitos}` : `+${digitos}`;
+  return /^\+\d{9,15}$/.test(numero) ? numero : undefined;
+}
+
 async function CompanionFormWithData({ prefill, locale }: { prefill?: Prefill; locale: Locale }) {
   const t = TEXT[locale];
-  const { userId, sessionClaims, redirectToSignIn } = await auth();
+  const { userId, sessionClaims } = await auth();
 
-  // Não há /sign-up nem /sign-in no site (as páginas de entrada são as do
-  // Clerk), e mandar para lá dava 404. A página de entrada do Clerk tem a
-  // opção de criar conta e volta a esta página no fim.
+  // Sem sessão, o registo começa no /anunciar, que pede o telemóvel antes de
+  // criar a conta. Quem já tem conta entra por lá ("Já tem conta? Entrar").
   if (!userId) {
-    return redirectToSignIn();
+    redirect(localizeHref("/anunciar", locale));
   }
 
   const [cities, companion, userPlan, acesso] = await Promise.all([
@@ -96,6 +108,18 @@ async function CompanionFormWithData({ prefill, locale }: { prefill?: Prefill; l
     }
   }
 
+  // Telemóvel trazido do /anunciar ou da calculadora: vai já para o lead do
+  // e-mail. Sem isto, quem desistia antes de passar o passo 1 ficava no RD
+  // em dois contactos soltos, um só com o telemóvel e outro só com o e-mail.
+  if (!companion && prefill?.phoneNumber) {
+    const telefone = prefill.phoneNumber;
+    after(async () => {
+      const user = await (await clerkClient()).users.getUser(userId);
+      const email = user.emailAddresses[0]?.emailAddress;
+      if (email) await upsertContactInRD({ email, name: user.fullName ?? undefined, phone: telefone });
+    });
+  }
+
   return (
     <>
       <div className="text-center space-y-2 mb-6">
@@ -132,7 +156,7 @@ export default async function RegisterCompanionPage({
   const parsedPrice = Number(price);
 
   const prefill: Prefill = {
-    phoneNumber: phone?.trim() || undefined,
+    phoneNumber: normalizarTelefone(phone),
     price: Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : undefined,
   };
 

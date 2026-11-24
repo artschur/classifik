@@ -255,7 +255,7 @@ export default async function CheckoutPage() {
           <p className="text-base text-muted-foreground mb-3">{t.semPerfilTexto}</p>
           <LocaleLink
             locale={locale}
-            href="/companions/register"
+            href="/anunciar"
             className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
           >
             {t.semPerfilBotao}

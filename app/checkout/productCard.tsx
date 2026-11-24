@@ -106,7 +106,7 @@ export function ProductCard({
         {/* Sem perfil o botão não finge que compra: leva ao registo, que é o
             passo que falta mesmo. */}
         {!hasProfile && (
-          <LocaleLink locale={locale} href="/companions/register" className={`${buttonClasses} w-full`}>
+          <LocaleLink locale={locale} href="/anunciar" className={`${buttonClasses} w-full`}>
             {t.criarPerfil}
           </LocaleLink>
         )}

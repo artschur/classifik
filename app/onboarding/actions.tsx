@@ -25,9 +25,10 @@ export async function handleOnboard(formData: FormData) {
 
     await definirPerfil(userId, isCompanion);
 
-    // 3. Redirect logic
+    // A anunciante passa pelo /anunciar para deixar o telemóvel antes do
+    // formulário: é o contacto que permite falar com quem desiste a meio.
     if (isCompanion) {
-      redirect(localizeHref("/companions/register", locale));
+      redirect(localizeHref("/anunciar", locale));
     } else {
       redirect(localizeHref("/location", locale));
     }
