@@ -16,7 +16,6 @@ import { Toaster } from '@/components/ui/toaster';
 import Navbar from '@/components/header';
 import { RDLeadSync } from '@/components/rd-lead-sync';
 import { ThemeProvider } from '@/components/theme-provider';
-import { WhatsAppButton } from '@/components/whatsapp-button';
 import { TwoStepModal } from '@/components/two-step-modal';
 import { CtaClickTracker } from '@/components/cta-click-tracker';
 import { LocaleProvider } from '@/components/locale-provider';
@@ -240,7 +239,6 @@ export default async function RootLayout({
             <RDLeadSync />
             <main className="flex-grow">{children}</main>
             <Footer />
-            <WhatsAppButton />
             <Toaster />
             <TwoStepModal />
           </ThemeProvider>
