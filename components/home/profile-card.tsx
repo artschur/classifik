@@ -102,11 +102,8 @@ export function ProfileCard({
             <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label={selo.verificado} />
           )}
         </div>
-        {!sugar.identityVerified && (
-          <span className="w-fit rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-            {selo.naoVerificado}
-          </span>
-        )}
+        {/* Sem o selo "Não verificada" nas listagens (decisão de 25/11): o
+            selo Verificada, ao lado do nome, já mostra quem confirmou. */}
         <p className="text-xs text-muted-foreground">
           {sugar.age} {t.anos}
           {genero ? ` • ${genero}` : ''}

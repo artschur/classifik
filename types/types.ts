@@ -67,6 +67,8 @@ export type CompanionFiltered = Pick<
   identityVerified?: boolean;
   /** Género gravado ('Feminino', 'Masculino', 'Trans'). Só nas listagens. */
   gender?: string | null;
+  /** Nome do distrito na base ("Lisboa"). Só nas listagens. */
+  city?: string | null;
   /** Descrição curta em inglês, para os cartões em /en. Só nas listagens. */
   shortDescriptionEn?: string | null;
   /** Áudio que está no perfil público. Só na fila de verificação. */
