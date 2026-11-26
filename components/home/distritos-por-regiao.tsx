@@ -60,7 +60,9 @@ export async function DistritosPorRegiao({
 
         <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
           {REGIOES.map((regiao) => {
-            const slugs = [...regiao.slugs].sort((a, b) => (totais?.[b] ?? 0) - (totais?.[a] ?? 0));
+            const slugs = [...regiao.slugs].sort(
+              (a, b) => (totais?.[b]?.todos ?? 0) - (totais?.[a]?.todos ?? 0),
+            );
             return (
               <div key={regiao.pt}>
                 <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-rose-500">
@@ -69,7 +71,7 @@ export async function DistritosPorRegiao({
                 <ul className="grid grid-cols-2 gap-2 sm:grid-cols-1">
                   {slugs.map((slug) => {
                     const nome = nomeDistrito(slug, locale);
-                    const total = totais?.[slug] ?? 0;
+                    const total = totais?.[slug]?.todos ?? 0;
                     return (
                       <li key={slug}>
                         {/* O texto da ligação continua a ser "Acompanhantes em

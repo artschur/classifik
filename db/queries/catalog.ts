@@ -195,25 +195,32 @@ export const getOutrosGenerosNoDistrito = unstable_cache(
   { revalidate: 1800, tags: ['companions', 'companions-filter'] },
 );
 
+export type TotaisDistrito = { todos: number; feminino: number };
+
 /**
- * Quantos perfis estão no ar em cada distrito (todos os géneros), por slug.
- * Alimenta a lista de distritos da página principal e a frase de abertura
- * de cada distrito. Distritos sem perfis não aparecem no objecto.
+ * Quantos perfis estão no ar em cada distrito, por slug: todos os géneros (a
+ * lista de distritos da página principal) e só os femininos (a frase de
+ * abertura do distrito, que abre em feminino). Distritos sem perfis não
+ * aparecem no objecto.
  */
 export const getTotaisPorDistrito = unstable_cache(
-  async (): Promise<Record<string, number>> => {
+  async (): Promise<Record<string, TotaisDistrito>> => {
     const linhas = await db
       .select({
         slug: citiesTable.slug,
-        total: sql<number>`count(*)::int`,
+        todos: sql<number>`count(*)::int`,
+        feminino: sql<number>`count(*) filter (where lower(${companionsTable.gender}) = 'feminino')::int`,
       })
       .from(companionsTable)
       .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
       .where(and(eq(companionsTable.verified, true), eq(companionsTable.paused, false)))
       .groupBy(citiesTable.slug);
-    return Object.fromEntries(linhas.map((l) => [l.slug, Number(l.total)]));
+    return Object.fromEntries(
+      linhas.map((l) => [l.slug, { todos: Number(l.todos), feminino: Number(l.feminino) }]),
+    );
   },
-  ['totais-por-distrito'],
+  // Chave nova com o formato novo: a antiga guardava só um número por distrito.
+  ['totais-por-distrito-genero'],
   { revalidate: 1800, tags: ['companions', 'companions-filter'] },
 );
 

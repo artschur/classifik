@@ -1350,7 +1350,9 @@ async function CityIntro({ citySlug, locale }: { citySlug: string; locale: Local
   const cityKey = citySlug.toLowerCase();
   const en = locale === 'en';
   const totais = await getTotaisPorDistrito().catch(() => null);
-  const total = totais?.[cityKey] ?? null;
+  // Só os femininos: é com eles que a página abre. Os outros géneros têm a
+  // sua ligação por cima da lista (OutrosGenerosNoDistrito).
+  const total = totais?.[cityKey]?.feminino ?? null;
   const vizinhos = DISTRITOS_VIZINHOS[cityKey]?.slice(0, 3) ?? [];
   const local = getCityLabel(cityKey, locale);
 
