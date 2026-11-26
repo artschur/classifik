@@ -55,7 +55,6 @@ const TEXT = {
     continuar: "Continuar",
     janelaTitulo: "Verificar identidade",
     janelaDescricao: "Um vídeo curto e um documento. Só a nossa equipa os vê.",
-    tutorial: "Como gravar o vídeo de verificação",
     videoTitulo: "1. Vídeo 360°",
     videoTextoAntes: "Mostre o rosto e o corpo com boa iluminação, segurando um papel com ",
     videoTextoDepois: " e a data de hoje. 10 a 15 segundos, até 50MB.",
@@ -100,7 +99,6 @@ const TEXT = {
     continuar: "Continue",
     janelaTitulo: "Verify my identity",
     janelaDescricao: "A short video and an ID document. Only our team can see them.",
-    tutorial: "How to record the verification video",
     videoTitulo: "1. 360° video",
     videoTextoAntes: "Show your face and body in good lighting, holding a piece of paper with ",
     videoTextoDepois: " and today's date. 10 to 15 seconds, up to 50MB.",
@@ -391,18 +389,6 @@ function JanelaVerificacao({
         </DialogHeader>
 
         <div className="space-y-4">
-          {faltaVideo && (
-            <div className="aspect-video w-full">
-              <iframe
-                className="h-full w-full rounded-lg border"
-                src="https://www.youtube-nocookie.com/embed/m5Tja4hJMXQ?controls=1&modestbranding=1&rel=0"
-                title={t.tutorial}
-                allow="encrypted-media; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          )}
-
           <Peca
             icone={<Video className="h-5 w-5" />}
             titulo={t.videoTitulo}
