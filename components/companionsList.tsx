@@ -4,26 +4,30 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { CompanionFiltered, FilterTypesCompanions, Media } from '@/types/types';
 import { framingStyle, isVideoMedia, mediaFraming, mediaUrl } from '@/lib/image-framing';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCompanionsToFilter } from '@/db/queries/companions';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Check } from 'lucide-react';
-import { PlanType } from '@/db/queries/kv';
+import { BadgeCheck, Camera, MapPin } from 'lucide-react';
 import { useLocale } from '@/components/locale-provider';
 import { LocaleLink } from '@/components/locale-link';
-import { traduzirValor } from '@/lib/i18n-values';
+import { nomeDistrito } from '@/lib/districts';
+import { TAMANHO_LISTA } from '@/lib/listagem';
+import { precoCartao } from '@/lib/preco';
 import { etiquetaGenero, seloVerificacao } from '@/lib/genero';
+
+/**
+ * Grelha da listagem: dois perfis por linha no telemóvel, três entre md e
+ * xl (com o painel de filtros ao lado a partir de lg) e quatro a partir de xl.
+ */
+const GRELHA = 'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4';
 
 export function CompanionsList({
   location,
   page,
   filters,
   initialCompanions,
-  pageSize = 9,
+  pageSize = TAMANHO_LISTA,
 }: {
   location: string;
   page: number;
@@ -132,9 +136,7 @@ export function CompanionsList({
 
   return (
     <>
-      {/* Com o painel de filtros ao lado (ecrãs largos), três colunas só
-          cabem a partir de xl; entre lg e xl ficam duas. */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className={GRELHA}>
         {companions.map((companion: CompanionFiltered) => (
           <CompanionCard key={companion.id} companion={companion} />
         ))}
@@ -143,9 +145,9 @@ export function CompanionsList({
       {hasMore && (
         <div ref={sentinela} className="flex justify-center py-10">
           {loadingMore ? (
-            <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-[420px] w-full rounded-xl" />
+            <div className={`${GRELHA} w-full`}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
               ))}
             </div>
           ) : (
@@ -166,54 +168,24 @@ export function CompanionsList({
   );
 }
 
-const planRibbonStyles: Record<string, { bg: string; text: string; border: string; label: string; emoji?: string }> = {
-  vip: {
-    bg: 'bg-gradient-to-r from-yellow-400 to-amber-500',
-    text: 'text-yellow-900',
-    border: 'border-yellow-600/30',
-    label: 'VIP',
-    emoji: '👑',
-  },
-  plus: {
-    bg: 'bg-gradient-to-r from-orange-400 to-rose-400',
-    text: 'text-white',
-    border: 'border-orange-600/30',
-    label: 'Plus',
-    emoji: '⭐',
-  },
-  classic: {
-    bg: 'bg-gradient-to-r from-pink-300 to-rose-400',
-    text: 'text-rose-900',
-    border: 'border-rose-400/30',
-    label: 'Classic',
-  },
+/** Rótulo do plano no cartão, igual ao da página principal. */
+const PLANO: Record<string, { pt: string; en: string; className: string }> = {
+  vip: { pt: 'VIP', en: 'VIP', className: 'bg-gradient-to-r from-amber-400 to-yellow-500 text-yellow-950' },
+  plus: { pt: 'Plus', en: 'Plus', className: 'bg-gradient-to-r from-orange-400 to-rose-500 text-white' },
+  classic: { pt: 'Clássico', en: 'Classic', className: 'bg-rose-600 text-white' },
 };
 
-const PlanRibbon = ({ plan }: { plan?: string | null }) => {
-  if (!plan || plan === 'free') return null;
-
-  const style = planRibbonStyles[plan.toLowerCase()];
-  // const style = planRibbonStyles["classic"];
-  if (!style) return null;
-
-  return (
-    <div className="absolute top-0 right-0 z-10 w-24 h-24 pointer-events-none">
-      {/* Floating emoji — top-right, slightly rotated */}
-      <span className="absolute -top-1 right-0 text-3xl drop-shadow-md rotate-45 inline-block">
-        {style.emoji}
-      </span>
-      {/* Diagonal ribbon strip */}
-      <div className="overflow-hidden w-full h-full absolute inset-0">
-        <div
-          className={`absolute top-[18px] -right-[28px] ${style.bg} ${style.text} text-[11px] font-bold py-1 w-32 text-center transform rotate-45 shadow-md uppercase tracking-wider border-b ${style.border}`}
-        >
-          {style.label}
-        </div>
-      </div>
-    </div>
-  );
-};
-
+/**
+ * Cartão compacto da listagem (distritos e /companions): a foto de capa em
+ * pé, no formato das fotos dos anúncios, com o plano e o número de fotos, e
+ * por baixo nome, idade, zona e preço.
+ *
+ * Antes era um cartão por linha no telemóvel, com a foto deitada (4:3), que
+ * cortava quase metade de uma foto em pé, um carrossel com todas as fotos,
+ * a descrição e as características. A galeria e a descrição continuam no
+ * perfil. O selo "Não verificada" saiu da listagem (decisão de 25/11): o
+ * selo "Verificada" continua e a falta dele já informa quem procura.
+ */
 export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   const locale = useLocale();
   const en = locale === 'en';
@@ -224,155 +196,97 @@ export function CompanionCard({ companion }: { companion: CompanionFiltered }) {
   const images = companion.images.filter(
     (media): media is string | Media => !isVideoMedia(media),
   );
-
-  // const getPlanBadge = (planType?: string | null) => {
-  //   switch (planType) {
-  //     case 'basico':
-  //       return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Clássico</Badge>;
-  //     case 'plus':
-  //       return <Badge className="bg-purple-100 text-purple-800 border-purple-200">PLUS</Badge>;
-  //     case 'vip':
-  //       return (
-  //         <Badge className="bg-gold-100 text-gold-800 border-gold-200 bg-gradient-to-r from-yellow-200 to-yellow-300 text-yellow-900">
-  //           VIP
-  //         </Badge>
-  //       );
-  //     default:
-  //       return (
-  //         <Badge variant="outline" className="text-gray-600">
-  //           FREE
-  //         </Badge>
-  //       );
-  //   }
-  // };
+  const capa = images[0];
+  const plano = PLANO[(companion.planType ?? '').toLowerCase()];
+  const cidade = companion.city ? nomeDistrito(companion.city, locale) : '';
 
   return (
     <LocaleLink
       locale={locale}
       href={`/companions/${companion.id}`}
-      className="transition-transform duration-200 ease-in-out transform hover:scale-102"
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-lg"
     >
-      <Card className="h-full overflow-hidden">
-        <Carousel className="w-full">
-          <CarouselContent>
-            {images.length > 0 ? (
-              images.map((image, index) => (
-                <CarouselItem key={index}>
-                  <div className="relative aspect-[4/3]">
-                    <PlanRibbon plan={companion.planType} />
-                    {etiqueta && (
-                      <span className="absolute bottom-2 left-2 z-10 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
-                        {etiqueta}
-                      </span>
-                    )}
-                    <Image
-                      src={mediaUrl(image) || '/placeholder.svg'}
-                      alt={en ? `${companion.name}, photo ${index + 1}` : `${companion.name}, foto ${index + 1}`}
-                      fill={true}
-                      // Largura real do cartão: uma coluna no telemóvel, duas
-                      // até ao xl e três a partir daí. Sem isto o navegador
-                      // assumia a largura do ecrã e descarregava fotos de até
-                      // 1920px para cada miniatura.
-                      sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover"
-                      style={framingStyle(mediaFraming(image))}
-                    />
-                    <Image
-                      src={'/watermark.png'}
-                      width={100}
-                      height={100}
-                      alt=""
-                      className="absolute inset-0 m-auto h-16 w-16 opacity-80 invert"
-                    />
-                  </div>
-                </CarouselItem>
-              ))
-            ) : (
-              <CarouselItem>
-                <div className="relative aspect-[4/3]">
-                  <Image src="/image.png" alt={companion.name} fill={true} sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
-                </div>
-              </CarouselItem>
-            )}
-          </CarouselContent>
-          {images.length > 1 && (
-            <>
-              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
-              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
-            </>
-          )}
-        </Carousel>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold">{companion.name}</h3>
-            <div className="flex items-center gap-2">
-              {/*{getPlanBadge(companion.planType)}*/}
-              {/* O selo é do documento visto. Quem está no ar sem ele diz-o. */}
-              {companion.identityVerified ? (
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  <Check className="w-3 h-3 mr-1" /> {selo.verificado}
-                </Badge>
-              ) : (
-                <Badge
-                  variant="secondary"
-                  className="bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-                >
-                  {selo.naoVerificado}
-                </Badge>
-              )}
-              <Badge variant="secondary">{companion.age} {en ? 'years old' : 'anos'}</Badge>
-            </div>
-          </div>
-          {/* Em /en, a tradução da descrição curta quando existe; senão o original. */}
-          <p
-            lang={en && !companion.shortDescriptionEn ? 'pt-PT' : undefined}
-            className="text-sm text-muted-foreground line-clamp-2 mb-2"
+      <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+        <Image
+          src={(capa && mediaUrl(capa)) || '/image.png'}
+          alt={
+            cidade
+              ? en ? `${companion.name}, escort in ${cidade}` : `${companion.name}, acompanhante em ${cidade}`
+              : companion.name
+          }
+          fill={true}
+          // Duas colunas no telemóvel, três entre md e xl, quatro a partir
+          // daí (com o painel de filtros ao lado). O navegador escolhe a foto
+          // pela largura real do cartão e pela densidade do ecrã: a nitidez
+          // fica igual à de antes, sem descarregar fotos maiores do que o
+          // cartão.
+          sizes="(min-width: 1280px) 20vw, (min-width: 768px) 30vw, 50vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          style={capa ? framingStyle(mediaFraming(capa)) : undefined}
+        />
+        <Image
+          src={'/watermark.png'}
+          width={100}
+          height={100}
+          alt=""
+          className="absolute inset-0 m-auto h-12 w-12 opacity-80 invert"
+        />
+        {plano && (
+          <span
+            className={`absolute left-2 top-2 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide shadow ${plano.className}`}
           >
-            {(en && companion.shortDescriptionEn) || companion.shortDescription}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {companion.silicone && <Badge variant="outline">Silicone</Badge>}
-            {companion.ethinicity && <Badge variant="outline">{traduzirValor(companion.ethinicity, locale)}</Badge>}
-            {companion.eyeColor && <Badge variant="outline">{traduzirValor(companion.eyeColor, locale)}</Badge>}
-            {companion.hairColor && <Badge variant="outline">{traduzirValor(companion.hairColor, locale)}</Badge>}
-          </div>
-        </CardContent>
-        <CardFooter className="p-4 pt-0">
-          {/* Perfis criados pelo admin podem ainda não ter preço. */}
-          <span className="text-lg font-bold">
-            {companion.price != null
-              ? `€ ${companion.price.toFixed(2)}`
-              : en ? 'Price on request' : 'Preço sob consulta'}
+            {en ? plano.en : plano.pt}
           </span>
-        </CardFooter>
-      </Card>
+        )}
+        {/* Só nos perfis masculinos e trans (lib/genero.ts). */}
+        {etiqueta && (
+          <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
+            {etiqueta}
+          </span>
+        )}
+        {images.length > 0 && (
+          <span className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
+            <Camera className="h-3 w-3" />
+            {images.length}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-0.5 p-3">
+        <div className="flex items-center gap-1.5">
+          <h3 className="truncate font-semibold">{companion.name}</h3>
+          {/* O selo é só para quem confirmou a identidade com documento. */}
+          {companion.identityVerified && (
+            <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label={selo.verificado} />
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {companion.age} {en ? 'years old' : 'anos'}
+        </p>
+        {cidade && (
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0 text-rose-500" />
+            {cidade}
+          </p>
+        )}
+        <p className="mt-auto pt-1.5 text-sm font-bold">{precoCartao(companion.price, locale)}</p>
+      </div>
     </LocaleLink>
   );
 }
 
 export function CompanionsListSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-      {[...Array(6)].map((_, index) => (
-        <Card key={index} className="h-full">
-          <Skeleton className="w-full aspect-[4/3]" />
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Skeleton className="w-1/2 h-6" />
-              <Skeleton className="w-1/4 h-6" />
-            </div>
-            <Skeleton className="w-full h-4 mb-2" />
-            <Skeleton className="w-3/4 h-4 mb-2" />
-            <div className="flex flex-wrap gap-2">
-              <Skeleton className="w-20 h-6" />
-              <Skeleton className="w-20 h-6" />
-              <Skeleton className="w-20 h-6" />
-            </div>
-          </CardContent>
-          <CardFooter className="p-4 pt-0">
-            <Skeleton className="w-1/4 h-6" />
-          </CardFooter>
-        </Card>
+    <div className={GRELHA}>
+      {[...Array(8)].map((_, index) => (
+        <div key={index} className="overflow-hidden rounded-xl border border-border bg-card">
+          <Skeleton className="w-full aspect-[3/4]" />
+          <div className="space-y-2 p-3">
+            <Skeleton className="h-5 w-2/3" />
+            <Skeleton className="h-3 w-1/3" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
+        </div>
       ))}
     </div>
   );

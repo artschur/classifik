@@ -2,22 +2,12 @@ import Image from 'next/image';
 import { FaqAcordeao } from '@/components/faq-acordeao';
 import { SignedIn, SignedOut } from '@clerk/nextjs';
 import { RegistarButton } from '@/components/registar-button';
-import {
-  Shield,
-  MapPin,
-  Clock,
-  Star,
-  Mic,
-  ShieldCheck,
-  Video,
-  UserCheck,
-  MessageCircle,
-} from 'lucide-react';
+import { Shield, MapPin, Star, Mic, UserCheck, MessageCircle } from 'lucide-react';
 import { FeatureItem } from '@/components/v0/feature-tem';
 import { SectionHeading } from '@/components/v0/section-heading';
 import { LiteYouTube } from '@/components/lite-youtube';
 import { LocaleLink } from '@/components/locale-link';
-import { nomeDistrito } from '@/lib/districts';
+import { DistritosPorRegiao } from '@/components/home/distritos-por-regiao';
 import { absoluteUrl } from '@/lib/i18n';
 import { ORGANIZATION_ID, WEBSITE_ID } from '@/lib/brand';
 
@@ -28,43 +18,14 @@ import { ORGANIZATION_ID, WEBSITE_ID } from '@/lib/brand';
  */
 const L = 'en' as const;
 
-const regions = [
-  {
-    title: 'Northern Portugal',
-    text: 'Porto and Braga are two of the busiest areas on the platform, with a wide choice of verified escorts and companions for dinners and social events. Viana do Castelo, Bragança and Vila Real complete the north.',
-    slugs: ['porto', 'braga', 'viana-do-castelo', 'braganca', 'vila-real'],
-  },
-  {
-    title: 'Central Portugal',
-    text: 'Coimbra and Aveiro lead the centre of the country, and Leiria keeps growing thanks to its spot between Lisbon and the north. The region also covers Viseu, Guarda and Castelo Branco.',
-    slugs: ['coimbra', 'aveiro', 'leiria', 'viseu', 'guarda', 'castelo-branco'],
-  },
-  {
-    title: 'Lisbon, Alentejo and the Algarve',
-    text: 'Lisbon has the largest number of active profiles, followed by Setúbal, which covers the south bank of the Tagus. The Algarve, around Faro, sees steady demand from international visitors all year round. Évora, Beja, Portalegre and Santarém complete the south.',
-    slugs: ['lisboa', 'setubal', 'santarem', 'evora', 'beja', 'faro', 'portalegre'],
-  },
-  {
-    title: 'The islands',
-    text: 'Madeira is an international destination with growing demand for verified companions, and OneSugar has active profiles on the island.',
-    slugs: ['madeira'],
-  },
-];
-
-/** "Escorts in the Algarve" para Faro, que é como quem viaja procura. */
-function districtLabel(slug: string): string {
-  if (slug === 'faro') return 'Escorts in the Algarve';
-  return `Escorts in ${nomeDistrito(slug, L)}`;
-}
-
 const faq = [
   {
     q: 'What is OneSugar?',
-    a: 'OneSugar is a Portuguese platform for finding verified escorts and companions in Portugal. It covers all 18 districts of mainland Portugal plus Madeira, and every profile is reviewed by the team before it is published; profiles with the Verified badge have confirmed their identity with a document.',
+    a: 'OneSugar is a Portuguese platform for escort and companion listings, with a page for each of the 18 districts of mainland Portugal plus Madeira. Every profile is reviewed by the team before it is published, and profiles with the Verified badge have confirmed their identity with a document.',
   },
   {
     q: 'How are profiles verified?',
-    a: 'Each companion confirms her identity, sends a recent photo and confirms her availability before her profile goes live. OneSugar uses audio, video and document checks to make sure the person in the photos is the person you will meet. Profiles that fail the check are not published.',
+    a: 'Before a profile goes live, the OneSugar team reviews its photos, details and contact number. The companion can then confirm her identity with a document and a video: once the team approves them, her profile gets the Verified badge.',
   },
   {
     q: 'Do the companions speak English?',
@@ -208,32 +169,6 @@ export function HomeRestEn() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="py-12 px-6 bg-card/50">
-        <div className="container mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-2">
-            How OneSugar reviews every profile
-          </h2>
-          <p className="text-base text-muted-foreground text-center mb-10">
-            Tools that let you check a companion before you get in touch.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: <Mic className="w-6 h-6 text-rose-500" />, title: 'Voice verification', desc: 'Hear a voice message recorded by the companion herself.' },
-              { icon: <ShieldCheck className="w-6 h-6 text-rose-500" />, title: 'Verified badge', desc: 'The badge shows the companion confirmed her identity with a document.' },
-              { icon: <Video className="w-6 h-6 text-rose-500" />, title: 'Team review', desc: 'Every profile is reviewed by the OneSugar team before it goes live.' },
-              { icon: <Star className="w-6 h-6 text-rose-500" />, title: 'Real reviews', desc: 'Read what other clients say about each companion.' },
-            ].map((f) => (
-              <div key={f.title} className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3">
-                {f.icon}
-                <h3 className="font-semibold text-base">{f.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* HOW IT WORKS */}
       <section className="py-12 px-6">
         <div className="container mx-auto">
@@ -285,10 +220,10 @@ export function HomeRestEn() {
                 centered={false}
               />
               <div className="space-y-4">
-                <FeatureItem icon={Shield} title="Verified by OneSugar" description="Every profile is reviewed by our team, and the Verified badge confirms identity with a document." />
-                <FeatureItem icon={MapPin} title="All over Portugal" description="Companions in Lisbon, Porto, the Algarve and every district in between." />
-                <FeatureItem icon={Clock} title="Flexible availability" description="Arrange a meeting that fits your plans, whether you are here for one night or a few weeks." />
+                <FeatureItem icon={Shield} title="Reviewed by our team" description="No profile goes live without a check by our team, and the Verified badge shows who confirmed her identity with a document." />
+                <FeatureItem icon={Mic} title="Voice introductions" description="Hear a voice message recorded by the companion herself before you get in touch." />
                 <FeatureItem icon={Star} title="Genuine reviews" description="Feedback from real clients on each companion's profile." />
+                <FeatureItem icon={MapPin} title="All over Portugal" description="Companions in Lisbon, Porto, the Algarve and other districts, with a page for each one." />
               </div>
             </div>
             <Image
@@ -303,82 +238,18 @@ export function HomeRestEn() {
         </div>
       </section>
 
-      <JoinCta />
-
-      {/* DISTRICT GRID */}
-      <section className="py-12 px-6">
-        <div className="container mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-2">
-            Verified escorts in every district of Portugal
-          </h2>
-          <p className="text-base text-muted-foreground text-center mb-10 max-w-2xl mx-auto">
-            OneSugar has active profiles across mainland Portugal and Madeira.
-            Pick a region to see the verified companions near you.
-          </p>
-
-          {regions.map((region) => (
-            <div key={region.title} className="mb-10">
-              <h3 className="text-base font-semibold mb-2 text-rose-500">{region.title}</h3>
-              <p className="text-base text-muted-foreground mb-4 leading-relaxed">{region.text}</p>
-              <div className="flex flex-wrap gap-3">
-                {region.slugs.map((slug) => (
-                  <LocaleLink
-                    key={slug}
-                    locale={L}
-                    href={`/location/${slug}`}
-                    className="bg-card border border-border hover:border-rose-500 hover:text-rose-500 text-sm px-4 py-2 rounded-full transition-colors"
-                  >
-                    {districtLabel(slug)}
-                  </LocaleLink>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <div className="text-center mt-8">
-            <LocaleLink
-              locale={L}
-              href="/location"
-              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-8 py-3 rounded-full transition-colors text-sm"
-            >
-              See all districts
-            </LocaleLink>
-          </div>
-        </div>
-      </section>
+      {/* DISTRICT GRID: por região, com o número de perfis */}
+      <DistritosPorRegiao
+        locale="en"
+        titulo="Verified escorts in every district of Portugal"
+        subtitulo="Pick your district to see the profiles available near you."
+      />
 
       {/* FAQ */}
       <section className="py-12 px-6 bg-card/50">
         <div className="container mx-auto max-w-3xl">
           <h2 className="text-2xl font-bold text-center mb-10">Frequently asked questions</h2>
           <FaqAcordeao itens={faq} />
-        </div>
-      </section>
-
-      {/* FOOTER CTA */}
-      <section className="py-12 px-6 bg-card/50 text-center">
-        <div className="container mx-auto max-w-2xl">
-          <h2 className="text-xl font-bold mb-3">Visiting Portugal?</h2>
-          <p className="text-base text-muted-foreground mb-6 leading-relaxed">
-            Browse verified companions in the city you are staying in and get
-            in touch with full discretion.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <LocaleLink
-              locale={L}
-              href="/companions"
-              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold px-6 py-3 rounded-full transition-colors text-sm"
-            >
-              See all profiles
-            </LocaleLink>
-            <LocaleLink
-              locale={L}
-              href="/location"
-              className="border border-rose-600 text-rose-500 hover:bg-rose-600 hover:text-white font-semibold px-6 py-3 rounded-full transition-colors text-sm"
-            >
-              Search by district
-            </LocaleLink>
-          </div>
         </div>
       </section>
 

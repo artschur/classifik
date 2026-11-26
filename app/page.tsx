@@ -332,8 +332,11 @@ export default async function HomePage({
             </div>
           </div>
 
-          {/* Direita: sugar do dia, num cartão como os do oje.pt */}
-          <div className="flex justify-center lg:justify-end">
+          {/* Direita: sugar do dia, num cartão como os do oje.pt. Sem sugar do
+              dia, o lugar fica com a imagem de boas-vindas, que no telemóvel
+              ocupava quase um ecrã antes dos perfis: aí só aparece a partir de
+              lg. A sugar do dia (um benefício do VIP) aparece sempre. */}
+          <div className={`${doDia ? 'flex' : 'hidden lg:flex'} justify-center lg:justify-end`}>
             <LocaleLink
               locale={locale}
               href={doDia ? `/companions/${doDia.id}` : '/location'}

@@ -195,6 +195,28 @@ export const getOutrosGenerosNoDistrito = unstable_cache(
   { revalidate: 1800, tags: ['companions', 'companions-filter'] },
 );
 
+/**
+ * Quantos perfis estão no ar em cada distrito (todos os géneros), por slug.
+ * Alimenta a lista de distritos da página principal e a frase de abertura
+ * de cada distrito. Distritos sem perfis não aparecem no objecto.
+ */
+export const getTotaisPorDistrito = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const linhas = await db
+      .select({
+        slug: citiesTable.slug,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(companionsTable)
+      .innerJoin(citiesTable, eq(citiesTable.id, companionsTable.city_id))
+      .where(and(eq(companionsTable.verified, true), eq(companionsTable.paused, false)))
+      .groupBy(citiesTable.slug);
+    return Object.fromEntries(linhas.map((l) => [l.slug, Number(l.total)]));
+  },
+  ['totais-por-distrito'],
+  { revalidate: 1800, tags: ['companions', 'companions-filter'] },
+);
+
 function selecionar() {
   return db
     .select({

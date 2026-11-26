@@ -9,10 +9,10 @@ import { HeroCarouselWrapper } from '@/components/hero-carousel-wrapper';
 import { LocaleLink } from '@/components/locale-link';
 import { BreadcrumbTrail } from '@/components/breadcrumb-trail';
 import { FaqAcordeao } from '@/components/faq-acordeao';
-import { PlanType } from '@/db/queries/kv';
 import { getLocale } from '@/lib/locale.server';
 import { OG_LOCALE, absoluteUrl, hasEnglish, type Locale } from '@/lib/i18n';
 import { TODOS_OS_DISTRITOS } from '@/lib/districts';
+import { TAMANHO_LISTA } from '@/lib/listagem';
 import type { FilterTypesCompanions } from '@/types/types';
 import type { CityData } from '@/app/location/[city]/types';
 
@@ -23,7 +23,8 @@ import type { CityData } from '@/app/location/[city]/types';
  */
 
 // O mesmo tamanho de leva das páginas de distrito (getCompanionsToFilter).
-const PAGE_SIZE = 9;
+// Igual ao tamanho da leva de getCompanionsToFilter.
+const PAGE_SIZE = TAMANHO_LISTA;
 
 const TEXT = {
   pt: {
@@ -521,9 +522,8 @@ export default async function CompanionsIndexPage({
         )}
       </p>
 
-      <div className="mb-8">
-        <HeroCarouselWrapper plans={[PlanType.VIP]} />
-      </div>
+      {/* Perfis em destaque: só planos pagos; sem pagantes, não aparece. */}
+      <HeroCarouselWrapper />
 
       {/* Filtros abertos ao lado da lista, como nos distritos. */}
       <div className="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8">

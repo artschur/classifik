@@ -1,5 +1,7 @@
 "use server";
 
+import { TAMANHO_LISTA } from "@/lib/listagem";
+
 import {
   companionsTable,
   characteristicsTable,
@@ -619,7 +621,7 @@ export const getCompanionsToFilter = unstable_cache(
     page: number,
     filters?: FilterTypesCompanions,
   ): Promise<CompanionFiltered[]> => {
-    const pageSize = 9;
+    const pageSize = TAMANHO_LISTA;
     const offset = (page - 1) * pageSize;
 
     // "portugal" é a listagem geral (/companions): todos os distritos.
@@ -681,7 +683,10 @@ export const getCompanionsToFilter = unstable_cache(
       });
     return output;
   },
-  ["companions-filter"],
+  // A chave mudou com o tamanho da leva (9 para 12): com a antiga, a página 1
+  // guardada em cache com 9 perfis e a página 2 já calculada com 12 deixavam
+  // perfis de fora durante meia hora depois do deploy.
+  ["companions-filter-12"],
   {
     revalidate: 1800,
     tags: ["companions", "companions-filter"],

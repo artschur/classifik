@@ -27,7 +27,7 @@ export const districtsEnB: Record<string, CityData> = {
         {
           heading: 'Discretion in a mid-sized city',
           paragraphs: [
-            'Braga is large enough to offer a real choice of profiles but small enough that discretion matters. OneSugar lists female and trans companions here, and the filters let you narrow the list by preference before you open a single profile.',
+            'Braga is large enough to offer a real choice of profiles but small enough that discretion matters. The page opens with female companions; when the district also has trans or male profiles, a link to them appears just above the list, and the filters let you narrow it down before you open a single profile.',
             'OneSugar does not keep a record of contacts between clients and companions and does not share personal data with third parties. You can browse every profile without creating an account.',
           ],
         },
@@ -271,7 +271,7 @@ export const districtsEnB: Record<string, CityData> = {
         {
           heading: 'Choice and discretion in a smaller city',
           paragraphs: [
-            'Viseu is smaller than Porto or Coimbra, which makes discretion easier to keep. The platform lists female and trans companions in Viseu, and the filters help you narrow the list by preference.',
+            'Viseu is smaller than Porto or Coimbra, which makes discretion easier to keep. The Viseu page opens with female companions; when there are trans or male profiles in the district, a link to them appears just above the list.',
             'Nothing about your visit is stored or passed on: OneSugar keeps no record of contacts between clients and companions and does not share personal data with third parties. You can browse without an account.',
           ],
         },
@@ -297,7 +297,7 @@ export const districtsEnB: Record<string, CityData> = {
       },
       {
         q: 'Are there trans escorts in Viseu on OneSugar?',
-        a: 'OneSugar lists female and trans companions. Use the filters on the Viseu page to see the profiles currently available.',
+        a: 'The Viseu page opens with female companions. When there are trans profiles in the district, a link to them appears just above the list, and you can also choose Trans in the gender filter.',
       },
       {
         q: 'Is it discreet?',

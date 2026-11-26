@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { useLocale } from "@/components/locale-provider"
 import { LocaleLink } from "@/components/locale-link"
 import { nomeDistrito } from "@/lib/districts"
+import { precoCartao } from "@/lib/preco"
 
 const planRibbonStyles: Record<string, { bg: string; color: string; label: string; emoji: string }> = {
   vip:     { bg: 'linear-gradient(to right, #facc15, #f59e0b)', color: '#713f12', label: 'VIP',     emoji: '👑' },
@@ -15,10 +16,12 @@ const planRibbonStyles: Record<string, { bg: string; color: string; label: strin
   classic: { bg: 'linear-gradient(to right, #f9a8d4, #fb7185)', color: '#881337', label: 'Classic', emoji: '✨' },
 }
 
-function PlanBadge({ plan }: { plan?: string | null }) {
+function PlanBadge({ plan, locale }: { plan?: string | null; locale: string }) {
   if (!plan || plan === 'free') return null
   const style = planRibbonStyles[plan.toLowerCase()]
   if (!style) return null
+  // Em português o plano chama-se Clássico, como na página de planos.
+  const label = plan.toLowerCase() === 'classic' && locale !== 'en' ? 'Clássico' : style.label
   return (
     <div
       style={{
@@ -37,7 +40,7 @@ function PlanBadge({ plan }: { plan?: string | null }) {
         pointerEvents: 'none',
       }}
     >
-      {style.emoji} {style.label}
+      {style.emoji} {label}
     </div>
   )
 }
@@ -63,25 +66,23 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
   }
 
   return (
-    <section className="w-full bg-background py-12 md:py-24">
-      <div className="container mx-auto px-4">
-        <div className="mb-8">
-          {/* Estava só em português, também nas páginas /en. */}
-          <h2 className="text-3xl font-bold text-center mb-2">
-            {locale === "en" ? "Premium profiles" : "Perfis em destaque"}
+    // Compacto: o bloco fica dentro da coluna da lista, logo acima dela. A
+    // frase de apresentação que vinha por baixo do título saiu a pedido da
+    // Katia: dava a entender que aqui estavam as verificadas, quando o bloco
+    // é só de planos pagos.
+    <section className="w-full mb-6">
+      <div>
+        <div className="mb-3">
+          <h2 className="text-lg font-bold sm:text-xl">
+            {locale === "en" ? "Featured profiles" : "Perfis em destaque"}
           </h2>
-          <p className="text-muted-foreground text-center">
-            {locale === "en"
-              ? "Our premium and verified companions"
-              : "Descubra as nossas acompanhantes premium e verificadas"}
-          </p>
         </div>
 
         <div className="relative">
           {/* Left Navigation Button */}
           <button
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20 p-3 bg-background border rounded-full shadow-lg hover:bg-accent transition-colors"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 hidden md:block p-2.5 bg-background border rounded-full shadow-lg hover:bg-accent transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -90,7 +91,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
           {/* Carousel Container */}
           <div
             ref={carouselRef}
-            className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory hide-scrollbar pb-4"
+            className="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory hide-scrollbar pb-2"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {companions.map((companion, i) => {
@@ -98,11 +99,10 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
               const imageUrl = firstImage ? getImageUrl(firstImage) : "/placeholder.svg?height=400&width=300"
 
               return (
-                <LocaleLink locale={locale} href={`/companions/${companion.id}`} key={companion.id + companion.name} className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <LocaleLink locale={locale} href={`/companions/${companion.id}`} key={companion.id + companion.name} className="flex-none w-[62%] sm:w-[240px] lg:w-[260px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   <Card
                     key={companion.id}
-                    className="flex-none w-[280px] md:w-[320px] snap-start overflow-hidden hover:shadow-xl transition-shadow duration-300"
-
+                    className="w-full overflow-hidden rounded-xl border-rose-500/40 hover:shadow-xl transition-shadow duration-300"
                   >
                     <div className="relative aspect-[3/4] w-full">
                       <Image
@@ -113,24 +113,22 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
                         // aparece no topo do distrito, carrega com prioridade.
                         priority={i === 0}
                         className="object-cover"
-                        sizes="(max-width: 768px) 280px, 320px"
+                        sizes="(max-width: 640px) 62vw, 260px"
                       />
                       {/* Gradient Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      <PlanBadge plan={companion.planType} />
+                      <PlanBadge plan={companion.planType} locale={locale} />
 
                       {/* Card Info */}
                       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                        <h3 className="text-xl font-bold mb-1">{companion.name}</h3>
-                        <div className="flex items-center justify-between text-base">
+                        <h3 className="text-lg font-bold mb-1">{companion.name}</h3>
+                        <div className="flex items-center justify-between text-sm">
                           <span className="text-white/90">{companion.age} {companion.age == 40 ? "+" : ""} {locale === "en" ? "years old" : "anos"}</span>
                           <span className="text-white/90">{nomeDistrito(companion.city, locale)}</span>
                         </div>
                         <div className="mt-2">
-                          <span className="text-lg font-bold">
-                            {typeof companion.price === "number"
-                              ? `€${companion.price}`
-                              : companion.price ?? (locale === "en" ? "Price on request" : "Preço sob consulta")}
+                          <span className="text-base font-bold">
+                            {precoCartao(companion.price, locale)}
                           </span>
                         </div>
                       </div>
@@ -144,7 +142,7 @@ export function HeroCarousel({ companions }: { companions: CompanionPreview[] })
           {/* Right Navigation Button */}
           <button
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20 p-3 bg-background border rounded-full shadow-lg hover:bg-accent transition-colors"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 hidden md:block p-2.5 bg-background border rounded-full shadow-lg hover:bg-accent transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" />
