@@ -17,7 +17,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { saveCompletarPerfil } from "@/db/queries/companions";
-import { esquemasRegisto, type CompletarPerfilInput } from "@/lib/registo-schema";
+import { caracteristicasVazias, esquemasRegisto, type CompletarPerfilInput } from "@/lib/registo-schema";
 import { CompletarPerfilFields } from "@/components/registo/completar-perfil-fields";
 import { LocaleLink } from "@/components/locale-link";
 import { useLocale } from "@/components/locale-provider";
@@ -33,6 +33,8 @@ const TEXT = {
     enviadoRevisaoDescricao:
       "O seu anúncio já está no ar: estas informações aparecem assim que forem revistas.",
     guardado: "Guardámos as suas informações.",
+    guardadoTitulo: "Informações guardadas",
+    faltamCaracteristicas: "Pode acrescentar as suas características mais tarde, no seu painel.",
     naoGuardou: "Não foi possível guardar",
     tenteNovamente: "Tente novamente.",
     titulo: "Complete o seu perfil",
@@ -48,6 +50,8 @@ const TEXT = {
     enviadoRevisaoDescricao:
       "Your listing is already live: this information appears as soon as it has been reviewed.",
     guardado: "We've saved your information.",
+    guardadoTitulo: "Information saved",
+    faltamCaracteristicas: "You can add your features later from your dashboard.",
     naoGuardou: "We couldn't save your changes",
     tenteNovamente: "Please try again.",
     titulo: "Complete your profile",
@@ -88,10 +92,17 @@ export function CompletarPerfilForm({
     try {
       const { pendingReview } = await saveCompletarPerfil(data);
       medirRegistoConcluido();
+      // "Perfil completo" só quando há características: sem elas o perfil
+      // ainda não aparece nos filtros.
+      const semCaracteristicas = caracteristicasVazias(data);
       toast({
         variant: "success",
-        title: pendingReview ? t.enviadoRevisao : t.perfilCompleto,
-        description: pendingReview ? t.enviadoRevisaoDescricao : t.guardado,
+        title: pendingReview ? t.enviadoRevisao : semCaracteristicas ? t.guardadoTitulo : t.perfilCompleto,
+        description: pendingReview
+          ? t.enviadoRevisaoDescricao
+          : semCaracteristicas
+            ? t.faltamCaracteristicas
+            : t.guardado,
       });
       router.push(localizeHref(FIM_DO_REGISTO, locale));
     } catch (error) {

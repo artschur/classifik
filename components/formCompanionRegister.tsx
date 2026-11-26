@@ -147,8 +147,9 @@ const TEXT = {
     algoErrado: "Algo deu errado",
     falhaEnvioArquivos: (n: number) => `Falha ao enviar ${n} arquivos`,
     falhaUpload: "Falha no upload",
-    imagensEnviadas: "Imagens enviadas",
-    imagensEnviadasDescricao: (n: number) => `${n} imagens enviadas com sucesso`,
+    imagensEnviadas: "Ficheiros enviados",
+    imagensEnviadasDescricao: (n: number) =>
+      n === 1 ? "1 ficheiro enviado com sucesso" : `${n} ficheiros enviados com sucesso`,
     imagensApagadas: "Images deleted",
     imagensApagadasDescricao: (n: number) => `Successfully deleted ${n} images`,
     falhaApagar: "Delete failed",
@@ -730,7 +731,7 @@ export function RegisterCompanionForm({
       } else {
         toast({
           title: t.imagensEnviadas,
-          description: t.imagensEnviadasDescricao(files.length),
+          description: t.imagensEnviadasDescricao(filesToUpload.length),
           variant: "success",
         });
       }
