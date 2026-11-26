@@ -52,7 +52,8 @@ import {
   updateImagesOrder,
   updateImageFraming,
 } from "@/db/queries/images";
-import { PhotoSortableGrid, type ManagedImage } from "@/components/photoSortableGrid";
+import { PhotoSortableGrid, isVideo, type ManagedImage } from "@/components/photoSortableGrid";
+import { AvisoQualidadeFotos } from "@/components/registo/aviso-qualidade-fotos";
 import { ImageFramingDialog } from "@/components/imageFramingDialog";
 import { mediaFraming } from "@/lib/image-framing";
 import { useState } from "react";
@@ -99,6 +100,8 @@ const SECCOES = {
   },
 } as const;
 const PAGINA_FOTOS = 2;
+/** No registo: 2 fotos, ou 1 foto e 1 vídeo. Mais fotos depois, no painel. */
+const LIMITE_REGISTO = 2;
 
 /** Campos dos passos 1 e 2 que ficam guardados no navegador se ela sair a meio. */
 const CAMPOS_RASCUNHO = [
@@ -159,6 +162,11 @@ const TEXT = {
     enquadramentoFalhou: "Não foi possível guardar o enquadramento",
     enquadramentoGuardado: "Enquadramento guardado",
     enquadramentoGuardadoDescricao: "A foto original não foi alterada.",
+    limiteRegistoDescricao: "No registo pode adicionar até 2 ficheiros: 2 fotos, ou 1 foto e 1 vídeo.",
+    umVideoTitulo: "Só um vídeo no registo",
+    umVideoDescricao: "O outro lugar fica para uma foto: o perfil precisa de pelo menos 1 foto.",
+    regraRegisto: "Pode adicionar até 2 ficheiros: 2 fotos, ou 1 foto e 1 vídeo. É precisa pelo menos 1 foto.",
+    limiteRegistoAtingido: "Limite de 2 ficheiros atingido. Pode adicionar mais fotos depois, no seu painel.",
     fotosObrigatorias: "Fotos obrigatórias",
     fotosObrigatoriasDescricao: "Por favor, adicione pelo menos uma foto antes de continuar.",
     falhaGuardar: "Falha ao guardar",
@@ -256,6 +264,11 @@ const TEXT = {
     enquadramentoFalhou: "We couldn't save the framing",
     enquadramentoGuardado: "Framing saved",
     enquadramentoGuardadoDescricao: "The original photo has not been changed.",
+    limiteRegistoDescricao: "When signing up you can add up to 2 files: 2 photos, or 1 photo and 1 video.",
+    umVideoTitulo: "Only one video when signing up",
+    umVideoDescricao: "The other spot is for a photo: your profile needs at least 1 photo.",
+    regraRegisto: "You can add up to 2 files: 2 photos, or 1 photo and 1 video. At least 1 photo is required.",
+    limiteRegistoAtingido: "You have reached the limit of 2 files. You can add more photos later from your dashboard.",
     fotosObrigatorias: "Photos required",
     fotosObrigatoriasDescricao: "Please add at least one photo before continuing.",
     falhaGuardar: "Saving failed",
@@ -610,6 +623,9 @@ export function RegisterCompanionForm({
     }
   };
 
+  const limiteFicheiros = emEdicao ? maxPhotos : LIMITE_REGISTO;
+  const temFoto = images.some((image) => !isVideo(image.publicUrl));
+
   const [companionId, setCompanionId] = React.useState<number | null>(
     companionData?.companionId ?? null,
   );
@@ -620,21 +636,38 @@ export function RegisterCompanionForm({
   const handleFileUpload = async (files: File[]) => {
     if (!files.length) return;
 
-    if (images.length >= maxPhotos) {
+    if (images.length >= limiteFicheiros) {
       toast({
         variant: "destructive",
         title: t.limiteTitulo,
-        description: t.limiteDescricao(maxPhotos),
+        description: emEdicao ? t.limiteDescricao(maxPhotos) : t.limiteRegistoDescricao,
       });
       return;
     }
 
-    const allowedCount = maxPhotos - images.length;
-    const filesToUpload = files.slice(0, allowedCount);
-    if (filesToUpload.length < files.length) {
+    // No registo, no máximo um vídeo: o outro lugar fica para a foto, que é
+    // obrigatória.
+    let candidatos = files;
+    if (!emEdicao) {
+      let videos = images.filter((image) => isVideo(image.publicUrl)).length;
+      candidatos = files.filter((file) => {
+        if (!file.type.startsWith("video/")) return true;
+        if (videos > 0) return false;
+        videos++;
+        return true;
+      });
+      if (candidatos.length < files.length) {
+        toast({ variant: "destructive", title: t.umVideoTitulo, description: t.umVideoDescricao });
+      }
+      if (!candidatos.length) return;
+    }
+
+    const allowedCount = limiteFicheiros - images.length;
+    const filesToUpload = candidatos.slice(0, allowedCount);
+    if (filesToUpload.length < candidatos.length) {
       toast({
         title: t.algunsNaoEnviadosTitulo,
-        description: t.algunsNaoEnviadosDescricao(allowedCount, maxPhotos),
+        description: t.algunsNaoEnviadosDescricao(allowedCount, limiteFicheiros),
         variant: "destructive",
       });
     }
@@ -860,7 +893,7 @@ export function RegisterCompanionForm({
     if (!emEdicao) {
       // O perfil já foi criado na primeira foto: falta só seguir para a
       // verificação (passo 4).
-      if (images.length === 0) {
+      if (!temFoto) {
         toast({
           variant: "destructive",
           title: t.fotosObrigatorias,
@@ -885,7 +918,7 @@ export function RegisterCompanionForm({
         }
       }
 
-      router.push(localizeHref("/companions/verification", locale));
+      router.push(localizeHref("/companions/verification?registo=1", locale));
       return;
     }
     try {
@@ -1288,12 +1321,13 @@ export function RegisterCompanionForm({
                       </p>
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
+                  <AvisoQualidadeFotos />
+                  <div className="flex items-center justify-between gap-4">
                     <p className="text-sm text-neutral-500">
-                      {t.adicioneFotos}
+                      {emEdicao ? t.adicioneFotos : t.regraRegisto}
                     </p>
-                    <span className={`text-sm font-medium ${images.length >= maxPhotos ? "text-destructive" : "text-neutral-500"}`}>
-                      {images.length}/{maxPhotos}
+                    <span className={`shrink-0 text-sm font-medium ${images.length >= limiteFicheiros ? "text-destructive" : "text-neutral-500"}`}>
+                      {images.length}/{limiteFicheiros}
                     </span>
                   </div>
 
@@ -1410,8 +1444,12 @@ export function RegisterCompanionForm({
                     </>
                   )}
 
-                  {images.length < maxPhotos ? (
+                  {images.length < limiteFicheiros ? (
                     <FileUpload onChange={handleFileUpload} />
+                  ) : !emEdicao ? (
+                    <p className="text-sm text-center text-muted-foreground border border-dashed border-border rounded-lg py-6 px-4">
+                      {t.limiteRegistoAtingido}
+                    </p>
                   ) : (
                     <p className="text-sm text-center text-muted-foreground border border-dashed border-border rounded-lg py-6">
                       {t.limiteAtingido(maxPhotos)}
@@ -1472,7 +1510,7 @@ export function RegisterCompanionForm({
                     disabled={
                       form.formState.isSubmitting ||
                       isRegistering ||
-                      (!emEdicao && images.length === 0)
+                      (!emEdicao && !temFoto)
                     }
                   >
                     {form.formState.isSubmitting ? (

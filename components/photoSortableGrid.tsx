@@ -63,7 +63,7 @@ interface PhotoSortableGridProps {
   onReplace?: (image: ManagedImage) => void;
 }
 
-const isVideo = (url: string) => /\.(mp4|webm|ogg|mov)$/i.test(url);
+export const isVideo = (url: string) => /\.(mp4|webm|ogg|mov)$/i.test(url);
 
 function SortableTile({
   image,

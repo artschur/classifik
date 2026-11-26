@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const TEXT = {
   pt: {
@@ -139,7 +139,7 @@ function documentFormSchema(locale: Locale) {
 
 type DocumentFormValues = z.infer<ReturnType<typeof documentFormSchema>>;
 
-async function uploadDocumentToSupabase(
+export async function uploadDocumentToSupabase(
   file: File,
   documentType: string,
   locale: Locale,

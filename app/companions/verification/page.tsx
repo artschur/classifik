@@ -14,10 +14,16 @@ export const dynamic = 'force-dynamic';
 /**
  * Passo 4 do registo: vídeo e documento. Também é para onde levam os avisos
  * de verificação por fazer ou recusada, e a compra de um plano sem selo.
+ * `?registo=1` vem do passo 3: mostra os passos e segue para o perfil criado.
  */
-export default async function VideoVerificationPage() {
+export default async function VideoVerificationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ registo?: string }>;
+}) {
   const { userId } = await auth();
   const locale = await getLocale();
+  const registo = (await searchParams).registo === '1';
 
   if (!userId) redirect(localizeHref('/', locale));
 
@@ -32,17 +38,20 @@ export default async function VideoVerificationPage() {
 
   // Quem já tem a identidade verificada não tem nada a fazer aqui: o vídeo e
   // o documento já foram vistos.
-  if (companion.identityVerified) redirect(localizeHref('/profile', locale));
+  if (companion.identityVerified) {
+    redirect(localizeHref(registo ? '/companions/register/criado' : '/profile', locale));
+  }
 
   const documentos = await resumoDocumentos(companion.id);
 
   return (
     <div className="container mx-auto py-12 px-4">
-      <PassosRegisto atual={4} />
+      {registo && <PassosRegisto atual={4} />}
       <VerificacaoPasso
         video={documentos.video}
         documento={documentos.documento}
         motivoRecusa={documentos.motivoRecusa}
+        registo={registo}
       />
     </div>
   );

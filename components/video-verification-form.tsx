@@ -14,7 +14,7 @@ import { useLocale } from "@/components/locale-provider";
 import type { Locale } from "@/lib/i18n";
 import { medirVerificacaoErro } from "@/lib/ga-registo";
 
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+export const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
 const TEXT = {
   pt: {
@@ -84,7 +84,7 @@ const TEXT = {
 /** Estado de cada peça da verificação (db/queries/verificacao.ts). */
 export type EstadoPecaVerificacao = "por-enviar" | "pendente" | "aprovado" | "recusado";
 
-async function uploadVideoToSupabase(
+export async function uploadVideoToSupabase(
   file: File,
   locale: Locale,
 ): Promise<{ success: true } | { success: false; error: string }> {

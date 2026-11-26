@@ -47,7 +47,7 @@ const EN_ROUTES: RegExp[] = [
   // Áreas de quem anuncia (registo, verificação, planos e painel). Pedem
   // sessão: o proxy.ts aplica as mesmas regras de acesso que em português.
   /^\/onboarding$/,
-  /^\/companions\/register(\/(audio|completar))?$/,
+  /^\/companions\/register(\/(audio|completar|criado))?$/,
   /^\/companions\/verification(\/(document|pending|success))?$/,
   /^\/checkout$/,
   /^\/success$/,
